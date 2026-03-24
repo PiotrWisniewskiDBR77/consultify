@@ -278,8 +278,13 @@ const PredictiveAnalyticsView: React.FC = () => {
       <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
         <LineChart className="w-5 h-5 text-blue-500 shrink-0" />
         <div>
-          <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Statistical models available</p>
-          <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">Train models using live platform data (subscriptions, users, revenue). Predictions are based on basic statistical calculations.</p>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+            Statistical models available
+          </p>
+          <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">
+            Train models using live platform data (subscriptions, users, revenue). Predictions are
+            based on basic statistical calculations.
+          </p>
         </div>
       </div>
 
@@ -291,7 +296,10 @@ const PredictiveAnalyticsView: React.FC = () => {
             <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
           </div>
           <button
-            onClick={() => { setError(null); fetchModels(); }}
+            onClick={() => {
+              setError(null);
+              fetchModels();
+            }}
             className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />

@@ -197,6 +197,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const id = String(req.params.id || '').trim();
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const provider = await dbGet<any>(
       `SELECT id, name, type, config FROM mcp_providers WHERE id = ? AND organization_id = ?`,
       [id, orgId]
@@ -266,6 +267,7 @@ router.post(
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
     const id = String(req.params.id || '').trim();
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const toolName = String(req.body?.toolName || '').trim();
     const args = (
       req.body?.args && typeof req.body.args === 'object' && !Array.isArray(req.body.args)

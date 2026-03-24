@@ -7,6 +7,7 @@
  */
 
 import { Router } from 'express';
+import multer from 'multer';
 
 import { InterviewController } from '../controllers/InterviewController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
@@ -15,11 +16,30 @@ import { requireAnyPermission, requirePermission } from '../middleware/permissio
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 
 const router = Router();
+const templateSourceUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['application/pdf', 'text/plain', 'text/markdown'];
+    if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error(`Unsupported file type: ${file.mimetype}`));
+  },
+});
 
 // Middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
+
+// ==========================================
+// KNOWLEDGE SEARCH
+// ==========================================
+
+/** GET /interview/knowledge/search - Search across interview knowledge */
+router.get('/knowledge/search', InterviewController.searchInterviewKnowledge);
 
 // ==========================================
 // SESSION ROUTES
@@ -177,6 +197,21 @@ router.post(
   InterviewController.createTemplate
 );
 
+/** POST /interview/templates/import-source - Extract TXT/PDF text for AI builder */
+router.post(
+  '/templates/import-source',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  templateSourceUpload.single('file'),
+  InterviewController.importTemplateSource
+);
+
+/** POST /interview/templates/evaluate-quality - Evaluate template question quality (V6-B04) */
+router.post(
+  '/templates/evaluate-quality',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.evaluateTemplateQuality
+);
+
 /** GET /interview/templates/:id - Get template metadata */
 router.get(
   '/templates/:id',
@@ -219,6 +254,20 @@ router.delete(
   InterviewController.deleteTemplate
 );
 
+/** POST /interview/templates/:id/archive - Archive template */
+router.post(
+  '/templates/:id/archive',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.archiveTemplate
+);
+
+/** POST /interview/templates/:id/restore - Restore archived template to draft */
+router.post(
+  '/templates/:id/restore',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.restoreTemplate
+);
+
 /** POST /interview/templates/:id/questions - Add template question */
 router.post(
   '/templates/:id/questions',
@@ -259,6 +308,15 @@ router.patch('/questions/:questionId', InterviewController.updateQuestion);
 
 /** POST /interview/questions/:questionId/ai-suggest - Suggest answer draft for a question */
 router.post('/questions/:questionId/ai-suggest', InterviewController.aiSuggestQuestion);
+
+/** POST /interview/questions/:questionId/ai-improve - Improve/clean up user's answer */
+router.post('/questions/:questionId/ai-improve', InterviewController.aiImproveAnswer);
+
+/** POST /interview/questions/:questionId/ai-explain - Explain question in plain language */
+router.post('/questions/:questionId/ai-explain', InterviewController.aiExplainQuestion);
+
+/** POST /interview/sessions/:sessionId/evaluate-answers - AI evaluation of answer quality/sufficiency */
+router.post('/sessions/:sessionId/evaluate-answers', InterviewController.evaluateSessionAnswers);
 
 /** POST /interview/sessions/:sessionId/ai-parse - Map chat transcript to answers */
 router.post('/sessions/:sessionId/ai-parse', InterviewController.aiParseSessionAnswers);
@@ -315,6 +373,15 @@ router.post('/sessions/:sessionId/evidence', InterviewController.createEvidence)
 /** DELETE /interview/evidence/:evidenceId - Delete evidence */
 router.delete('/evidence/:evidenceId', InterviewController.deleteEvidence);
 
+/** GET /interview/sessions/:sessionId/linked-items - Get persisted object links */
+router.get('/sessions/:sessionId/linked-items', InterviewController.getLinkedItems);
+
+/** POST /interview/sessions/:sessionId/linked-items - Add persisted object link */
+router.post('/sessions/:sessionId/linked-items', InterviewController.addLinkedItem);
+
+/** DELETE /interview/sessions/:sessionId/linked-items/:edgeId - Delete persisted object link */
+router.delete('/sessions/:sessionId/linked-items/:edgeId', InterviewController.deleteLinkedItem);
+
 // ==========================================
 // ORGANIZATION CONTEXT ROUTES (Company Facts)
 // ==========================================
@@ -331,6 +398,9 @@ router.put('/context', InterviewController.updateOrganizationContext);
 
 /** POST /interview/sessions/:sessionId/summary - Generate summary (FACTS ONLY) */
 router.post('/sessions/:sessionId/summary', InterviewController.generateSummary);
+
+/** GET /interview/sessions/:sessionId/summary - Get stored summary */
+router.get('/sessions/:sessionId/summary', InterviewController.getSummary);
 
 /** POST /interview/sessions/:sessionId/export - Export context to Tools/Assessment */
 router.post('/sessions/:sessionId/export', InterviewController.exportContext);
@@ -356,6 +426,14 @@ router.patch('/insights/:id', InterviewController.updateInsight);
 
 /** POST /interview/insights/:id/export - Export insight to Tools or Assessment */
 router.post('/insights/:id/export', InterviewController.exportInsight);
+
+/** GET /interview/insights/:id/activity - Activity log for insight */
+router.get('/insights/:id/activity', InterviewController.getInsightActivity);
+
+/** GET/POST/DELETE /interview/insights/:id/comments - Comments for insight */
+router.get('/insights/:id/comments', InterviewController.getInsightComments);
+router.post('/insights/:id/comments', InterviewController.createInsightComment);
+router.delete('/insights/:id/comments/:commentId', InterviewController.deleteInsightComment);
 
 /** DELETE /interview/insights/:id - Delete insight */
 router.delete('/insights/:id', InterviewController.deleteInsight);

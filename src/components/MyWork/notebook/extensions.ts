@@ -141,3 +141,76 @@ export const DetailsContentNode = Node.create({
     return ['div', { 'data-details-content': '', class: 'nb-details-content' }, 0];
   },
 });
+
+/* ------------------------------------------------------------------ */
+/*  Embedded reference chip (inline artifact link + preview payload)   */
+/* ------------------------------------------------------------------ */
+
+export const EmbeddedRefNode = Node.create({
+  name: 'embeddedRef',
+  group: 'inline',
+  inline: true,
+  atom: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      artifactType: {
+        default: 'unknown',
+        parseHTML: (el) => el.getAttribute('data-artifact-type') || 'unknown',
+        renderHTML: (attrs) => ({ 'data-artifact-type': attrs.artifactType }),
+      },
+      artifactId: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-artifact-id') || '',
+        renderHTML: (attrs) => ({ 'data-artifact-id': attrs.artifactId }),
+      },
+      title: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-title') || '',
+        renderHTML: (attrs) => ({ 'data-title': attrs.title }),
+      },
+      status: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-status') || '',
+        renderHTML: (attrs) => ({ 'data-status': attrs.status }),
+      },
+      snippet: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-snippet') || '',
+        renderHTML: (attrs) => ({ 'data-snippet': attrs.snippet }),
+      },
+      updatedAt: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-updated-at') || '',
+        renderHTML: (attrs) => ({ 'data-updated-at': attrs.updatedAt }),
+      },
+      label: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-label') || '',
+        renderHTML: (attrs) => ({ 'data-label': attrs.label }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'button[data-embedded-ref]' }];
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const label = String(node.attrs.label || node.attrs.title || node.attrs.artifactType || 'Reference');
+    return [
+      'button',
+      mergeAttributes(
+        {
+          'data-embedded-ref': '',
+          type: 'button',
+          class: 'nb-embedded-ref',
+          contenteditable: 'false',
+        },
+        HTMLAttributes
+      ),
+      label,
+    ];
+  },
+});

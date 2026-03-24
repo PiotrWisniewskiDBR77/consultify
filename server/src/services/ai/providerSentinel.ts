@@ -18,6 +18,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { getAlertAggregator } from '../AlertAggregator.js';
+import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from './aiTaskCatalog.js';
+import { ALERT_TYPE, SEVERITY } from './alerting.js';
 import { llmService } from './llmService.js';
 
 type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
@@ -241,6 +244,81 @@ async function testProvider(row: ProviderRow): Promise<{
   };
 }
 
+async function emitAggregatedAlert(
+  alertType: string,
+  severity: 'info' | 'warning' | 'error' | 'critical',
+  title: string,
+  message: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    await getAlertAggregator().processAlert(alertType, severity, title, message, data);
+  } catch (err: any) {
+    logger.warn('[ProviderSentinel] Failed to emit alert', {
+      error: err?.message || err,
+      alertType,
+    });
+  }
+}
+
+async function evaluateUseCaseCoverage(): Promise<void> {
+  for (const useCase of EXECUTIVE_USE_CASES) {
+    const purposeHealth = await Promise.all(
+      useCase.purposes.map(async (purpose) => {
+        const routingKeys = getRoutingPurposeKeys(purpose);
+        if (routingKeys.length === 0) {
+          return { purpose, total: 0, healthyish: 0 };
+        }
+
+        const placeholders = routingKeys.map(() => '?').join(',');
+        const rows = (await dbAll(
+          `SELECT lp.health_status
+           FROM ai_purpose_assignments apa
+           INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+           WHERE apa.purpose IN (${placeholders})
+             AND apa.is_active = 1
+             AND lp.is_active = 1`,
+          routingKeys,
+          { fallback: true } as any
+        )) as Array<{ health_status?: string | null }>;
+
+        const total = rows.length;
+        const healthyish = rows.filter((row) => {
+          const status = String(row.health_status || 'unknown').toLowerCase();
+          return status === 'healthy' || status === 'degraded' || status === 'unknown';
+        }).length;
+
+        return { purpose, total, healthyish };
+      })
+    );
+
+    const missing = purposeHealth.filter((item) => item.total === 0).map((item) => item.purpose);
+    const threatened = purposeHealth
+      .filter((item) => item.total > 0 && item.healthyish === 0)
+      .map((item) => item.purpose);
+
+    if (missing.length > 0) {
+      await emitAggregatedAlert(
+        ALERT_TYPE.PURPOSE_COVERAGE_MISSING,
+        SEVERITY.CRITICAL,
+        `Purpose coverage missing: ${useCase.label}`,
+        `No assignments found for: ${missing.join(', ')}`,
+        { useCase: useCase.key, purposes: missing }
+      );
+    }
+
+    if (threatened.length > 0) {
+      await emitAggregatedAlert(
+        ALERT_TYPE.DELIVERY_THREATENED,
+        SEVERITY.CRITICAL,
+        `LLM delivery threatened: ${useCase.label}`,
+        `No healthy providers remain for: ${threatened.join(', ')}`,
+        { useCase: useCase.key, purposes: threatened, severity: SEVERITY.CRITICAL }
+      );
+    }
+  }
+}
+
 class ProviderSentinel {
   private intervalId: NodeJS.Timeout | null = null;
   private running = false;
@@ -290,13 +368,19 @@ class ProviderSentinel {
           // Mark as degraded (not unhealthy) so modelRouter's health gating doesn't exclude it,
           // but still record the error and report it as unavailable for diagnostics.
           const statusToWrite: HealthStatus =
-            providerId === 'openrouter' && r.status === 'unhealthy' && (cat === 'auth' || cat === 'billing')
+            providerId === 'openrouter' &&
+            r.status === 'unhealthy' &&
+            (cat === 'auth' || cat === 'billing')
               ? 'degraded'
               : r.status;
 
           const available =
             (statusToWrite === 'healthy' || statusToWrite === 'degraded') &&
-            !(providerId === 'openrouter' && (cat === 'auth' || cat === 'billing') && r.status === 'unhealthy');
+            !(
+              providerId === 'openrouter' &&
+              (cat === 'auth' || cat === 'billing') &&
+              r.status === 'unhealthy'
+            );
           const errorMsg = r.errorMessage
             ? `${cat ? `${cat.toUpperCase()}: ` : ''}${r.errorMessage}`
             : null;
@@ -311,6 +395,39 @@ class ProviderSentinel {
             errorMessage: available ? null : errorMsg,
             checkedAtIso,
           });
+
+          if (!available) {
+            await emitAggregatedAlert(
+              String(p.kind || '').toUpperCase() === 'IMAGE_MODEL'
+                ? ALERT_TYPE.IMAGE_PROVIDER_UNAVAILABLE
+                : ALERT_TYPE.PROVIDER_DOWN,
+              SEVERITY.CRITICAL,
+              `Provider down: ${p.provider}`,
+              errorMsg || 'Provider unavailable',
+              {
+                providerId: p.provider,
+                modelId: p.model_id || null,
+                purpose:
+                  String(p.kind || '').toUpperCase() === 'IMAGE_MODEL'
+                    ? 'presentation_visual_generation'
+                    : undefined,
+                error: errorMsg,
+              }
+            );
+          } else if ((r.latencyMs || 0) >= 8000) {
+            await emitAggregatedAlert(
+              ALERT_TYPE.HIGH_LATENCY,
+              SEVERITY.WARNING,
+              `High latency: ${p.provider}`,
+              `Latency ${r.latencyMs}ms for ${p.provider}/${p.model_id || 'default'}`,
+              {
+                providerId: p.provider,
+                modelId: p.model_id || null,
+                latencyMs: r.latencyMs,
+                threshold: 8000,
+              }
+            );
+          }
         } catch (e: any) {
           await writeProviderStatus({ providerId: p.id, status: 'unhealthy', checkedAtIso });
           await writeHealthEvent({
@@ -322,8 +439,17 @@ class ProviderSentinel {
             errorMessage: `UNKNOWN: ${String(e?.message || e).slice(0, 300)}`,
             checkedAtIso,
           });
+          await emitAggregatedAlert(
+            ALERT_TYPE.PROVIDER_DOWN,
+            SEVERITY.CRITICAL,
+            `Provider down: ${p.provider}`,
+            String(e?.message || e).slice(0, 300),
+            { providerId: p.provider, modelId: p.model_id || null, error: String(e?.message || e) }
+          );
         }
       }
+
+      await evaluateUseCaseCoverage();
     } catch (e: any) {
       logger.warn('[ProviderSentinel] runOnce failed', { error: e?.message || e });
     } finally {

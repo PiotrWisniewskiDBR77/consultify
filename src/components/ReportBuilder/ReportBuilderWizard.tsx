@@ -164,9 +164,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
   });
 
   const isCanonicalReport = intent.reportTypeV3 && intent.reportTypeV3 !== 'custom';
-  const STEPS = isCanonicalReport
-    ? BASE_STEPS.filter((s) => s.id !== 1)
-    : BASE_STEPS;
+  const STEPS = isCanonicalReport ? BASE_STEPS.filter((s) => s.id !== 1) : BASE_STEPS;
 
   // If we loaded an existing report with config.intent, hydrate local intent
   useEffect(() => {

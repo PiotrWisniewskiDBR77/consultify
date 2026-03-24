@@ -131,10 +131,31 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
   const sourceLink = useMemo(() => {
     if (!sourceType || !sourceId) return null;
     const st = sourceType.toUpperCase();
-    if (st === 'VALUATION') return { label: t('reports.openSourceValuation', 'Open Valuation'), url: `/economics?tab=valuation&openId=${sourceId}` };
-    if (st === 'FINANCIAL_ANALYSIS') return { label: t('reports.openSourceAnalysis', 'Open Analysis'), url: `/economics?tab=analysis&openId=${sourceId}` };
-    if (st === 'ASSESSMENT') return { label: t('reports.openSourceAssessment', 'Open Assessment'), url: `/interview?assessmentId=${sourceId}` };
-    if (st === 'INITIATIVE') return { label: t('reports.openSourceInitiative', 'Open Initiative'), url: `/initiatives?id=${sourceId}` };
+    if (st === 'VALUATION')
+      return {
+        label: t('reports.openSourceValuation', 'Open Valuation'),
+        url: `/economics?tab=valuation&openId=${sourceId}`,
+      };
+    if (st === 'FINANCIAL_ANALYSIS')
+      return {
+        label: t('reports.openSourceAnalysis', 'Open Analysis'),
+        url: `/economics?tab=analysis&openId=${sourceId}`,
+      };
+    if (st === 'ASSESSMENT')
+      return {
+        label: t('reports.openSourceAssessment', 'Open Assessment'),
+        url: `/interview?assessmentId=${sourceId}`,
+      };
+    if (st === 'INITIATIVE')
+      return {
+        label: t('reports.openSourceInitiative', 'Open Initiative'),
+        url: `/initiatives?id=${sourceId}`,
+      };
+    if (st === 'TOOL' || st === 'TOOL_SESSION')
+      return {
+        label: t('reports.openSourceSession', 'Open Idea Workspace'),
+        url: `/my-work?tab=ideas&sessionId=${sourceId}`,
+      };
     return null;
   }, [sourceType, sourceId, t]);
 

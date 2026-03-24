@@ -25,6 +25,10 @@ export const ALERT_TYPE = {
   PROVIDER_RECOVERED: 'provider_recovered',
   HIGH_LATENCY: 'high_latency',
   ERROR_SPIKE: 'error_spike',
+  PURPOSE_COVERAGE_MISSING: 'purpose_coverage_missing',
+  DELIVERY_THREATENED: 'delivery_threatened',
+  DOCUMENT_PATH_DEGRADED: 'document_path_degraded',
+  IMAGE_PROVIDER_UNAVAILABLE: 'image_provider_unavailable',
 } as const;
 
 type Severity = (typeof SEVERITY)[keyof typeof SEVERITY];
@@ -68,10 +72,32 @@ export class AlertingService {
   enabled: boolean;
 
   constructor() {
-    this.slackWebhook = process.env.SLACK_WEBHOOK_URL || process.env.AI_SLACK_WEBHOOK_URL;
+    // IMPORTANT:
+    // - `SLACK_WEBHOOK_URL` is used by product feedback notifications.
+    // - AI infra alerting (circuit breakers, provider outages) should NOT spam the same channel by default.
+    // Use a dedicated webhook for AI alerting.
+    this.slackWebhook = process.env.AI_SLACK_WEBHOOK_URL;
     this.discordWebhook = process.env.DISCORD_WEBHOOK_URL || process.env.AI_DISCORD_WEBHOOK_URL;
     this.genericWebhook = process.env.AI_ALERT_WEBHOOK_URL;
-    this.enabled = process.env.AI_ALERTING_ENABLED !== 'false';
+
+    // Railway runs both staging/prod with NODE_ENV=production (Dockerfile),
+    // so we must use APP_ENV / Railway env name to decide whether to alert.
+    const env = String(
+      process.env.APP_ENV ||
+        process.env.RAILWAY_ENVIRONMENT_NAME ||
+        process.env.RAILWAY_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        'development'
+    ).toLowerCase();
+    // Default: only enable AI infra alerting in production unless explicitly enabled.
+    // This prevents noisy spam during local development and staging.
+    if (String(process.env.AI_ALERTING_ENABLED || '').trim().toLowerCase() === 'true') {
+      this.enabled = true;
+    } else if (String(process.env.AI_ALERTING_ENABLED || '').trim().toLowerCase() === 'false') {
+      this.enabled = false;
+    } else {
+      this.enabled = env === 'production';
+    }
   }
 
   async send(alertType: AlertType, data: AlertData = {}): Promise<void> {
@@ -119,7 +145,15 @@ export class AlertingService {
           tags: {
             alertType: alert.type,
             severity: alert.severity,
-            environment: alert.environment || process.env.NODE_ENV || 'unknown',
+            environment:
+              alert.environment ||
+              String(
+                process.env.APP_ENV ||
+                  process.env.RAILWAY_ENVIRONMENT_NAME ||
+                  process.env.RAILWAY_ENVIRONMENT ||
+                  process.env.NODE_ENV ||
+                  'unknown'
+              ).toLowerCase(),
             ...(alert.data.providerId ? { providerId: String(alert.data.providerId) } : {}),
             ...(alert.data.organizationId
               ? { organizationId: String(alert.data.organizationId) }
@@ -198,6 +232,33 @@ export class AlertingService {
         title = 'Error Rate Spike';
         message = `Error rate increased to ${data.errorRate}% (${data.errorCount} errors in last ${data.windowMinutes || 5} minutes).`;
         break;
+      case ALERT_TYPE.PURPOSE_COVERAGE_MISSING:
+        severity = SEVERITY.CRITICAL;
+        emoji = '🧭';
+        title = `Purpose Coverage Missing: ${data.purpose || data.useCase || 'unknown'}`;
+        message = `No healthy primary/fallback chain is available for ${data.purpose || data.useCase || 'this AI use case'}. User-visible delivery is at risk.`;
+        break;
+      case ALERT_TYPE.DELIVERY_THREATENED:
+        severity = (data.severity as Severity) || SEVERITY.WARNING;
+        emoji = severity === SEVERITY.CRITICAL ? '🚨' : '⚠️';
+        title = `LLM Delivery Threatened: ${data.useCase || data.purpose || 'runtime'}`;
+        message = String(
+          data.message ||
+            `Delivery risk detected for ${data.useCase || data.purpose || 'an AI runtime path'}.`
+        );
+        break;
+      case ALERT_TYPE.DOCUMENT_PATH_DEGRADED:
+        severity = SEVERITY.WARNING;
+        emoji = '📄';
+        title = `Document Path Degraded: ${data.purpose || 'document runtime'}`;
+        message = `Document understanding path is degraded for ${data.purpose || 'document runtime'}. Fallbacks may still work, but grounded answers are at risk.`;
+        break;
+      case ALERT_TYPE.IMAGE_PROVIDER_UNAVAILABLE:
+        severity = SEVERITY.WARNING;
+        emoji = '🖼️';
+        title = `Image Provider Unavailable: ${data.providerId || 'visual generation'}`;
+        message = `Image generation capacity is degraded for ${data.purpose || 'presentation visuals'}. Asset generation may fall back or fail.`;
+        break;
       default:
         title = alertType;
         message = JSON.stringify(data);
@@ -211,7 +272,13 @@ export class AlertingService {
       message,
       timestamp,
       data,
-      environment: process.env.NODE_ENV || 'development',
+      environment: String(
+        process.env.APP_ENV ||
+          process.env.RAILWAY_ENVIRONMENT_NAME ||
+          process.env.RAILWAY_ENVIRONMENT ||
+          process.env.NODE_ENV ||
+          'development'
+      ).toLowerCase(),
     };
   }
 

@@ -1,10 +1,22 @@
-import { Calculator, ChevronRight, ExternalLink, MessageSquare } from 'lucide-react';
+import { Calculator, ChevronRight, Copy, ExternalLink, Link2, MessageSquare } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type ActionRow,
+  type DetailsAction,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 
 export type InitiativePreviewV3Model = {
   id: string;
@@ -32,9 +44,6 @@ const formatDate = (value: unknown): string => {
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
-
-const pillBase =
-  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent';
 
 export const InitiativePreviewV3Body: React.FC<{
   initiative: InitiativePreviewV3Model;
@@ -80,8 +89,36 @@ export const InitiativePreviewV3Body: React.FC<{
     }
   }, [detailsText, initiative.name, initiative.title, isPolish]);
 
-  const detailsMenu = useMemo(() => {
-    const menu: RowAction[] = [
+  const metaPills = useMemo((): MetaPill[] => {
+    const pillClass = 'bg-slate-500/10 text-slate-700 dark:text-slate-200';
+    const pills: MetaPill[] = [
+      { label: isPolish ? 'Inicjatywa' : 'Initiative', className: pillClass },
+      { label: status.replace(/_/g, ' '), className: pillClass },
+    ];
+    if (progress != null) {
+      pills.push({
+        label: `${t('preview.progress', 'Progress')}: ${progress}%`,
+        className: pillClass,
+      });
+    }
+    if (axis) {
+      pills.push({
+        label: `${isPolish ? 'Oś' : 'Axis'}: ${axis}`,
+        className: pillClass,
+      });
+    }
+    if (priority) {
+      pills.push({
+        label: `${isPolish ? 'Pilność' : 'Priority'}: ${priority}`,
+        className: pillClass,
+      });
+    }
+    return pills;
+  }, [axis, isPolish, priority, progress, status, t]);
+
+  const detailsCustomActions = useMemo((): DetailsAction[] => {
+    const title = String(initiative.name || initiative.title || '').trim();
+    const actions: DetailsAction[] = [
       {
         id: 'toggle',
         label: expanded ? (isPolish ? 'Zwiń' : 'Collapse') : isPolish ? 'Rozwiń' : 'Expand',
@@ -97,76 +134,58 @@ export const InitiativePreviewV3Body: React.FC<{
       {
         id: 'copy',
         label: isPolish ? 'Kopiuj' : t('common.copy', 'Copy'),
-        divider: true,
+        icon: Copy,
         onClick: async () => {
           await handleCopy();
         },
       },
+      {
+        id: 'copy-md',
+        label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+        onClick: () =>
+          void copyAsMarkdown(
+            { title, status, description: detailsText },
+            isPolish ? 'pl' : 'en'
+          ),
+      },
+      {
+        id: 'copy-slack',
+        label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+        onClick: () =>
+          void copyForSlack(
+            { title, status, description: detailsText },
+            isPolish ? 'pl' : 'en'
+          ),
+      },
     ];
-    return menu;
-  }, [expanded, handleCopy, isPolish, onSummarize, t]);
+    return actions;
+  }, [detailsText, expanded, handleCopy, initiative.name, initiative.title, isPolish, onSummarize, status, t]);
 
   return (
     <div className="space-y-4">
-      {/* Brief / meta card */}
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-            {isPolish ? 'Inicjatywa' : 'Initiative'}
-          </span>
-          <div className="flex flex-wrap items-center justify-end gap-1.5 min-w-0">
-            <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>{status.replace(/_/g, ' ')}</span>
-            {progress != null ? (
-              <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-                <span className="text-slate-500 dark:text-slate-400">{t('preview.progress', 'Progress')}</span>
-                <span className="text-slate-900 dark:text-white">{progress}%</span>
-              </span>
-            ) : null}
-            {axis ? (
-              <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-                <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Oś' : 'Axis'}</span>
-                <span className="text-slate-900 dark:text-white">{axis}</span>
-              </span>
-            ) : null}
-            {priority ? (
-              <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-                <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Pilność' : 'Priority'}</span>
-                <span className="text-slate-900 dark:text-white">{priority}</span>
-              </span>
-            ) : null}
-          </div>
-        </div>
-
+      <PreviewMetaCard pills={metaPills}>
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
           <div>
-            <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Utworzono' : 'Created'}</div>
+            <div className="text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Utworzono' : 'Created'}
+            </div>
             <div className="text-slate-900 dark:text-white">{createdAt}</div>
           </div>
           <div className="text-right">
-            <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Ostatnia zmiana' : 'Last modified'}</div>
+            <div className="text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Ostatnia zmiana' : 'Last modified'}
+            </div>
             <div className="text-slate-900 dark:text-white">{updatedAt}</div>
           </div>
         </div>
-      </div>
+      </PreviewMetaCard>
 
-      {/* Details */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {isPolish ? 'Szczegóły' : 'Details'}
-          </div>
-          <RowActionsMenu iconVariant="vertical" actions={detailsMenu} />
-        </div>
-
-        <div
-          className={[
-            'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
-            expanded ? '' : 'line-clamp-6',
-          ].join(' ')}
-        >
-          {detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
-        </div>
-      </div>
+      <PreviewDetailsSection
+        text={detailsText}
+        expanded={expanded}
+        onToggleExpanded={toggleExpanded}
+        customActions={detailsCustomActions}
+      />
 
       {/* Financial Analysis Card (V3 position 4, 19.3) */}
       <FinancialAnalysisCard initiativeId={initiative.id} />
@@ -236,22 +255,16 @@ export const InitiativePreviewV3Footer: React.FC<{
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const footerPillBase =
-    'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-  const hintChipClass =
-    'inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]';
-  const pillNeutral = `${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-  const pillPrimary = `${footerPillBase} border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15`;
-
   const sourceType = String(initiative.sourceType || '').trim();
   const sourceId = String(initiative.sourceId || '').trim();
-  const sourceLabel = sourceType
+  const sourceDisplayType = sourceType ? getSourceDisplayLabel(sourceType, isPolish) : '';
+  const sourceLabel = sourceDisplayType
     ? sourceId
-      ? `${sourceType} · ${sourceId.slice(0, 8)}…`
-      : sourceType
+      ? `${sourceDisplayType} · ${sourceId.slice(0, 8)}…`
+      : sourceDisplayType
     : '—';
 
-  const aiHints = isPolish
+  const aiHintsWithPrompts = isPolish
     ? [
         { label: 'Kolejne kroki', prompt: 'Zaproponuj 3 kolejne kroki dla tej inicjatywy.' },
         { label: 'Ryzyka', prompt: 'Wypisz 5 ryzyk i propozycje mitigacji dla tej inicjatywy.' },
@@ -263,121 +276,118 @@ export const InitiativePreviewV3Footer: React.FC<{
         { label: 'Scope', prompt: 'Draft a short scope and success criteria for this initiative.' },
       ];
 
-  const aiMenu: RowAction[] = [
-    {
-      id: 'regenerate',
-      label: isPolish ? 'Regeneruj' : 'Regenerate',
-      onClick: () =>
-        onOpenChat?.(
-          isPolish
-            ? 'Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).'
-            : 'Generate 3 quick hints (what to do / risks / how to measure).'
-        ),
+  const aiHintLabels = aiHintsWithPrompts.map((h) => h.label);
+  const handleRunHint = useCallback(
+    (hint: string) => {
+      const h = aiHintsWithPrompts.find((x) => x.label === hint);
+      if (h) onOpenChat?.(h.prompt);
     },
-    ...(onCopyLink
-      ? ([
-          {
-            id: 'copy-link',
-            label: isPolish ? 'Kopiuj link' : 'Copy link',
-            divider: true,
-            onClick: async () => {
-              await onCopyLink();
-            },
-          },
-        ] as RowAction[])
-      : []),
-  ];
-
-  const relationsPill = (label: string, value: string, onClick?: () => void) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      className={[
-        'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border',
-        'border-slate-200/70 dark:border-white/[0.08]',
-        'bg-transparent',
-        onClick
-          ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors'
-          : 'text-slate-500 dark:text-slate-400 cursor-default',
-      ].join(' ')}
-    >
-      <span className="text-slate-500 dark:text-slate-400">{label}</span>
-      <span className="truncate max-w-[220px]">{value}</span>
-    </button>
+    [aiHintsWithPrompts, onOpenChat]
   );
+
+  const handleRegenerate = useCallback(
+    () =>
+      onOpenChat?.(
+        isPolish
+          ? 'Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).'
+          : 'Generate 3 quick hints (what to do / risks / how to measure).'
+      ),
+    [isPolish, onOpenChat]
+  );
+
+  const relationItems: RelationItem[] = useMemo(() => {
+    const items: RelationItem[] = [
+      {
+        label: `${isPolish ? 'Źródło' : 'Source'}: ${sourceLabel}`,
+        tone: 'text-slate-600 dark:text-slate-300',
+      },
+    ];
+    if (typeof tasksCount === 'number') {
+      items.push({
+        label: `${isPolish ? 'Zadania' : 'Tasks'}: ${tasksCount}`,
+        tone: 'text-slate-600 dark:text-slate-300',
+      });
+    }
+    return items;
+  }, [isPolish, sourceLabel, tasksCount]);
+
+  const chatPrompt = isPolish
+    ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
+    : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.';
+
+  const actionRows: ActionRow[] = useMemo(() => {
+    if (extraActionsSlot) return [];
+    const buttons: ActionRow['buttons'] = [
+      {
+        label: isPolish ? 'Otwórz' : 'Open',
+        icon: ExternalLink,
+        onClick: onOpenFull,
+        colorScheme: 'primary',
+        shortcut: 'O',
+      },
+      ...(onOpenInModule
+        ? [
+            {
+              label: isPolish ? 'W module' : 'In module',
+              icon: ChevronRight,
+              onClick: onOpenInModule,
+              colorScheme: 'neutral' as const,
+              shortcut: 'M',
+            },
+          ]
+        : []),
+      ...(onOpenChat
+        ? [
+            {
+              label: isPolish ? 'Czat' : 'Chat',
+              icon: MessageSquare,
+              onClick: () => onOpenChat(chatPrompt),
+              colorScheme: 'neutral' as const,
+              shortcut: 'C',
+            },
+          ]
+        : []),
+      ...(onCopyLink
+        ? [
+            {
+              label: isPolish ? 'Kopiuj link' : 'Copy link',
+              icon: Link2,
+              onClick: async () => onCopyLink(),
+              colorScheme: 'neutral' as const,
+            },
+          ]
+        : []),
+    ];
+    return [{ buttons }];
+  }, [
+    chatPrompt,
+    extraActionsSlot,
+    isPolish,
+    onCopyLink,
+    onOpenChat,
+    onOpenFull,
+    onOpenInModule,
+  ]);
 
   return (
     <div className="space-y-0">
-      {/* AI zone */}
-      <div className="py-1">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-            <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-          </div>
-          <RowActionsMenu iconVariant="vertical" actions={aiMenu} />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {aiHints.map((h) => (
-            <button
-              key={h.label}
-              type="button"
-              onClick={() => onOpenChat?.(h.prompt)}
-              className={hintChipClass}
-              disabled={!onOpenChat}
-            >
-              {h.label}
-            </button>
-          ))}
-        </div>
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={aiHintLabels}
+          onRunHint={handleRunHint}
+          onRegenerate={handleRegenerate}
+          disabled={!onOpenChat}
+        />
       </div>
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-      {/* Relations (2 rows) */}
-      <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-        {relationsPill(isPolish ? 'Źródło' : 'Source', sourceLabel)}
-        {typeof tasksCount === 'number' ? relationsPill(isPolish ? 'Zadania' : 'Tasks', String(tasksCount)) : null}
-      </div>
+      <PreviewRelations items={relationItems} />
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-      {/* Actions */}
-      <div className="space-y-2.5 py-1">
-        {extraActionsSlot ? (
-          extraActionsSlot
-        ) : (
-          <div className="flex gap-2 flex-wrap">
-            <button type="button" onClick={onOpenFull} className={pillPrimary}>
-              <ExternalLink size={14} />
-              {isPolish ? 'Otwórz' : 'Open'}
-            </button>
-            {onOpenInModule ? (
-              <button type="button" onClick={onOpenInModule} className={pillNeutral}>
-                <ChevronRight size={14} />
-                {isPolish ? 'W module' : 'In module'}
-              </button>
-            ) : null}
-            {onOpenChat ? (
-              <button
-                type="button"
-                onClick={() =>
-                  onOpenChat(
-                    isPolish
-                      ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
-                      : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.'
-                  )
-                }
-                className={pillNeutral}
-              >
-                <MessageSquare size={14} />
-                {isPolish ? 'Czat' : 'Chat'}
-              </button>
-            ) : null}
-          </div>
-        )}
-        {extraActionsAfterSlot ? extraActionsAfterSlot : null}
-      </div>
+      {extraActionsSlot ? extraActionsSlot : <PreviewActionBar rows={actionRows} />}
+      {extraActionsAfterSlot ? extraActionsAfterSlot : null}
     </div>
   );
 };

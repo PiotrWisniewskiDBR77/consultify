@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { demoContextMiddleware, demoWriteProtection } from '../../../server/src/middleware/demoGuard.middleware.ts';
+import {
+  DEMO_ORG_ID,
+  demoContextMiddleware,
+  demoWriteProtection,
+} from '../../../server/src/middleware/demoGuard.middleware.ts';
 
 function makeReq(opts: { method: string; originalUrl: string; demoHeader?: string }) {
   const headers: Record<string, string | undefined> = {
@@ -71,5 +75,26 @@ describe('Demo write protection', () => {
     const mw = demoWriteProtection({ allowedRoutes: ['/api/demo/', '/api/auth/'] });
     mw(req, res as any, next2);
     expect(next2).toHaveBeenCalled();
+  });
+
+  it('blocks writes when target org is demo-org (defense in depth)', async () => {
+    const req = makeReq({ method: 'POST', originalUrl: '/api/initiatives', demoHeader: undefined });
+    req.user = {
+      ...req.user,
+      organizationId: DEMO_ORG_ID,
+      organization_id: DEMO_ORG_ID,
+    };
+    req.organizationId = DEMO_ORG_ID;
+    const res = makeRes();
+    const next1 = vi.fn();
+    demoContextMiddleware(req, res as any, next1);
+
+    const next2 = vi.fn();
+    const mw = demoWriteProtection({ allowedRoutes: ['/api/demo/', '/api/auth/'] });
+    mw(req, res as any, next2);
+
+    expect(next2).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual(expect.objectContaining({ code: 'DEMO_READ_ONLY' }));
   });
 });

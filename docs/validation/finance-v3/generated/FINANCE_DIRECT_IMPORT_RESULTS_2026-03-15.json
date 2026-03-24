@@ -1,0 +1,1316 @@
+[
+  {
+    "label": "Apator SA Raport R 2024",
+    "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+    "statementType": "BS",
+    "statementId": "9d9fbc60-53d2-469c-8004-fb4507be2816",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 33,
+    "eligibleLineCount": 33,
+    "mappedLineCount": 33,
+    "coveragePct": 100,
+    "validationStatus": "pass",
+    "readinessStatus": "ready",
+    "readinessScore": 100,
+    "reasonCodes": [],
+    "validationCodes": [
+      "BS_EQUATION_OK"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "confirmed"
+  },
+  {
+    "label": "Apator SA Raport R 2024",
+    "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+    "statementType": "P&L",
+    "statementId": "1d8a16a6-d73c-4e6f-9dfd-493441576999",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 15,
+    "eligibleLineCount": 14,
+    "mappedLineCount": 14,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 77,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Apator SA Raport R 2024",
+    "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+    "statementType": "CF",
+    "statementId": "4f7e1dc4-c2a2-4c7d-b53e-98418864f885",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 29,
+    "eligibleLineCount": 28,
+    "mappedLineCount": 28,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 89,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Grupa Apator Raport RS 2023",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+    "statementType": "BS",
+    "statementId": "52566c9a-a3f5-40fd-a676-391587cec0f5",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2023",
+    "comparisonPeriodLabel": "2022",
+    "extractedLineCount": 42,
+    "eligibleLineCount": 42,
+    "mappedLineCount": 42,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 89,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_OK",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Grupa Apator Raport RS 2023",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+    "statementType": "P&L",
+    "statementId": "2f0126e1-1dac-4ae3-abdc-76caa98d5aaf",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2023",
+    "comparisonPeriodLabel": "2022",
+    "extractedLineCount": 21,
+    "eligibleLineCount": 21,
+    "mappedLineCount": 21,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 71,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Grupa Apator Raport RS 2023",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+    "statementType": "CF",
+    "statementId": "d6039ce3-a9d9-42ef-9f15-7c5a5a5000c2",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2023",
+    "comparisonPeriodLabel": "2022",
+    "extractedLineCount": 27,
+    "eligibleLineCount": 26,
+    "mappedLineCount": 26,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 83,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Grupa Apator Raport RS 2024",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+    "statementType": "BS",
+    "statementId": "867469ce-5ee4-4805-ad58-b7a74d4374e0",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 45,
+    "eligibleLineCount": 45,
+    "mappedLineCount": 45,
+    "coveragePct": 100,
+    "validationStatus": "pass",
+    "readinessStatus": "ready",
+    "readinessScore": 100,
+    "reasonCodes": [],
+    "validationCodes": [
+      "BS_EQUATION_OK"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "confirmed"
+  },
+  {
+    "label": "Grupa Apator Raport RS 2024",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+    "statementType": "P&L",
+    "statementId": "cf949c7e-a4d0-43fe-a921-060d0baa2b85",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 17,
+    "eligibleLineCount": 17,
+    "mappedLineCount": 17,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 77,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Grupa Apator Raport RS 2024",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+    "statementType": "CF",
+    "statementId": "c20c469e-dbcf-45e0-bee3-37f65507fcd5",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 30,
+    "eligibleLineCount": 28,
+    "mappedLineCount": 28,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 89,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Raport skonsolidowany Apator",
+    "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+    "statementType": "BS",
+    "statementId": "25e5db33-e5b9-472c-afd4-64e665931477",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2022",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 48,
+    "eligibleLineCount": 48,
+    "mappedLineCount": 48,
+    "coveragePct": 100,
+    "validationStatus": "pass",
+    "readinessStatus": "ready",
+    "readinessScore": 100,
+    "reasonCodes": [],
+    "validationCodes": [
+      "BS_EQUATION_OK"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "confirmed"
+  },
+  {
+    "label": "Raport skonsolidowany Apator",
+    "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+    "statementType": "P&L",
+    "statementId": "f8241f90-3421-4248-87ba-247732849a9d",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2022",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 22,
+    "eligibleLineCount": 19,
+    "mappedLineCount": 19,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 71,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Raport skonsolidowany Apator",
+    "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+    "statementType": "CF",
+    "statementId": "db69d7ba-5529-4d0f-b925-0ab348a96633",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2022",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 35,
+    "eligibleLineCount": 34,
+    "mappedLineCount": 34,
+    "coveragePct": 100,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 89,
+    "reasonCodes": [
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "statementType": "BS",
+    "statementId": "3989f7e1-7b64-45b7-9eb6-fc0b0caa198e",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2025",
+    "extractedLineCount": 48,
+    "eligibleLineCount": 45,
+    "mappedLineCount": 11,
+    "coveragePct": 24,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 6,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Revenues 2024",
+      "thereof external revenues 2024",
+      "thereof inter-segment revenues 2024",
+      "Cost of sales 2024",
+      "Selling and administrative expenses 2024",
+      "Other operating expenses 2024",
+      "Segment result Automotive and Motorcycles 2024",
+      "Interest and similar expenses 2024",
+      "Other financial result 2024",
+      "Result from equity accounted investments 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "statementType": "P&L",
+    "statementId": "ebe877d5-9414-4794-a567-d864dcf4e65b",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 59,
+    "eligibleLineCount": 58,
+    "mappedLineCount": 22,
+    "coveragePct": 38,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 28,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "PL_GROSS_MISMATCH",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Profit/loss before financial result 2024",
+      "Interest and similar income 2024",
+      "Interest and similar expenses 2024",
+      "Financial result 2024",
+      "Attributable to shareholders of the BMW AG 2024",
+      "Remeasurement of the net liability for defined benefit pension plans 2024",
+      "Derivative financial instruments 2024",
+      "Other comprehensive income from equity accounted investments 2024",
+      "Currency translation foreign operations 2024",
+      "Total comprehensive income attributable to shareholders of BMW AG 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "statementType": "CF",
+    "statementId": "2766f244-a5ca-4eb8-8e7e-dbb7e7baaae7",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 49,
+    "eligibleLineCount": 48,
+    "mappedLineCount": 19,
+    "coveragePct": 40,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 53,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE"
+    ],
+    "topUnmappedLabels": [
+      "Interest received * 2024",
+      "Depreciation and amortisation of tangible and intangible assets 2024",
+      "Result from equity accounted investments 2024",
+      "Change in leased products 2024",
+      "Change in receivables from sales financing 2024",
+      "Change in inventories 2024",
+      "Change in other operating assets and liabilities 2024",
+      "Total investment in intangible assets and property, plant and equipment 2024",
+      "Proceeds from subsidies for intangible assets and property, plant and equipment 2024",
+      "Expenditure for investment assets 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "statementType": "BS",
+    "statementId": "b18e1823-7699-4670-bd22-be5401695c31",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 15,
+    "eligibleLineCount": 15,
+    "mappedLineCount": 10,
+    "coveragePct": 67,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 48,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "AKTYWA Rzeczowe aktywa trwałe górnicze i hutnicze 2024",
+      "Instrumenty finansowe razem 2024",
+      "Kapitał własny udziałowców niekontrolujących 2024",
+      "Zobowiązanie długo i krótkoterminowe 2024",
+      "RAZEM ZOBOWIĄZANIA I KAPITAŁ WŁASNY 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "statementType": "P&L",
+    "statementId": "ed92c87d-f678-4684-a276-9553369182f3",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 14,
+    "eligibleLineCount": 14,
+    "mappedLineCount": 12,
+    "coveragePct": 86,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 37,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "na udziały niekontrolujące 2024",
+      "Łączne całkowite dochody przypadające: akcjonariuszom Jednostki Dominującej 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "statementType": "CF",
+    "statementId": "018de906-c1bf-418e-b69c-d07da9aeefbe",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 51,
+    "eligibleLineCount": 48,
+    "mappedLineCount": 21,
+    "coveragePct": 44,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 50,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Przepływy pieniężne z działalności operacyjnej Zysk/(strata) przed opodatkowaniem 2024",
+      "Pozostałe odsetki 2024",
+      "Zysk z tytułu odwrócenia utraty wartości rzeczowych aktywów trwałych i wartości niematerialnych ( 2024",
+      "wspólnemu przedsięwzięciu ( 2024",
+      "z działalności inwestycyjnej i wyceny środków pieniężnych ( 2024",
+      "z działalności finansowej 2024",
+      "Razem wyłączenia przychodów i kosztów 2024",
+      "wydatki z tytułu zapłaty podatku dochodowego 2024",
+      "Wydatki na aktywa finansowe przeznaczone na likwidację kopalń i innych obiektów technologicznych ( 2024",
+      "Udzielone zaliczki na rzeczowe aktywa trwałe i wartości niematerialne ( 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "statementType": "BS",
+    "statementId": "8bad9b41-fb14-4f20-92cc-153ea93efc5a",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2025",
+    "comparisonPeriodLabel": "2024",
+    "extractedLineCount": 43,
+    "eligibleLineCount": 37,
+    "mappedLineCount": 14,
+    "coveragePct": 38,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 33,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Azule Energy 2025",
+      "Profit (loss) before interest and taxation 2025",
+      "Finance costs 2025",
+      "Profit (loss) before taxationa 2025",
+      "Taxation 2025",
+      "Profit (loss) for the year 2025",
+      "Current assetsb 2025",
+      "Current liabilitiesc 2025",
+      "Non-current liabilitiesd 2025",
+      "Net assets 2025"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "statementType": "P&L",
+    "statementId": "db561c04-6396-4c92-9ea9-09ad7607e366",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2023",
+    "comparisonPeriodLabel": "2025",
+    "extractedLineCount": 85,
+    "eligibleLineCount": 77,
+    "mappedLineCount": 20,
+    "coveragePct": 26,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 7,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Other income statement items Production and similar taxes 2023",
+      "Non-current assets Non-current assetsb c 2023",
+      "Crude oil 2023",
+      "Oil products 2023",
+      "Natural gas, LNG and NGLs 2023",
+      "Non-oil products and other revenues from contracts with customers 2023",
+      "Revenue from contracts with customers 2023",
+      "Other operating revenuesa 2023",
+      "Financial assets measured at fair value through profit or loss 2023",
+      "Interest expense on other liabilities measured at amortized costd 2023"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "statementType": "CF",
+    "statementId": "def82d82-fa6f-482a-920e-57bcbd27f8ac",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2025",
+    "comparisonPeriodLabel": "2024",
+    "extractedLineCount": 112,
+    "eligibleLineCount": 107,
+    "mappedLineCount": 26,
+    "coveragePct": 24,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 42,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE"
+    ],
+    "topUnmappedLabels": [
+      "Items that may be reclassified subsequently to profit or loss Currency translation differencesa 2025",
+      "Cash flow hedges marked to market 2025",
+      "Costs of hedging marked to market 2025",
+      "Costs of hedging reclassified to the income statement 2025",
+      "Share of items relating to equity-accounted entities, net of tax 2025",
+      "Income tax relating to items that may be reclassified 2025",
+      "Remeasurements of equity investments 2025",
+      "Cash flow hedges that will subsequently be transferred to the balance sheet 2025",
+      "Income tax relating to items that will not be reclassifieda 2025",
+      "Other comprehensive income 2025"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "statementType": "BS",
+    "statementId": "515fcb8d-a97b-440e-942b-e0dce49429de",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 61,
+    "eligibleLineCount": 58,
+    "mappedLineCount": 26,
+    "coveragePct": 45,
+    "validationStatus": "needs_review",
+    "readinessStatus": "recoverable",
+    "readinessScore": 24,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES",
+      "VALIDATION_HARD_FAIL"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_MISMATCH",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Net Operating Revenues $ 2024",
+      "Cost of goods sold 2024",
+      "Gross Profit 2024",
+      "Selling, general and administrative expenses 2024",
+      "Other operating charges 2024",
+      "Operating Income 2024",
+      "Interest income 2024",
+      "Interest expense 2024",
+      "Equity income (loss) — net 2024",
+      "Other income (loss) — net 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "statementType": "P&L",
+    "statementId": "9a70ae12-8072-49fa-b198-805f3ee81f6f",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2023",
+    "comparisonPeriodLabel": "2025",
+    "extractedLineCount": 19,
+    "eligibleLineCount": 13,
+    "mappedLineCount": 3,
+    "coveragePct": 23,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 0,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "In December 2023",
+      "for our year ending December 2023",
+      "(Subtopic 2023",
+      "annual disclosures are effective for our year ending December 2023",
+      "during 2023",
+      "information on these investments. Divestitures During 2023",
+      "investee, for which we received cash proceeds of $ 2023",
+      "received cash proceeds of $ 2023",
+      "December 2023",
+      "which we received net cash proceeds of $ 2023"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "statementType": "CF",
+    "statementId": "9518dc95-d604-4fc5-aa5f-42d7845a79b0",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 48,
+    "eligibleLineCount": 39,
+    "mappedLineCount": 7,
+    "coveragePct": 18,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 20,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "were $ 2024",
+      "foreign currency denominated assets and liabilities were $ 2024",
+      "December 2024",
+      "Company’s interest rate cash flow hedging program was $ 2024",
+      "Foreign currency contracts $ 2024",
+      "Foreign currency contracts 2024",
+      "Interest rate contracts 2024",
+      "Commodity contracts 2024",
+      "As of December 2024",
+      "(in millions): Notional Values Gain (Loss) Recognized in OCI as of December 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "statementType": "BS",
+    "statementId": "4e7ef11f-f2c1-4095-aa5f-e9ef7d00150d",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 69,
+    "eligibleLineCount": 69,
+    "mappedLineCount": 22,
+    "coveragePct": 32,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 35,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_OK",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Prepaid expenses and other current assets 2024",
+      "Solar energy systems, net 2024",
+      "Digital assets, net 2024",
+      "Liabilities Current liabilities Accounts payable $ 2024",
+      "Deferred revenue 2024",
+      "Current portion of debt and finance leases 2024",
+      "Debt and finance leases, net of current portion 2024",
+      "Deferred revenue, net of current portion 2024",
+      "Equity Stockholders’ equity Preferred stock; $ 2024",
+      "December 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "statementType": "P&L",
+    "statementId": "0d13f4e4-c471-47d4-94df-11add8e6a1d5",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": null,
+    "extractedLineCount": 68,
+    "eligibleLineCount": 56,
+    "mappedLineCount": 15,
+    "coveragePct": 27,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 2,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "expenses. The ASU is effective for annual periods beginning after December 2024",
+      "the provisions of this ASU. Recently adopted accounting pronouncements In November 2024",
+      "interim periods within fiscal years beginning after December 2024",
+      "In December 2024",
+      "is effective for annual periods beginning after December 2024",
+      "Adjustments from Adoption of the New Crypto Assets Standard Balances at January 2024",
+      "Stockholders' equity Retained earnings 2024",
+      "During the years ended December 2024",
+      "December 2024",
+      "summarizes the amounts shown on our consolidated balance sheet as of December 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "statementType": "CF",
+    "statementId": "625a7be2-992a-40f7-a383-3aea92e23798",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2025",
+    "comparisonPeriodLabel": null,
+    "extractedLineCount": 31,
+    "eligibleLineCount": 26,
+    "mappedLineCount": 1,
+    "coveragePct": 4,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 4,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "CF_CORE_LINES_MISSING",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Automotive sales $ 2025",
+      "Automotive regulatory credits 2025",
+      "Automotive leasing 2025",
+      "Total automotive revenues 2025",
+      "Services and other 2025",
+      "Total automotive & services and other segment revenue 2025",
+      "Energy generation and storage segment revenue 2025",
+      "Total revenues $ 2025",
+      "Automotive sales revenue decreased $6.03 billion, or 2025",
+      "well as mix. Additionally, there was a decrease of approximately 2025"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BDG 2026 V1 XLSX",
+    "filePath": "knowledge/Finanse/BDG 2026 V1.xlsx",
+    "statementType": "BS",
+    "statementId": "417cf8ca-998e-4804-a9ff-db35c5b5a955",
+    "parseMethod": "excel_import",
+    "documentClass": "spreadsheet",
+    "extractionStrategy": "spreadsheet_structured",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2028",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 113,
+    "eligibleLineCount": 66,
+    "mappedLineCount": 28,
+    "coveragePct": 42,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 19,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Bilans 2028",
+      "Opis Description Description 2028",
+      "Towary d. Goods d. Goods 2028",
+      "Leasing c. Leasing c. Leasing 2028",
+      "Pozostałe zobowiązania finansowe d. Other external financing sources d. Other external financing sources 2028",
+      "a. Dotacje rządowe a. Government subsidies a. Government subsidies 2028",
+      "b.Pozostałe zobowizania b. Other liabilities b. Other liabilities 2028",
+      "Wobec pozostałych podmiotów To other entities To other entities 2028",
+      "Kredyty w rachunku bieżącym (overdrafty) Overdrafts Overdrafts 2028",
+      "Factoring Factoring Factoring 2028"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BDG 2026 V1 XLSX",
+    "filePath": "knowledge/Finanse/BDG 2026 V1.xlsx",
+    "statementType": "P&L",
+    "statementId": "6e076aed-c43c-4682-ae68-1e0b0a25a9ee",
+    "parseMethod": "excel_import",
+    "documentClass": "spreadsheet",
+    "extractionStrategy": "spreadsheet_structured",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2021",
+    "comparisonPeriodLabel": null,
+    "extractedLineCount": 112,
+    "eligibleLineCount": 109,
+    "mappedLineCount": 23,
+    "coveragePct": 21,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 16,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "PL_NON_POSITIVE_REVENUE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "=== Sheet: Ass. PL === 2021",
+      "Kapitalizacja 2021",
+      "Net Sales DEV Net Sales DEV 2021",
+      "b) Digital Twin (SAAS) b) Digital Twin (SAAS) 2021",
+      "c) IoT c) IoT 2021",
+      "d) DRD d) DRD 2021",
+      "e) Program Partnerski e) Program Partnerski 2021",
+      "Change Zmiana 2021",
+      "Amortization Amortyzacja Other costs Pozostałe koszty / EU Business development 2021",
+      "PL POLSKA 2021"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BDG 2026 V1 XLSX",
+    "filePath": "knowledge/Finanse/BDG 2026 V1.xlsx",
+    "statementType": "CF",
+    "statementId": "e4f9d07f-cda7-46f6-abb5-31aaf49ef46d",
+    "parseMethod": "excel_import",
+    "documentClass": "spreadsheet",
+    "extractionStrategy": "spreadsheet_structured",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2028",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 1469,
+    "eligibleLineCount": 1281,
+    "mappedLineCount": 43,
+    "coveragePct": 3,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 27,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE"
+    ],
+    "topUnmappedLabels": [
+      "=== Sheet: Presentation PL All === Description Opis 2028",
+      "A. FIXED ASSETS A. AKTYWA TRWAŁE 2028",
+      "B CURRENT ASSETS B. AKTYWA OBROTOWE 2028",
+      "a. Raw materials a. Materiały 2028",
+      "b. Semi-finished products and work in progress b. Półprodukty i produkty w toku 2028",
+      "Finished products c. Produkty gotowe 2028",
+      "Goods d. Towary 2028",
+      "e. Advances for deliveries e. Zaliczki na poczet dostaw 2028",
+      "a. Receivables from related parties a. Należności od podmiotów powiązanych 2028",
+      "b. Receivables from other entities b. Należności od pozostałych podmiotów 2028"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BDG 2026 V1 XLS",
+    "filePath": "knowledge/Finanse/BDG 2026 V1 old.xls",
+    "statementType": "BS",
+    "statementId": "b74e4af5-e604-4e81-af3f-f71ca0d96ea7",
+    "parseMethod": "excel_import",
+    "documentClass": "spreadsheet",
+    "extractionStrategy": "spreadsheet_structured",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2028",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 113,
+    "eligibleLineCount": 66,
+    "mappedLineCount": 28,
+    "coveragePct": 42,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 19,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Bilans 2028",
+      "Opis Description Description 2028",
+      "Towary d. Goods d. Goods 2028",
+      "Leasing c. Leasing c. Leasing 2028",
+      "Pozostałe zobowiązania finansowe d. Other external financing sources d. Other external financing sources 2028",
+      "a. Dotacje rządowe a. Government subsidies a. Government subsidies 2028",
+      "b.Pozostałe zobowizania b. Other liabilities b. Other liabilities 2028",
+      "Wobec pozostałych podmiotów To other entities To other entities 2028",
+      "Kredyty w rachunku bieżącym (overdrafty) Overdrafts Overdrafts 2028",
+      "Factoring Factoring Factoring 2028"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BDG 2026 V1 XLS",
+    "filePath": "knowledge/Finanse/BDG 2026 V1 old.xls",
+    "statementType": "P&L",
+    "statementId": "e8031ab4-caf1-4466-832c-48a4735bf0fa",
+    "parseMethod": "excel_import",
+    "documentClass": "spreadsheet",
+    "extractionStrategy": "spreadsheet_structured",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2021",
+    "comparisonPeriodLabel": null,
+    "extractedLineCount": 112,
+    "eligibleLineCount": 109,
+    "mappedLineCount": 23,
+    "coveragePct": 21,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 16,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "PL_NON_POSITIVE_REVENUE",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "=== Sheet: Ass. PL === 2021",
+      "Kapitalizacja 2021",
+      "Net Sales DEV Net Sales DEV 2021",
+      "b) Digital Twin (SAAS) b) Digital Twin (SAAS) 2021",
+      "c) IoT c) IoT 2021",
+      "d) DRD d) DRD 2021",
+      "e) Program Partnerski e) Program Partnerski 2021",
+      "Change Zmiana 2021",
+      "Amortization Amortyzacja Other costs Pozostałe koszty / EU Business development 2021",
+      "PL POLSKA 2021"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BDG 2026 V1 XLS",
+    "filePath": "knowledge/Finanse/BDG 2026 V1 old.xls",
+    "statementType": "CF",
+    "statementId": "e7a0c60b-7fc0-49d1-b204-03221b2804e5",
+    "parseMethod": "excel_import",
+    "documentClass": "spreadsheet",
+    "extractionStrategy": "spreadsheet_structured",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "selectedPeriodLabel": "2028",
+    "comparisonPeriodLabel": "2021",
+    "extractedLineCount": 1470,
+    "eligibleLineCount": 1282,
+    "mappedLineCount": 43,
+    "coveragePct": 3,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 27,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE"
+    ],
+    "topUnmappedLabels": [
+      "=== Sheet: Presentation PL All === Description Opis 2028",
+      "A. FIXED ASSETS A. AKTYWA TRWAŁE 2028",
+      "B CURRENT ASSETS B. AKTYWA OBROTOWE 2028",
+      "a. Raw materials a. Materiały 2028",
+      "b. Semi-finished products and work in progress b. Półprodukty i produkty w toku 2028",
+      "Finished products c. Produkty gotowe 2028",
+      "Goods d. Towary 2028",
+      "e. Advances for deliveries e. Zaliczki na poczet dostaw 2028",
+      "a. Receivables from related parties a. Należności od podmiotów powiązanych 2028",
+      "b. Receivables from other entities b. Należności od pozostałych podmiotów 2028"
+    ],
+    "persistedStatus": "mapped"
+  }
+]

@@ -109,6 +109,8 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
           status: 'todo',
           priority: item.priority || 'medium',
           tags: ['from-notebook', 'ai-extracted'],
+          sourceType: 'notebook_page',
+          sourceId: noteId,
         });
         setCreatedIds((prev) => new Set(prev).add(idx));
         trackFunnelEvent('notebook_action_item_created', { noteId, idx });

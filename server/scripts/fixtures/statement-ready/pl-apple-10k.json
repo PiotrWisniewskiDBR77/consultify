@@ -1,0 +1,9 @@
+{
+  "name": "apple-10k-income-statement-2024",
+  "fileName": "Apple-10K-FY2024.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 18,
+  "expectedMinMapped": 15,
+  "text": "APPLE INC.\nCONSOLIDATED STATEMENTS OF OPERATIONS\n(In millions, except number of shares which are reflected in thousands and per share amounts)\n\nProduct net sales 2024 294,866 2023 298,085\nServices net sales 2024 96,169 2023 85,200\nTotal net sales 2024 391,035 2023 383,285\nProducts cost of sales 2024 185,233 2023 189,282\nServices cost of sales 2024 25,146 2023 24,855\nTotal cost of sales 2024 210,379 2023 214,137\nGross margin 2024 180,656 2023 169,148\nResearch and development 2024 31,370 2023 29,915\nSelling, general and administrative expenses 2024 26,097 2023 24,932\nTotal operating expenses 2024 57,467 2023 54,847\nOperating income 2024 123,189 2023 114,301\nOther income expense net 2024 269 2023 -565\nIncome before provision for income taxes 2024 123,458 2023 113,736\nProvision for income taxes 2024 29,749 2023 16,741\nNet income 2024 93,736 2023 96,995\nBasic earnings per share 2024 6.11 2023 6.16\nDiluted earnings per share 2024 6.08 2023 6.13\nWeighted average shares outstanding basic 2024 15,343,783 2023 15,744,231\nWeighted average shares outstanding diluted 2024 15,408,095 2023 15,812,547"
+}

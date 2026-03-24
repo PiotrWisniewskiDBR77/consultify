@@ -44,16 +44,17 @@ import {
   Inbox,
   Layers,
   Lightbulb,
-  MoreVertical,
   Loader2,
   MessageSquare,
   Minus,
+  MoreVertical,
   Pin,
   Scale,
   Settings2,
   Sparkles,
   Square,
   Star,
+  type LucideIcon,
   X,
   Zap,
 } from 'lucide-react';
@@ -61,6 +62,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  PreviewActionBar,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  actionPillClass,
+  type ActionRow,
+  type ExtraCopyFormat,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
@@ -70,7 +84,6 @@ import {
 } from '@/components/ui/ResizableTable';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -119,7 +132,7 @@ type InboxEntityKind = 'task' | 'initiative' | 'survey' | 'decision' | 'notifica
 
 const ENTITY_KIND_CONFIG: Record<
   InboxEntityKind,
-  { icon: React.ElementType; labelEn: string; labelPl: string; pill: string; borderLeft: string }
+  { icon: LucideIcon; labelEn: string; labelPl: string; pill: string; borderLeft: string }
 > = {
   task: {
     icon: CheckSquare,
@@ -212,6 +225,10 @@ interface InboxItem {
   isActionable: boolean;
   suggestedAction?: TriageAction;
   suggestedReason?: string;
+  /** V4-INBX-03: AI confidence 0–1 for threshold/undo */
+  suggestedConfidence?: number;
+  /** V4-INBX-01: Canonical type (task|decision|approval|signal) */
+  itemType?: 'task' | 'decision' | 'approval' | 'signal';
   _key: InboxItemKey;
 }
 
@@ -319,7 +336,7 @@ const groupItems = (items: InboxItem[]): InboxGroup[] => {
 // ── Urgency config ──
 const urgencyConfig: Record<
   InboxUrgency,
-  { icon: React.ElementType; pill: string; label: string; heatColor: string }
+  { icon: LucideIcon; pill: string; label: string; heatColor: string }
 > = {
   critical: {
     icon: AlertTriangle,
@@ -703,7 +720,8 @@ const PreviewPane: React.FC<{
   onTriage: (action: TriageAction) => void;
   onSnooze: (preset: SnoozePreset) => void;
   onSaveAsNote?: (item: InboxItem) => void;
-}> = ({ item, isPolish, onClose, onOpen, onTriage, onSnooze, onSaveAsNote }) => {
+  onUndoLastAI?: () => void;
+}> = ({ item, isPolish, onClose, onOpen, onTriage, onSnooze, onSaveAsNote, onUndoLastAI }) => {
   const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
   const UIcon = u.icon;
   const sla = slaPill(item.sla);
@@ -746,14 +764,18 @@ const PreviewPane: React.FC<{
           reason: item.reason,
           linkedTaskId: item.linkedTaskId,
           linkedDecisionId: item.linkedDecisionId,
-          source: item.source ? { type: item.source.type, userName: item.source.userName } : undefined,
+          source: item.source
+            ? { type: item.source.type, userName: item.source.userName }
+            : undefined,
         },
       })) as any;
       const r = res?.result;
       if (!r?.brief || !r?.recommendedAction) throw new Error('Invalid AI response');
       setAiResult({
         brief: String(r.brief),
-        bullets: Array.isArray(r.bullets) ? r.bullets.map((x: any) => String(x)).filter(Boolean) : [],
+        bullets: Array.isArray(r.bullets)
+          ? r.bullets.map((x: any) => String(x)).filter(Boolean)
+          : [],
         recommendedAction: r.recommendedAction as TriageAction,
         recommendedReason: String(r.recommendedReason || ''),
       });
@@ -773,62 +795,222 @@ const PreviewPane: React.FC<{
 
   const descriptionTrimmed = (item.description || '').trim();
 
-  const handleDetailsAction = useCallback(async (action: 'expand' | 'summarize' | 'copy') => {
-    if (action === 'copy') {
-      const textToCopy = detailsOverride || aiResult?.brief
-        ? [aiResult?.brief, ...(aiResult?.bullets || []).map((b) => `• ${b}`)].filter(Boolean).join('\n')
-        : descriptionTrimmed;
+  const detailsDisplayText = detailsOverride
+    ? detailsOverride
+    : aiResult
+      ? [
+          aiResult.brief,
+          ...(aiResult.bullets || []).map((b) => `• ${b}`),
+          aiResult.recommendedReason ? `\n${aiResult.recommendedReason}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : descriptionTrimmed + (aiError ? `\n\n${aiError}` : '');
+
+  const handleDetailsAction = useCallback(
+    async (action: 'expand' | 'summarize' | 'copy') => {
+      if (action === 'copy') {
+        const textToCopy =
+          detailsOverride || aiResult?.brief
+            ? [aiResult?.brief, ...(aiResult?.bullets || []).map((b) => `• ${b}`)]
+                .filter(Boolean)
+                .join('\n')
+            : descriptionTrimmed;
+        try {
+          await navigator.clipboard.writeText(textToCopy || '');
+          toast.success(isPolish ? 'Skopiowano' : 'Copied');
+        } catch {
+          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+        }
+        return;
+      }
+      setDetailsLoading(true);
       try {
-        await navigator.clipboard.writeText(textToCopy || '');
-        toast.success(isPolish ? 'Skopiowano' : 'Copied');
+        const prompt =
+          action === 'expand'
+            ? isPolish
+              ? `Rozwiń poniższy opis narzędzia. Wyjaśnij kontekst, cel i co użytkownik powinien z tym zrobić. Pisz zwięźle, max 4-5 zdań.\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
+              : `Expand the following tool description. Explain context, purpose and what the user should do. Be concise, max 4-5 sentences.\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`
+            : isPolish
+              ? `Podsumuj poniższy element w 1-2 zdaniach. Co to jest i co z tym zrobić?\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
+              : `Summarize the following item in 1-2 sentences. What is it and what to do?\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`;
+
+        const res = (await Api.post('/my-work/inbox/ai-assist', {
+          language: isPolish ? 'pl' : 'en',
+          item: {
+            title: item.title,
+            description: prompt,
+            type: item.type,
+            section: item.section,
+            urgency: item.urgency,
+            receivedAt: item.receivedAt,
+            dueDate: item.dueDate,
+            sla: item.sla,
+            reason: item.reason,
+            linkedTaskId: item.linkedTaskId,
+            linkedDecisionId: item.linkedDecisionId,
+            source: item.source
+              ? { type: item.source.type, userName: item.source.userName }
+              : undefined,
+          },
+        })) as any;
+        const r = res?.result;
+        if (r?.brief) {
+          const full = [
+            r.brief,
+            ...(Array.isArray(r.bullets) ? r.bullets : []).map((b: string) => `• ${b}`),
+          ]
+            .filter(Boolean)
+            .join('\n');
+          setDetailsOverride(full);
+        }
       } catch {
-        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+      } finally {
+        setDetailsLoading(false);
       }
-      return;
-    }
-    setDetailsLoading(true);
-    try {
-      const prompt = action === 'expand'
-        ? (isPolish
-          ? `Rozwiń poniższy opis narzędzia. Wyjaśnij kontekst, cel i co użytkownik powinien z tym zrobić. Pisz zwięźle, max 4-5 zdań.\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
-          : `Expand the following tool description. Explain context, purpose and what the user should do. Be concise, max 4-5 sentences.\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`)
-        : (isPolish
-          ? `Podsumuj poniższy element w 1-2 zdaniach. Co to jest i co z tym zrobić?\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
-          : `Summarize the following item in 1-2 sentences. What is it and what to do?\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`);
+    },
+    [isPolish, item, descriptionTrimmed, detailsOverride, aiResult]
+  );
 
-      const res = (await Api.post('/my-work/inbox/ai-assist', {
-        language: isPolish ? 'pl' : 'en',
-        item: {
-          title: item.title,
-          description: prompt,
-          type: item.type,
-          section: item.section,
-          urgency: item.urgency,
-          receivedAt: item.receivedAt,
-          dueDate: item.dueDate,
-          sla: item.sla,
-          reason: item.reason,
-          linkedTaskId: item.linkedTaskId,
-          linkedDecisionId: item.linkedDecisionId,
-          source: item.source ? { type: item.source.type, userName: item.source.userName } : undefined,
+  const metaPills: MetaPill[] = [
+    { label: isPolish ? kindCfg.labelPl : kindCfg.labelEn, className: kindCfg.pill, icon: KindIcon },
+    { label: u.label, className: u.pill, icon: UIcon },
+  ];
+
+  const metaTrailing = (
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>
+        {receivedText}
+      </span>
+      {item.sla && sla.label !== '-' ? (
+        <>
+          <span className="text-slate-300 dark:text-navy-600">·</span>
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
+          >
+            SLA {sla.label}
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+
+  const relationItems: RelationItem[] = [
+    ...(item.linkedTaskId
+      ? [
+          {
+            label: `Task ${item.linkedTaskId.slice(0, 8)}…`,
+            icon: CheckSquare,
+            tone: 'text-emerald-600 dark:text-emerald-400',
+          } as RelationItem,
+        ]
+      : []),
+    ...(item.linkedDecisionId
+      ? [
+          {
+            label: `${isPolish ? 'Decyzja' : 'Decision'} ${item.linkedDecisionId.slice(0, 8)}…`,
+            icon: Scale,
+            tone: 'text-amber-600 dark:text-amber-400',
+          } as RelationItem,
+        ]
+      : []),
+  ];
+
+  const actionRows: ActionRow[] = [
+    {
+      buttons: [
+        {
+          label: isPolish ? 'Dziś' : 'Today',
+          icon: Zap,
+          onClick: () => onTriage('accept_today'),
+          colorScheme: 'emerald',
+          flex: true,
+          shortcut: 'T',
         },
-      })) as any;
-      const r = res?.result;
-      if (r?.brief) {
-        const full = [r.brief, ...(Array.isArray(r.bullets) ? r.bullets : []).map((b: string) => `• ${b}`)].filter(Boolean).join('\n');
-        setDetailsOverride(full);
-      }
-    } catch {
-      toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
-    } finally {
-      setDetailsLoading(false);
-    }
-  }, [isPolish, item, descriptionTrimmed, detailsOverride, aiResult]);
+        {
+          label: isPolish ? 'Tydzień' : 'Week',
+          icon: CalendarClock,
+          onClick: () => onTriage('accept_week'),
+          colorScheme: 'blue',
+          flex: true,
+          shortcut: 'W',
+        },
+        {
+          label: isPolish ? 'Później' : 'Later',
+          icon: Calendar,
+          onClick: () => onTriage('accept_later'),
+          colorScheme: 'neutral',
+          flex: true,
+          shortcut: 'L',
+        },
+      ],
+    },
+    {
+      columns: onSaveAsNote ? 4 : 3,
+      buttons: [
+        {
+          label: isPolish ? 'Gotowe' : 'Done',
+          icon: CheckCircle2,
+          onClick: () => onTriage('done'),
+          colorScheme: 'green',
+          shortcut: 'D',
+        },
+        {
+          label: isPolish ? 'Zapisz' : 'Save',
+          icon: Bookmark,
+          onClick: () => onTriage('save'),
+          colorScheme: 'amber',
+          shortcut: 'S',
+        },
+        ...(onSaveAsNote
+          ? [
+              {
+                label: isPolish ? 'Notatka' : 'Note',
+                icon: FileText,
+                onClick: () => onSaveAsNote(item),
+                colorScheme: 'neutral' as const,
+                shortcut: 'N',
+              },
+            ]
+          : []),
+        {
+          label: isPolish ? 'Odłóż' : 'Dismiss',
+          icon: Archive,
+          onClick: () => onTriage('dismiss'),
+          colorScheme: 'neutral',
+          shortcut: 'X',
+        },
+      ],
+    },
+  ];
 
-  const metaPillBase =
-    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
-  const footerPillBase =
-    'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  const extraCopyFormats: ExtraCopyFormat[] = [
+    {
+      label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+      onClick: () =>
+        void copyAsMarkdown(
+          {
+            title: item.title || '',
+            description: descriptionTrimmed,
+            aiSummary: aiResult?.brief,
+          },
+          isPolish ? 'pl' : 'en'
+        ),
+    },
+    {
+      label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+      onClick: () =>
+        void copyForSlack(
+          {
+            title: item.title || '',
+            description: descriptionTrimmed,
+            aiSummary: aiResult?.brief,
+          },
+          isPolish ? 'pl' : 'en'
+        ),
+    },
+  ];
 
   return (
     <PreviewPaneShell
@@ -847,92 +1029,28 @@ const PreviewPane: React.FC<{
       footer={
         <div className="space-y-0">
           {/* ── AI hint chips ── */}
-          <AIHintStrip item={item} isPolish={isPolish} loading={aiLoading} onRun={runAi} onApplyAction={onTriage} result={aiResult} onClear={() => { setAiResult(null); setAiError(null); }} />
+          <AIHintStrip
+            item={item}
+            isPolish={isPolish}
+            loading={aiLoading}
+            onRun={runAi}
+            onApplyAction={onTriage}
+            result={aiResult}
+            onClear={() => {
+              setAiResult(null);
+              setAiError(null);
+            }}
+          />
 
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-          {/* ── Linked documents (room for 2 rows) ── */}
-          <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-            {item.linkedTaskId ? (
-              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-emerald-600 dark:text-emerald-400">
-                <CheckSquare size={13} />
-                Task {item.linkedTaskId.slice(0, 8)}…
-              </span>
-            ) : null}
-            {item.linkedDecisionId ? (
-              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-amber-600 dark:text-amber-400">
-                <Scale size={13} />
-                {isPolish ? 'Decyzja' : 'Decision'} {item.linkedDecisionId.slice(0, 8)}…
-              </span>
-            ) : null}
-            {!item.linkedTaskId && !item.linkedDecisionId ? (
-              <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
-                {isPolish ? 'Brak powiązań' : 'No linked documents'}
-              </span>
-            ) : null}
-          </div>
+          {/* ── Linked documents ── */}
+          <PreviewRelations items={relationItems} />
 
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
           {/* ── Action buttons ── */}
-          <div className="space-y-2.5 py-1">
-            <div className="flex gap-2">
-              <button
-                onClick={() => onTriage('accept_today')}
-                className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
-              >
-                <Zap size={14} />
-                {isPolish ? 'Dziś' : 'Today'}
-              </button>
-              <button
-                onClick={() => onTriage('accept_week')}
-                className={`${footerPillBase} flex-1 border-blue-300/40 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-200 hover:bg-blue-100/70 dark:hover:bg-blue-500/15`}
-              >
-                <CalendarClock size={14} />
-                {isPolish ? 'Tydzień' : 'Week'}
-              </button>
-              <button
-                onClick={() => onTriage('accept_later')}
-                className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-              >
-                <Calendar size={14} />
-                {isPolish ? 'Później' : 'Later'}
-              </button>
-            </div>
-
-            <div className={`grid ${onSaveAsNote ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
-              <button
-                onClick={() => onTriage('done')}
-                className={`${footerPillBase} border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15`}
-              >
-                <CheckCircle2 size={14} />
-                {isPolish ? 'Gotowe' : 'Done'}
-              </button>
-              <button
-                onClick={() => onTriage('save')}
-                className={`${footerPillBase} border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
-              >
-                <Bookmark size={14} />
-                {isPolish ? 'Zapisz' : 'Save'}
-              </button>
-              {onSaveAsNote ? (
-                <button
-                  onClick={() => onSaveAsNote(item)}
-                  className={`${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                >
-                  <FileText size={14} />
-                  {isPolish ? 'Notatka' : 'Note'}
-                </button>
-              ) : null}
-              <button
-                onClick={() => onTriage('dismiss')}
-                className={`${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-              >
-                <Archive size={14} />
-                {isPolish ? 'Odłóż' : 'Dismiss'}
-              </button>
-            </div>
-          </div>
+          <PreviewActionBar rows={actionRows} />
 
           <div className="pt-1.5">
             <button
@@ -941,7 +1059,10 @@ const PreviewPane: React.FC<{
             >
               <Clock size={14} />
               {isPolish ? 'Odłóż na…' : 'Snooze…'}
-              <ChevronDown size={12} className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={12}
+                className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
+              />
             </button>
             {snoozeOpen ? (
               <div className="flex flex-wrap gap-2 mt-2">
@@ -949,7 +1070,7 @@ const PreviewPane: React.FC<{
                   <button
                     key={p.id}
                     onClick={() => onSnooze(p.id)}
-                    className={`${footerPillBase} h-8 px-3 border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
+                    className={`${actionPillClass('amber', 'h-8 px-3')}`}
                   >
                     <Clock size={13} />
                     {isPolish ? p.labelPl : p.labelEn}
@@ -958,128 +1079,31 @@ const PreviewPane: React.FC<{
               </div>
             ) : null}
           </div>
+          {onUndoLastAI ? (
+            <div className="pt-2 border-t border-slate-200/50 dark:border-white/[0.06]">
+              <button
+                onClick={onUndoLastAI}
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+              >
+                <Minus size={12} />
+                {isPolish ? 'Cofnij ostatnią sugestię AI' : 'Undo last AI suggestion'}
+              </button>
+            </div>
+          ) : null}
         </div>
       }
     >
       <div className="space-y-4">
-        {/* Brief card — type pill + meta + short title context */}
-        <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${kindCfg.pill}`}>
-              <KindIcon size={11} />
-              {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
-            </span>
-            <div className="flex flex-wrap items-center justify-end gap-1.5">
-              <span className={`${metaPillBase} ${u.pill}`}>
-                <UIcon size={11} />
-                {u.label}
-              </span>
-              <span className="text-slate-300 dark:text-navy-600">·</span>
-              <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
-              {item.sla && sla.label !== '-' ? (
-                <>
-                  <span className="text-slate-300 dark:text-navy-600">·</span>
-                  <span className={`${metaPillBase} ${sla.className}`}>SLA {sla.label}</span>
-                </>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <PreviewMetaCard pills={metaPills} trailing={metaTrailing} />
 
-        {/* Details — AI contextual brief (auto-generated) with raw text as fallback */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {isPolish ? 'Szczegóły' : 'Details'}
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setDetailsMenuOpen(!detailsMenuOpen)}
-                className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
-              >
-                <MoreVertical size={13} />
-              </button>
-              {detailsMenuOpen ? (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setDetailsMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                    <button
-                      onClick={() => { setDetailsMenuOpen(false); handleDetailsAction('expand'); }}
-                      disabled={detailsLoading}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                    >
-                      <ChevronDown size={12} className="text-purple-500" />
-                      {isPolish ? 'Rozwiń' : 'Expand'}
-                    </button>
-                    <button
-                      onClick={() => { setDetailsMenuOpen(false); handleDetailsAction('summarize'); }}
-                      disabled={detailsLoading}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                    >
-                      <Sparkles size={12} className="text-purple-500" />
-                      {isPolish ? 'Podsumuj' : 'Summarize'}
-                    </button>
-                    <button
-                      onClick={() => { setDetailsMenuOpen(false); handleDetailsAction('copy'); }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
-                    >
-                      <Copy size={12} />
-                      {isPolish ? 'Kopiuj' : 'Copy'}
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </div>
-
-          {detailsLoading ? (
-            <div className="space-y-2 animate-pulse">
-              <div className="h-3.5 w-full rounded bg-slate-200/60 dark:bg-white/[0.06]" />
-              <div className="h-3.5 w-5/6 rounded bg-slate-200/50 dark:bg-white/[0.05]" />
-              <div className="h-3 w-3/4 rounded bg-slate-200/40 dark:bg-white/[0.04]" />
-            </div>
-          ) : detailsOverride ? (
-            <div className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
-              {detailsOverride}
-            </div>
-          ) : aiLoading ? (
-            <div className="space-y-2 animate-pulse">
-              <div className="h-3.5 w-full rounded bg-slate-200/60 dark:bg-white/[0.06]" />
-              <div className="h-3.5 w-5/6 rounded bg-slate-200/50 dark:bg-white/[0.05]" />
-              <div className="h-3 w-3/4 rounded bg-slate-200/40 dark:bg-white/[0.04]" />
-              <div className="h-3 w-2/3 rounded bg-slate-200/30 dark:bg-white/[0.03]" />
-            </div>
-          ) : aiResult ? (
-            <div>
-              <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
-                {aiResult.brief}
-              </p>
-              {aiResult.bullets?.length ? (
-                <ul className="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
-                  {aiResult.bullets.slice(0, 4).map((b, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="mt-2 h-1 w-1 rounded-full bg-purple-400/50 shrink-0" />
-                      <span className="min-w-0 leading-relaxed">{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {aiResult.recommendedReason ? (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {aiResult.recommendedReason}
-                </p>
-              ) : null}
-            </div>
-          ) : (
-            <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-              {descriptionTrimmed || (isPolish ? 'Brak opisu.' : 'No description.')}
-              {aiError ? (
-                <p className="mt-2 text-xs text-red-500 dark:text-red-400">{aiError}</p>
-              ) : null}
-            </div>
-          )}
-        </div>
+        <PreviewDetailsSection
+          text={detailsDisplayText}
+          loading={detailsLoading || aiLoading}
+          onExpand={() => handleDetailsAction('expand')}
+          onSummarize={() => handleDetailsAction('summarize')}
+          onCopy={() => handleDetailsAction('copy')}
+          extraCopyFormats={extraCopyFormats}
+        />
       </div>
     </PreviewPaneShell>
   );
@@ -1094,7 +1118,12 @@ const AIHintStrip: React.FC<{
   loading: boolean;
   onRun: () => void;
   onApplyAction: (action: TriageAction) => void;
-  result: { brief: string; bullets: string[]; recommendedAction: TriageAction; recommendedReason: string } | null;
+  result: {
+    brief: string;
+    bullets: string[];
+    recommendedAction: TriageAction;
+    recommendedReason: string;
+  } | null;
   onClear: () => void;
 }> = ({ item, isPolish, loading, onRun, onApplyAction, result, onClear }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1118,8 +1147,32 @@ const AIHintStrip: React.FC<{
 
   const actionLabel = (a: TriageAction): string => {
     const map: Record<string, Record<TriageAction, string>> = {
-      pl: { accept_today: 'Dziś', accept_week: 'Tydzień', accept_later: 'Później', done: 'Gotowe', save: 'Zapisz', dismiss: 'Odłóż', archive: 'Archiwizuj', delegate: 'Deleguj', schedule: 'Zaplanuj', reject: 'Odrzuć', snooze: 'Odłóż' },
-      en: { accept_today: 'Today', accept_week: 'Week', accept_later: 'Later', done: 'Done', save: 'Save', dismiss: 'Dismiss', archive: 'Archive', delegate: 'Delegate', schedule: 'Schedule', reject: 'Reject', snooze: 'Snooze' },
+      pl: {
+        accept_today: 'Dziś',
+        accept_week: 'Tydzień',
+        accept_later: 'Później',
+        done: 'Gotowe',
+        save: 'Zapisz',
+        dismiss: 'Odłóż',
+        archive: 'Archiwizuj',
+        delegate: 'Deleguj',
+        schedule: 'Zaplanuj',
+        reject: 'Odrzuć',
+        snooze: 'Odłóż',
+      },
+      en: {
+        accept_today: 'Today',
+        accept_week: 'Week',
+        accept_later: 'Later',
+        done: 'Done',
+        save: 'Save',
+        dismiss: 'Dismiss',
+        archive: 'Archive',
+        delegate: 'Delegate',
+        schedule: 'Schedule',
+        reject: 'Reject',
+        snooze: 'Snooze',
+      },
     };
     return (isPolish ? map.pl : map.en)[a] || a;
   };
@@ -1153,14 +1206,26 @@ const AIHintStrip: React.FC<{
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
               <div className="absolute right-0 bottom-full mb-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
                 <button
-                  onClick={() => { setMenuOpen(false); onRun(); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onRun();
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
                 >
                   <Sparkles size={12} className="text-purple-500" />
                   {isPolish ? 'Regeneruj' : 'Regenerate'}
                 </button>
                 <button
-                  onClick={() => { setMenuOpen(false); if (result) { navigator.clipboard.writeText([result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')).then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied')); } }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (result) {
+                      navigator.clipboard
+                        .writeText(
+                          [result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')
+                        )
+                        .then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied'));
+                    }
+                  }}
                   disabled={!result}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
                 >
@@ -1168,7 +1233,10 @@ const AIHintStrip: React.FC<{
                   {isPolish ? 'Kopiuj' : 'Copy'}
                 </button>
                 <button
-                  onClick={() => { setMenuOpen(false); onClear(); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onClear();
+                  }}
                   disabled={!result}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
                 >
@@ -1183,12 +1251,7 @@ const AIHintStrip: React.FC<{
 
       <div className="flex flex-wrap gap-1.5">
         {hints.map((hint, idx) => (
-          <button
-            key={idx}
-            onClick={onRun}
-            disabled={loading}
-            className={AI_HINT_CHIPCLASS}
-          >
+          <button key={idx} onClick={onRun} disabled={loading} className={AI_HINT_CHIPCLASS}>
             <Sparkles size={10} className="text-purple-400/70 dark:text-purple-500/70" />
             {hint}
           </button>
@@ -1340,10 +1403,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [controlledAiOnly, onAiOnlyChange]
   );
 
-  // L4: Auto-triage
-  const [autoTriageSuggestions, setAutoTriageSuggestions] = useState<any[]>([]);
-  const [autoTriageLoading, setAutoTriageLoading] = useState(false);
-
   // ── Fetch ──
   const fetchInbox = useCallback(async () => {
     try {
@@ -1356,7 +1415,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             : statusTab === 'saved'
               ? 'saved'
               : 'open';
-      const res = (await Api.get(`/my-work/inbox?limit=200&status=${status}`)) as InboxResponse;
+      const [res] = await Promise.all([
+        Api.inboxGetTable({ status, limit: 200 }).catch(
+          () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
+        ) as Promise<InboxResponse>,
+        Api.materializeInbox().catch(() => null),
+      ]);
       setData(res);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1463,9 +1527,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     if (actionRequiredOnly) result = result.filter((item) => item.isActionable);
 
     if (criticalOnly)
-      result = result.filter(
-        (item) => item.urgency === 'critical' || item.severity === 'CRITICAL'
-      );
+      result = result.filter((item) => item.urgency === 'critical' || item.severity === 'CRITICAL');
 
     if (overdueOnly) {
       const nowTs = Date.now();
@@ -1525,12 +1587,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // ── Triage ──
   const triage = useCallback(
-    async (item: InboxItem, action: TriageAction) => {
+    async (
+      item: InboxItem,
+      action: TriageAction,
+      opts?: { fromAISuggestion?: boolean; confidence?: number }
+    ) => {
       if (action === 'snooze') return;
       try {
         await Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
           action,
           itemKey: item._key,
+          ...(opts?.fromAISuggestion && {
+            fromAISuggestion: true,
+            confidence: opts.confidence ?? item.suggestedConfidence,
+          }),
         });
         // Optimistic: remove from current view (item moves to different status tab)
         setData((prev) => {
@@ -1584,6 +1654,21 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [isPolish]
   );
 
+  // V4-INBX-03: Undo last AI triage
+  const handleUndoLastAI = useCallback(async () => {
+    try {
+      const res = await Api.undoLastAITriage();
+      if (res.success) {
+        toast.success(isPolish ? 'Cofnięto ostatnią sugestię AI' : 'Undo last AI suggestion');
+        fetchInbox();
+      } else {
+        toast.error(res.message || (isPolish ? 'Brak AI do cofnięcia' : 'No AI triage to undo'));
+      }
+    } catch (e) {
+      toast.error(isPolish ? 'Nie udało się cofnąć' : 'Undo failed');
+    }
+  }, [isPolish, fetchInbox]);
+
   // N9: Snooze — persist to backend (source of truth)
   const handleSnooze = useCallback(
     async (item: InboxItem, preset: SnoozePreset) => {
@@ -1613,46 +1698,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [isPolish, previewItem]
   );
 
-  // ── L4: Auto-triage ──
-  const handleAutoTriage = async () => {
-    setAutoTriageLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/my-work/inbox/auto-triage', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const suggestions = data.suggestions || [];
-        const autoApplyItems = suggestions.filter((s: any) => s.autoApply);
-        for (const item of autoApplyItems) {
-          try {
-            await fetch(`/api/my-work/inbox/${item.itemId}/triage`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: item.suggestedAction, itemKey: item.itemKey }),
-            });
-          } catch {
-            /* continue */
-          }
-        }
-        if (autoApplyItems.length > 0) {
-          toast.success(
-            isPolish
-              ? `${autoApplyItems.length} elementów automatycznie przetriażowanych`
-              : `${autoApplyItems.length} items auto-triaged`
-          );
-          emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: 'bulk' });
-        }
-        setAutoTriageSuggestions(suggestions.filter((s: any) => !s.autoApply));
-      }
-    } catch {
-      toast.error(isPolish ? 'Auto-triage nieudany' : 'Auto-triage failed');
-    }
-    setAutoTriageLoading(false);
-  };
-
   // ── Bulk triage ──
   const bulkTriage = useCallback(
     async (action: TriageAction) => {
@@ -1660,7 +1705,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       if (selectedItems.length === 0) return;
       try {
         const itemKeys = selectedItems.map((i) => i._key);
-        await Api.post('/my-work/inbox/bulk-triage', { itemKeys, action });
+        const aiItems = selectedItems
+          .filter((item) => item.suggestedAction === action && item.suggestedConfidence != null)
+          .map((item) => ({
+            itemKey: item._key,
+            confidence: item.suggestedConfidence ?? null,
+          }));
+        await Api.post('/my-work/inbox/bulk-triage', { itemKeys, action, aiItems });
         const removedKeys = new Set(itemKeys);
         setData((prev) => {
           if (!prev) return prev;
@@ -2056,8 +2107,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {!hiddenSet.has('section') && (
           <td className="px-3 py-2" style={{ width: columnWidths.section }}>
             <span className="text-xs text-slate-600 dark:text-slate-400">
-              {SMART_SECTIONS.find((s) => s.id === item.section)?.[isPolish ? 'labelPl' : 'labelEn'] ||
-                item.section}
+              {SMART_SECTIONS.find((s) => s.id === item.section)?.[
+                isPolish ? 'labelPl' : 'labelEn'
+              ] || item.section}
             </span>
           </td>
         )}
@@ -2068,7 +2120,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             {(() => {
               const src = item.source?.type || 'system';
               const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
-                system: { icon: Bell, color: 'text-slate-500', label: isPolish ? 'System' : 'System' },
+                system: {
+                  icon: Bell,
+                  color: 'text-slate-500',
+                  label: isPolish ? 'System' : 'System',
+                },
                 ai: { icon: Star, color: 'text-purple-500', label: 'AI' },
                 user: {
                   icon: MessageSquare,
@@ -2128,6 +2184,22 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 variant: 'primary',
                 onClick: () => open(item),
               },
+              ...(item.suggestedAction && !item.triaged
+                ? [
+                    {
+                      id: 'apply-ai',
+                      label: isPolish
+                        ? `Zastosuj AI (${item.suggestedAction})`
+                        : `Apply AI (${item.suggestedAction})`,
+                      icon: Sparkles,
+                      onClick: () =>
+                        triage(item, item.suggestedAction!, {
+                          fromAISuggestion: true,
+                          confidence: item.suggestedConfidence,
+                        }),
+                    } as RowAction,
+                  ]
+                : []),
               {
                 id: 'focus-today',
                 label: isPolish ? 'Focus → Dziś' : 'Focus → Today',
@@ -2237,7 +2309,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               style={{ width: columnWidths[colId] }}
             >
               <div className="flex items-center gap-1">
-                <span className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}>
+                <span
+                  className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
+                >
                   {getColumnLabel(colId)}
                 </span>
                 {hasFilter ? (
@@ -2340,7 +2414,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
       const descTrimmed = (item.description || '').trim();
       const cardBrief = descTrimmed
-        ? descTrimmed.split('\n').find((l) => l.trim().length > 0)?.trim() || ''
+        ? descTrimmed
+            .split('\n')
+            .find((l) => l.trim().length > 0)
+            ?.trim() || ''
         : '';
       const cardBriefText = cardBrief.length > 120 ? `${cardBrief.slice(0, 117)}…` : cardBrief;
 
@@ -2371,7 +2448,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     ? 'bg-primary-500 border-primary-500 text-white'
                     : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                 }`}
-                aria-label={isSelected ? (isPolish ? 'Odznacz' : 'Deselect') : isPolish ? 'Zaznacz' : 'Select'}
+                aria-label={
+                  isSelected ? (isPolish ? 'Odznacz' : 'Deselect') : isPolish ? 'Zaznacz' : 'Select'
+                }
               >
                 {isSelected && <CheckSquare size={10} />}
               </button>
@@ -2387,15 +2466,68 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                     {(() => {
                       const actions: RowAction[] = [
-                        { id: 'open', label: isPolish ? 'Otwórz' : 'Open', icon: Eye, variant: 'primary', onClick: () => open(item) },
-                        { id: 'focus-today', label: isPolish ? 'Focus → Dziś' : 'Focus → Today', icon: Zap, onClick: () => triage(item, 'accept_today') },
-                        { id: 'focus-week', label: isPolish ? 'Focus → Ten tydz.' : 'Focus → This week', icon: CalendarClock, onClick: () => triage(item, 'accept_week') },
-                        { id: 'focus-later', label: isPolish ? 'Focus → Później' : 'Focus → Later', icon: Calendar, onClick: () => triage(item, 'accept_later') },
-                        { id: 'done', label: isPolish ? 'Gotowe' : 'Done', icon: CheckCircle2, divider: true, onClick: () => triage(item, 'done') },
-                        { id: 'save', label: isPolish ? 'Zapisz' : 'Save', icon: Bookmark, onClick: () => triage(item, 'save') },
-                        { id: 'dismiss', label: isPolish ? 'Odłóż' : 'Dismiss', icon: Archive, onClick: () => triage(item, 'dismiss') },
-                        ...(handleSaveAsNote ? [{ id: 'save-as-note', label: isPolish ? 'Zapisz jako notatkę' : 'Save as note', icon: FileText, onClick: () => handleSaveAsNote(item), divider: true } satisfies RowAction] : []),
-                        ...SNOOZE_PRESETS.map((p, idx) => ({ id: `snooze-${p.id}`, label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`, icon: Clock, divider: idx === 0 && !handleSaveAsNote, onClick: () => handleSnooze(item, p.id) })),
+                        {
+                          id: 'open',
+                          label: isPolish ? 'Otwórz' : 'Open',
+                          icon: Eye,
+                          variant: 'primary',
+                          onClick: () => open(item),
+                        },
+                        {
+                          id: 'focus-today',
+                          label: isPolish ? 'Focus → Dziś' : 'Focus → Today',
+                          icon: Zap,
+                          onClick: () => triage(item, 'accept_today'),
+                        },
+                        {
+                          id: 'focus-week',
+                          label: isPolish ? 'Focus → Ten tydz.' : 'Focus → This week',
+                          icon: CalendarClock,
+                          onClick: () => triage(item, 'accept_week'),
+                        },
+                        {
+                          id: 'focus-later',
+                          label: isPolish ? 'Focus → Później' : 'Focus → Later',
+                          icon: Calendar,
+                          onClick: () => triage(item, 'accept_later'),
+                        },
+                        {
+                          id: 'done',
+                          label: isPolish ? 'Gotowe' : 'Done',
+                          icon: CheckCircle2,
+                          divider: true,
+                          onClick: () => triage(item, 'done'),
+                        },
+                        {
+                          id: 'save',
+                          label: isPolish ? 'Zapisz' : 'Save',
+                          icon: Bookmark,
+                          onClick: () => triage(item, 'save'),
+                        },
+                        {
+                          id: 'dismiss',
+                          label: isPolish ? 'Odłóż' : 'Dismiss',
+                          icon: Archive,
+                          onClick: () => triage(item, 'dismiss'),
+                        },
+                        ...(handleSaveAsNote
+                          ? [
+                              {
+                                id: 'save-as-note',
+                                label: isPolish ? 'Zapisz jako notatkę' : 'Save as note',
+                                icon: FileText,
+                                onClick: () => handleSaveAsNote(item),
+                                divider: true,
+                              } satisfies RowAction,
+                            ]
+                          : []),
+                        ...SNOOZE_PRESETS.map((p, idx) => ({
+                          id: `snooze-${p.id}`,
+                          label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`,
+                          icon: Clock,
+                          divider: idx === 0 && !handleSaveAsNote,
+                          onClick: () => handleSnooze(item, p.id),
+                        })),
                       ];
                       return <RowActionsMenu actions={actions} iconVariant="vertical" />;
                     })()}
@@ -2413,19 +2545,28 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
             {/* Row 3: Meta pills */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${kindCfg.pill}`}>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${kindCfg.pill}`}
+              >
                 <KindIcon size={10} />
                 {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
               </span>
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${u.pill}`}>
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${u.pill}`}
+              >
                 <UIcon size={10} />
                 {u.label}
               </span>
-              <span className={`text-[10px] font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
+              <span
+                className={`text-[10px] font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}
+              >
                 {receivedText}
               </span>
               {sla.label !== '-' ? (
-                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`} title={sla.title}>
+                <span
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`}
+                  title={sla.title}
+                >
                   {sla.label}
                 </span>
               ) : null}
@@ -2450,7 +2591,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </div>
 
             {/* Row 4: Linked docs (if any) */}
-            {(item.linkedTaskId || item.linkedDecisionId) ? (
+            {item.linkedTaskId || item.linkedDecisionId ? (
               <div className="flex flex-wrap items-center gap-1.5 -mt-0.5">
                 {item.linkedTaskId ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
@@ -2471,21 +2612,30 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-0.5">
               {renderStatusPill(item)}
               <button
-                onClick={(e) => { e.stopPropagation(); triage(item, 'accept_today'); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triage(item, 'accept_today');
+                }}
                 className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
               >
                 <Zap size={10} />
                 {isPolish ? 'Dziś' : 'Today'}
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); triage(item, 'done'); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triage(item, 'done');
+                }}
                 className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-green-300/40 dark:border-green-500/20 bg-transparent text-green-700 dark:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-500/10 transition-colors"
               >
                 <CheckCircle2 size={10} />
                 {isPolish ? 'Gotowe' : 'Done'}
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); triage(item, 'dismiss'); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triage(item, 'dismiss');
+                }}
                 className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-slate-200/60 dark:border-white/[0.06] bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <Archive size={10} />
@@ -2543,7 +2693,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         ? group.items
                         : [group.representative];
                     return itemsToRender.map((it, idx) =>
-                      renderCard(it, idx === 0 ? group.count : undefined, idx === 0 ? group.key : undefined)
+                      renderCard(
+                        it,
+                        idx === 0 ? group.count : undefined,
+                        idx === 0 ? group.key : undefined
+                      )
                     );
                   })}
                 </div>
@@ -2588,9 +2742,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       {/* Main content + Preview pane */}
       <div className="flex-1 flex min-h-0 gap-1.5">
         {/* Table content */}
-        <div
-          className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200"
-        >
+        <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
               <Loader2 className="animate-spin mr-2" size={18} />
@@ -2657,7 +2809,15 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               onClose={() => setPreviewItem(null)}
               onOpen={() => open(previewItem)}
               onTriage={(action) => {
-                triage(previewItem, action);
+                const isFromAI =
+                  action === previewItem.suggestedAction && previewItem.suggestedConfidence != null;
+                triage(
+                  previewItem,
+                  action,
+                  isFromAI
+                    ? { fromAISuggestion: true, confidence: previewItem.suggestedConfidence }
+                    : undefined
+                );
                 setPreviewItem(null);
               }}
               onSnooze={(preset) => {
@@ -2665,6 +2825,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 setPreviewItem(null);
               }}
               onSaveAsNote={handleSaveAsNote}
+              onUndoLastAI={handleUndoLastAI}
             />
           </div>
         )}

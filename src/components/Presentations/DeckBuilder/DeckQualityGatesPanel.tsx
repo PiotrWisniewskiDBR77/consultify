@@ -80,7 +80,9 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
   const { t } = useTranslation();
   const [report, setReport] = useState<DeckQualityReport | null>(null);
   const [loading, setLoading] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['structure', 'content']));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(['structure', 'content'])
+  );
 
   const runCheck = useCallback(async () => {
     if (!deckId) return;
@@ -156,9 +158,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
           <div className="mt-2 flex gap-2">
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                report.canExport
-                  ? 'bg-green-500/10 text-green-600'
-                  : 'bg-red-500/10 text-red-600'
+                report.canExport ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'
               }`}
             >
               {report.canExport ? 'Export OK' : 'Export Blocked'}
@@ -191,7 +191,10 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
               {t('presentations.qualityGates.allPassed', 'All quality gates passed!')}
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              {t('presentations.qualityGates.readyToExport', 'Your deck is ready to export and share.')}
+              {t(
+                'presentations.qualityGates.readyToExport',
+                'Your deck is ready to export and share.'
+              )}
             </p>
           </div>
         )}

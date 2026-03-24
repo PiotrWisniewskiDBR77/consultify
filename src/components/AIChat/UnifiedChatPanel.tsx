@@ -32,7 +32,12 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
+import type {
+  IdeaWorkspaceCreationPayload,
+  IdeaWorkspaceSeedIntent,
+} from '@/components/MyWork/ideaEntryTypes';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
@@ -59,6 +64,10 @@ import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
+import {
+  isSupportedChatAttachment,
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+} from './chatAttachmentSupport';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
@@ -66,6 +75,9 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
+import { detectTableIntent } from './tableIntentDetector';
+import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
+import { V8ContextIndicator } from './V8ContextIndicator';
 
 // ============================================================================
 // Types
@@ -261,9 +273,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   onKickoffConsumed,
   quickPrompts,
 }) => {
+  const route = useLocation();
   const { t, i18n } = useTranslation();
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
+
+  const routeInfo = useMemo(
+    () => ({
+      pathname: route.pathname,
+      search: route.search,
+      hash: route.hash,
+    }),
+    [route.hash, route.pathname, route.search]
+  );
 
   // ========================================================================
   // Store hooks
@@ -317,6 +339,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
+  const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
+  const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
   const lastKickoffSentRef = useRef<string | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
@@ -325,7 +349,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    // Backward-compatible keys (older builds used consultinity-*).
     const explicitPref =
       localStorage.getItem('consultinity-preferred-chat-lang') ||
       localStorage.getItem('consultify-preferred-chat-lang');
@@ -333,15 +356,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // Priority: explicit preference > conversation-specific > draft > 'pl' default
-    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
-    // from browser), not the user's chat language preference. For this Polish product,
-    // the default chat language is 'pl'.
-    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
+    // 3. Fall back to UI language (i18n), then 'en'
+    const uiLang = i18n.language?.split('-')[0] || 'en';
+    const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
     const base = String(candidate).split('-')[0];
     return (normalizeLanguageCode(base) ||
-      (isValidLanguage(base) ? (base as SupportedLanguage) : 'pl')) as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
 
   // Voice Hook (uses autoReadEnabled state)
   const {
@@ -376,6 +397,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [contextSaveBusyMessageId, setContextSaveBusyMessageId] = useState<string | null>(null);
+  const [contextSavedMessageIds, setContextSavedMessageIds] = useState<Set<string>>(new Set());
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
@@ -450,6 +473,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiConfig?.textToSpeech]);
 
+  useEffect(() => {
+    setContextSavedMessageIds(new Set());
+    setContextSaveBusyMessageId(null);
+  }, [activeConversationId]);
+
   // Ref for incremental TTS (defined here, used in effects after useAIStream)
   const spokenCharsRef = useRef(0);
 
@@ -508,18 +536,73 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const autoTriggered = options?.autoTriggered === true;
 
       try {
-        const created = await Api.createMyIdea({
+        if (navigateToMyWork) {
+          const creationPayload: IdeaWorkspaceCreationPayload = {
+            title,
+            body: trimmed,
+            tags: [],
+            sourceType: 'chat',
+            sourceConversationId: activeConversationId,
+            sourceMessageId: messageId,
+          };
+          const seedIntent: IdeaWorkspaceSeedIntent = {
+            startMode: 'describe_with_ai',
+            seedText: trimmed,
+            preferredSystem: 'mindmap',
+            templateId: null,
+            popularStartId: null,
+            popularStartLabel: null,
+            structuredBrief: null,
+            source: 'chat_handoff',
+          };
+          const draftId = `new-idea-${Date.now()}`;
+
+          trackFunnelEvent('my_idea_saved', {
+            source: autoTriggered ? 'chat_auto' : 'chat',
+            ideaId: draftId,
+            messageId,
+            handoff: true,
+          });
+          toast.success(
+            autoTriggered
+              ? t('myWork.ideas.savedFromChatToast', 'Saved from chat to My Ideas')
+              : t('myWork.ideas.sentToWorkspaceToast', 'Opened in Ideas workspace')
+          );
+
+          try {
+            const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+            setMyWorkIntent?.({
+              tab: 'ideas',
+              open: {
+                type: 'idea',
+                id: draftId,
+                name: title,
+                data: {
+                  isNew: true,
+                  creationPayload,
+                  seedIntent,
+                },
+              },
+            });
+            setCurrentView?.(AppView.MY_WORK);
+          } catch {
+            // ignore
+          }
+          return;
+        }
+
+        const created = await Api.createIdeaFromChat({
           title,
-          body: trimmed,
-          tags: [],
-          sourceType: 'chat',
-          sourceConversationId: activeConversationId,
+          seedText: trimmed,
+          sourceConversationId: activeConversationId || undefined,
           sourceMessageId: messageId,
+          startMode: 'describe_with_ai',
+          preferredSystem: 'mindmap',
         });
 
         trackFunnelEvent('my_idea_saved', {
           source: autoTriggered ? 'chat_auto' : 'chat',
-          ideaId: created?.id,
+          ideaId: created?.ideaId,
           messageId,
         });
         toast.success(
@@ -527,19 +610,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? t('myWork.ideas.savedFromChatToast', 'Saved from chat to My Ideas')
             : t('myWork.ideas.savedToast', 'Saved to My Ideas')
         );
-
-        if (navigateToMyWork) {
-          try {
-            const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
-            setMyWorkIntent?.({
-              tab: 'ideas',
-              open: { type: 'idea', id: created?.id, name: created?.title || title, data: created },
-            });
-            setCurrentView?.(AppView.MY_WORK);
-          } catch {
-            // ignore
-          }
-        }
       } catch (err) {
         console.error('[UnifiedChatPanel] Failed to save idea:', err);
         toast.error(t('myWork.errors.createFailed', 'Failed to create idea'));
@@ -1181,6 +1251,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Table Platform: intercept table creation/modification intents
+      // Opens the AI Table Builder slide-over panel with the user's message
+      if (detectTableIntent(text)) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch { /* best-effort persist */ }
+        }
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `table-builder-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl'
+            ? 'Otwieram AI Kreator Tabel \u2014 zaraz przygotuję propozycję struktury.'
+            : 'Opening AI Table Builder \u2014 I\'ll prepare a structure proposal for you.',
+          timestamp: new Date(),
+        });
+
+        setTableBuilderInitialMsg(text);
+        setTableBuilderOpen(true);
+
+        onMessageSent?.(content);
+        return;
+      }
+
       const saveIntent = parseChatSaveIntent(content);
       const effectivePrompt = saveIntent?.cleanPrompt || content;
       pendingChatSaveIntentRef.current = null;
@@ -1248,24 +1357,42 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           )
         : [];
 
+      const urlAttachments: Array<{ kind?: string; url: string; title?: string; name?: string }> =
+        Array.isArray(attachments)
+          ? attachments
+              .filter((a: any) => a && typeof a === 'object' && typeof a.url === 'string')
+              .map((a: any) => ({
+                kind: a.kind,
+                url: String(a.url),
+                title: a.title ? String(a.title) : undefined,
+                name: a.name ? String(a.name) : undefined,
+              }))
+          : [];
+
       const uploadedAttachments: Array<{
         docId: string;
         filename: string;
         mimeType?: string;
         size?: number;
+        sourceUrl?: string;
+        kind?: 'file' | 'url';
       }> = [];
 
       // Show a visible "Analyzing file..." status message while files are being processed (C4.1)
-      const fileAnalysisMessageId = files.length > 0 ? `file-analysis-${Date.now()}` : null;
-      if (files.length > 0 && fileAnalysisMessageId) {
-        const fileNames = files.map((f) => f.name).join(', ');
+      const sourcesCount = files.length + urlAttachments.length;
+      const fileAnalysisMessageId = sourcesCount > 0 ? `file-analysis-${Date.now()}` : null;
+      if (sourcesCount > 0 && fileAnalysisMessageId) {
+        const sourceNames = [
+          ...files.map((f) => f.name),
+          ...urlAttachments.map((u) => u.name || u.url),
+        ].join(', ');
         addChatMessage({
           id: fileAnalysisMessageId,
           role: 'assistant',
           content: t(
-            'aiChat.attachments.analyzingFiles',
-            '📎 Analyzing {{count}} file(s): {{names}}... Extracting content for AI analysis.',
-            { count: files.length, names: fileNames }
+            'aiChat.attachments.analyzingSources',
+            '📎 Analyzing {{count}} attachment(s): {{names}}... Extracting content for AI analysis.',
+            { count: sourcesCount, names: sourceNames }
           ),
           timestamp: new Date(),
           isStreaming: true,
@@ -1274,17 +1401,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       for (const file of files) {
-        const ext = String(file.name || '')
-          .split('.')
-          .pop()
-          ?.toLowerCase();
-        const supported =
-          file.type === 'application/pdf' ||
-          file.type.startsWith('text/') ||
-          file.type === 'application/json' ||
-          ['txt', 'md', 'csv', 'json'].includes(ext || '');
-
-        if (!supported) {
+        if (!isSupportedChatAttachment(file)) {
           console.warn('[UnifiedChatPanel] Skipping unsupported attachment type:', {
             name: file.name,
             type: file.type,
@@ -1293,8 +1410,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           toast.error(
             t(
               'aiChat.attachments.unsupportedType',
-              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: PDF, TXT, MD, CSV, JSON.',
-              { name: file.name }
+              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: {{types}}.',
+              { name: file.name, types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
             ),
             { duration: 5000 }
           );
@@ -1318,6 +1435,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             filename: file.name,
             mimeType: file.type || undefined,
             size: file.size,
+            kind: 'file',
           });
           toast.success(
             t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
@@ -1346,6 +1464,41 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      for (const urlAtt of urlAttachments) {
+        const url = String(urlAtt.url || '').trim();
+        if (!url) continue;
+        try {
+          const resp = await Api.ingestChatUrlAttachment(url, { title: urlAtt.title });
+          const docId = String((resp as any)?.docId || '');
+          if (!docId) {
+            toast.error(t('aiChat.attachments.urlIngestFailed', 'Nie udało się przetworzyć linku.'), {
+              duration: 4000,
+            });
+            continue;
+          }
+          const filename =
+            String((resp as any)?.filename || '').trim() ||
+            urlAtt.name ||
+            url;
+          uploadedAttachments.push({
+            docId,
+            filename,
+            mimeType: (resp as any)?.mimeType || 'text/html',
+            sourceUrl: String((resp as any)?.sourceUrl || url),
+            kind: 'url',
+          });
+          toast.success(t('aiChat.attachments.urlReady', 'Link przetworzony.'), { duration: 1500 });
+        } catch (err: any) {
+          console.error('[UnifiedChatPanel] Failed to ingest URL attachment:', err);
+          toast.error(
+            t('aiChat.attachments.urlError', 'Błąd przetwarzania linku: {{error}}', {
+              error: String(err?.message || '').slice(0, 120),
+            }),
+            { duration: 5000 }
+          );
+        }
+      }
+
       // Remove the "Analyzing file..." message once processing is done
       if (fileAnalysisMessageId) {
         // Replace with a summary of processed attachments
@@ -1357,7 +1510,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'assistant',
             content: t(
               'aiChat.attachments.filesReady',
-              '📎 {{count}} file(s) ready for analysis: {{names}}. The AI will reference these files in its response.',
+              '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
               { count: uploadedAttachments.length, names: processedNames }
             ),
             timestamp: new Date(),
@@ -1415,6 +1568,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           currentScreen: workspaceContext?.type || null,
           selectedObjectId: workspaceContext?.entityId || null,
           selectedObjectType: workspaceContext?.type || null,
+          route: routeInfo,
+          page: (workspaceContext as any)?.entityData || null,
         },
         workspaceContext,
         conversationId,
@@ -1661,6 +1816,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       aiConfig,
       dtConfirmBusy,
       addMessageToConversation,
+      i18n.language,
+      setIsBotTyping,
     ]
   );
 
@@ -2166,6 +2323,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [saveMessageAsNote]
   );
 
+  const handleSaveToContext = useCallback(
+    async (messageId: string, _content: string, _role: 'user' | 'ai') => {
+      if (!activeConversationId) return;
+      setContextSaveBusyMessageId(messageId);
+      try {
+        const response = await Api.saveConversationMessageToContext(activeConversationId, messageId);
+        setContextSavedMessageIds((prev) => {
+          const next = new Set(prev);
+          next.add(messageId);
+          return next;
+        });
+        toast.success(
+          response?.alreadyCaptured
+            ? t('chat.context.alreadySaved', 'Message is already in Context OS')
+            : t('chat.context.saved', 'Saved to Context OS')
+        );
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save message to context:', err);
+        toast.error(t('chat.context.saveFailed', 'Failed to save to Context OS'));
+      } finally {
+        setContextSaveBusyMessageId(null);
+      }
+    },
+    [activeConversationId, t]
+  );
+
   // Deep Thinking: Enable DT mode from hint banner
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
@@ -2292,6 +2475,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           currentScreen: workspaceContext?.type || null,
           selectedObjectId: workspaceContext?.entityId || null,
           selectedObjectType: workspaceContext?.type || null,
+          route: routeInfo,
+          page: (workspaceContext as any)?.entityData || null,
         },
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,
@@ -2492,6 +2677,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       hoveredMessageId={hoveredMessageId}
       setHoveredMessageId={setHoveredMessageId}
       copiedMessageId={copiedMessageId}
+      contextSaveBusyMessageId={contextSaveBusyMessageId}
+      contextSavedMessageIds={contextSavedMessageIds}
       selectedMultiOptions={selectedMultiOptions}
       voiceState={voiceState}
       handleCopyMessage={handleCopyMessage}
@@ -2507,6 +2694,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleSaveAsDecision={handleSaveAsDecision}
       handleSaveAsIdea={handleSaveAsIdea}
       handleSaveAsNote={handleSaveAsNote}
+      handleSaveToContext={handleSaveToContext}
       handleRunDirectedDeepening={handleRunDirectedDeepening}
       handleMultiSelectToggle={handleMultiSelectToggle}
       handleMultiSelectConfirm={handleMultiSelectConfirm}
@@ -2576,27 +2764,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </button>
           )}
 
-          {/* T105: 3rd "Business/Actions" button */}
-          <button
-            onClick={() => {
-              trackFunnelEvent('chat_business_button_clicked', {
-                mode: isSplitMode ? 'split' : 'full',
-                pendingCount: pendingActionsCount,
-              });
-              onNavigateToActions?.();
-            }}
-            data-testid="chat-business-button"
-            className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
-            title={t('aiChat.business', 'Business actions')}
-            aria-label={t('aiChat.business', 'Business actions')}
-          >
-            <Briefcase size={18} strokeWidth={1.75} />
-            {pendingActionsCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
-                {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
-              </span>
-            )}
-          </button>
+          {/* Show the business/actions button only when a real navigation target exists. */}
+          {onNavigateToActions && (
+            <button
+              onClick={() => {
+                trackFunnelEvent('chat_business_button_clicked', {
+                  mode: isSplitMode ? 'split' : 'full',
+                  pendingCount: pendingActionsCount,
+                });
+                onNavigateToActions();
+              }}
+              data-testid="chat-business-button"
+              className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+              title={t('aiChat.business', 'Business actions')}
+              aria-label={t('aiChat.business', 'Business actions')}
+            >
+              <Briefcase size={18} strokeWidth={1.75} />
+              {pendingActionsCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
+                  {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* T012: Important signals (chat-active) */}
           {signalsEnabled && (
@@ -2613,6 +2803,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         </div>
 
         <div className="flex items-center gap-0.5">
+          <V8ContextIndicator conversationId={activeConversationId} />
           {isPrivateMode && (
             <div
               className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
@@ -2830,6 +3021,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           open={signalsOpen}
           onClose={() => setSignalsOpen(false)}
           projectId={workspaceContext?.projectId || null}
+        />
+      )}
+
+      {/* AI Table Builder slide-over panel */}
+      {tableBuilderOpen && (
+        <ChatToSchemaPanel
+          workspaceId={workspaceContext?.entityId || ''}
+          initialMessage={tableBuilderInitialMsg}
+          slideOver
+          companyContext={{
+            workspaceName: workspaceContext?.entityName || workspaceContext?.projectName,
+            moduleName: workspaceContext?.type || undefined,
+          }}
+          onExecuted={() => {
+            const uiLang = (i18n.language || 'en').split('-')[0];
+            addChatMessage({
+              id: `table-created-${Date.now()}`,
+              role: 'ai',
+              content: uiLang === 'pl'
+                ? 'Tabela została utworzona pomyślnie! Możesz ją teraz znaleźć w zakładce My Work.'
+                : 'Table created successfully! You can find it in the My Work tab.',
+              timestamp: new Date(),
+            });
+            setTableBuilderOpen(false);
+            setTableBuilderInitialMsg(undefined);
+          }}
+          onClose={() => {
+            setTableBuilderOpen(false);
+            setTableBuilderInitialMsg(undefined);
+          }}
         />
       )}
     </div>

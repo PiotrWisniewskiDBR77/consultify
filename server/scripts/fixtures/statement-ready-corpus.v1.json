@@ -1,0 +1,156 @@
+[
+  {
+    "fixtureFile": "bs-basic.json",
+    "expected": {
+      "statementType": "BS",
+      "documentClass": "native_pdf",
+      "selectedPeriodLabel": "2025",
+      "selectionStrategy": "detected_period_fallback",
+      "extracted": [
+        { "label": "Total Assets 2025", "value": 1200 },
+        { "label": "Current Assets 2025", "value": 450 },
+        { "label": "Cash and cash equivalents 2025", "value": 210 },
+        { "label": "Accounts Receivable 2025", "value": 160 },
+        { "label": "Total Liabilities 2025", "value": 700 },
+        { "label": "Current Liabilities 2025", "value": 240 },
+        { "label": "Equity 2025", "value": 500 }
+      ],
+      "mapped": [
+        { "label": "Total Assets 2025", "canonicalId": "fsl-bs-total-assets" },
+        { "label": "Current Assets 2025", "canonicalId": "fsl-bs-current-assets" },
+        { "label": "Cash and cash equivalents 2025", "canonicalId": "fsl-bs-cash" },
+        { "label": "Accounts Receivable 2025", "canonicalId": "fsl-bs-ar" },
+        { "label": "Total Liabilities 2025", "canonicalId": "fsl-bs-total-liabilities" },
+        { "label": "Current Liabilities 2025", "canonicalId": "fsl-bs-current-liabilities" },
+        { "label": "Equity 2025", "canonicalId": "fsl-bs-equity" }
+      ]
+    }
+  },
+  {
+    "fixtureFile": "bs-polish-manufacturing.xlsx.json",
+    "expected": {
+      "statementType": "BS",
+      "documentClass": "spreadsheet",
+      "selectedPeriodLabel": "2025",
+      "selectionStrategy": "detected_period_fallback",
+      "extracted": [
+        { "label": "Aktywa razem 2025", "value": 5200 },
+        { "label": "Środki pieniężne i ich ekwiwalenty 2025", "value": 680 },
+        { "label": "Należności handlowe 2025", "value": 740 },
+        { "label": "Pozostałe aktywa operacyjne 2025", "value": 320 },
+        { "label": "Zobowiązania razem 2025", "value": 2860 },
+        { "label": "Zobowiązania krótkoterminowe 2025", "value": 1180 },
+        { "label": "Kapitał własny ogółem 2025", "value": 2340 }
+      ],
+      "mapped": [
+        { "label": "Aktywa razem 2025", "canonicalId": "fsl-bs-total-assets" },
+        { "label": "Środki pieniężne i ich ekwiwalenty 2025", "canonicalId": "fsl-bs-cash" },
+        { "label": "Należności handlowe 2025", "canonicalId": "fsl-bs-ar" },
+        { "label": "Pozostałe aktywa operacyjne 2025", "canonicalId": "fsl-bs-other-current-assets" },
+        { "label": "Zobowiązania razem 2025", "canonicalId": "fsl-bs-total-liabilities" },
+        { "label": "Zobowiązania krótkoterminowe 2025", "canonicalId": "fsl-bs-current-liabilities" },
+        { "label": "Kapitał własny ogółem 2025", "canonicalId": "fsl-bs-equity" }
+      ]
+    }
+  },
+  {
+    "fixtureFile": "cf-basic.json",
+    "expected": {
+      "statementType": "CF",
+      "documentClass": "native_pdf",
+      "selectedPeriodLabel": "2025",
+      "selectionStrategy": "detected_period_fallback",
+      "extracted": [
+        { "label": "Operating cash flow 2025", "value": 420 },
+        { "label": "Capital expenditures 2025", "value": -120 },
+        { "label": "Free cash flow 2025", "value": 300 },
+        { "label": "Financing cash flow 2025", "value": -80 },
+        { "label": "Investing cash flow 2025", "value": -140 }
+      ],
+      "mapped": [
+        { "label": "Operating cash flow 2025", "canonicalId": "fsl-cf-operating" },
+        { "label": "Capital expenditures 2025", "canonicalId": "fsl-cf-capex" },
+        { "label": "Free cash flow 2025", "canonicalId": "fsl-cf-fcf" },
+        { "label": "Financing cash flow 2025", "canonicalId": "fsl-cf-financing" },
+        { "label": "Investing cash flow 2025", "canonicalId": "fsl-cf-investing" }
+      ]
+    }
+  },
+  {
+    "fixtureFile": "cf-polish-manufacturing.json",
+    "expected": {
+      "statementType": "CF",
+      "documentClass": "native_pdf",
+      "selectedPeriodLabel": "2025",
+      "selectionStrategy": "detected_period_fallback",
+      "extracted": [
+        { "label": "Przepływy pieniężne netto z działalności operacyjnej 2025", "value": 880 },
+        { "label": "Nakłady inwestycyjne 2025", "value": -260 },
+        { "label": "Przepływy pieniężne netto z działalności inwestycyjnej 2025", "value": -310 },
+        { "label": "Przepływy pieniężne netto z działalności finansowej 2025", "value": -180 },
+        { "label": "Wolne przepływy pieniężne 2025", "value": 620 }
+      ],
+      "mapped": [
+        { "label": "Przepływy pieniężne netto z działalności operacyjnej 2025", "canonicalId": "fsl-cf-operating" },
+        { "label": "Nakłady inwestycyjne 2025", "canonicalId": "fsl-cf-capex" },
+        { "label": "Przepływy pieniężne netto z działalności inwestycyjnej 2025", "canonicalId": "fsl-cf-investing" },
+        { "label": "Przepływy pieniężne netto z działalności finansowej 2025", "canonicalId": "fsl-cf-financing" },
+        { "label": "Wolne przepływy pieniężne 2025", "canonicalId": "fsl-cf-fcf" }
+      ]
+    }
+  },
+  {
+    "fixtureFile": "pl-basic.json",
+    "expected": {
+      "statementType": "P&L",
+      "documentClass": "native_pdf",
+      "selectedPeriodLabel": "2025",
+      "selectionStrategy": "detected_period_fallback",
+      "extracted": [
+        { "label": "Revenue 2025", "value": 2400 },
+        { "label": "Cost of goods sold 2025", "value": -1500 },
+        { "label": "Gross profit 2025", "value": 900 },
+        { "label": "Operating expenses 2025", "value": -300 },
+        { "label": "EBITDA 2025", "value": 600 },
+        { "label": "EBIT 2025", "value": 520 },
+        { "label": "Net income 2025", "value": 410 }
+      ],
+      "mapped": [
+        { "label": "Revenue 2025", "canonicalId": "fsl-pl-revenue" },
+        { "label": "Cost of goods sold 2025", "canonicalId": "fsl-pl-cogs" },
+        { "label": "Gross profit 2025", "canonicalId": "fsl-pl-gross" },
+        { "label": "Operating expenses 2025", "canonicalId": "fsl-pl-opex" },
+        { "label": "EBITDA 2025", "canonicalId": "fsl-pl-ebitda" },
+        { "label": "EBIT 2025", "canonicalId": "fsl-pl-ebit" },
+        { "label": "Net income 2025", "canonicalId": "fsl-pl-net" }
+      ]
+    }
+  },
+  {
+    "fixtureFile": "pl-polish-manufacturing.json",
+    "expected": {
+      "statementType": "P&L",
+      "documentClass": "native_pdf",
+      "selectedPeriodLabel": "2025",
+      "selectionStrategy": "detected_period_fallback",
+      "extracted": [
+        { "label": "Przychody ze sprzedaży 2025", "value": 3820 },
+        { "label": "Koszt własny sprzedaży 2025", "value": -2460 },
+        { "label": "Zysk brutto na sprzedaży 2025", "value": 1360 },
+        { "label": "Koszty operacyjne 2025", "value": -540 },
+        { "label": "EBITDA 2025", "value": 920 },
+        { "label": "EBIT 2025", "value": 820 },
+        { "label": "Zysk netto 2025", "value": 610 }
+      ],
+      "mapped": [
+        { "label": "Przychody ze sprzedaży 2025", "canonicalId": "fsl-pl-revenue" },
+        { "label": "Koszt własny sprzedaży 2025", "canonicalId": "fsl-pl-cogs" },
+        { "label": "Zysk brutto na sprzedaży 2025", "canonicalId": "fsl-pl-gross" },
+        { "label": "Koszty operacyjne 2025", "canonicalId": "fsl-pl-opex" },
+        { "label": "EBITDA 2025", "canonicalId": "fsl-pl-ebitda" },
+        { "label": "EBIT 2025", "canonicalId": "fsl-pl-ebit" },
+        { "label": "Zysk netto 2025", "canonicalId": "fsl-pl-net" }
+      ]
+    }
+  }
+]

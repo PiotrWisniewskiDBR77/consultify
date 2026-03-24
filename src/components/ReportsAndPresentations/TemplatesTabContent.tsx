@@ -4,16 +4,22 @@
  * Connected to /api/report-builder/templates + /api/presentations/templates
  */
 
-import { Archive, BookTemplate, Copy, Edit, FileText, Loader2, Play, Presentation } from 'lucide-react';
+import { BookTemplate, Copy, Edit, FileText, Loader2, Play, Presentation } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  FilterableTable,
+  type FilterChip,
+  type GridItem,
+  GridView,
+  type TableColumn,
+  type ViewMode,
+} from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
-import { FilterableTable, type FilterChip, type GridItem, GridView, type TableColumn, type ViewMode } from '../shared/ModuleHub';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-
-import { TemplatePreview } from './previews/TemplatePreview';
+import { TemplatePreviewBody, TemplatePreviewFooter } from './previews/TemplatePreview';
 import { TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
 interface TemplatesTabContentProps {
@@ -23,6 +29,7 @@ interface TemplatesTabContentProps {
   onFilterChange: (filters: FilterChip[]) => void;
   templates: TemplateItem[];
   loading: boolean;
+  error?: string | null;
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
@@ -32,6 +39,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   onFilterChange,
   templates,
   loading,
+  error,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -44,8 +52,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       const q = searchQuery.toLowerCase();
       data = data.filter(
         (item) =>
-          item.title.toLowerCase().includes(q) ||
-          (item.description || '').toLowerCase().includes(q)
+          item.title.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q)
       );
     }
     for (const f of activeFilters) {
@@ -83,7 +90,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'report', label: isPolish ? 'Raport' : 'Report', color: 'bg-blue-400' },
-          { value: 'presentation', label: isPolish ? 'Prezentacja' : 'Presentation', color: 'bg-purple-400' },
+          {
+            value: 'presentation',
+            label: isPolish ? 'Prezentacja' : 'Presentation',
+            color: 'bg-purple-400',
+          },
         ],
         render: (row: TemplateItem) => {
           const meta = TEMPLATE_TYPE_META[row.type];
@@ -130,8 +141,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         render: (row: TemplateItem) => (
           <span className="text-sm text-slate-600 dark:text-slate-300">
             {row.scope === 'application'
-              ? (isPolish ? 'System' : 'Application')
-              : (isPolish ? 'Organizacja' : 'Organization')}
+              ? isPolish
+                ? 'System'
+                : 'Application'
+              : isPolish
+                ? 'Organizacja'
+                : 'Organization'}
           </span>
         ),
       },
@@ -143,7 +158,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterOptions: [
           { value: 'active', label: isPolish ? 'Aktywny' : 'Active', color: 'bg-emerald-400' },
           { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
-          { value: 'archived', label: isPolish ? 'Zarchiwizowany' : 'Archived', color: 'bg-slate-500' },
+          {
+            value: 'archived',
+            label: isPolish ? 'Zarchiwizowany' : 'Archived',
+            color: 'bg-slate-500',
+          },
         ],
       },
       {
@@ -155,7 +174,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           const d = new Date(row.updatedAt);
           return (
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
             </span>
           );
         },
@@ -198,19 +221,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         }
       },
     },
-    {
-      id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
-      icon: Archive,
-      divider: true,
-      variant: 'danger',
-      onClick: () => {},
-    },
   ];
 
-  const selectedItem = selectedId
-    ? filteredData.find((i) => i.id === selectedId) || null
-    : null;
+  const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
   const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;
   const itemIds = filteredData.map((i) => i.id);
 
@@ -218,6 +231,25 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (error && templates.length === 0 && !searchQuery && activeFilters.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('rap.errors.realTemplatesTitle', 'Real templates source needs attention')}
+          </div>
+          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
+          <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t(
+              'rap.errors.realSourceHint',
+              'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -254,7 +286,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         selectedItem={previewItem}
         onSelect={setSelectedId}
         itemIds={itemIds}
-        renderPreview={(item) => <TemplatePreview template={item} />}
+        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
+        renderPreview={(item) => <TemplatePreviewBody template={item} />}
+        renderPreviewFooter={(item) => <TemplatePreviewFooter template={item} />}
       >
         <FilterableTable
           columns={columns}

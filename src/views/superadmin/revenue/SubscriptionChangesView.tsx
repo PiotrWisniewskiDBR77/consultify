@@ -136,7 +136,9 @@ export const SubscriptionChangesView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Subscription Changes</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Subscription Changes
+          </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage subscription upgrades, downgrades, and cancellations
           </p>
@@ -161,49 +163,37 @@ export const SubscriptionChangesView: React.FC = () => {
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Total Changes
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Total Changes</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pending}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Pending
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Pending</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.upgrades}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Upgrades
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Upgrades</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-orange-400">{stats.downgrades}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Downgrades
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Downgrades</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-red-400">{stats.cancellations}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Cancellations
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Cancellations</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.approved}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Approved
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Approved</div>
             </CardContent>
           </Card>
           <Card>
@@ -211,9 +201,7 @@ export const SubscriptionChangesView: React.FC = () => {
               <div className="text-lg font-bold text-indigo-400">
                 {formatCurrency(stats.totalProration || 0)}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Total Proration
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Total Proration</div>
             </CardContent>
           </Card>
         </div>

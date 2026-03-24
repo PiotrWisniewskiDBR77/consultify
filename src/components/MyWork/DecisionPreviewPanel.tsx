@@ -1,15 +1,12 @@
 import {
   AlarmClockOff,
   Bell,
-  Calendar,
   Check,
   ChevronDown,
-  Clock,
   Copy,
   ExternalLink,
   Loader2,
   MessageSquare,
-  MoreVertical,
   Sparkles,
   TrendingUp,
   UserPlus,
@@ -19,6 +16,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  actionPillClass,
+  type ActionRow,
+  type DetailsAction,
+  type ExtraCopyFormat,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -185,157 +196,146 @@ export const DecisionPreviewBody: React.FC<{
   onCloseDetailsMenu,
   onDetailsAction,
 }) => {
-  const metaPillBase =
-    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
-
-  const urgencyPill =
-    brief?.urgency === 'urgent'
-      ? `${metaPillBase} bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300`
-      : `${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`;
-
   const status = String(decision?.status || 'PENDING').toUpperCase();
-  const statusPill =
+  const statusClassName =
     status === 'APPROVED'
-      ? `${metaPillBase} bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300`
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
       : status === 'REJECTED'
-        ? `${metaPillBase} bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300`
-        : status === 'DEFERRED'
-          ? `${metaPillBase} bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300`
-          : status === 'ESCALATED'
-            ? `${metaPillBase} bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300`
-            : `${metaPillBase} bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300`;
+        ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+        : status === 'DEFERRED' || status === 'ESCALATED'
+          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+          : 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300';
 
   const pri = String(decision?.priority || 'MEDIUM').toUpperCase();
-  const priPill =
+  const priClassName =
     pri === 'CRITICAL'
-      ? `${metaPillBase} bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300`
+      ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
       : pri === 'HIGH'
-        ? `${metaPillBase} bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300`
-        : `${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`;
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
+
+  const priLabel =
+    isPolish
+      ? pri === 'CRITICAL'
+        ? 'Krytyczne'
+        : pri === 'HIGH'
+          ? 'Wysoki'
+          : pri === 'MEDIUM'
+            ? 'Średni'
+            : 'Niski'
+      : pri[0] + pri.slice(1).toLowerCase();
+
+  const urgencyClassName =
+    brief?.urgency === 'urgent'
+      ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+      : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
+
+  const pills: MetaPill[] = [
+    {
+      label: isPolish ? status : status[0] + status.slice(1).toLowerCase(),
+      className: statusClassName,
+    },
+    { label: priLabel, className: priClassName },
+    ...(brief?.summary
+      ? [
+          {
+            label:
+              brief.urgency === 'urgent'
+                ? isPolish
+                  ? 'Pilne'
+                  : 'Urgent'
+                : isPolish
+                  ? 'Normalne'
+                  : 'Normal',
+            className: urgencyClassName,
+          } as MetaPill,
+        ]
+      : []),
+    ...(decision?.projectName
+      ? [
+          {
+            label: decision.projectName,
+            className: 'bg-transparent text-slate-600 dark:text-slate-300 truncate max-w-[120px]',
+          } as MetaPill,
+        ]
+      : []),
+  ];
+
+  const trailing =
+    decision?.dueDate ? (
+      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+        {formatShortDate(decision.dueDate) || ''}
+      </span>
+    ) : (
+      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic">
+        {isPolish ? 'Bez terminu' : 'No due date'}
+      </span>
+    );
 
   const detailsText = detailsOverride ?? String(decision?.description || '').trim();
 
   return (
     <div className="space-y-4">
-      {/* Brief/meta */}
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={statusPill}>{isPolish ? status : status[0] + status.slice(1).toLowerCase()}</span>
-            <span className={priPill}>
-              {isPolish
-                ? pri === 'CRITICAL'
-                  ? 'Krytyczne'
-                  : pri === 'HIGH'
-                    ? 'Wysoki'
-                    : pri === 'MEDIUM'
-                      ? 'Średni'
-                      : 'Niski'
-                : pri[0] + pri.slice(1).toLowerCase()}
-            </span>
-            {brief?.summary ? (
-              <>
-                <span className="text-slate-300 dark:text-navy-600">·</span>
-                <span className={urgencyPill}>
-                  {brief.urgency === 'urgent'
-                    ? isPolish
-                      ? 'Pilne'
-                      : 'Urgent'
-                    : isPolish
-                      ? 'Normalne'
-                      : 'Normal'}
-                </span>
-              </>
-            ) : null}
-            {decision?.projectName ? (
-              <>
-                <span className="text-slate-300 dark:text-navy-600">·</span>
-                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 truncate">
-                  {decision.projectName}
-                </span>
-              </>
-            ) : null}
-          </div>
-          {decision?.dueDate ? (
-            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-              {formatShortDate(decision.dueDate) || ''}
-            </span>
-          ) : (
-            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic">
-              {isPolish ? 'Bez terminu' : 'No due date'}
-            </span>
-          )}
-        </div>
+      <PreviewMetaCard pills={pills} trailing={trailing}>
         {brief?.recommendation ? (
           <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {clampText(brief.recommendation, 140)}
           </div>
         ) : null}
-      </div>
+      </PreviewMetaCard>
 
-      {/* Details */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {isPolish ? 'Szczegóły' : 'Details'}
-          </div>
-          <div className="relative">
-            <button
-              onClick={onToggleDetailsMenu}
-              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-              aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-              title={isPolish ? 'Opcje' : 'Options'}
-            >
-              <MoreVertical size={14} />
-            </button>
-            {detailsMenuOpen ? (
-              <>
-                <div className="fixed inset-0 z-40" onClick={onCloseDetailsMenu} />
-                <div className="absolute right-0 top-full mt-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                  <button
-                    onClick={() => onDetailsAction('expand')}
-                    disabled={detailsLoading}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                  >
-                    <ChevronDown size={12} className="text-purple-500" />
-                    {isPolish ? 'Rozwiń' : 'Expand'}
-                  </button>
-                  <button
-                    onClick={() => onDetailsAction('summarize')}
-                    disabled={detailsLoading}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                  >
-                    <Sparkles size={12} className="text-purple-500" />
-                    {isPolish ? 'Podsumuj' : 'Summarize'}
-                  </button>
-                  <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                  <button
-                    onClick={() => onDetailsAction('copy')}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
-                  >
-                    <Copy size={12} />
-                    {isPolish ? 'Kopiuj' : 'Copy'}
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-          {detailsLoading ? (
-            <span className="text-slate-400 dark:text-slate-500">
-              {isPolish ? 'Generowanie…' : 'Generating…'}
-            </span>
-          ) : detailsText ? (
-            detailsText
-          ) : (
-            <span className="text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Brak opisu.' : 'No description.'}
-            </span>
-          )}
-        </div>
-      </div>
+      <PreviewDetailsSection
+        text={detailsText}
+        loading={detailsLoading}
+        customActions={[
+          {
+            id: 'expand',
+            label: isPolish ? 'Rozwiń' : 'Expand',
+            icon: ChevronDown,
+            onClick: () => onDetailsAction('expand'),
+            disabled: detailsLoading,
+          },
+          {
+            id: 'summarize',
+            label: isPolish ? 'Podsumuj' : 'Summarize',
+            icon: Sparkles,
+            onClick: () => onDetailsAction('summarize'),
+            disabled: detailsLoading,
+          },
+          {
+            id: 'copy',
+            label: isPolish ? 'Kopiuj' : 'Copy',
+            icon: Copy,
+            onClick: () => onDetailsAction('copy'),
+          },
+          {
+            id: 'copy-md',
+            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+            onClick: () =>
+              void copyAsMarkdown(
+                {
+                  title: decision?.title || '',
+                  status: decision?.status ?? undefined,
+                  description: detailsText,
+                },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+          {
+            id: 'copy-slack',
+            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+            onClick: () =>
+              void copyForSlack(
+                {
+                  title: decision?.title || '',
+                  status: decision?.status ?? undefined,
+                  description: detailsText,
+                },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+        ] as DetailsAction[]}
+      />
     </div>
   );
 };
@@ -391,184 +391,124 @@ export const DecisionPreviewFooter: React.FC<{
   onCloseSnooze,
   onSnooze,
 }) => {
-  const footerPillBase =
-    'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-  const hintChip =
-    'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98] disabled:opacity-40';
+  const hintSummarize = isPolish ? 'Podsumuj kontekst' : 'Summarize context';
+  const hintPropose = isPolish ? 'Zaproponuj opcje' : 'Propose options';
+  const hintAssess = isPolish ? 'Oceń ryzyko' : 'Assess risk';
+  const hints = [hintSummarize, hintPropose, hintAssess];
 
-  const relations = (decision?.linkedItems || []).slice(0, 6);
+  const hintToIntent = (hint: string): DecisionAiIntent => {
+    if (hint === hintSummarize) return 'summarize_context';
+    if (hint === hintPropose) return 'propose_options';
+    if (hint === hintAssess) return 'assess_risk';
+    return 'summarize_context';
+  };
+
+  const relationItems: RelationItem[] = (decision?.linkedItems || [])
+    .slice(0, 6)
+    .map((r) => ({
+      label: clampText(String(r.title || r.id), 42),
+      tone: relationTone(r.type),
+    }));
+
+  const actionRows: ActionRow[] = [
+    ...(canAct
+      ? [
+          {
+            buttons: [
+              {
+                label: isPolish ? 'Przyjęta' : 'Approve',
+                icon: Check,
+                onClick: onApprove,
+                colorScheme: 'emerald' as const,
+                flex: true,
+                shortcut: 'A',
+              },
+              {
+                label: isPolish ? 'Odrzucona' : 'Reject',
+                icon: X,
+                onClick: onReject,
+                colorScheme: 'red' as const,
+                flex: true,
+                shortcut: 'R',
+              },
+            ],
+          },
+        ]
+      : []),
+    {
+      buttons: [
+        {
+          label: isPolish ? 'Więcej info' : 'More info',
+          icon: MessageSquare,
+          onClick: onMoreInfo,
+          colorScheme: 'neutral' as const,
+          flex: true,
+          shortcut: 'I',
+        },
+        ...(canAct
+          ? [
+              {
+                label: isPolish ? 'Deleguj' : 'Delegate',
+                icon: UserPlus,
+                onClick: onDelegate,
+                colorScheme: 'neutral' as const,
+                flex: true,
+                shortcut: 'G',
+              },
+            ]
+          : [
+              {
+                label: isPolish ? 'Przypomnij' : 'Remind',
+                icon: Bell,
+                onClick: onRemind,
+                colorScheme: 'blue' as const,
+                flex: true,
+                shortcut: 'M',
+              },
+            ]),
+      ],
+    },
+  ];
 
   return (
     <div className="space-y-0">
-      {/* AI hints */}
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-            <Sparkles size={12} />
-            <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-          </div>
-          <div className="relative">
-            <button
-              onClick={onToggleAiMenu}
-              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-              aria-label={isPolish ? 'Opcje AI' : 'AI options'}
-              title={isPolish ? 'Opcje' : 'Options'}
-            >
-              <MoreVertical size={14} />
-            </button>
-            {aiMenuOpen ? (
-              <>
-                <div className="fixed inset-0 z-40" onClick={onCloseAiMenu} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                  <button
-                    onClick={onRegenerateAi}
-                    className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                  >
-                    {isPolish ? 'Regeneruj' : 'Regenerate'}
-                  </button>
-                  <button
-                    onClick={onCopyAi}
-                    disabled={!aiText}
-                    className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40"
-                  >
-                    {isPolish ? 'Kopiuj' : 'Copy'}
-                  </button>
-                  <button
-                    onClick={onClearAi}
-                    disabled={!aiText && !aiError}
-                    className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40"
-                  >
-                    {isPolish ? 'Wyczyść' : 'Clear'}
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="mt-2 flex flex-wrap gap-2">
-          <button
-            className={hintChip}
-            onClick={() => onRunAi('summarize_context')}
-            disabled={aiLoading || !decision?.id}
-          >
-            {isPolish ? 'Podsumuj kontekst' : 'Summarize context'}
-          </button>
-          <button
-            className={hintChip}
-            onClick={() => onRunAi('propose_options')}
-            disabled={aiLoading || !decision?.id}
-          >
-            {isPolish ? 'Zaproponuj opcje' : 'Propose options'}
-          </button>
-          <button
-            className={hintChip}
-            onClick={() => onRunAi('assess_risk')}
-            disabled={aiLoading || !decision?.id}
-          >
-            {isPolish ? 'Oceń ryzyko' : 'Assess risk'}
-          </button>
-        </div>
-
-        {aiLoading ? (
-          <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            {isPolish ? 'Analiza…' : 'Thinking…'}
-          </div>
-        ) : aiError ? (
-          <div className="mt-2 text-xs text-red-600 dark:text-red-400">{aiError}</div>
-        ) : aiText ? (
-          <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-            {aiText}
-          </div>
-        ) : null}
+        <PreviewAIHintStrip
+          hints={hints}
+          loading={aiLoading}
+          result={aiText}
+          error={aiError}
+          onRunHint={(hint) => onRunAi(hintToIntent(hint))}
+          onRegenerate={onRegenerateAi}
+          onCopy={onCopyAi}
+          onClear={onClearAi}
+          disabled={!decision?.id}
+        />
       </div>
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-      {/* Relations (2 rows) */}
-      <div className="min-h-[4.5rem]">
-        <div className="flex flex-wrap gap-2 py-1">
-          {relations.length > 0 ? (
-            relations.map((r) => (
-              <span
-                key={`${r.type}:${r.id}`}
-                className={`inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${relationTone(
-                  r.type
-                )}`}
-                title={r.title || r.id}
-              >
-                {clampText(String(r.title || r.id), 42)}
-              </span>
-            ))
-          ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {isPolish ? 'Brak powiązań' : 'No relations'}
-            </span>
-          )}
-        </div>
-      </div>
+      <PreviewRelations
+        items={relationItems}
+        emptyLabel={isPolish ? 'Brak powiązań' : 'No relations'}
+      />
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-      {/* Actions */}
       <div className="space-y-2.5 py-1">
-        {canAct ? (
-          <div className="flex gap-2">
-            <button
-              onClick={onApprove}
-              className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
-            >
-              <Check size={14} />
-              {isPolish ? 'Przyjęta' : 'Approve'}
-            </button>
-            <button
-              onClick={onReject}
-              className={`${footerPillBase} flex-1 border-red-300/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-200 hover:bg-red-100/70 dark:hover:bg-red-500/15`}
-            >
-              <X size={14} />
-              {isPolish ? 'Odrzucona' : 'Reject'}
-            </button>
-          </div>
-        ) : null}
-
-        <div className="flex gap-2">
-          <button
-            onClick={onMoreInfo}
-            className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-          >
-            <MessageSquare size={14} />
-            {isPolish ? 'Więcej info' : 'More info'}
-          </button>
-          {canAct ? (
-            <button
-              onClick={onDelegate}
-              className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-            >
-              <UserPlus size={14} />
-              {isPolish ? 'Deleguj' : 'Delegate'}
-            </button>
-          ) : (
-            <button
-              onClick={onRemind}
-              className={`${footerPillBase} flex-1 border-blue-300/40 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-200 hover:bg-blue-100/70 dark:hover:bg-blue-500/15`}
-            >
-              <Bell size={14} />
-              {isPolish ? 'Przypomnij' : 'Remind'}
-            </button>
-          )}
-        </div>
+        <PreviewActionBar rows={actionRows} />
 
         <div className="flex gap-2">
           <button
             onClick={onRemind}
-            className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
+            className={actionPillClass('neutral', 'flex-1')}
           >
             <Bell size={14} />
             {isPolish ? 'Przypomnij' : 'Remind'}
           </button>
           <button
             onClick={onEscalate}
-            className={`${footerPillBase} border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
+            className={actionPillClass('amber', '')}
           >
             <TrendingUp size={14} />
             {isPolish ? 'Eskaluj' : 'Escalate'}
@@ -576,11 +516,14 @@ export const DecisionPreviewFooter: React.FC<{
           <div className="relative flex-1">
             <button
               onClick={onToggleSnooze}
-              className={`${footerPillBase} w-full border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
+              className={actionPillClass('neutral', 'w-full flex-1')}
             >
               <AlarmClockOff size={14} />
               {isPolish ? 'Odłóż' : 'Snooze'}
-              <ChevronDown size={12} className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={12}
+                className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
+              />
             </button>
             {snoozeOpen ? (
               <>
@@ -655,7 +598,11 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     try {
       setLoading(true);
       const d = (await Api.getDecision(decisionId)) as DecisionPreviewData;
-      setDecision({ ...d, id: String((d as any)?.id || decisionId), title: String((d as any)?.title || 'Decision') });
+      setDecision({
+        ...d,
+        id: String((d as any)?.id || decisionId),
+        title: String((d as any)?.title || 'Decision'),
+      });
       try {
         const b = (await Api.get(`/my-work/decisions/${decisionId}/brief`)) as DecisionBrief;
         setBrief(b && typeof (b as any)?.summary === 'string' ? b : null);
@@ -854,7 +801,9 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     try {
       await Api.escalateDecision(
         decisionId,
-        isPolish ? 'Eskalacja z preview — wymaga reakcji' : 'Escalated from preview — needs attention'
+        isPolish
+          ? 'Eskalacja z preview — wymaga reakcji'
+          : 'Escalated from preview — needs attention'
       );
       toast.success(isPolish ? 'Eskaluowano' : 'Escalated');
       onDidMutate?.();

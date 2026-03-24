@@ -8,10 +8,13 @@ import {
   MessageSquare,
   SearchCode,
   ShieldAlert,
+  Upload,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
 
 export interface PageTemplate {
   id: string;
@@ -270,12 +273,21 @@ interface NewPageModalProps {
   open: boolean;
   onClose: () => void;
   onSelectTemplate: (template: PageTemplate) => void;
+  /** V4-NOTE-01: When upload completes, receives the created page */
+  onUploadComplete?: (page: any) => void;
 }
 
-export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSelectTemplate }) => {
+export const NewPageModal: React.FC<NewPageModalProps> = ({
+  open,
+  onClose,
+  onSelectTemplate,
+  onUploadComplete,
+}) => {
   const { i18n } = useTranslation();
   const pl = i18n.language === 'pl';
   const overlayRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleSelect = useCallback(
     async (tmpl: PageTemplate) => {
@@ -359,6 +371,25 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSel
     [onSelectTemplate, onClose]
   );
 
+  const handleUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !onUploadComplete) return;
+      setUploading(true);
+      try {
+        const page = await Api.uploadNotebookFile(file);
+        onUploadComplete(page);
+        onClose();
+      } catch {
+        // toast handled by caller or Api
+      } finally {
+        setUploading(false);
+        e.target.value = '';
+      }
+    },
+    [onUploadComplete, onClose]
+  );
+
   useEffect(() => {
     if (!open) return;
     const handleEsc = (e: KeyboardEvent) => {
@@ -392,6 +423,42 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSel
         </div>
 
         <div className="p-4">
+          {onUploadComplete && (
+            <div className="mb-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.xlsx,.xls,.txt,.md"
+                className="hidden"
+                onChange={handleUpload}
+                disabled={uploading}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-500/5 transition-colors"
+              >
+                <div className="shrink-0 p-2.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
+                  <Upload size={20} />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                    {pl ? 'Wgraj plik (PDF, XLSX, TXT)' : 'Upload file (PDF, XLSX, TXT)'}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {uploading
+                      ? pl
+                        ? 'Przetwarzam…'
+                        : 'Processing…'
+                      : pl
+                        ? 'Tekst zostanie wyekstrahowany do nowej notatki'
+                        : 'Text will be extracted into a new note'}
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             {pl
               ? 'Wybierz szablon, aby szybciej zacząć pisać'

@@ -52,6 +52,18 @@ interface Model {
   status: string;
   version: number;
   assumptions_json: Record<string, any>;
+  source_statement_id?: string | null;
+  source_statement?: {
+    id: string;
+    statement_type: string;
+    period_label: string;
+    period_start: string;
+    period_end: string;
+    currency: string;
+    scaling: string;
+    source_file_name: string;
+    status: string;
+  } | null;
   events?: ModelEvent[];
 }
 
@@ -157,10 +169,25 @@ const EVENT_TYPES = [
   { value: 'dividend', label: 'Dividend', labelPl: 'Dywidenda', cf: 'financing', icon: '🎯' },
 ];
 
-const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  draft: { color: 'slate', icon: <Edit3 size={12} /> },
-  review: { color: 'amber', icon: <AlertTriangle size={12} /> },
-  approved: { color: 'emerald', icon: <CheckCircle2 size={12} /> },
+const STATUS_CONFIG: Record<
+  string,
+  { badgeClass: string; icon: React.ReactNode }
+> = {
+  draft: {
+    badgeClass:
+      'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
+    icon: <Edit3 size={12} />,
+  },
+  review: {
+    badgeClass:
+      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    icon: <AlertTriangle size={12} />,
+  },
+  approved: {
+    badgeClass:
+      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    icon: <CheckCircle2 size={12} />,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -243,6 +270,26 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       setSelectedModel(model);
       setEvents((model as any)?.events || []);
       setAssumptions((model as any)?.assumptions_json || {});
+      try {
+        const [outData, valData] = await Promise.all([
+          Api.get(`/api/financial-modeling/models/${modelId}/outputs`).catch(() => null),
+          Api.get(`/api/financial-modeling/models/${modelId}/validations`).catch(() => null),
+        ]);
+        setOutputs(((outData as any)?.grouped || {}) as Record<string, Record<string, OutputLine[]>>);
+        setValidations(((valData as any)?.validations || []) as ValidationItem[]);
+        setValidationSummary(
+          ((valData as any)?.summary || { total: 0, pass: 0, fail: 0, warning: 0 }) as {
+            total: number;
+            pass: number;
+            fail: number;
+            warning: number;
+          }
+        );
+      } catch {
+        setOutputs({});
+        setValidations([]);
+        setValidationSummary({ total: 0, pass: 0, fail: 0, warning: 0 });
+      }
       setError(null);
       trackFunnelEvent('financial_model_created', { modelId }); // viewed
     } catch (e: any) {
@@ -397,7 +444,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-${cfg.color}-100 text-${cfg.color}-700 dark:bg-${cfg.color}-900/30 dark:text-${cfg.color}-400`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badgeClass}`}
       >
         {cfg.icon} {status.toUpperCase()}
       </span>
@@ -410,11 +457,48 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     return <AlertTriangle size={14} className="text-amber-500" />;
   };
 
-  const formatAmount = (n: number) =>
-    n.toLocaleString(isPl ? 'pl-PL' : 'en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const formatAmount = (n: number, opts?: { decimals?: number }) => {
+    const decimals = opts?.decimals ?? 0;
+    return new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+      signDisplay: 'auto',
+    }).format(n);
+  };
+
+  const formatCurrency = (n: number) => {
+    const currency = selectedModel?.currency || 'PLN';
+    try {
+      return new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(n);
+    } catch {
+      return `${formatAmount(n)} ${currency}`;
+    }
+  };
+
+  const seedSource = selectedModel?.assumptions_json?.seedSource || null;
+  const seedStatus = selectedModel?.assumptions_json?.seedStatus || null;
+  const baselineAssumptions = (assumptions?.baseline || {}) as Record<string, number>;
+  const missingBaselineLines: string[] = Array.isArray(seedStatus?.missingBaselineLines)
+    ? seedStatus.missingBaselineLines
+    : [];
+  const seededInputKeys = new Set(
+    seedSource?.type === 'statement'
+      ? [
+          'initialCash',
+          'initialEquity',
+          'initialDebt',
+          'initialPPE',
+          'initialAR',
+          'initialInventory',
+          'initialAP',
+        ]
+      : []
+  );
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     {
@@ -554,6 +638,46 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
               </div>
             </div>
 
+            {(selectedModel.source_statement || seedSource) && (
+              <div className="mx-6 mt-4 rounded-2xl border border-cyan-200/70 dark:border-cyan-700/40 bg-cyan-50/70 dark:bg-cyan-900/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
+                      {t('finance.model.sourceStatement', 'Source statement')}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                      {selectedModel.source_statement?.period_label ||
+                        seedSource?.periodLabel ||
+                        t('finance.model.manualSeed', 'Manual / zero-seeded model')}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                      {selectedModel.source_statement
+                        ? `${selectedModel.source_statement.statement_type} • ${selectedModel.source_statement.currency} • ${selectedModel.source_statement.status}`
+                        : seedSource?.type === 'statement'
+                          ? t('finance.model.seededFromStatement', 'Seeded from imported statement')
+                          : t('finance.model.seededManually', 'Created without source statement')}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
+                      {t('finance.model.seedStatus', 'Seed status')}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                      {seedSource?.type === 'statement'
+                        ? t('finance.model.seedReady', 'Seeded from statement')
+                        : t('finance.model.seededManually', 'Manual')}
+                    </div>
+                    {missingBaselineLines.length > 0 && (
+                      <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                        {t('finance.model.missingBaselineLines', 'Missing baseline lines')}: {' '}
+                        {missingBaselineLines.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="mx-6 mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
                 <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
@@ -562,10 +686,18 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             )}
 
             {/* Tabs */}
-            <div className="px-6 pt-3 flex gap-1 border-b border-slate-200 dark:border-navy-700">
+            <div
+              role="tablist"
+              aria-label={t('finance.model.tabs', 'Model sections')}
+              className="px-6 pt-3 flex gap-1 border-b border-slate-200 dark:border-navy-700"
+            >
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  aria-controls={`tabpanel-${tab.key}`}
+                  id={`tab-${tab.key}`}
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
                     activeTab === tab.key
@@ -584,10 +716,47 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div
+              role="tabpanel"
+              id={`tabpanel-${activeTab}`}
+              aria-labelledby={`tab-${activeTab}`}
+              className="flex-1 overflow-y-auto p-6"
+            >
               {/* ── Inputs tab ── */}
               {activeTab === 'inputs' && (
                 <div className="max-w-2xl space-y-6">
+                  <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5 space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                        {t('finance.model.seedInputs', 'Seed source and baseline')}
+                      </h3>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {seedSource?.type === 'statement'
+                          ? t('finance.model.seededFromStatement', 'Seeded from statement')
+                          : t('finance.model.seededManually', 'Manual / zero-seeded')}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        ['Revenue', baselineAssumptions.revenue],
+                        ['COGS', baselineAssumptions.cogs],
+                        ['OPEX', baselineAssumptions.opex],
+                        ['Depreciation', baselineAssumptions.depreciation],
+                        ['Interest', baselineAssumptions.interest],
+                        ['Tax', baselineAssumptions.tax],
+                        ['CAPEX', baselineAssumptions.capex],
+                      ].map(([label, value]) => (
+                        <div key={String(label)} className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {label}
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                            {formatAmount(Number(value || 0))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5 space-y-4">
                     <h3 className="font-semibold text-slate-900 dark:text-white">
                       {t('finance.model.initialBalances', 'Initial Balance Sheet')}
@@ -602,9 +771,16 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       { key: 'initialAP', label: 'Accounts Payable', labelPl: 'Zobowiązania' },
                     ].map(({ key, label, labelPl }) => (
                       <div key={key} className="flex items-center justify-between gap-4">
-                        <label className="text-sm text-slate-700 dark:text-slate-300 w-48">
-                          {isPl ? labelPl : label}
-                        </label>
+                        <div className="w-48">
+                          <label className="text-sm text-slate-700 dark:text-slate-300">
+                            {isPl ? labelPl : label}
+                          </label>
+                          {seededInputKeys.has(key) && (
+                            <div className="mt-1 text-[10px] uppercase tracking-wide text-cyan-600 dark:text-cyan-300">
+                              {t('finance.model.importedFromStatement', 'Imported from statement')}
+                            </div>
+                          )}
+                        </div>
                         <input
                           type="number"
                           value={assumptions[key] ?? 0}
@@ -647,10 +823,15 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <div className="text-center py-12 text-slate-400">
                       <Calendar size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
-                        {t(
-                          'finance.model.noEvents',
-                          'No events yet. Add economic events to drive the model.'
-                        )}
+                        {seedSource?.type === 'statement'
+                          ? t(
+                              'finance.model.noEventsSeeded',
+                              'No forecast events yet. This model already has a seeded baseline; add events to project changes on top of it.'
+                            )
+                          : t(
+                              'finance.model.noEvents',
+                              'No events yet. Add economic events to drive the model.'
+                            )}
                       </p>
                     </div>
                   )}
@@ -671,7 +852,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
                               <span>{isPl ? cfg?.labelPl : cfg?.label}</span>
                               <span className="font-mono">
-                                {formatAmount(ev.amount)} {selectedModel.currency}
+                                {formatCurrency(ev.amount)}
                               </span>
                               <span>{ev.recurrence}</span>
                               {ev.growth_rate !== 0 && (
@@ -887,14 +1068,27 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   {Object.keys(outputs).length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
                       <BarChart3 size={32} className="mx-auto mb-3 opacity-40" />
-                      <p>{t('finance.model.noOutputs', 'Click "Compute" to generate outputs')}</p>
+                      <p>
+                        {seedSource?.type === 'statement'
+                          ? t(
+                              'finance.model.noOutputsSeeded',
+                              'Statement connected but compute not run yet. Run compute to generate forecast outputs.'
+                            )
+                          : t('finance.model.noOutputs', 'Click "Compute" to generate outputs')}
+                      </p>
+                      {missingBaselineLines.length > 0 && (
+                        <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                          {t('finance.model.missingBaselineLines', 'Missing baseline lines')}: {' '}
+                          {missingBaselineLines.join(', ')}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm border-collapse">
                         <thead>
                           <tr className="bg-slate-50 dark:bg-navy-800">
-                            <th className="text-left px-3 py-2 font-medium text-slate-500 sticky left-0 bg-slate-50 dark:bg-navy-800 z-10">
+                            <th className="text-left px-3 py-2 font-medium text-slate-500 sticky left-0 bg-slate-50 dark:bg-navy-800 z-10 border-r border-slate-200 dark:border-navy-700 min-w-[180px]">
                               {t('finance.model.line', 'Line')}
                             </th>
                             {Object.keys(outputs).map((period) => (
@@ -936,7 +1130,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                                       : ''
                                   }
                                 >
-                                  <td className="px-3 py-2 text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-navy-950 z-10 whitespace-nowrap">
+                                  <td
+                                    className={`px-3 py-2 text-slate-700 dark:text-slate-300 sticky left-0 z-10 whitespace-nowrap border-r border-slate-100 dark:border-navy-700 ${
+                                      isSummaryLine
+                                        ? 'bg-slate-50 dark:bg-navy-800/50'
+                                        : 'bg-white dark:bg-navy-950'
+                                    }`}
+                                  >
                                     {line.lineName}
                                   </td>
                                   {Object.entries(outputs).map(([period, stmts]) => {
@@ -967,26 +1167,48 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
               {activeTab === 'validation' && (
                 <div className="space-y-4">
                   {/* Summary cards */}
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <SummaryCard
                       label={t('finance.model.totalChecks', 'Total Checks')}
                       value={String(validationSummary.total)}
-                      icon={<Shield size={16} className="text-blue-500" />}
+                      icon={<Shield size={18} className="text-blue-500" />}
+                      accentClass="border-l-blue-500"
                     />
                     <SummaryCard
                       label={t('finance.model.passed', 'Passed')}
                       value={String(validationSummary.pass)}
-                      icon={<CheckCircle2 size={16} className="text-emerald-500" />}
+                      icon={<CheckCircle2 size={18} className="text-emerald-500" />}
+                      accentClass="border-l-emerald-500"
+                      ratio={
+                        validationSummary.total > 0
+                          ? validationSummary.pass / validationSummary.total
+                          : 0
+                      }
+                      ratioColor="bg-emerald-500"
                     />
                     <SummaryCard
                       label={t('finance.model.failed', 'Failed')}
                       value={String(validationSummary.fail)}
-                      icon={<XCircle size={16} className="text-red-500" />}
+                      icon={<XCircle size={18} className="text-red-500" />}
+                      accentClass="border-l-red-500"
+                      ratio={
+                        validationSummary.total > 0
+                          ? validationSummary.fail / validationSummary.total
+                          : 0
+                      }
+                      ratioColor="bg-red-500"
                     />
                     <SummaryCard
                       label={t('finance.model.warnings', 'Warnings')}
                       value={String(validationSummary.warning)}
-                      icon={<AlertTriangle size={16} className="text-amber-500" />}
+                      icon={<AlertTriangle size={18} className="text-amber-500" />}
+                      accentClass="border-l-amber-500"
+                      ratio={
+                        validationSummary.total > 0
+                          ? validationSummary.warning / validationSummary.total
+                          : 0
+                      }
+                      ratioColor="bg-amber-500"
                     />
                   </div>
 
@@ -1075,6 +1297,19 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                  {validations.length === 0 && (
+                    <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-sm text-slate-500 dark:text-slate-400">
+                      {seedSource?.type === 'statement'
+                        ? t(
+                            'finance.model.validationSeededEmpty',
+                            'Statement connected but compute not run yet. Run compute to generate validation checks.'
+                          )
+                        : t(
+                            'finance.model.validationEmpty',
+                            'No validation results yet. Run compute to evaluate model consistency.'
+                          )}
                     </div>
                   )}
                 </div>
@@ -1186,17 +1421,32 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 };
 
 // ── Sub-components ──
-const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({
-  label,
-  value,
-  icon,
-}) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center gap-3">
-    <div className="p-2 bg-slate-50 dark:bg-navy-800 rounded-lg">{icon}</div>
-    <div>
-      <p className="text-xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+const SummaryCard: React.FC<{
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  accentClass?: string;
+  ratio?: number;
+  ratioColor?: string;
+}> = ({ label, value, icon, accentClass, ratio, ratioColor }) => (
+  <div
+    className={`bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 border-l-4 ${accentClass || 'border-l-slate-300'}`}
+  >
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-slate-50 dark:bg-navy-800 rounded-lg shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{value}</p>
+        <p className="text-xs text-slate-500 mt-1">{label}</p>
+      </div>
     </div>
+    {ratio != null && ratio > 0 && (
+      <div className="mt-3 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${ratioColor || 'bg-slate-400'}`}
+          style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+        />
+      </div>
+    )}
   </div>
 );
 

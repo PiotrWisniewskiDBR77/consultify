@@ -9,6 +9,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 export type AICommandType = 'ask' | 'expand' | 'challenge' | 'action';
 
 interface AIInlineResponseProps {
+  pageId?: string | null;
   commandType: AICommandType;
   noteContent: string;
   noteTitle: string;
@@ -45,6 +46,7 @@ const COMMAND_LABELS: Record<AICommandType, { en: string; pl: string }> = {
 };
 
 export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
+  pageId: _pageId,
   commandType,
   noteContent,
   noteTitle,
@@ -170,7 +172,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium transition-colors"
             >
               <Check size={12} />
-              {pl ? 'Wstaw do notatki' : 'Insert into note'}
+              {pl ? 'Zaproponuj do notatki' : 'Propose for note'}
             </button>
             <button
               onClick={handleCopy}

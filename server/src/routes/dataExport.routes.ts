@@ -6,8 +6,22 @@ import { Request, Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 const isAuthenticated = verifyToken; // alias for compatibility
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+
+async function checkLegalHoldForUser(
+  db: { get: (sql: string, params: any[]) => Promise<any> },
+  userId: string,
+  operation: string
+): Promise<void> {
+  const user = (await db.get('SELECT organization_id FROM users WHERE id = ?', [userId])) as {
+    organization_id: string;
+  } | null;
+  const orgId = user?.organization_id;
+  if (orgId) await requireNoLegalHold(orgId, operation);
+}
 
 const router = Router();
 const db = {
@@ -20,13 +34,13 @@ const db = {
  * POST /api/data-export/request
  * Create a new data export request
  */
-router.post('/request', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
+router.post('/request', verifyToken, isAuthenticated, requireAudit, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-
+    await checkLegalHoldForUser(db, userId, 'Data export request');
     const { format = 'json', includeAIData = true, includeActivityLogs = true } = req.body;
 
     // Create export request record
@@ -41,6 +55,14 @@ router.post('/request', verifyToken, isAuthenticated, async (req: Request, res: 
     );
 
     logger.info(`[DataExport] Export request created: ${requestId} for user ${userId}`);
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'create',
+      resourceType: 'data_export_request',
+      resourceId: requestId,
+      after: { format, includeAIData, includeActivityLogs, status: 'PENDING' },
+      metadata: { userId },
+    });
 
     res.json({
       success: true,
@@ -49,6 +71,9 @@ router.post('/request', verifyToken, isAuthenticated, async (req: Request, res: 
       estimatedTime: '24-48 hours',
     });
   } catch (error: any) {
+    if (error?.code === 'LEGAL_HOLD') {
+      return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+    }
     logger.error('[DataExport] Failed to create export request:', error);
     res.status(500).json({ error: 'Failed to create export request', message: error.message });
   }
@@ -153,6 +178,7 @@ router.get(
       if (request.expires_at && new Date(request.expires_at) < new Date()) {
         return res.status(410).json({ error: 'Export has expired. Please create a new request.' });
       }
+      await checkLegalHoldForUser(db, userId, 'Data export download');
 
       // For now, generate export inline (in production, would fetch from storage)
       const exportData = await generateUserExport(userId, request.format || 'json');
@@ -163,6 +189,9 @@ router.get(
 
       res.send(exportData);
     } catch (error: any) {
+      if (error?.code === 'LEGAL_HOLD') {
+        return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+      }
       logger.error('[DataExport] Failed to download export:', error);
       res.status(500).json({ error: 'Failed to download export', message: error.message });
     }
@@ -177,13 +206,14 @@ router.post(
   '/delete-request',
   verifyToken,
   isAuthenticated,
+  requireAudit,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
+      await checkLegalHoldForUser(db, userId, 'Account deletion request');
       const { reason, confirmationEmail } = req.body;
 
       // Verify email matches
@@ -209,6 +239,14 @@ router.post(
       );
 
       logger.info(`[DataExport] Deletion request created: ${requestId} for user ${userId}`);
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'create',
+        resourceType: 'data_delete_request',
+        resourceId: requestId,
+        after: { status: 'SCHEDULED', scheduledDate: scheduledDate.toISOString() },
+        metadata: { userId, reason: reason || null },
+      });
 
       res.json({
         success: true,
@@ -219,6 +257,9 @@ router.post(
         scheduledDate: scheduledDate.toISOString(),
       });
     } catch (error: any) {
+      if (error?.code === 'LEGAL_HOLD') {
+        return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
+      }
       logger.error('[DataExport] Failed to create deletion request:', error);
       res.status(500).json({ error: 'Failed to create deletion request', message: error.message });
     }
@@ -233,6 +274,7 @@ router.delete(
   '/delete-request/:requestId',
   verifyToken,
   isAuthenticated,
+  requireAudit,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
@@ -250,6 +292,15 @@ router.delete(
       if ((result as any).changes === 0) {
         return res.status(404).json({ error: 'Deletion request not found or already processed' });
       }
+
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'cancel',
+        resourceType: 'data_delete_request',
+        resourceId: requestId,
+        after: { status: 'CANCELLED' },
+        metadata: { userId },
+      });
 
       res.json({ success: true, message: 'Deletion request cancelled' });
     } catch (error: any) {

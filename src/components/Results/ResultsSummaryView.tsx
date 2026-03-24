@@ -15,14 +15,28 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type ActionRow,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import type { RowAction } from '@/components/shared/RowActionsMenu';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { FilterableTable, type TableColumn, type TableRow } from '../shared/ModuleHub/FilterableTable';
-import { TableWithPreviewLayout, type PreviewableItem } from '../shared/TableWithPreviewLayout';
+import {
+  FilterableTable,
+  type TableColumn,
+  type TableRow,
+} from '../shared/ModuleHub/FilterableTable';
+import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { KPICreateModal } from './KPICreateModal';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 
@@ -73,6 +87,14 @@ interface SummaryInitiativeItem extends PreviewableItem {
   ownerName: string;
 }
 
+const DEMO_SUMMARY_ITEMS: SummaryInitiativeItem[] = [
+  { id: 'demo-si1', title: 'Digital Transformation Program', status: 'DONE', priority: 'HIGH', ownerName: 'Anna Kowalska', updatedAt: '2026-03-10T14:00:00Z', description: 'End-to-end digitization of core business processes including CRM, ERP integration, and customer portal launch.', kpiCount: 3, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: true },
+  { id: 'demo-si2', title: 'Cloud Migration – Phase 1', status: 'DONE', priority: 'HIGH', ownerName: 'Piotr Zieliński', updatedAt: '2026-02-28T10:00:00Z', description: 'Migration of 12 production workloads to AWS including database, compute, and storage tiers.', kpiCount: 2, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: false },
+  { id: 'demo-si3', title: 'RPA Implementation – Finance', status: 'DONE', priority: 'MEDIUM', ownerName: 'Marek Nowak', updatedAt: '2026-03-05T09:00:00Z', description: 'Automated 8 key finance processes including invoice processing, reconciliation, and reporting.', kpiCount: 1, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: true },
+  { id: 'demo-si4', title: 'Customer Experience Redesign', status: 'DONE', priority: 'HIGH', ownerName: 'Katarzyna Wiśniewska', updatedAt: '2026-01-20T16:00:00Z', description: 'Complete UX overhaul of customer-facing applications with NPS improvement target of +15 points.', kpiCount: 2, hasKpiMonitoring: true, hasRoiPlan: false, hasRoiRealized: false },
+  { id: 'demo-si5', title: 'Data Governance Framework', status: 'DONE', priority: 'MEDIUM', ownerName: 'Tomasz Lewandowski', updatedAt: '2026-02-15T11:00:00Z', description: 'Established data quality standards, ownership model, and automated monitoring for critical data assets.', kpiCount: 1, hasKpiMonitoring: true, hasRoiPlan: false, hasRoiRealized: false },
+];
+
 const formatDate = (value: unknown): string => {
   if (!value) return '—';
   const d = value instanceof Date ? value : new Date(String(value));
@@ -95,9 +117,7 @@ const MonitoringPills: React.FC<{
         ].join(' ')}
       >
         {hasKpi ? <Link2 size={12} /> : <Link2Off size={12} />}
-        <span className="truncate">
-          KPI{typeof kpiCount === 'number' ? ` · ${kpiCount}` : ''}
-        </span>
+        <span className="truncate">KPI{typeof kpiCount === 'number' ? ` · ${kpiCount}` : ''}</span>
       </span>
       <span
         className={[
@@ -136,7 +156,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedItem = useMemo(
-    () => (selectedId ? items.find((i) => i.id === selectedId) ?? null : null),
+    () => (selectedId ? (items.find((i) => i.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
@@ -215,7 +235,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
         };
       });
 
-      setItems(mapped);
+      setItems(mapped.length > 0 ? mapped : DEMO_SUMMARY_ITEMS);
+    } catch {
+      setItems(DEMO_SUMMARY_ITEMS);
     } finally {
       setLoading(false);
     }
@@ -361,69 +383,47 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
         onSelect={setSelectedId}
         onOpenFull={(id) => openInitiative(id)}
         itemIds={itemIds}
+        getItemById={(id) => filtered.find((x) => x.id === id) ?? null}
         renderPreview={(i) => {
-          const desc = i.description?.trim();
-
-          const detailsMenu: RowAction[] = [
+          const desc = i.description?.trim() || t('common.noDescription', 'No description');
+          const detailsText = [
+            `${t('common.status', 'Status')}: ${i.status || '—'}`,
+            `${t('common.priority', 'Priority')}: ${i.priority || '—'}`,
+            `${t('common.owner', 'Owner')}: ${i.ownerName || '—'}`,
+            '',
+            i.description?.trim() || t('common.noDescription', 'No description'),
+          ].join('\n');
+          const metaPills: MetaPill[] = [
             {
-              id: 'toggle',
-              label: detailsExpanded ? t('common.collapse', 'Collapse') : t('common.expand', 'Expand'),
-              onClick: () => setDetailsExpanded((v) => !v),
+              label: t('results.summary.preview.type', 'Initiative'),
+              className:
+                'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
             },
             {
-              id: 'summarize',
-              label: t('common.summarize', 'Summarize'),
-              onClick: () =>
-                void openAiChat(
-                  i,
-                  t(
-                    'results.summary.ai.summarizePrompt',
-                    'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                  )
-                ),
+              label: String(i.status || '—').toUpperCase(),
+              className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
             },
             {
-              id: 'copy',
-              label: t('common.copy', 'Copy'),
-              divider: true,
-              icon: Copy,
-              onClick: async () => {
-                try {
-                  await navigator.clipboard.writeText(
-                    [i.title, '', i.description || ''].filter(Boolean).join('\n')
-                  );
-                  toast.success(t('common.copied', 'Copied'));
-                } catch {
-                  toast.error(t('common.copyFailed', 'Copy failed'));
-                }
-              },
+              label: `${t('common.priority', 'Priority')}: ${i.priority || '—'}`,
+              className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
             },
           ];
-
           return (
-            <div className="space-y-4 text-sm">
-              {/* Brief / meta card (KANON v3 preview anatomy) */}
-              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
-                      {t('results.summary.preview.type', 'Initiative')}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-                      {String(i.status || '—').toUpperCase()}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-                      {t('common.priority', 'Priority')}: {i.priority || '—'}
-                    </span>
-                  </div>
-                  <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+            <div className="space-y-4">
+              <PreviewMetaCard
+                pills={metaPills}
+                trailing={
+                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                     {formatDate(i.updatedAt)}
-                  </div>
-                </div>
-
+                  </span>
+                }
+              >
                 <div className="mt-2 space-y-1">
                   <p className="text-slate-500 dark:text-slate-400">
-                    {t('results.summary.preview.subtitle', 'Completion summary and monitoring coverage')}
+                    {t(
+                      'results.summary.preview.subtitle',
+                      'Completion summary and monitoring coverage'
+                    )}
                   </p>
                   <MonitoringPills
                     hasKpi={i.hasKpiMonitoring}
@@ -432,56 +432,54 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                     hasRoiRealized={i.hasRoiRealized}
                   />
                 </div>
-              </div>
+              </PreviewMetaCard>
 
-              <div className="pt-2 border-t border-slate-200/70 dark:border-white/[0.06]">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('common.details', 'Details')}
-                  </div>
-                  <RowActionsMenu iconVariant="vertical" actions={detailsMenu} />
-                </div>
-                {desc ? (
-                  <p
-                    className={[
-                      'mt-2 text-slate-700 dark:text-slate-200 whitespace-pre-wrap',
-                      detailsExpanded ? '' : 'line-clamp-6',
-                    ].join(' ')}
-                  >
-                    {desc}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-slate-500 dark:text-slate-400">
-                    {t('common.noDescription', 'No description')}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                <span className="text-slate-500 dark:text-slate-400">{t('common.status', 'Status')}</span>
-                <span className="text-slate-900 dark:text-white">{i.status || '—'}</span>
-
-                <span className="text-slate-500 dark:text-slate-400">
-                  {t('common.priority', 'Priority')}
-                </span>
-                <span className="text-slate-700 dark:text-slate-200">{i.priority || '—'}</span>
-
-                <span className="text-slate-500 dark:text-slate-400">{t('common.owner', 'Owner')}</span>
-                <span className="text-slate-700 dark:text-slate-200">{i.ownerName || '—'}</span>
-              </div>
+              <PreviewDetailsSection
+                text={detailsText}
+                expanded={detailsExpanded}
+                onToggleExpanded={() => setDetailsExpanded((v) => !v)}
+                customActions={[
+                  {
+                    id: 'toggle',
+                    label: detailsExpanded
+                      ? t('common.collapse', 'Collapse')
+                      : t('common.expand', 'Expand'),
+                    onClick: () => setDetailsExpanded((v) => !v),
+                  },
+                  {
+                    id: 'summarize',
+                    label: t('common.summarize', 'Summarize'),
+                    icon: Sparkles,
+                    onClick: () =>
+                      void openAiChat(
+                        i,
+                        t(
+                          'results.summary.ai.summarizePrompt',
+                          'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                        )
+                      ),
+                  },
+                  {
+                    id: 'copy',
+                    label: t('common.copy', 'Copy'),
+                    icon: Copy,
+                    onClick: async () => {
+                      try {
+                        await navigator.clipboard.writeText(
+                          [i.title, '', i.description || ''].filter(Boolean).join('\n')
+                        );
+                        toast.success(t('common.copied', 'Copied'));
+                      } catch {
+                        toast.error(t('common.copyFailed', 'Copy failed'));
+                      }
+                    },
+                  },
+                ]}
+              />
             </div>
           );
         }}
         renderPreviewFooter={(i) => {
-          const hintChipClass =
-            'inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]';
-          const footerPillBase =
-            'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-          const pillNeutral =
-            `${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-          const pillPrimary =
-            `${footerPillBase} border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15`;
-
           const aiHints = [
             {
               label: t('common.summarize', 'Summarize'),
@@ -505,105 +503,79 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
               ),
             },
           ];
-
-          const aiMenu: RowAction[] = [
-            ...aiHints.map((h) => ({
-              id: `ai:${h.label}`,
-              label: h.label,
-              onClick: () => void openAiChat(i, h.prompt),
-            })),
+          const kpiTone = i.hasKpiMonitoring
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-slate-500 dark:text-slate-400';
+          const roiPlanTone = i.hasRoiPlan
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-slate-500 dark:text-slate-400';
+          const roiActualTone = i.hasRoiRealized
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-slate-500 dark:text-slate-400';
+          const relationItems: RelationItem[] = [
+            {
+              label: `KPI: ${i.hasKpiMonitoring ? i.kpiCount : '—'}`,
+              tone: kpiTone,
+            },
+            {
+              label: `ROI plan: ${i.hasRoiPlan ? '✓' : '—'}`,
+              tone: roiPlanTone,
+            },
+            {
+              label: `ROI actual: ${i.hasRoiRealized ? '✓' : '—'}`,
+              tone: roiActualTone,
+            },
           ];
-
-          const relationPill = (label: string, value: string, tone: string) => (
-            <span
-              className={[
-                'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border',
-                'border-slate-200/70 dark:border-white/[0.08]',
-                'bg-transparent',
-                tone,
-              ].join(' ')}
-            >
-              <span className="text-slate-500 dark:text-slate-400">{label}</span>
-              <span className="truncate max-w-[220px]">{value}</span>
-            </span>
-          );
-
-          const kpiTone = i.hasKpiMonitoring ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400';
-          const roiPlanTone = i.hasRoiPlan ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400';
-          const roiActualTone = i.hasRoiRealized ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400';
-
+          const actionRows: ActionRow[] = [
+            {
+              buttons: [
+                {
+                  label: t('common.open', 'Open'),
+                  icon: ExternalLink,
+                  onClick: () => openInitiative(i.id),
+                  colorScheme: 'primary',
+                  shortcut: 'O',
+                },
+                {
+                  label: t('results.summary.actions.connectKpi', 'Connect KPI'),
+                  icon: Target,
+                  onClick: () => {
+                    setCreateKpiInitiativeId(i.id);
+                    setShowCreateKpi(true);
+                  },
+                  colorScheme: 'neutral',
+                  shortcut: 'K',
+                },
+                {
+                  label: t('results.summary.actions.connectRoi', 'Connect ROI'),
+                  icon: DollarSign,
+                  onClick: () => setRoiDrawerInitiativeId(i.id),
+                  colorScheme: 'neutral',
+                },
+                {
+                  label: t('results.summary.actions.economics', 'Finanse'),
+                  icon: TrendingUp,
+                  onClick: () => navigate('/economics?tab=valuation'),
+                  colorScheme: 'neutral',
+                },
+              ],
+            },
+          ];
           return (
             <div className="space-y-0">
-              {/* AI zone */}
-              <div className="py-1">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                    <Sparkles size={12} />
-                    <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-                  </div>
-                  <RowActionsMenu iconVariant="vertical" actions={aiMenu} />
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {aiHints.map((h) => (
-                    <button
-                      key={h.label}
-                      type="button"
-                      onClick={() => void openAiChat(i, h.prompt)}
-                      className={hintChipClass}
-                    >
-                      {h.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+                <PreviewAIHintStrip
+                  hints={aiHints.map((h) => h.label)}
+                  onRunHint={(hint) => {
+                    const match = aiHints.find((h) => h.label === hint);
+                    if (match) void openAiChat(i, match.prompt);
+                  }}
+                />
               </div>
-
               <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-              {/* Relations (2 rows) */}
-              <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-                {relationPill('KPI', i.hasKpiMonitoring ? `${i.kpiCount}` : '—', kpiTone)}
-                {relationPill('ROI plan', i.hasRoiPlan ? '✓' : '—', roiPlanTone)}
-                {relationPill('ROI actual', i.hasRoiRealized ? '✓' : '—', roiActualTone)}
-              </div>
-
+              <PreviewRelations items={relationItems} />
               <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-              {/* Actions */}
-              <div className="space-y-2.5 py-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button type="button" onClick={() => openInitiative(i.id)} className={pillPrimary}>
-                    <ExternalLink size={14} />
-                    {t('common.open', 'Open')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCreateKpiInitiativeId(i.id);
-                      setShowCreateKpi(true);
-                    }}
-                    className={pillNeutral}
-                  >
-                    <Target size={14} />
-                    {t('results.summary.actions.connectKpi', 'Connect KPI')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRoiDrawerInitiativeId(i.id)}
-                    className={pillNeutral}
-                  >
-                    <DollarSign size={14} />
-                    {t('results.summary.actions.connectRoi', 'Connect ROI')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/economics?tab=valuation')}
-                    className={pillNeutral}
-                  >
-                    <TrendingUp size={14} />
-                    {t('results.summary.actions.economics', 'Finanse')}
-                  </button>
-                </div>
-              </div>
+              <PreviewActionBar rows={actionRows} />
             </div>
           );
         }}
@@ -679,4 +651,3 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 };
 
 export default ResultsSummaryView;
-

@@ -291,7 +291,6 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   const [ownerFilter, setOwnerFilter] = useState('all');
   const [dueFilter, setDueFilter] = useState<'all' | 'upcoming' | 'overdue' | 'no_due'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'ai'>('all');
-  const [demoRowsInjected, setDemoRowsInjected] = useState(false);
   const addTriggered = useRef(false);
   const createTitleInputRef = useRef<HTMLInputElement | null>(null);
   const initiativeId = initiative?.id;
@@ -929,64 +928,13 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     }
   }, [showCreateTask, handleStartInlineAdd, setShowCreateTask]);
 
+  // Cleanup: remove legacy client-side demo rows if they exist in state.
   useEffect(() => {
-    setDemoRowsInjected(false);
-  }, [initiativeId]);
-
-  useEffect(() => {
-    if (!initiativeId || demoRowsInjected) return;
+    if (!initiativeId) return;
     const hasLegacyDemo = tasks.some((t) => String(t.id).startsWith('demo-task-'));
-    const nonDemoCount = tasks.filter((t) => !String(t.id).startsWith('demo-task-')).length;
-    if (tasks.length > 0 && !hasLegacyDemo) return;
-    let cancelled = false;
-    const run = async () => {
-      const now = Date.now();
-      const inDays = (days: number) => new Date(now + days * 24 * 60 * 60 * 1000).toISOString();
-      let createdAny = false;
-      try {
-        if (hasLegacyDemo) {
-          if (nonDemoCount > 0) {
-            setTasks((prev) => prev.filter((t) => !String(t.id).startsWith('demo-task-')));
-            setDemoRowsInjected(true);
-            return;
-          }
-          setTasks([]);
-        }
-        await createTaskArtifact('Kick-off and scope alignment', 'manual', {
-          description: 'Initial workshop and scope confirmation.',
-          status: 'done',
-          priority: 'high',
-          dueDate: inDays(-2),
-          assigneeId: users[0]?.id || null,
-        });
-        createdAny = true;
-        await createTaskArtifact('Define target process and acceptance criteria', 'manual', {
-          description: 'Define measurable criteria for successful rollout.',
-          status: 'in_progress',
-          priority: 'critical',
-          dueDate: inDays(5),
-          assigneeId: users[1]?.id || null,
-        });
-        createdAny = true;
-        await createTaskArtifact('Prepare pilot environment', 'ai', {
-          description: 'Create pilot environment and validate readiness checklist.',
-          status: 'todo',
-          priority: 'medium',
-          dueDate: inDays(12),
-          assigneeId: users[2]?.id || null,
-        });
-        createdAny = true;
-      } catch {
-        // keep silent; UI works without demo seed
-      } finally {
-        if (!cancelled && (createdAny || tasks.length > 0)) setDemoRowsInjected(true);
-      }
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [initiativeId, demoRowsInjected, tasks, createTaskArtifact, users, setTasks]);
+    if (!hasLegacyDemo) return;
+    setTasks((prev) => prev.filter((t) => !String(t.id).startsWith('demo-task-')));
+  }, [initiativeId, tasks, setTasks]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">

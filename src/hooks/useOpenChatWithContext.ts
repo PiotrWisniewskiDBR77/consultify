@@ -12,7 +12,13 @@
  */
 
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { useDeviceType } from '@/hooks/useDeviceType';
+import { AppView } from '@/types';
+
+import { getRouteFromAppView } from '../routes/routeConfig';
+import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 
 export interface OpenChatOptions {
@@ -39,6 +45,13 @@ export function useOpenChatWithContext() {
   const { activeConversationId, conversations, createConversation, setWorkspaceContext } =
     useConversationStore();
 
+  const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
+  const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const navigateFn = useAppStore((s) => s.navigateFn);
+  const navigate = useNavigate();
+  const { isMobile, isTablet, isDesktop } = useDeviceType();
+
   return useCallback(
     async (options: OpenChatOptions) => {
       const { entityType, entityId, entityName, contextData, pmoContext } = options;
@@ -52,6 +65,28 @@ export function useOpenChatWithContext() {
         existingPmoCtx?.decisionId === entityId ||
         existingPmoCtx?.reportId === entityId ||
         (existingPmoCtx?.initiativeIds || []).includes(entityId);
+
+      // Ensure chat UI becomes visible.
+      // - Desktop: open split chat panel (MainLayout)
+      // - Mobile/Tablet: navigate to full chat view (split panel is hidden below lg)
+      if (!isDesktop || isMobile || isTablet) {
+        try {
+          setCurrentViewState(AppView.AI_CHAT);
+          const route = getRouteFromAppView(AppView.AI_CHAT);
+          if (navigateFn) {
+            navigateFn(route);
+          } else {
+            navigate(route);
+          }
+        } catch {
+          // non-blocking; conversation still gets created below
+        }
+      } else {
+        // Desktop: ensure split chat panel is open.
+        if (isChatCollapsed) {
+          toggleChatCollapse();
+        }
+      }
 
       if (alreadyHasContext && activeConversationId) {
         // Already in context — just update workspace context
@@ -90,7 +125,20 @@ export function useOpenChatWithContext() {
 
       return conv.id;
     },
-    [activeConversationId, conversations, createConversation, setWorkspaceContext]
+    [
+      activeConversationId,
+      conversations,
+      createConversation,
+      isChatCollapsed,
+      isDesktop,
+      isMobile,
+      isTablet,
+      navigate,
+      navigateFn,
+      setCurrentViewState,
+      setWorkspaceContext,
+      toggleChatCollapse,
+    ]
   );
 }
 

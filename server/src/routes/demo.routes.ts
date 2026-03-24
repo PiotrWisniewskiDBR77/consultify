@@ -65,8 +65,12 @@ router.post(
     const isDemoEnabled = enabled === true || enabled === 'true' || enabled === 1;
 
     try {
-      // Save preference to database
-      await setUserDemoPreference(userId, isDemoEnabled);
+      // Save preference to database (non-blocking if storage unavailable)
+      try {
+        await setUserDemoPreference(userId, isDemoEnabled);
+      } catch (prefErr: any) {
+        logger.warn('[DemoMode] Preference storage failed (continuing):', prefErr?.message || prefErr);
+      }
 
       if (isDemoEnabled) {
         let demoOrganization: any;
@@ -265,6 +269,45 @@ router.get(
         message: error.message,
       });
     }
+  })
+);
+
+// ==========================================
+// RECORD TELEMETRY EVENT (from frontend)
+// ==========================================
+
+/**
+ * POST /api/demo/record-event
+ * Record demo/trial telemetry events (e.g. trial_expiry_warning_shown when user sees banner)
+ */
+router.post(
+  '/record-event',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const { eventType, organizationId, metadata } = req.body || {};
+    const allowed = [
+      DEMO_TRIAL_EVENT_TYPES.TRIAL_EXPIRY_WARNING_SHOWN,
+      DEMO_TRIAL_EVENT_TYPES.DEMO_AI_LIMIT_REACHED,
+    ];
+    if (!eventType || !allowed.includes(eventType)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid eventType',
+        allowed: allowed.join(', '),
+      });
+    }
+    await recordDemoTrialEvent({
+      eventType,
+      organizationId: organizationId || (req as any).user?.organizationId,
+      userId,
+      source: 'frontend',
+      metadata: typeof metadata === 'object' ? metadata : undefined,
+    });
+    return res.json({ success: true });
   })
 );
 

@@ -27,6 +27,7 @@ import {
   Lock,
   Presentation,
   RotateCcw,
+  Sparkles,
   Square,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -48,6 +49,7 @@ import type {
 } from './types';
 
 const STEP_ORDER: WizardStepId[] = ['define', 'inputs', 'work', 'review', 'finalize', 'outputs'];
+const STANDARD_OUTPUTS: OutputType[] = ['initiative', 'report', 'presentation', 'idea'];
 
 export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
   config,
@@ -435,8 +437,8 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
           <Callout variant="success" title={t('tools.wizard.finalize.done', 'Session finalized')}>
             <p className="text-sm mt-1">
               {lang === 'pl'
-                ? 'Sesja jest zablokowana. Przejdź do zakładki Outputs aby tworzyć raporty i inicjatywy.'
-                : 'Session is locked. Go to the Outputs step to create reports and initiatives.'}
+                ? 'Sesja jest zablokowana. Przejdź do zakładki Outputs aby tworzyć raporty, prezentacje, inicjatywy i pomysły.'
+                : 'Session is locked. Go to the Outputs step to create reports, presentations, initiatives, and ideas.'}
             </p>
           </Callout>
         ) : (
@@ -456,8 +458,8 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
               <Callout variant="info" title={t('tools.wizard.finalize.ready', 'Ready to finalize')}>
                 <p className="text-sm mt-1">
                   {lang === 'pl'
-                    ? 'Finalizacja zablokuje sesję do edycji. Będziesz mógł tworzyć outputy (raporty, inicjatywy, prezentacje).'
-                    : 'Finalizing will lock the session for editing. You will be able to create outputs (reports, initiatives, presentations).'}
+                    ? 'Finalizacja zablokuje sesję do edycji. Będziesz mógł tworzyć outputy (raporty, inicjatywy, prezentacje i pomysły).'
+                    : 'Finalizing will lock the session for editing. You will be able to create outputs (reports, initiatives, presentations, and ideas).'}
                 </p>
               </Callout>
             )}
@@ -495,25 +497,37 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
     }
 
     const outputButtons: Array<{ type: OutputType; icon: React.ReactNode; label: string }> = [];
-    if (config.outputCapabilities.includes('initiative')) {
+    const availableOutputs = STANDARD_OUTPUTS.filter(
+      (outputType) =>
+        outputType === 'idea' || config.outputCapabilities.includes(outputType)
+    );
+
+    if (availableOutputs.includes('initiative')) {
       outputButtons.push({
         type: 'initiative',
         icon: <Lightbulb size={18} />,
         label: t('tools.wizard.outputs.createInitiative', 'Create Initiative'),
       });
     }
-    if (config.outputCapabilities.includes('report')) {
+    if (availableOutputs.includes('report')) {
       outputButtons.push({
         type: 'report',
         icon: <FileText size={18} />,
         label: t('tools.wizard.outputs.createReport', 'Create Report'),
       });
     }
-    if (config.outputCapabilities.includes('presentation')) {
+    if (availableOutputs.includes('presentation')) {
       outputButtons.push({
         type: 'presentation',
         icon: <Presentation size={18} />,
         label: t('tools.wizard.outputs.createPresentation', 'Create Presentation'),
+      });
+    }
+    if (availableOutputs.includes('idea')) {
+      outputButtons.push({
+        type: 'idea',
+        icon: <Sparkles size={18} />,
+        label: t('tools.wizard.outputs.createIdea', 'Create Idea'),
       });
     }
 
@@ -521,8 +535,8 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
       <div className="space-y-6">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {lang === 'pl'
-            ? 'Twórz artefakty na podstawie wyników sesji. Każdy output będzie powiązany z tą sesją (traceability).'
-            : 'Create artifacts based on session results. Each output will be linked to this session (traceability).'}
+            ? 'Twórz artefakty na podstawie wyników sesji. Każdy output będzie powiązany z tą sesją. Docelowy standard obejmuje inicjatywę, raport, prezentację i pomysł.'
+            : 'Create artifacts based on session results. Each output will be linked to this session. The standard output layer includes initiative, report, presentation, and idea.'}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

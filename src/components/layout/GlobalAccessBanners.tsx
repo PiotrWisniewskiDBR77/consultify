@@ -7,7 +7,7 @@
  * Step 2 Finalization: Enterprise+ Ready
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   useIsDemo,
@@ -15,6 +15,8 @@ import {
   useIsTrialExpired,
   usePolicySnapshot,
 } from '../../contexts/AccessPolicyContext';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import DemoBanner from './DemoBanner';
 import TrialBanner from './TrialBanner';
 import TrialExpirationModal from './TrialExpirationModal';
@@ -34,9 +36,31 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
   const isDemo = useIsDemo();
   const isTrial = useIsTrial();
   const isTrialExpired = useIsTrialExpired();
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
+  const trialWarningRecordedRef = useRef(false);
 
   const [showExpirationModal, setShowExpirationModal] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
+
+  // TRIAL-03: Record trial_expiry_warning_shown when user sees trial banner (T-7, T-3, T-1) — once per session
+  useEffect(() => {
+    if (
+      !snapshot ||
+      !isTrial ||
+      isTrialExpired ||
+      trialWarningRecordedRef.current ||
+      snapshot.trialDaysLeft > 7
+    ) {
+      return;
+    }
+    trialWarningRecordedRef.current = true;
+    Api.recordDemoTrialEvent({
+      eventType: 'trial_expiry_warning_shown',
+      metadata: { daysRemaining: snapshot.trialDaysLeft },
+    }).catch(() => {
+      trialWarningRecordedRef.current = false; // retry next mount
+    });
+  }, [snapshot, isTrial, isTrialExpired]);
 
   // Show expiration modal when trial expires (only once per session)
   useEffect(() => {
@@ -65,15 +89,15 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
     return null;
   }
 
-  // PAID orgs see no banners
-  if (snapshot.isPaid) {
+  // PAID orgs see no banners unless user explicitly switched into demo mode.
+  if (snapshot.isPaid && !isDemoMode) {
     return null;
   }
 
   return (
     <>
-      {/* Demo Banner */}
-      {isDemo && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
+      {/* Demo Banner — skip when DemoModeBanner already shows (toggle flow) */}
+      {(isDemo || isDemoMode) && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
 
       {/* Trial Banner */}
       {isTrial && !isTrialExpired && (
@@ -81,6 +105,8 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
           daysRemaining={snapshot.trialDaysLeft}
           warningLevel={snapshot.warningLevel}
           onUpgradeClick={onUpgrade || (() => {})}
+          usageToday={snapshot.usageToday}
+          limits={snapshot.limits ?? undefined}
         />
       )}
 

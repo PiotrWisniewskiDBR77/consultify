@@ -14,9 +14,45 @@ Rejestr audytu systemu testów automatycznych z 5 poziomami pokrycia.
 
 **🎯 Overall Pass Rate: 97%+** (Target: 95% global, 100% user journeys)
 
+
+## 📊 Aktualny Stan Testów (2026-03-10)
+
+| Poziom                        | Pliki Testów | Pokrycie         | Pass Rate |
+| ----------------------------- | ------------ | ---------------- | --------- |
+| **1. Unit**                   | 445+         | **L1: 95%+ ✅**  | ~99%+     |
+| **2. Component**              | 251+         | Backend: 85%+   | ~95%+     |
+| **3. Integration**            | 202+         | L3: 95%+ ✅      | ~95%+     |
+| **4. E2E**                    | 150+         | Smoke: ✅        | N/A (CI)  |
+| **5. Security + Performance** | 51+          | L1 security: ✅  | ~95%+     |
+
+> ℹ️ Pokrycie mierzone przez `test:l1:coverage` / `test:l3:coverage` (realne pomiary V8).
+> Dane `~96%` w starszych wpisach to **szacunki**, nie wyniki narzędzia — nie należy ich porównywać z nowymi.
+
 ---
 
-## 📝 Historia Audytów
+### 2026-03-10 | System Cleanup & Coverage Fix
+
+| Poziom        | Pliki | Pokrycie | Pass Rate | Zmiana                                          |
+| ------------- | ----- | -------- | --------- | ----------------------------------------------- |
+| Unit          | 445   | L1: 95%  | —         | Bez zmian merytorycznych                        |
+| Component     | 251   | —        | —         | Bez zmian merytorycznych                        |
+| Integration   | 202   | L3: 95%  | —         | Bez zmian merytorycznych                        |
+| E2E           | 150   | —        | —         | Usunięto 56 duplikatów iCloud                   |
+| Security+Perf | 51    | —        | —         | Bez zmian merytorycznych                        |
+
+**Działania hygieniczne (2026-03-10):**
+
+- ✅ Usunięto **56 zduplikowanych plików spec** (`* 2.ts`, `* 3.ts`, `* 4.ts`) z `tests/e2e/` — artefakty iCloud
+- ✅ Usunięto **6 zduplikowanych plików konfiguracyjnych** (`vitest.l*.config 2.ts`, `playwright.*.config 2.ts`)
+- ✅ Usunięto **38 zduplikowanych dokumentów** z `tests/` (`TEST_AUDIT_REGISTRY *.md`, `VERIFICATION_REPORT *.md`, `TEST_STRUCTURE_COMPLETE *`, `skip-unstable *`)
+- ✅ Usunięto **10 zduplikowanych plików** z katalogu głównego (`ARCHITECTURE_DECISIONS_TAB *.md`, `pyrightconfig *.json`, itp.)
+- ✅ Wyczyszczono **3212 orphaned plików `.db`** z katalogu głównego (~kilka GB zwolnionego miejsca)
+- ✅ Zweryfikowano `.gitignore` — reguły `*.db`, `*.db-journal`, `* [0-9]*.*` już istnieją
+- ✅ Rozszerzono `coverage.include` w `vitest.config.ts` o `src/**/*.{ts,tsx}` (frontend)
+
+---
+
+
 
 ### 2026-02-15 | Automated Audit
 
@@ -150,6 +186,24 @@ Rejestr audytu systemu testów automatycznych z 5 poziomami pokrycia.
 - Naprawiono `authMiddleware.ts` (import config, named export)
 - Stworzono 10 nowych plików testowych z real DB
 - Pass rate: 4742/4867 (97.4%)
+
+---
+
+### 2026-03-10 | Miro-style Toolbar Overhaul — Phase 5 Tests
+
+| Poziom | Pliki | Tests | Zmiana |
+| ------ | ----- | ----- | ------ |
+| Unit (mindmap) | 9 | 49/49 (100%) | +6 nowych plików testowych |
+
+**Nowe pliki testowe:**
+
+- `canvasLeftToolbar.test.tsx` — render, slot dispatch, AI popover, undo/redo (6 tests)
+- `floatingNodeToolbar.test.tsx` — render, dropdown toggle, bold, link, more, nodeId reset (6 tests)
+- `floatingToolbarDropdowns.test.tsx` — SemanticType/BranchTheme/FontSize dropdowns (10 tests)
+- `moreToolsPanel.test.tsx` — categories, search filter, dispatch (4 tests)
+- `colorPickerPopover.test.tsx` — line style, opacity, color click, randomize (5 tests)
+- `branchColor.test.ts` — branchColor helper with colorOverride support (4 tests)
+- Extended `mindMapNodeModel.test.ts` — copyNodeStyle/applyNodeStyle for new fields (2 tests added)
 
 ---
 

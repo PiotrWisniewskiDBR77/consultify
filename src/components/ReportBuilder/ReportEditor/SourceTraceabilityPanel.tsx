@@ -95,7 +95,7 @@ function formatArtifactType(type: string, isPl: boolean): string {
     execution_status: ['Execution', 'Realizacja'],
     risk: ['Risk', 'Ryzyko'],
     raid: ['RAID', 'RAID'],
-    tool_session: ['Tool Session', 'Sesja narzędzia'],
+    tool_session: ['Idea Workspace', 'Workspace pomysłu'],
   };
   const pair = labels[type];
   return pair ? pair[isPl ? 1 : 0] : type;

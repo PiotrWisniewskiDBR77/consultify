@@ -13,7 +13,7 @@ import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { ToolType, useToolStore } from '@/store/useToolStore';
+import { ProposalCardType, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
@@ -214,6 +214,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     canAdvanceStep,
     getStepDefinitions,
     calculateProgress,
+    acceptCard,
+    rejectCard,
   } = useToolStore();
 
   // AI integration
@@ -223,6 +225,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     requestSuggestions,
     generateCorrelations,
     generateSummary,
+    generateFullSession,
+    rethinkCard,
     abortStream,
   } = useToolAI({ toolType });
 
@@ -235,13 +239,16 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const gaps: string[] = [];
     const data = currentSession.inputData as any;
     if (toolType === 'dynamic-swot') {
-      if (!data.context?.goal || !data.context?.scope) gaps.push('Missing strategic context');
+      if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
+        gaps.push('Missing mission brief');
+      }
       ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
         if (!data.items?.some((i: any) => i.quadrant === q)) {
           gaps.push(`Missing ${q}`);
         }
       });
-      if (!data.correlations?.length) gaps.push('Missing correlations');
+      if (!data.tensions?.length && !data.correlations?.length) gaps.push('Missing strategic tensions');
+      if (!data.recommendedMoves?.length) gaps.push('Missing recommended moves');
     }
     if (toolType === 'market-forces') {
       if (!data.context?.industry) gaps.push('Missing industry');
@@ -575,6 +582,14 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               role: m.role,
               content: m.content,
             }))}
+            onGenerateFullSession={generateFullSession}
+            sessionGenerationStatus={currentSession.sessionGenerationStatus}
+            onAcceptCard={(cardType: ProposalCardType, cardId: string) => acceptCard(cardType, cardId)}
+            onRejectCard={(cardType: ProposalCardType, cardId: string) => rejectCard(cardType, cardId)}
+            onRethinkCard={(cardType: ProposalCardType, cardId: string, comment?: string) => {
+              const phaseId = stepDefs[currentStep - 1]?.id || 'mission';
+              rethinkCard(phaseId, cardType, cardId, comment);
+            }}
           />
         )}
       </div>

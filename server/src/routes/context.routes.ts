@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -50,6 +51,14 @@ router.post(
   `,
       [id, userId, orgId, name, type || 'custom', content, priority || 0]
     );
+    if (orgId) {
+      await organizationContextService.recordManualAIContext({
+        organizationId: orgId,
+        userId: userId || null,
+        contextId: id,
+        payload: { name, type: type || 'custom', content, priority: priority || 0 },
+      });
+    }
     res.status(201).json({ success: true, id });
   })
 );
@@ -59,7 +68,8 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const orgId = req.user?.organizationId;
     const { name, content, isActive, priority } = req.body;
     const updates: string[] = [];
     const params: any[] = [];
@@ -82,6 +92,24 @@ router.put(
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
     params.push(id);
     await dbRun(`UPDATE ai_contexts SET ${updates.join(', ')} WHERE id = ?`, params);
+    const row = (await dbGet(
+      `SELECT name, type, content, priority FROM ai_contexts WHERE id = ?`,
+      [id]
+    )) as { name?: string; type?: string; content?: string; priority?: number } | null;
+    if (orgId && row) {
+      await organizationContextService.recordManualAIContext({
+        organizationId: orgId,
+        userId: req.user?.id || null,
+        contextId: id,
+        payload: {
+          name: row.name,
+          type: row.type,
+          content: row.content,
+          priority: row.priority,
+          isActive,
+        },
+      });
+    }
     res.json({ success: true });
   })
 );

@@ -278,7 +278,9 @@ export const DocumentsRAGTab: React.FC = () => {
                       <FileText className="text-indigo-500" size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-slate-900 dark:text-white font-medium truncate">{doc.filename}</h4>
+                      <h4 className="text-slate-900 dark:text-white font-medium truncate">
+                        {doc.filename}
+                      </h4>
                       <p className="text-slate-500 dark:text-slate-400 text-xs">
                         {new Date(doc.created_at).toLocaleDateString()}
                       </p>

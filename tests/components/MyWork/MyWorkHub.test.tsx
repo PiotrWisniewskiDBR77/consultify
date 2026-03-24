@@ -23,7 +23,7 @@ vi.mock('@/hooks/useCurrentUser', () => ({
   }),
 }));
 
-// Mock the MyWorkHub component
+// Mock the MyWorkHub component with new tab order
 const MockMyWorkHub = () => {
   return (
     <div data-testid="mywork-hub">
@@ -31,8 +31,11 @@ const MockMyWorkHub = () => {
         <h1>My Work</h1>
       </header>
       <nav data-testid="mywork-navigation">
+        <button data-testid="mywork-tab-home">Home</button>
+        <button data-testid="mywork-tab-ideas">Ideas</button>
+        <button data-testid="mywork-tab-notebook">Notebook</button>
         <button data-testid="mywork-tab-inbox">Inbox</button>
-        <button data-testid="mywork-tab-focus">Focus</button>
+        <button data-testid="mywork-tab-calendar">Calendar</button>
         <button data-testid="mywork-tab-tasks">Tasks</button>
         <button data-testid="mywork-tab-decisions">Decisions</button>
       </nav>
@@ -107,14 +110,24 @@ describe('MyWorkHub', () => {
       expect(screen.getByTestId('mywork-tab-inbox')).toBeDefined();
     });
 
-    it('should render Focus tab', () => {
+    it('should render Home tab', () => {
       render(
         <MemoryRouter>
           <MockMyWorkHub />
         </MemoryRouter>
       );
 
-      expect(screen.getByTestId('mywork-tab-focus')).toBeDefined();
+      expect(screen.getByTestId('mywork-tab-home')).toBeDefined();
+    });
+
+    it('should render Calendar tab', () => {
+      render(
+        <MemoryRouter>
+          <MockMyWorkHub />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByTestId('mywork-tab-calendar')).toBeDefined();
     });
 
     it('should render Tasks tab', () => {
@@ -191,7 +204,7 @@ describe('MyWorkHub', () => {
         </MemoryRouter>
       );
 
-      const tabs = ['inbox', 'focus', 'tasks', 'decisions'];
+      const tabs = ['home', 'ideas', 'notebook', 'inbox', 'calendar', 'tasks', 'decisions'];
       tabs.forEach((tab) => {
         expect(screen.getByTestId(`mywork-tab-${tab}`)).toBeDefined();
       });

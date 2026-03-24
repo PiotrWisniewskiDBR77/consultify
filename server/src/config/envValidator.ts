@@ -5,6 +5,8 @@
  * Usage: Call validateEnv() at application startup
  */
 
+import { validateDemoPolicy } from './demoPolicy.js';
+
 interface EnvValidationRule {
   key: string;
   required: boolean;
@@ -233,6 +235,10 @@ export function validateEnv(): ValidationResult {
       warnings.push('REDIS_URL not set. Rate limiting and caching will use in-memory fallback.');
     }
   }
+
+  const demoPolicy = validateDemoPolicy(process.env);
+  errors.push(...demoPolicy.errors);
+  warnings.push(...demoPolicy.warnings);
 
   return {
     valid: errors.length === 0,

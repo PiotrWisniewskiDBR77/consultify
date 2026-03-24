@@ -1,10 +1,10 @@
 import {
   ArrowRight,
-  BookOpen,
   Check,
+  ClipboardList,
   FileText,
   Layout,
-  Lightbulb,
+  Shield,
   Target,
   TrendingUp,
   Zap,
@@ -16,23 +16,21 @@ import type { SourceArtifact } from './types';
 
 const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   Target,
-  BookOpen,
+  ClipboardList,
   FileText,
   TrendingUp,
   Zap,
   Layout,
-  Lightbulb,
+  Shield,
 };
 
 const SOURCE_TYPES = [
-  { type: 'initiative', icon: 'Target', color: 'text-blue-500' },
-  { type: 'note', icon: 'BookOpen', color: 'text-emerald-500' },
-  { type: 'report', icon: 'FileText', color: 'text-purple-500' },
-  { type: 'financial_analysis', icon: 'TrendingUp', color: 'text-amber-500' },
-  { type: 'valuation', icon: 'TrendingUp', color: 'text-orange-500' },
+  { type: 'initiative_portfolio', icon: 'Target', color: 'text-blue-500' },
+  { type: 'kpi_roi', icon: 'TrendingUp', color: 'text-amber-500' },
+  { type: 'assessment', icon: 'FileText', color: 'text-purple-500' },
+  { type: 'raid', icon: 'Shield', color: 'text-red-500' },
+  { type: 'execution_status', icon: 'ClipboardList', color: 'text-emerald-500' },
   { type: 'tool_session', icon: 'Zap', color: 'text-cyan-500' },
-  { type: 'workspace', icon: 'Layout', color: 'text-indigo-500' },
-  { type: 'insight', icon: 'Lightbulb', color: 'text-pink-500' },
 ];
 
 interface SourceStepProps {

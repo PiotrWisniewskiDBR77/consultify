@@ -7,6 +7,31 @@
 import * as queryHelpers from './queryHelpers.js';
 
 const cache = new Map<string, Promise<Set<string>>>();
+const MOCK_TABLE_FALLBACK_COLUMNS: Record<string, string[]> = {
+  my_idea_maps: [
+    'id',
+    'idea_id',
+    'user_id',
+    'organization_id',
+    'nodes_json',
+    'edges_json',
+    'version',
+    'created_at',
+    'updated_at',
+    'preferred_tool',
+    'extensions_json',
+    'schema_version',
+  ],
+};
+
+function isMockDbEnabled(): boolean {
+  return (
+    process.env.MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false')
+  );
+}
 
 async function getPostgresColumns(table: string): Promise<Set<string>> {
   const rows = await queryHelpers.queryAll<{ column_name: string }>(
@@ -16,10 +41,27 @@ async function getPostgresColumns(table: string): Promise<Set<string>> {
   return new Set((rows || []).map((r) => String(r.column_name)));
 }
 
+async function getMockColumns(table: string): Promise<Set<string>> {
+  try {
+    const rows = await queryHelpers.queryAll<{ name?: string }>(
+      `PRAGMA table_info("${String(table || '').trim()}")`,
+      []
+    );
+    const columns = new Set((rows || []).map((r) => String(r.name || '')).filter(Boolean));
+    if (columns.size > 0) return columns;
+    const fallback = MOCK_TABLE_FALLBACK_COLUMNS[String(table || '').trim().toLowerCase()] || [];
+    return new Set(fallback);
+  } catch {
+    const fallback = MOCK_TABLE_FALLBACK_COLUMNS[String(table || '').trim().toLowerCase()] || [];
+    return new Set(fallback);
+  }
+}
+
 export async function getTableColumns(table: string): Promise<Set<string>> {
-  const key = `postgres:${table}`;
+  const mode = isMockDbEnabled() ? 'mock' : 'postgres';
+  const key = `${mode}:${table}`;
   if (!cache.has(key)) {
-    cache.set(key, getPostgresColumns(table));
+    cache.set(key, isMockDbEnabled() ? getMockColumns(table) : getPostgresColumns(table));
   }
   return await cache.get(key)!;
 }

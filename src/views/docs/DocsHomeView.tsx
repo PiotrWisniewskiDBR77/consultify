@@ -96,9 +96,8 @@ export const DocsHomeView: React.FC = () => {
               Consultify Documentation
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
-              Comprehensive guides, tutorials, and best practices for the Consultify
-              Transformation AI Platform. Learn how to accelerate your digital transformation
-              journey.
+              Comprehensive guides, tutorials, and best practices for the Consultify Transformation
+              AI Platform. Learn how to accelerate your digital transformation journey.
             </p>
 
             {/* Search Box */}

@@ -1,0 +1,553 @@
+/**
+ * Workload & Capacity Service
+ * V4-TASK-06: Workload model + capacity analytics
+ */
+
+import DbPromise from '../utils/DbPromise.js';
+
+const DEFAULT_WEEKLY_HOURS = 40;
+const displayNameSql = (userAlias: string, fallbackExpr: string) =>
+  `COALESCE(NULLIF(TRIM(COALESCE(${userAlias}.first_name, '') || ' ' || COALESCE(${userAlias}.last_name, '')), ''), ${userAlias}.email, ${fallbackExpr})`;
+const recentDaysSql = (days: number) =>
+  process.env.DB_TYPE === 'postgres'
+    ? `CURRENT_DATE - INTERVAL '${days} days'`
+    : `date('now', '-${days} days')`;
+
+interface UserCapacityRow {
+  user_id: string;
+  name: string;
+  email: string;
+  allocation_percent: number;
+}
+
+interface TaskAllocationRow {
+  user_id: string;
+  allocated_hours: number;
+}
+
+interface TimeEntryRow {
+  user_id: string;
+  actual_hours: number;
+}
+
+export interface CapacityOverviewUser {
+  userId: string;
+  name: string;
+  capacityHours: number;
+  allocatedHours: number;
+  actualHours: number;
+  utilizationPercent: number;
+  overloaded: boolean;
+}
+
+export interface CapacityOverview {
+  users: CapacityOverviewUser[];
+  summary: {
+    totalCapacity: number;
+    totalAllocated: number;
+    avgUtilization: number;
+  };
+}
+
+export interface WeekForecast {
+  weekStart: string;
+  capacityHours: number;
+  allocatedHours: number;
+  availableHours: number;
+}
+
+export interface OverloadAlert {
+  userId: string;
+  name: string;
+  capacityHours: number;
+  allocatedHours: number;
+  overloadHours: number;
+  severity: 'warning' | 'critical';
+  suggestion: string;
+}
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+function getMonday(d: Date): Date {
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+function formatDate(d: Date): string {
+  return d.toISOString().split('T')[0];
+}
+
+export async function getCapacityOverview(orgId: string): Promise<CapacityOverview> {
+  const members = await DbPromise.all<UserCapacityRow>(
+    `SELECT DISTINCT pm.user_id,
+            ${displayNameSql('u', 'pm.user_id')} as name,
+            COALESCE(u.email, '') as email,
+            COALESCE(pm.allocation_percent, 100) as allocation_percent
+     FROM project_members pm
+     LEFT JOIN users u ON u.id = pm.user_id
+     WHERE pm.project_id IN (SELECT id FROM projects WHERE organization_id = ?)`,
+    [orgId]
+  );
+
+  const userCapMap = new Map<string, { name: string; capacityHours: number }>();
+  for (const m of members) {
+    const existing = userCapMap.get(m.user_id);
+    const addedCap = (Math.min(100, Math.max(0, Number(m.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS;
+    if (existing) {
+      existing.capacityHours += addedCap;
+    } else {
+      userCapMap.set(m.user_id, { name: m.name, capacityHours: addedCap });
+    }
+  }
+
+  const userIds = [...userCapMap.keys()];
+  if (userIds.length === 0) {
+    return { users: [], summary: { totalCapacity: 0, totalAllocated: 0, avgUtilization: 0 } };
+  }
+
+  const placeholders = userIds.map(() => '?').join(',');
+
+  const allocRows = await DbPromise.all<TaskAllocationRow>(
+    `SELECT assignee_id as user_id, COALESCE(SUM(estimated_hours), 0) as allocated_hours
+     FROM tasks
+     WHERE assignee_id IN (${placeholders}) AND organization_id = ?
+       AND lower(coalesce(status,'')) NOT IN ('done','completed','validated','cancelled')
+     GROUP BY assignee_id`,
+    [...userIds, orgId]
+  );
+  const allocMap = new Map(allocRows.map(r => [r.user_id, Number(r.allocated_hours)]));
+
+  let actualMap = new Map<string, number>();
+  try {
+    const actualRows = await DbPromise.all<TimeEntryRow>(
+      `SELECT user_id, COALESCE(SUM(hours), 0) as actual_hours
+       FROM time_entries
+       WHERE user_id IN (${placeholders}) AND organization_id = ?
+         AND date >= ${recentDaysSql(7)}
+       GROUP BY user_id`,
+      [...userIds, orgId]
+    );
+    actualMap = new Map(actualRows.map(r => [r.user_id, Number(r.actual_hours)]));
+  } catch {
+    // time_entries table may not exist yet
+  }
+
+  const users: CapacityOverviewUser[] = [];
+  let totalCapacity = 0;
+  let totalAllocated = 0;
+
+  for (const [userId, info] of userCapMap) {
+    const cap = round1(info.capacityHours);
+    const alloc = round1(allocMap.get(userId) || 0);
+    const actual = round1(actualMap.get(userId) || 0);
+    const util = cap > 0 ? Math.round((alloc / cap) * 100) : 0;
+
+    users.push({
+      userId,
+      name: info.name,
+      capacityHours: cap,
+      allocatedHours: alloc,
+      actualHours: actual,
+      utilizationPercent: util,
+      overloaded: alloc > cap * 1.1,
+    });
+
+    totalCapacity += cap;
+    totalAllocated += alloc;
+  }
+
+  const avgUtilization = totalCapacity > 0 ? Math.round((totalAllocated / totalCapacity) * 100) : 0;
+
+  return {
+    users,
+    summary: {
+      totalCapacity: round1(totalCapacity),
+      totalAllocated: round1(totalAllocated),
+      avgUtilization,
+    },
+  };
+}
+
+export async function getUserForecast(
+  orgId: string,
+  userId: string
+): Promise<WeekForecast[]> {
+  const allocRows = await DbPromise.all<{ allocation_percent: number }>(
+    `SELECT COALESCE(allocation_percent, 100) as allocation_percent
+     FROM project_members
+     WHERE user_id = ? AND project_id IN (SELECT id FROM projects WHERE organization_id = ?)`,
+    [userId, orgId]
+  );
+
+  let weeklyCapacity = DEFAULT_WEEKLY_HOURS;
+  if (allocRows.length > 0) {
+    weeklyCapacity = allocRows.reduce(
+      (sum, r) => sum + (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS,
+      0
+    );
+  }
+
+  const today = new Date();
+  const weeks: WeekForecast[] = [];
+
+  for (let w = 0; w < 4; w++) {
+    const weekStart = getMonday(new Date(today.getTime() + w * 7 * 24 * 60 * 60 * 1000));
+    const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+    const wsStr = formatDate(weekStart);
+    const weStr = formatDate(weekEnd);
+
+    let allocated = 0;
+
+    try {
+      const allocRow = await DbPromise.get<{ hours: number }>(
+        `SELECT COALESCE(SUM(allocated_hours), 0) as hours
+         FROM task_allocations
+         WHERE user_id = ? AND organization_id = ? AND week_start = ?`,
+        [userId, orgId, wsStr]
+      );
+      allocated = Number(allocRow?.hours || 0);
+    } catch {
+      // task_allocations may not exist yet; fall back to estimated_hours
+    }
+
+    if (allocated === 0) {
+      const estRow = await DbPromise.get<{ hours: number }>(
+        `SELECT COALESCE(SUM(estimated_hours), 0) / 4.0 as hours
+         FROM tasks
+         WHERE assignee_id = ? AND organization_id = ?
+           AND lower(coalesce(status,'')) NOT IN ('done','completed','validated','cancelled')
+           AND (due_date IS NULL OR due_date >= ?)
+           AND (started_at IS NULL OR started_at <= ?)`,
+        [userId, orgId, wsStr, weStr]
+      );
+      allocated = Number(estRow?.hours || 0);
+    }
+
+    weeks.push({
+      weekStart: wsStr,
+      capacityHours: round1(weeklyCapacity),
+      allocatedHours: round1(allocated),
+      availableHours: round1(Math.max(0, weeklyCapacity - allocated)),
+    });
+  }
+
+  return weeks;
+}
+
+export async function getOverloadAlerts(orgId: string): Promise<OverloadAlert[]> {
+  const overview = await getCapacityOverview(orgId);
+  const alerts: OverloadAlert[] = [];
+
+  for (const user of overview.users) {
+    if (user.allocatedHours > user.capacityHours * 1.1) {
+      const overloadHours = round1(user.allocatedHours - user.capacityHours);
+      const severity = user.allocatedHours > user.capacityHours * 1.3 ? 'critical' : 'warning';
+      const suggestion = severity === 'critical'
+        ? `Reassign ${overloadHours}h of work or extend deadlines`
+        : `Review task priorities — ${overloadHours}h over capacity`;
+
+      alerts.push({
+        userId: user.userId,
+        name: user.name,
+        capacityHours: user.capacityHours,
+        allocatedHours: user.allocatedHours,
+        overloadHours,
+        severity,
+        suggestion,
+      });
+    }
+  }
+
+  return alerts.sort((a, b) => b.overloadHours - a.overloadHours);
+}
+
+// ================================================================
+// V4-EXEC-04: Initiative-level capacity
+// ================================================================
+
+export interface InitiativeResourceCapacity {
+  userId: string;
+  name: string;
+  role: string | null;
+  allocationPercent: number;
+  allocatedHours: number;
+  actualHours: number;
+  crossInitiativeTotal: number;
+}
+
+export interface InitiativeCapacity {
+  initiativeId: string;
+  resources: InitiativeResourceCapacity[];
+  summary: {
+    totalFteRequired: number;
+    totalFteAllocated: number;
+    avgUtilization: number;
+  };
+  alerts: { userId: string; type: 'overloaded' | 'underutilized' | 'skill_gap'; message: string }[];
+}
+
+export async function getInitiativeCapacity(
+  orgId: string,
+  initiativeId: string
+): Promise<InitiativeCapacity> {
+  const resourceRows = await DbPromise.all<{
+    user_id: string;
+    name: string;
+    role: string | null;
+    allocation_percentage: number;
+  }>(
+    `SELECT ir.user_id,
+            ${displayNameSql('u', 'ir.user_id')} AS name,
+            ir.role,
+            COALESCE(ir.allocation_percentage, 0) AS allocation_percentage
+     FROM initiative_resources ir
+     LEFT JOIN users u ON u.id = ir.user_id
+     WHERE ir.initiative_id = ? AND ir.organization_id = ?`,
+    [initiativeId, orgId]
+  );
+
+  const userIds = resourceRows.map((r) => r.user_id);
+  if (userIds.length === 0) {
+    return {
+      initiativeId,
+      resources: [],
+      summary: { totalFteRequired: 0, totalFteAllocated: 0, avgUtilization: 0 },
+      alerts: [],
+    };
+  }
+
+  const ph = userIds.map(() => '?').join(',');
+
+  const crossRows = await DbPromise.all<{ user_id: string; total_alloc: number }>(
+    `SELECT user_id, COALESCE(SUM(allocation_percentage), 0) AS total_alloc
+     FROM initiative_resources
+     WHERE user_id IN (${ph}) AND organization_id = ?
+     GROUP BY user_id`,
+    [...userIds, orgId]
+  );
+  const crossMap = new Map(crossRows.map((r) => [r.user_id, Number(r.total_alloc)]));
+
+  const taskRows = await DbPromise.all<{ assignee_id: string; hours: number }>(
+    `SELECT assignee_id, COALESCE(SUM(estimated_hours), 0) AS hours
+     FROM tasks
+     WHERE initiative_id = ? AND organization_id = ? AND assignee_id IN (${ph})
+       AND LOWER(COALESCE(status, '')) NOT IN ('done','completed','validated','cancelled')
+     GROUP BY assignee_id`,
+    [initiativeId, orgId, ...userIds]
+  );
+  const taskMap = new Map(taskRows.map((r) => [r.assignee_id, Number(r.hours)]));
+
+  let actualMap = new Map<string, number>();
+  try {
+    const actualRows = await DbPromise.all<{ user_id: string; hours: number }>(
+      `SELECT te.user_id, COALESCE(SUM(te.hours), 0) AS hours
+       FROM time_entries te
+       JOIN tasks t ON t.id = te.task_id
+       WHERE t.initiative_id = ? AND te.organization_id = ? AND te.user_id IN (${ph})
+       GROUP BY te.user_id`,
+      [initiativeId, orgId, ...userIds]
+    );
+    actualMap = new Map(actualRows.map((r) => [r.user_id, Number(r.hours)]));
+  } catch {
+    // time_entries may not exist
+  }
+
+  const resources: InitiativeResourceCapacity[] = [];
+  const alerts: InitiativeCapacity['alerts'] = [];
+  let totalAllocPercent = 0;
+
+  for (const r of resourceRows) {
+    const allocPct = Number(r.allocation_percentage) || 0;
+    const allocHours = round1(taskMap.get(r.user_id) || 0);
+    const actualHours = round1(actualMap.get(r.user_id) || 0);
+    const crossTotal = round1(crossMap.get(r.user_id) || 0);
+
+    totalAllocPercent += allocPct;
+
+    resources.push({
+      userId: r.user_id,
+      name: r.name,
+      role: r.role,
+      allocationPercent: allocPct,
+      allocatedHours: allocHours,
+      actualHours,
+      crossInitiativeTotal: crossTotal,
+    });
+
+    if (crossTotal > 100) {
+      alerts.push({
+        userId: r.user_id,
+        type: 'overloaded',
+        message: `${r.name} is allocated ${crossTotal}% across initiatives (over 100%)`,
+      });
+    } else if (allocPct < 20 && allocPct > 0) {
+      alerts.push({
+        userId: r.user_id,
+        type: 'underutilized',
+        message: `${r.name} has only ${allocPct}% allocation on this initiative`,
+      });
+    }
+  }
+
+  const totalFteAllocated = round1(totalAllocPercent / 100);
+  const totalFteRequired = totalFteAllocated;
+  const avgUtilization =
+    resources.length > 0
+      ? Math.round(resources.reduce((s, r) => s + r.allocationPercent, 0) / resources.length)
+      : 0;
+
+  return {
+    initiativeId,
+    resources,
+    summary: { totalFteRequired, totalFteAllocated, avgUtilization },
+    alerts,
+  };
+}
+
+export interface LevelingAlerts {
+  overloaded: { userId: string; name: string; totalAllocation: number }[];
+  underutilized: { userId: string; name: string; totalAllocation: number }[];
+  unfilledRoles: { initiativeId: string; initiativeName: string; role: string }[];
+}
+
+export async function getLevelingAlerts(orgId: string): Promise<LevelingAlerts> {
+  const allocRows = await DbPromise.all<{
+    user_id: string;
+    name: string;
+    total_alloc: number;
+  }>(
+    `SELECT ir.user_id,
+            ${displayNameSql('u', 'ir.user_id')} AS name,
+            COALESCE(SUM(ir.allocation_percentage), 0) AS total_alloc
+     FROM initiative_resources ir
+     LEFT JOIN users u ON u.id = ir.user_id
+     WHERE ir.organization_id = ?
+     GROUP BY ir.user_id, u.first_name, u.last_name, u.email`,
+    [orgId]
+  );
+
+  const overloaded = allocRows
+    .filter((r) => Number(r.total_alloc) > 100)
+    .map((r) => ({ userId: r.user_id, name: r.name, totalAllocation: Number(r.total_alloc) }));
+
+  const underutilized = allocRows
+    .filter((r) => Number(r.total_alloc) > 0 && Number(r.total_alloc) < 50)
+    .map((r) => ({ userId: r.user_id, name: r.name, totalAllocation: Number(r.total_alloc) }));
+
+  let unfilledRoles: LevelingAlerts['unfilledRoles'] = [];
+  try {
+    const unfilledRows = await DbPromise.all<{
+      initiative_id: string;
+      initiative_name: string;
+      role: string;
+    }>(
+      `SELECT ir.initiative_id,
+              COALESCE(i.name, i.title, ir.initiative_id) AS initiative_name,
+              ir.role
+       FROM initiative_resources ir
+       LEFT JOIN initiatives i ON i.id = ir.initiative_id
+       WHERE ir.organization_id = ? AND (ir.user_id IS NULL OR ir.user_id = '')
+         AND ir.role IS NOT NULL`,
+      [orgId]
+    );
+    unfilledRoles = unfilledRows.map((r) => ({
+      initiativeId: r.initiative_id,
+      initiativeName: r.initiative_name,
+      role: r.role,
+    }));
+  } catch {
+    // role column may not exist
+  }
+
+  return { overloaded, underutilized, unfilledRoles };
+}
+
+export interface CapacityTimelineWeek {
+  weekStart: string;
+  totalCapacity: number;
+  totalAllocated: number;
+  utilizationPercent: number;
+}
+
+export async function getCapacityTimeline(
+  orgId: string,
+  initiativeId?: string
+): Promise<CapacityTimelineWeek[]> {
+  const today = new Date();
+  const weeks: CapacityTimelineWeek[] = [];
+
+  let memberCountRow: { cnt: number } | null = null;
+  if (initiativeId) {
+    memberCountRow = await DbPromise.get<{ cnt: number }>(
+      `SELECT COUNT(*) AS cnt FROM initiative_resources WHERE initiative_id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+  } else {
+    memberCountRow = await DbPromise.get<{ cnt: number }>(
+      `SELECT COUNT(DISTINCT user_id) AS cnt FROM initiative_resources WHERE organization_id = ?`,
+      [orgId]
+    );
+  }
+  const memberCount = Number(memberCountRow?.cnt || 0);
+  const weeklyCapacity = memberCount * DEFAULT_WEEKLY_HOURS;
+
+  for (let w = 0; w < 12; w++) {
+    const weekStart = getMonday(new Date(today.getTime() + w * 7 * 24 * 60 * 60 * 1000));
+    const wsStr = formatDate(weekStart);
+
+    let allocated = 0;
+    try {
+      const params: unknown[] = [orgId, wsStr];
+      let sql = `SELECT COALESCE(SUM(allocated_hours), 0) AS hours
+                 FROM task_allocations
+                 WHERE organization_id = ? AND week_start = ?`;
+      if (initiativeId) {
+        sql += ` AND task_id IN (SELECT id FROM tasks WHERE initiative_id = ?)`;
+        params.push(initiativeId);
+      }
+      const row = await DbPromise.get<{ hours: number }>(sql, params);
+      allocated = Number(row?.hours || 0);
+    } catch {
+      // task_allocations may not exist
+    }
+
+    if (allocated === 0) {
+      const params: unknown[] = [orgId];
+      let sql = `SELECT COALESCE(SUM(estimated_hours), 0) / 12.0 AS hours
+                 FROM tasks
+                 WHERE organization_id = ?
+                   AND LOWER(COALESCE(status, '')) NOT IN ('done','completed','validated','cancelled')`;
+      if (initiativeId) {
+        sql += ` AND initiative_id = ?`;
+        params.push(initiativeId);
+      }
+      const row = await DbPromise.get<{ hours: number }>(sql, params);
+      allocated = Number(row?.hours || 0);
+    }
+
+    const util = weeklyCapacity > 0 ? Math.round((allocated / weeklyCapacity) * 100) : 0;
+    weeks.push({
+      weekStart: wsStr,
+      totalCapacity: round1(weeklyCapacity),
+      totalAllocated: round1(allocated),
+      utilizationPercent: util,
+    });
+  }
+
+  return weeks;
+}
+
+export default {
+  getCapacityOverview,
+  getUserForecast,
+  getOverloadAlerts,
+  getInitiativeCapacity,
+  getLevelingAlerts,
+  getCapacityTimeline,
+};

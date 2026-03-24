@@ -7,10 +7,18 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { hasPermission } from '../services/permissionService.js';
+import KnownToolsService from '../services/KnownToolsService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import KnownToolsService from '../services/KnownToolsService.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import {
+  ToolRuntimeContractSchema,
+  evaluateDoDGates,
+  type ToolRuntimeContract,
+} from '../validators/toolRuntime.validators.js';
 
 type ToolSessionRow = {
   id: string;
@@ -23,12 +31,23 @@ type ToolSessionRow = {
   confidence_avg: number;
   answers_json?: string | null;
   context_snapshot?: string | null;
+  runtime_contract_json?: string | null;
+  dod_status?: string | null;
   review_requested_at?: string | null;
   approved_at?: string | null;
   created_by?: string | null;
   updated_by?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+const safeParseJSON = <T>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
 };
 
 const normalizeStatus = (status: string | null | undefined) => (status || 'DRAFT').toUpperCase();
@@ -194,6 +213,9 @@ const logAudit = async (
 };
 
 const ensureToolsSchema = async (): Promise<void> => {
+  if (process.env.DB_MANAGED_SCHEMA === 'off') {
+    return;
+  }
   try {
     await queryHelpers.queryRun(
       `CREATE TABLE IF NOT EXISTS tool_sessions (
@@ -251,6 +273,22 @@ const ensureToolsSchema = async (): Promise<void> => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
+    // V4-TOOL-02: runtime contract & DoD status columns
+    try {
+      await queryHelpers.queryRun(
+        `ALTER TABLE tool_sessions ADD COLUMN runtime_contract_json TEXT`
+      );
+    } catch {
+      // column already exists
+    }
+    try {
+      await queryHelpers.queryRun(
+        `ALTER TABLE tool_sessions ADD COLUMN dod_status TEXT DEFAULT 'pending'`
+      );
+    } catch {
+      // column already exists
+    }
+
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_tool_sessions_org ON tool_sessions(organization_id)`
     );
@@ -259,6 +297,9 @@ const ensureToolsSchema = async (): Promise<void> => {
     );
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_tool_sessions_tool ON tool_sessions(tool_type)`
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_tool_sessions_dod ON tool_sessions(dod_status)`
     );
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_tool_decisions_session ON tool_decisions(tool_session_id)`
@@ -440,6 +481,12 @@ export class ToolController {
         return;
       }
 
+      const availability = await KnownToolsService.getKnownToolAvailability(String(toolType));
+      if (availability.exists && !availability.isActive) {
+        res.status(409).json({ error: 'This tool is inactive and cannot start a session yet' });
+        return;
+      }
+
       const id = uuidv4();
       const now = new Date().toISOString();
 
@@ -475,6 +522,18 @@ export class ToolController {
           now,
         ]
       );
+
+      await organizationContextService.recordToolSession({
+        organizationId: user.organizationId,
+        userId: user.id,
+        payload: {
+          toolId: id,
+          toolType,
+          name,
+          projectId: projectId || null,
+          contextSnapshot: safeParseJSON(contextSnapshot, {}),
+        },
+      });
 
       res.json({ id, status: 'DRAFT' });
     }
@@ -631,6 +690,86 @@ export class ToolController {
     }
   );
 
+  /**
+   * V4-TOOL-01: Tools hub — sessions + library in one response for unified navigation
+   */
+  static getToolsHub = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolsSchema();
+
+      const [sessionsRows, libraryResult] = await Promise.all([
+        queryHelpers.queryAll(
+          `SELECT id, name, tool_type, status, completion_percent, confidence_avg, project_id, created_by, created_at, updated_at
+           FROM tool_sessions WHERE organization_id = ? ORDER BY updated_at DESC LIMIT 50`,
+          [user.organizationId]
+        ) as Promise<ToolSessionRow[]>,
+        KnownToolsService.listKnownTools({ lang: 'en', limit: 100, offset: 0 }),
+      ]);
+
+      const sessions = (sessionsRows || []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        toolType: s.tool_type,
+        status: normalizeStatus(s.status),
+        progress: s.completion_percent || 0,
+        confidenceAvg: s.confidence_avg || 0,
+        projectId: s.project_id,
+        createdAt: s.created_at,
+        updatedAt: s.created_at,
+      }));
+
+      res.json({
+        sessions: { items: sessions, total: sessions.length },
+        library: libraryResult,
+      });
+    }
+  );
+
+  /**
+   * V4-TOOL-02: DoD check — returns what's missing before tool can be approved
+   */
+  static getToolDoDCheck = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT completion_percent, confidence_avg, status FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { completion_percent?: number; confidence_avg?: number; status?: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const completion = session.completion_percent || 0;
+      const confidence = session.confidence_avg || 0;
+      const missing: string[] = [];
+      if (completion < 100) missing.push(`Completion ${completion}% (required 100%)`);
+      if (confidence < 3) missing.push(`Confidence ${confidence} (required ≥3)`);
+      const passed = missing.length === 0;
+
+      res.json({
+        passed,
+        missing,
+        completion,
+        confidence,
+        readyForApproval: passed && normalizeStatus(session.status) === 'REVIEW',
+      });
+    }
+  );
+
   static getToolSession = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const user = req.user;
@@ -738,6 +877,20 @@ export class ToolController {
           user.organizationId,
         ]
       );
+
+      await organizationContextService.recordToolSession({
+        organizationId: user.organizationId,
+        userId: user.id,
+        payload: {
+          toolId,
+          toolType: req.body?.toolType || null,
+          name: req.body?.name || null,
+          answers,
+          contextSnapshot,
+          completionPercent,
+          confidenceAvg,
+        },
+      });
 
       res.json({ id: toolId, updatedAt: now });
     }
@@ -1093,6 +1246,158 @@ export class ToolController {
       );
 
       res.json({ batchId, initiatives: created, status: 'GENERATED' });
+    }
+  );
+
+  /**
+   * V4-TOOL-02: Evaluate runtime-contract DoD gates for a tool session.
+   * Falls back to legacy completion/confidence check when no contract is stored.
+   */
+  static getRuntimeDoDStatus = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolsSchema();
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id, answers_json, runtime_contract_json, dod_status, completion_percent, confidence_avg
+         FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as ToolSessionRow | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      if (!session.runtime_contract_json) {
+        const completion = session.completion_percent || 0;
+        const confidence = session.confidence_avg || 0;
+        const missing: string[] = [];
+        if (completion < 100) missing.push(`Completion ${completion}% (required 100%)`);
+        if (confidence < 3) missing.push(`Confidence ${confidence} (required ≥3)`);
+        res.json({
+          sessionId: toolId,
+          allPassed: missing.length === 0,
+          gates: [],
+          legacy: true,
+          missing,
+        });
+        return;
+      }
+
+      let contract: ToolRuntimeContract;
+      try {
+        contract = ToolRuntimeContractSchema.parse(JSON.parse(session.runtime_contract_json));
+      } catch {
+        res.status(422).json({ error: 'Invalid runtime contract stored on session' });
+        return;
+      }
+
+      const sessionData = safeJsonParse(session.answers_json);
+      const result = evaluateDoDGates(contract, sessionData);
+
+      const dodStatus = result.allPassed ? 'passed' : 'pending';
+      if (dodStatus !== session.dod_status) {
+        await queryHelpers.queryRun(
+          `UPDATE tool_sessions SET dod_status = ?, updated_at = ? WHERE id = ?`,
+          [dodStatus, new Date().toISOString(), toolId]
+        );
+      }
+
+      res.json({
+        sessionId: toolId,
+        allPassed: result.allPassed,
+        gates: result.gates,
+        legacy: false,
+      });
+    }
+  );
+
+  /**
+   * V4-TOOL-02: Manually approve a specific DoD gate within the runtime contract.
+   */
+  static approveDoDGate = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId, gateId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const allowed = await ensurePermission(req, 'TOOLS_APPROVE');
+      if (!allowed) {
+        res.status(403).json({ error: 'Permission denied' });
+        return;
+      }
+
+      await ensureToolsSchema();
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id, runtime_contract_json, answers_json, dod_status
+         FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as ToolSessionRow | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      if (!session.runtime_contract_json) {
+        res.status(409).json({ error: 'No runtime contract on this session' });
+        return;
+      }
+
+      let contract: ToolRuntimeContract;
+      try {
+        contract = ToolRuntimeContractSchema.parse(JSON.parse(session.runtime_contract_json));
+      } catch {
+        res.status(422).json({ error: 'Invalid runtime contract stored on session' });
+        return;
+      }
+
+      const gateIndex = contract.dodGates.findIndex((g) => g.id === gateId);
+      if (gateIndex === -1) {
+        res.status(404).json({ error: `Gate ${gateId} not found in contract` });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      contract.dodGates[gateIndex] = {
+        ...contract.dodGates[gateIndex],
+        passed: true,
+        passedAt: now,
+        passedBy: user.id,
+      };
+
+      const sessionData = safeJsonParse(session.answers_json);
+      const result = evaluateDoDGates(contract, sessionData);
+      const dodStatus = result.allPassed ? 'passed' : 'pending';
+
+      await queryHelpers.queryRun(
+        `UPDATE tool_sessions SET runtime_contract_json = ?, dod_status = ?, updated_at = ? WHERE id = ?`,
+        [JSON.stringify(contract), dodStatus, now, toolId]
+      );
+
+      await logAudit(user.organizationId, user.id, 'dod_gate_approved', toolId, {
+        gateId,
+        dodStatus,
+      });
+
+      res.json({
+        sessionId: toolId,
+        gateId,
+        approved: true,
+        allPassed: result.allPassed,
+        gates: result.gates,
+      });
     }
   );
 

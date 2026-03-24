@@ -452,17 +452,87 @@ async function loadArtifactData(
         }
         case 'kpi_roi': {
           const kpis = await dbAll(
-            `SELECT name, unit, baseline_value, target_value, current_value, is_on_target FROM initiative_kpis WHERE organization_id = ? LIMIT 6`,
+            `SELECT name, unit, baseline_value, target_value, current_value FROM initiative_kpis WHERE organization_id = ? LIMIT 6`,
             [orgId]
           );
-          data._performanceKpis = ((kpis || []) as any[]).map((k: any) => ({
-            label: k.name,
-            value: k.current_value ?? k.target_value ?? 0,
-            target: k.target_value,
-            unit: k.unit,
-            trend: k.is_on_target ? 'up' : 'down',
-          }));
+          data._performanceKpis = ((kpis || []) as any[]).map((k: any) => {
+            const current = Number(k.current_value ?? 0);
+            const target = Number(k.target_value ?? 0);
+            const onTarget = target > 0 ? current >= target : current > 0;
+            return {
+              label: k.name,
+              value: current || target || 0,
+              target: k.target_value,
+              unit: k.unit,
+              trend: onTarget ? 'up' : 'down',
+            };
+          });
           data._kpis = data._performanceKpis?.slice(0, 4);
+          break;
+        }
+        case 'raid': {
+          const raidItems = await dbAll(
+            `SELECT id, type, title, description, status, probability, impact, mitigation_plan, response_strategy, owner_id FROM raid_items WHERE organization_id = ? AND status NOT IN ('CLOSED', 'RESOLVED') ORDER BY impact DESC, probability DESC LIMIT 15`,
+            [orgId]
+          );
+          data._risks = ((raidItems || []) as any[])
+            .filter((r: any) => r.type === 'RISK')
+            .map((r: any) => ({
+              title: r.title,
+              description: r.description,
+              probability: r.probability || 'MEDIUM',
+              impact: r.impact || 'MEDIUM',
+              status: r.status,
+              mitigation: r.mitigation_plan,
+              strategy: r.response_strategy,
+            }));
+          data._raidSummary = {
+            risks: ((raidItems || []) as any[]).filter((r: any) => r.type === 'RISK').length,
+            assumptions: ((raidItems || []) as any[]).filter((r: any) => r.type === 'ASSUMPTION').length,
+            issues: ((raidItems || []) as any[]).filter((r: any) => r.type === 'ISSUE').length,
+            dependencies: ((raidItems || []) as any[]).filter((r: any) => r.type === 'DEPENDENCY').length,
+          };
+          break;
+        }
+        case 'execution_status': {
+          const initiatives = await dbAll(
+            `SELECT name, status, progress, start_date, target_end_date FROM initiatives WHERE organization_id = ? AND status IN ('IN_PROGRESS', 'ACTIVE', 'ON_TRACK', 'AT_RISK', 'DELAYED') ORDER BY target_end_date ASC LIMIT 20`,
+            [orgId]
+          );
+          data._phases = [
+            {
+              name: 'In Progress',
+              timeframe: 'Current',
+              items: ((initiatives || []) as any[]).map((i: any) => ({
+                name: i.name,
+                status: i.status,
+                progress: i.progress || 0,
+                deadline: i.target_end_date,
+              })),
+            },
+          ];
+          data._executionSummary = `${((initiatives || []) as any[]).length} active initiatives`;
+          break;
+        }
+        case 'tool_session': {
+          if (source.id) {
+            const session = await dbGet(
+              `SELECT id, tool_type, name, answers_json FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+              [source.id, orgId]
+            );
+            if (session) {
+              const answers = JSON.parse((session as any).answers_json || '{}');
+              data._toolInsight = {
+                tool: (session as any).tool_type,
+                title: (session as any).name,
+                findings: answers.findings || answers.insights || [],
+                summary: answers.summary || answers.conclusion || '',
+              };
+              if (answers.key_findings) data._keyFindings = answers.key_findings;
+              if (answers.recommendations) data._recommendation = answers.recommendations[0];
+              if (answers.key_messages) data._keyMessages = answers.key_messages;
+            }
+          }
           break;
         }
         case 'assessment': {
@@ -685,6 +755,7 @@ export async function generateDeck(
       try {
         const engineInput: NarrativeEngineInput = {
           context_pack: contextPack,
+          organizationId,
           report_config: {
             report_type_v3: 'presentation',
             goal_v3: setup.goal,
@@ -699,6 +770,10 @@ export async function generateDeck(
           section_key: slide.intent,
           section_type: slide.intent,
           section_title: slide.key_message || slide.intent,
+          aiPurpose:
+            slide.intent === 'executive_summary' || slide.intent === 'key_messages'
+              ? 'presentation_slide_copy'
+              : 'presentation_deck_outline',
         };
         const narrativeOutput = await generateNarrative(engineInput);
         if (narrativeOutput.post_check.passed && narrativeOutput.content) {

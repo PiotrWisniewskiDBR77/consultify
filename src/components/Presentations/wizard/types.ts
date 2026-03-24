@@ -208,36 +208,60 @@ export const CARD_SIZES: { id: CardSize; label: string }[] = [
 export type CardIntent =
   | 'cover'
   | 'executive_summary'
-  | 'summary'
-  | 'section_divider'
-  | 'content'
-  | 'data'
+  | 'section_intro'
+  | 'key_messages'
+  | 'performance_overview'
+  | 'single_insight'
   | 'comparison'
+  | 'assessment'
+  | 'recommendation_portfolio'
+  | 'initiative_portfolio'
+  | 'prioritization_matrix'
+  | 'roadmap'
+  | 'risk_management'
+  | 'next_steps'
+  | 'appendix'
+  // Deck Builder legacy intents (kept for backwards compatibility)
+  | 'content'
+  | 'summary'
+  | 'kpi_dashboard'
+  | 'data'
+  | 'recommendation'
+  | 'section_divider'
   | 'timeline'
   | 'process'
   | 'quote'
-  | 'kpi_dashboard'
   | 'risk_overview'
-  | 'recommendation'
-  | 'next_steps'
   | 'thank_you';
 
 export const INTENT_COLORS: Record<CardIntent, string> = {
   cover: 'bg-purple-500',
   executive_summary: 'bg-blue-500',
-  summary: 'bg-blue-400',
-  section_divider: 'bg-slate-500',
-  content: 'bg-emerald-500',
-  data: 'bg-amber-500',
+  section_intro: 'bg-slate-500',
+  key_messages: 'bg-emerald-500',
+  performance_overview: 'bg-violet-500',
+  single_insight: 'bg-amber-500',
   comparison: 'bg-orange-500',
-  timeline: 'bg-cyan-500',
-  process: 'bg-teal-500',
-  quote: 'bg-pink-500',
-  kpi_dashboard: 'bg-violet-500',
-  risk_overview: 'bg-red-500',
-  recommendation: 'bg-green-500',
+  assessment: 'bg-teal-500',
+  recommendation_portfolio: 'bg-green-500',
+  initiative_portfolio: 'bg-cyan-500',
+  prioritization_matrix: 'bg-pink-500',
+  roadmap: 'bg-sky-500',
+  risk_management: 'bg-red-500',
   next_steps: 'bg-indigo-500',
-  thank_you: 'bg-rose-400',
+  appendix: 'bg-slate-400',
+  // Legacy mappings
+  content: 'bg-emerald-500',
+  summary: 'bg-blue-500',
+  kpi_dashboard: 'bg-violet-500',
+  data: 'bg-amber-500',
+  recommendation: 'bg-green-500',
+  section_divider: 'bg-slate-500',
+  timeline: 'bg-sky-500',
+  process: 'bg-sky-500',
+  quote: 'bg-emerald-500',
+  risk_overview: 'bg-red-500',
+  thank_you: 'bg-indigo-500',
 };
 
 // ─── Curated Color Sets ──────────────────────────────────────────────

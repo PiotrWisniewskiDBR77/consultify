@@ -7,7 +7,7 @@
  *   DB_TYPE=postgres DATABASE_URL="postgresql://..." npx tsx server/scripts/seed-mywork-demo.ts
  *
  * Optional:
- *   SEED_ORG_ID=org_xxx
+ *   SEED_ORG_ID=<organization id>
  *   SEED_USER_EMAIL=user@example.com
  *   SEED_PROJECT_ID=proj_xxx
  *   SEED_DB_NAME=consultinity_migrated_YYYYMMDD_HHMMSS  (overrides DB name in DATABASE_URL)
@@ -254,17 +254,18 @@ async function main() {
   const seedProjectId = (process.env.SEED_PROJECT_ID || '').trim() || null;
   const seedUserEmail = (process.env.SEED_USER_EMAIL || '').trim() || null;
 
-  const orgId =
-    seedOrgId ||
-    (await (async () => {
-      const r = await db.query<Row<{ id: string }>>(
-        `SELECT id FROM organizations ORDER BY created_at DESC LIMIT 1`,
-        []
-      );
-      return r?.rows?.[0]?.id || null;
-    })());
+  const requestedOrgId = seedOrgId;
+  if (!requestedOrgId) {
+    throw new Error('[seed-mywork-demo] Set SEED_ORG_ID explicitly.');
+  }
+  const orgId = await (async () => {
+    const r = await db.query<Row<{ id: string }>>(`SELECT id FROM organizations WHERE id = $1 LIMIT 1`, [
+      requestedOrgId,
+    ]);
+    return r?.rows?.[0]?.id || null;
+  })();
   if (!orgId) {
-    throw new Error('No organizations found. Set SEED_ORG_ID or create an organization first.');
+    throw new Error(`[seed-mywork-demo] Target organization "${requestedOrgId}" not found.`);
   }
 
   const userRow = await (async () => {
@@ -273,7 +274,14 @@ async function main() {
         `SELECT id, email, organization_id FROM users WHERE email = $1 LIMIT 1`,
         [seedUserEmail]
       );
-      if (r?.rows?.[0]?.id) return r.rows[0];
+      if (r?.rows?.[0]?.id) {
+        if (String(r.rows[0].organization_id || '') !== orgId) {
+          throw new Error(
+            `[seed-mywork-demo] User ${seedUserEmail} belongs to organization "${r.rows[0].organization_id}", not "${orgId}".`
+          );
+        }
+        return r.rows[0];
+      }
       throw new Error(`User not found for SEED_USER_EMAIL=${seedUserEmail}`);
     }
 
@@ -326,14 +334,15 @@ async function main() {
   const DECISION_COUNT = envInt('SEED_DECISIONS', 20, 0, 200);
   const NOTIF_COUNT = envInt('SEED_NOTIFICATIONS', 20, 0, 200);
   const IDEAS_COUNT = envInt('SEED_IDEAS', 20, 0, 200);
-  const NOTEBOOK_COUNT = envInt('SEED_NOTEBOOK_PAGES', 20, 0, 200);
+  const NOTEBOOK_COUNT = 6; // fixed set of diverse English demo notes
   const FOCUS_COUNT = envInt('SEED_FOCUS_ITEMS', 20, 0, 200);
 
   const purgeDecisions = envBool('SEED_PURGE_DECISIONS', false);
   const purgeAllMyWork = envBool('SEED_PURGE_ALL_MYWORK', false);
+  const purgeNotebookOnly = envBool('SEED_PURGE_NOTEBOOK_ONLY', false);
   const confirmPurge = String(process.env.SEED_PURGE_CONFIRM || '').trim().toUpperCase() === 'YES';
 
-  if ((purgeDecisions || purgeAllMyWork) && !confirmPurge) {
+  if ((purgeDecisions || purgeAllMyWork || purgeNotebookOnly) && !confirmPurge) {
     throw new Error(
       'Purge requested but not confirmed. Set SEED_PURGE_CONFIRM=YES to proceed with deletions.'
     );
@@ -370,6 +379,16 @@ async function main() {
     } catch {}
     try {
       await db.run(`DELETE FROM tasks WHERE assignee_id = $1 AND organization_id = $2`, [userId, orgId]);
+    } catch {}
+  }
+
+  if (purgeNotebookOnly) {
+    logger.warn('[seed-mywork-demo] Purging notebook pages only for user/org scope', { orgId, userId });
+    try {
+      await db.run(`DELETE FROM notebook_pages WHERE owner_user_id = $1 AND organization_id = $2`, [
+        userId,
+        orgId,
+      ]);
     } catch {}
   }
 
@@ -1058,70 +1077,187 @@ async function main() {
   }
 
   // -------------------------
-  // Seed notebook pages (T011)
+  // Seed notebook pages (T011) — 6 diverse English demo notes
   // -------------------------
   try {
-    const notebookTopics = [
-      'Governance i SLA',
-      'Priorytety tygodnia',
-      'AI Signals (learning loop)',
-      'Cutover i deploy checklist',
-      'CORS/CSRF hardening',
-      'Observability: monitoring + alerting',
-      'Role i uprawnienia (RBAC)',
-      'Zależności i blokery',
-      'Plan testów (smoke/e2e)',
-      'Status dla sponsorów',
+    const demoNotebooks: Array<{
+      title: string;
+      icon: string;
+      maturity: 'seed' | 'growing' | 'mature' | 'actionable';
+      status: 'inbox' | 'active' | 'converted' | 'archived';
+      verificationStatus: 'unverified' | 'verified' | 'disputed';
+      reviewCadence: 'weekly' | 'monthly' | 'quarterly' | 'never';
+      pinned: boolean;
+      tags: string[];
+      visibility: 'private' | 'project';
+      daysAgo: number;
+      contentText: string;
+    }> = [
+      {
+        title: 'Our latest investment in open source security for the enterprise',
+        icon: '🛡️',
+        maturity: 'mature',
+        status: 'active',
+        verificationStatus: 'verified',
+        reviewCadence: 'monthly',
+        pinned: true,
+        tags: ['security', 'open-source', 'enterprise', 'investment'],
+        visibility: 'project',
+        daysAgo: 3,
+        contentText:
+          'Our latest investment in open source security for the enterprise.\n\n' +
+          '- Evaluated 5 OSS security frameworks for supply-chain hardening\n' +
+          '- Selected SLSA + Sigstore as the baseline for artifact signing\n' +
+          '- Budget approved: $120K for tooling + 2 FTE for integration\n' +
+          '- Next: pilot rollout on 3 critical repos by end of Q2',
+      },
+      {
+        title: 'Weekly priorities — Sprint 14 focus areas',
+        icon: '🎯',
+        maturity: 'mature',
+        status: 'active',
+        verificationStatus: 'verified',
+        reviewCadence: 'weekly',
+        pinned: false,
+        tags: ['sprint', 'priorities', 'planning'],
+        visibility: 'private',
+        daysAgo: 1,
+        contentText:
+          'Sprint 14 — Focus Areas\n\n' +
+          'MUST:\n' +
+          '- Finalize API rate-limiting policy before public launch\n' +
+          '- Complete data migration dry-run on staging\n\n' +
+          'SHOULD:\n' +
+          '- Review dashboard performance metrics\n' +
+          '- Update onboarding flow copy\n\n' +
+          'COULD:\n' +
+          '- Prototype AI-assisted triage for inbox',
+      },
+      {
+        title: 'Meeting notes — Team sync on Q2 roadmap',
+        icon: '👥',
+        maturity: 'growing',
+        status: 'active',
+        verificationStatus: 'unverified',
+        reviewCadence: 'monthly',
+        pinned: false,
+        tags: ['meeting', 'roadmap', 'q2', 'team'],
+        visibility: 'project',
+        daysAgo: 5,
+        contentText:
+          'Team sync — Q2 Roadmap Discussion\n\n' +
+          'Attendees: PM, Engineering Lead, Design, QA\n\n' +
+          'Key decisions:\n' +
+          '- Prioritize stability over new features for April\n' +
+          '- Move AI assistant to beta track (separate release)\n' +
+          '- Hire 1 senior backend engineer by mid-April\n\n' +
+          'Open questions:\n' +
+          '- Should we sunset the legacy reporting module?\n' +
+          '- Timeline for SOC 2 compliance audit',
+      },
+      {
+        title: 'Risk register — Transformation program blockers',
+        icon: '⚠️',
+        maturity: 'actionable',
+        status: 'active',
+        verificationStatus: 'disputed',
+        reviewCadence: 'weekly',
+        pinned: true,
+        tags: ['risk', 'transformation', 'blockers', 'governance'],
+        visibility: 'project',
+        daysAgo: 2,
+        contentText:
+          'Risk Register — Transformation Program\n\n' +
+          'R1 (HIGH): Data migration quality — 12% records failed validation in dry-run\n' +
+          '  → Mitigation: dedicated cleanup sprint before cutover\n\n' +
+          'R2 (MEDIUM): Vendor lock-in on AI model provider\n' +
+          '  → Mitigation: abstract LLM layer, evaluate 2 alternatives\n\n' +
+          'R3 (LOW): User adoption resistance in finance team\n' +
+          '  → Mitigation: champion program + weekly office hours\n\n' +
+          'R4 (HIGH): Budget overrun on infrastructure costs\n' +
+          '  → Mitigation: implement cost alerts + monthly review',
+      },
+      {
+        title: 'Untitled draft',
+        icon: '📝',
+        maturity: 'seed',
+        status: 'inbox',
+        verificationStatus: 'unverified',
+        reviewCadence: 'never',
+        pinned: false,
+        tags: ['draft'],
+        visibility: 'private',
+        daysAgo: 0,
+        contentText: '}',
+      },
+      {
+        title: 'Google is making new investments in AI infrastructure',
+        icon: '🤖',
+        maturity: 'growing',
+        status: 'active',
+        verificationStatus: 'unverified',
+        reviewCadence: 'quarterly',
+        pinned: false,
+        tags: ['ai', 'google', 'infrastructure', 'research'],
+        visibility: 'private',
+        daysAgo: 7,
+        contentText:
+          'Google is making new investments in AI infrastructure\n\n' +
+          '- $4B committed to custom TPU v6 fabrication\n' +
+          '- New Gemini Ultra model benchmarks exceed GPT-4 on reasoning tasks\n' +
+          '- Open-sourcing key inference optimization libraries\n\n' +
+          'Implications for us:\n' +
+          '- Evaluate Gemini API for our summarization pipeline\n' +
+          '- Monitor pricing changes — could reduce our AI spend by 15-20%\n' +
+          '- Consider multi-provider strategy to avoid single-vendor risk',
+      },
     ];
 
-    for (let i = 0; i < NOTEBOOK_COUNT; i++) {
-      const isProject = Boolean(projectId) && i % 2 === 0;
-      const title = `DBR77: Notatka #${i + 1} — ${pick(notebookTopics, i)}`;
-      const contentText = [
-        `DBR77 / My Work V2 — ${pick(notebookTopics, i)}`,
-        '',
-        '- Co jest do zrobienia (next actions)',
-        '- Ryzyka / blokery',
-        '- Decyzje potrzebne',
-      ].join('\n');
+    for (let i = 0; i < demoNotebooks.length; i++) {
+      const nb = demoNotebooks[i];
       const id = `seed_nb_${baseStamp}_${i}_${crypto.randomUUID()}`;
       const contentJson = JSON.stringify({
         type: 'doc',
         content: [
           {
             type: 'paragraph',
-            content: [{ type: 'text', text: contentText }],
+            content: [{ type: 'text', text: nb.contentText }],
           },
         ],
       });
+      const useProject = nb.visibility === 'project' && Boolean(projectId);
+      const rowCreatedAt = isoPlusDays(-nb.daysAgo);
       await db.run(
         `INSERT INTO notebook_pages(
           id, owner_user_id, organization_id, project_id, visibility,
-          title, content_json, content_text, tags_json, created_at, updated_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+          title, content_json, content_text, tags_json,
+          icon, maturity, status, pinned,
+          verification_status, review_cadence,
+          created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
         ON CONFLICT (id) DO NOTHING`,
         [
           id,
           userId,
           orgId,
-          isProject ? projectId : null,
-          isProject ? 'project' : 'private',
-          title,
+          useProject ? projectId : null,
+          useProject ? 'project' : 'private',
+          nb.title,
           contentJson,
-          contentText,
-          JSON.stringify([
-            'dbr77',
-            'my-work',
-            isProject ? 'project' : 'private',
-            pick(['governance', 'execution', 'ai', 'sla'], i),
-          ]),
-          isoPlusDays(-Math.max(0, i % 40)),
-          createdAt,
+          nb.contentText,
+          JSON.stringify(nb.tags),
+          nb.icon,
+          nb.maturity,
+          nb.status,
+          nb.pinned ? 1 : 0,
+          nb.verificationStatus,
+          nb.reviewCadence,
+          rowCreatedAt,
+          rowCreatedAt,
         ]
       );
     }
   } catch (e) {
-    // Notebook may not be migrated in some environments; don't fail seeding tasks/decisions.
     logger.warn('[seed-mywork-demo] Notebook seed skipped (missing table?)');
   }
 

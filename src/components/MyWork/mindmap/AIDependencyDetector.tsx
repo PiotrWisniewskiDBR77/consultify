@@ -1,0 +1,291 @@
+/**
+ * AIDependencyDetector — Detects semantic dependencies between nodes across
+ * different branches and suggests cross-branch edges.
+ */
+import { ArrowRight, GitMerge, Loader2, Network, Plus, X } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
+
+export interface DetectedDependency {
+  id: string;
+  sourceNodeId: string;
+  sourceLabel: string;
+  sourceBranch: string;
+  targetNodeId: string;
+  targetLabel: string;
+  targetBranch: string;
+  relationship: string;
+  confidence: number;
+  type: 'depends_on' | 'enables' | 'conflicts_with' | 'related_to';
+}
+
+interface AIDependencyDetectorProps {
+  open: boolean;
+  onClose: () => void;
+  ideaId: string;
+  ideaTitle: string;
+  nodes: Array<{ id: string; data: any }>;
+  edges: Array<{ id: string; source: string; target: string }>;
+  locked: boolean;
+  onAddDependency: (dep: DetectedDependency) => void;
+  onAddAll: (deps: DetectedDependency[]) => void;
+}
+
+const TYPE_CONFIG: Record<
+  string,
+  { color: string; label: string; labelPl: string; dash?: string }
+> = {
+  depends_on: { color: '#ef4444', label: 'Depends on', labelPl: 'Zależy od' },
+  enables: { color: '#22c55e', label: 'Enables', labelPl: 'Umożliwia' },
+  conflicts_with: { color: '#f59e0b', label: 'Conflicts with', labelPl: 'Konflikt z', dash: '5 5' },
+  related_to: { color: '#8b5cf6', label: 'Related to', labelPl: 'Powiązane z', dash: '3 6' },
+};
+
+export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
+  open,
+  onClose,
+  ideaId,
+  ideaTitle,
+  nodes,
+  edges,
+  locked,
+  onAddDependency,
+  onAddAll,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const [dependencies, setDependencies] = useState<DetectedDependency[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [applied, setApplied] = useState<Set<string>>(new Set());
+
+  const detectDependencies = useCallback(async () => {
+    setLoading(true);
+    try {
+      const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
+      const nodeLabels = ideaNodes.map(
+        (n) => `[${n.data?.branchKey || '?'}] ${n.data?.label || n.id}`
+      );
+
+      const res = await Api.getMyIdeaAISuggestions(ideaId, {
+        seedText: `Analyze dependencies between these mind map nodes for "${ideaTitle}". Find cross-branch relationships (depends_on, enables, conflicts_with, related_to). Nodes:\n${nodeLabels.join('\n')}\n\nReturn JSON array: [{"sourceIdx":0,"targetIdx":1,"type":"depends_on|enables|conflicts_with|related_to","relationship":"brief description","confidence":0.8}]`,
+        mapNodes: nodes.map((n) => ({
+          id: n.id,
+          type: 'idea',
+          data: { label: n.data?.label, branchKey: n.data?.branchKey },
+        })),
+        activeTool: 'mindmap',
+        language: i18n.language,
+      });
+
+      if (res?.suggestions && Array.isArray(res.suggestions)) {
+        const detected: DetectedDependency[] = [];
+        for (const s of res.suggestions) {
+          // Map suggestion pairs to actual nodes
+          const srcIdx = typeof s.sourceIdx === 'number' ? s.sourceIdx : 0;
+          const tgtIdx = typeof s.targetIdx === 'number' ? s.targetIdx : 1;
+          const srcNode = ideaNodes[srcIdx] || ideaNodes[0];
+          const tgtNode = ideaNodes[tgtIdx] || ideaNodes[1];
+
+          if (!srcNode || !tgtNode || srcNode.id === tgtNode.id) continue;
+          if (srcNode.data?.branchKey === tgtNode.data?.branchKey) continue;
+
+          // Check if edge already exists
+          const exists = edges.some(
+            (e) =>
+              (e.source === srcNode.id && e.target === tgtNode.id) ||
+              (e.source === tgtNode.id && e.target === srcNode.id)
+          );
+          if (exists) continue;
+
+          detected.push({
+            id: s.id || `dep-${detected.length}`,
+            sourceNodeId: srcNode.id,
+            sourceLabel: srcNode.data?.label || srcNode.id,
+            sourceBranch: srcNode.data?.branchKey || '?',
+            targetNodeId: tgtNode.id,
+            targetLabel: tgtNode.data?.label || tgtNode.id,
+            targetBranch: tgtNode.data?.branchKey || '?',
+            relationship: s.detail || s.text || s.relationship || '',
+            confidence: s.confidence ?? 0.7,
+            type: (['depends_on', 'enables', 'conflicts_with', 'related_to'].includes(s.category)
+              ? s.category
+              : 'related_to') as DetectedDependency['type'],
+          });
+        }
+        setDependencies(detected);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to detect dependencies');
+    } finally {
+      setLoading(false);
+    }
+  }, [edges, i18n.language, ideaId, ideaTitle, nodes]);
+
+  const handleApply = useCallback(
+    (dep: DetectedDependency) => {
+      onAddDependency(dep);
+      setApplied((prev) => new Set([...prev, dep.id]));
+      toast.success(isPl ? 'Dodano zależność' : 'Dependency added', { duration: 800 });
+    },
+    [isPl, onAddDependency]
+  );
+
+  const handleApplyAll = useCallback(() => {
+    const unapplied = dependencies.filter((d) => !applied.has(d.id));
+    if (unapplied.length === 0) return;
+    onAddAll(unapplied);
+    setApplied(new Set(dependencies.map((d) => d.id)));
+    toast.success(
+      isPl ? `Dodano ${unapplied.length} zależności` : `Added ${unapplied.length} dependencies`,
+      { duration: 1200 }
+    );
+  }, [applied, dependencies, isPl, onAddAll]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
+      <div className="w-full max-w-2xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+          <div>
+            <div className="flex items-center gap-2">
+              <Network size={16} className="text-violet-500" />
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                {isPl ? 'AI: Wykrywanie zależności' : 'AI: Dependency Detection'}
+              </h3>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {isPl
+                ? 'AI analizuje powiązania między nodami z różnych gałęzi.'
+                : 'AI analyzes relationships between nodes across different branches.'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+          {dependencies.length === 0 && !loading && (
+            <div className="text-center py-8">
+              <GitMerge size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+                {isPl
+                  ? 'Wykryj ukryte zależności między pomysłami.'
+                  : 'Discover hidden dependencies between ideas.'}
+              </p>
+              <button
+                onClick={detectDependencies}
+                disabled={loading || locked}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/15 to-indigo-500/10 text-[11px] font-bold text-violet-700 dark:text-violet-300 hover:from-violet-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
+              >
+                <Network size={14} />
+                {isPl ? 'Analizuj zależności' : 'Analyze dependencies'}
+              </button>
+            </div>
+          )}
+
+          {loading && (
+            <div className="flex items-center justify-center gap-2 py-8">
+              <Loader2 size={16} className="animate-spin text-violet-500" />
+              <span className="text-[11px] text-slate-500">
+                {isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}
+              </span>
+            </div>
+          )}
+
+          {dependencies.length > 0 && (
+            <div className="space-y-2">
+              {dependencies.map((dep) => {
+                const cfg = TYPE_CONFIG[dep.type] || TYPE_CONFIG.related_to;
+                const isApplied = applied.has(dep.id);
+                return (
+                  <div
+                    key={dep.id}
+                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}
+                      >
+                        {isPl ? cfg.labelPl : cfg.label}
+                      </span>
+                      <span className="text-[9px] text-slate-400">
+                        {Math.round(dep.confidence * 100)}%
+                      </span>
+                      {isApplied && (
+                        <span className="text-[9px] text-emerald-500 font-bold ml-auto">ADDED</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {dep.sourceLabel}
+                        </div>
+                        <div className="text-[9px] text-slate-400">{dep.sourceBranch}</div>
+                      </div>
+                      <ArrowRight size={14} style={{ color: cfg.color }} className="shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {dep.targetLabel}
+                        </div>
+                        <div className="text-[9px] text-slate-400">{dep.targetBranch}</div>
+                      </div>
+                    </div>
+
+                    {dep.relationship && (
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        {dep.relationship}
+                      </div>
+                    )}
+
+                    {!isApplied && (
+                      <button
+                        onClick={() => handleApply(dep)}
+                        disabled={locked}
+                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-40"
+                      >
+                        <Plus size={9} />
+                        {isPl ? 'Dodaj połączenie' : 'Add connection'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-200/30 dark:border-navy-700/30">
+                <button
+                  onClick={detectDependencies}
+                  disabled={loading}
+                  className="text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                >
+                  {isPl ? 'Ponowna analiza' : 'Re-analyze'}
+                </button>
+                <div className="flex-1" />
+                <button
+                  onClick={handleApplyAll}
+                  disabled={locked || applied.size === dependencies.length}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 transition-colors disabled:opacity-40"
+                >
+                  <Network size={12} />
+                  {isPl ? 'Dodaj wszystkie' : 'Add all'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AIDependencyDetector;

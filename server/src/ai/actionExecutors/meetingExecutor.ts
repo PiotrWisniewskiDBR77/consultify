@@ -1,9 +1,4 @@
-/**
- * Meeting Executor
- *
- * This feature is not implemented in this codebase yet.
- * Do not return fake-success payloads; callers must handle unavailability explicitly.
- */
+import { createMeeting } from '../../services/meetingService.js';
 
 export interface ExecutionResult {
   success: boolean;
@@ -26,7 +21,40 @@ export const MeetingExecutor = {
     payload: MeetingPayload,
     metadata: Record<string, unknown> = {}
   ): Promise<ExecutionResult> {
-    throw new Error('Feature unavailable: MEETING_SCHEDULE execution is not implemented');
+    const organizationId = String(metadata.organizationId || '').trim();
+    const createdBy = String(metadata.userId || metadata.executedBy || 'SYSTEM').trim();
+    const title = String(payload.title || '').trim();
+    const startAt = String(payload.start_time || '').trim();
+
+    if (!organizationId) {
+      throw new Error('Meeting execution requires organizationId');
+    }
+    if (!title || !startAt) {
+      throw new Error('Meeting execution requires title and start_time');
+    }
+
+    const meeting = await createMeeting({
+      organizationId,
+      createdBy,
+      projectId: payload.project_id || null,
+      title,
+      startAt,
+      endAt: String(payload.end_time || payload.start_time || '').trim() || startAt,
+      location: payload.description || '',
+      attendees: Array.isArray(payload.attendees) ? payload.attendees : [],
+      preRead: [],
+      agenda: [],
+      decisions: [],
+    });
+
+    return {
+      success: true,
+      result: {
+        action: 'schedule_meeting',
+        meetingId: meeting.id,
+        meeting,
+      },
+    };
   },
 
   async dryRun(

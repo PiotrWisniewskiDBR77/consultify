@@ -39,7 +39,7 @@ const LANGUAGE_MAP: Record<string, string> = {
 
 function langInstruction(lang: string): string {
   const name = LANGUAGE_MAP[lang] || LANGUAGE_MAP['en'];
-  return `[LANGUAGE: Respond entirely in ${name}.]`;
+  return `[LANGUAGE: Respond in the same language the user writes to you. UI locale hint: ${name}.]`;
 }
 
 export const CO_THINKER_MODES: CoThinkerModeConfig[] = [

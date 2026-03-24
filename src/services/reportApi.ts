@@ -91,9 +91,8 @@ export const reportApi = {
     if (!res.ok) throw new Error('Failed to regenerate block');
     return res.json();
   },
-  // Generate Report (AI) - Placeholder for now
+  // Generate Report (AI)
   generateReport: async (reportId: string, instructions?: string): Promise<void> => {
-    // Implement AI generation endpoint
     const res = await fetch(`${API_URL}/reports/${reportId}/generate`, {
       method: 'POST',
       headers: getHeaders(),

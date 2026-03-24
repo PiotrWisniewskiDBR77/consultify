@@ -152,16 +152,8 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
     try {
       const response = await Api.get(`/budget/initiative/${initiativeId}`);
       setBudget(response.budget);
-
-      if (response.budget) {
-        // Fetch burn rate and forecast
-        const [burnRateRes, forecastRes] = await Promise.all([
-          Api.get(`/budget/${response.budget.id}/burn-rate`).catch(() => ({ burnRate: null })),
-          Api.get(`/budget/${response.budget.id}/forecast`).catch(() => ({ forecast: null })),
-        ]);
-        setBurnRate(burnRateRes.burnRate);
-        setForecast(forecastRes.forecast);
-      }
+      setBurnRate(response.burnRate ?? null);
+      setForecast(response.forecast ?? null);
     } catch (error) {
       console.error('[BudgetTracking] Error:', error);
     } finally {

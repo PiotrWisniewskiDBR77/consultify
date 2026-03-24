@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+
 import EmailTemplatesView from '../../views/superadmin/EmailTemplatesView';
 
 export const EmailTemplatesPanel: React.FC = () => {

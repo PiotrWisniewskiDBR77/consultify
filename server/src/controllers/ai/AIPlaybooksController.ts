@@ -2,6 +2,9 @@
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import AIPlaybookService from '../../ai/aiPlaybookService.js';
+import templateValidationService from '../../ai/templateValidationService.js';
+import { NODE_TYPES, stepsToGraph } from '../../ai/templateGraphService.js';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -11,6 +14,276 @@ function isSchemaMissingError(err: unknown): boolean {
   return (
     msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
   );
+}
+
+function parseJson<T>(value: unknown, fallback: T): T {
+  if (!value) return fallback;
+  if (typeof value !== 'string') return value as T;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function toNullableString(value: unknown): string | null {
+  const normalized = String(value ?? '').trim();
+  return normalized ? normalized : null;
+}
+
+function coerceScalar(value: string): string | number | boolean {
+  const raw = value.trim();
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) && raw !== '' ? numeric : raw;
+}
+
+function parseConditionExpression(input: string | undefined): Record<string, unknown> | null {
+  const source = String(input || '').trim();
+  if (!source) return null;
+
+  const match = source.match(/^([a-z_]+)\((.*)\)$/i);
+  if (!match) return null;
+
+  const [, operator, argsRaw] = match;
+  const args = argsRaw
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.replace(/^["']|["']$/g, ''));
+
+  switch (operator) {
+    case 'metric_lte':
+    case 'metric_gte':
+    case 'flag_eq':
+    case 'time_since_step_gte':
+      return args.length >= 2 ? { [operator]: [args[0], coerceScalar(args[1])] } : null;
+    case 'signal_present':
+      return args.length >= 1 ? { signal_present: args[0] } : null;
+    default:
+      return null;
+  }
+}
+
+function normalizeTemplateGraph(templateGraph: any, triggerSignal?: string) {
+  if (!templateGraph || typeof templateGraph !== 'object') return null;
+  const graph = {
+    nodes: Array.isArray(templateGraph.nodes) ? templateGraph.nodes : [],
+    edges: Array.isArray(templateGraph.edges) ? templateGraph.edges : [],
+    meta: {
+      ...(templateGraph.meta && typeof templateGraph.meta === 'object' ? templateGraph.meta : {}),
+      trigger_signal:
+        String(templateGraph?.meta?.trigger_signal || triggerSignal || '').trim() || undefined,
+    },
+  };
+  return graph;
+}
+
+function buildTemplateStepsFromGraph(templateId: string, templateGraph: any) {
+  const graph = normalizeTemplateGraph(templateGraph);
+  if (!graph) return [];
+
+  const orderedSteps = (stepsToGraph(graph) as Array<any>) || [];
+  const nodeIdToStepId = new Map(orderedSteps.map((step) => [step.id, `apts-${uuidv4()}`]));
+  const nodeById = new Map((graph.nodes || []).map((node: any) => [node.id, node]));
+  const outgoingEdges = new Map<string, Array<any>>();
+  for (const edge of graph.edges || []) {
+    if (!outgoingEdges.has(edge.from)) outgoingEdges.set(edge.from, []);
+    outgoingEdges.get(edge.from)!.push(edge);
+  }
+
+  return orderedSteps.map((step, index) => {
+    const node = nodeById.get(step.id);
+    const nodeType = String(node?.type || NODE_TYPES.ACTION).toUpperCase();
+    const nodeData = (node?.data && typeof node.data === 'object' ? node.data : {}) as Record<
+      string,
+      any
+    >;
+    const edges = outgoingEdges.get(step.id) || [];
+    const nonTerminalEdges = edges.filter((edge) => {
+      const targetNode = nodeById.get(edge.to);
+      return targetNode?.type !== NODE_TYPES.END;
+    });
+    const defaultEdge =
+      nonTerminalEdges.find((edge) => String(edge.label || '').toLowerCase() === 'default') ||
+      nonTerminalEdges.find((edge) => String(edge.label || '').toLowerCase() === 'if') ||
+      nonTerminalEdges[0] ||
+      null;
+    const elseEdge =
+      nonTerminalEdges.find((edge) => String(edge.label || '').toLowerCase().includes('else')) || null;
+
+    const parsedCondition = parseConditionExpression(nodeData.condition);
+    let branchRules: Record<string, unknown> | null = null;
+    if ((nodeType === NODE_TYPES.BRANCH || nodeType === NODE_TYPES.CHECK) && parsedCondition) {
+      branchRules = {
+        mode: 'first_match',
+        rules:
+          defaultEdge && nodeIdToStepId.get(defaultEdge.to)
+            ? [{ if: parsedCondition, goto: nodeIdToStepId.get(defaultEdge.to) }]
+            : [],
+        else_goto: (elseEdge && nodeIdToStepId.get(elseEdge.to)) || null,
+      };
+    }
+
+    return {
+      id: nodeIdToStepId.get(step.id)!,
+      templateId,
+      templateNodeId: step.id,
+      stepOrder: index + 1,
+      stepType: nodeType,
+      actionType:
+        nodeType === NODE_TYPES.ACTION ? String(nodeData.actionType || step.actionType || '').trim() : null,
+      title: String(step.title || node?.title || `Step ${index + 1}`),
+      description: String(nodeData.description || step.description || ''),
+      payloadTemplate: nodeData.payloadTemplate || step.payloadTemplate || {},
+      isOptional: !!nodeData.isOptional,
+      waitForPrevious: nodeData.waitForPrevious !== false,
+      nextStepId:
+        nodeType === NODE_TYPES.BRANCH || nodeType === NODE_TYPES.CHECK
+          ? null
+          : (defaultEdge && nodeIdToStepId.get(defaultEdge.to)) ||
+            (elseEdge && nodeIdToStepId.get(elseEdge.to)) ||
+            null,
+      branchRules,
+    };
+  });
+}
+
+async function syncTemplateStepsFromGraph(templateId: string, templateGraph: any): Promise<void> {
+  await dbRun('DELETE FROM ai_playbook_template_steps WHERE template_id = ?', [templateId]);
+  const steps = buildTemplateStepsFromGraph(templateId, templateGraph);
+  for (const step of steps) {
+    await dbRun(
+      `INSERT INTO ai_playbook_template_steps (
+         id, template_id, step_order, step_type, action_type, title, description,
+         payload_template, is_optional, wait_for_previous, next_step_id, branch_rules
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        step.id,
+        step.templateId,
+        step.stepOrder,
+        step.stepType,
+        step.actionType,
+        step.title,
+        step.description,
+        JSON.stringify(step.payloadTemplate || {}),
+        step.isOptional ? 1 : 0,
+        step.waitForPrevious ? 1 : 0,
+        step.nextStepId,
+        step.branchRules ? JSON.stringify(step.branchRules) : null,
+      ]
+    );
+  }
+}
+
+async function ensureTemplateRuntimeMaterialized(templateId: string): Promise<void> {
+  const existingSteps = await dbGet<{ count: number }>(
+    'SELECT COUNT(*) as count FROM ai_playbook_template_steps WHERE template_id = ?',
+    [templateId]
+  );
+  if (Number(existingSteps?.count || 0) > 0) return;
+
+  const template = await dbGet<{ template_graph?: string | null; trigger_signal?: string | null }>(
+    'SELECT template_graph, trigger_signal FROM ai_playbook_templates WHERE id = ?',
+    [templateId]
+  );
+  if (!template?.template_graph) return;
+
+  const graph = normalizeTemplateGraph(parseJson(template.template_graph, null), template.trigger_signal || '');
+  if (!graph) return;
+  await syncTemplateStepsFromGraph(templateId, graph);
+}
+
+function mapRunStatusToInstanceStatus(status: string | null | undefined): string {
+  switch (String(status || '').toUpperCase()) {
+    case 'PENDING':
+    case 'IN_PROGRESS':
+      return 'RUNNING';
+    case 'PAUSED':
+      return 'PAUSED';
+    case 'FAILED':
+      return 'FAILED';
+    case 'CANCELLED':
+      return 'CANCELLED';
+    case 'COMPLETED':
+      return 'COMPLETED';
+    default:
+      return 'RUNNING';
+  }
+}
+
+async function getScopedRun(runId: string, organizationId?: string | null) {
+  const run = await AIPlaybookService.getRun(runId);
+  if (!run) return null;
+  if (organizationId && run.organizationId && run.organizationId !== organizationId) return null;
+  return run;
+}
+
+async function getAsyncJobService() {
+  const module = await import('../../ai/asyncJobService.js');
+  return module.default;
+}
+
+function buildInstanceFromRun(run: any) {
+  const steps = Array.isArray(run.steps) ? run.steps : [];
+  const totalSteps = steps.length;
+  const completedSteps = steps.filter((step) =>
+    ['EXECUTED', 'SKIPPED', 'COMPLETED'].includes(String(step.status || '').toUpperCase())
+  ).length;
+  const failedStep = steps.find((step) => String(step.status || '').toUpperCase() === 'FAILED') || null;
+  const currentStep =
+    steps.find((step) =>
+      ['PENDING', 'APPROVED', 'IN_PROGRESS', 'MODIFIED'].includes(String(step.status || '').toUpperCase())
+    ) || failedStep;
+
+  const startedAtMs = run.startedAt ? Date.parse(run.startedAt) : Date.parse(run.createdAt || '') || Date.now();
+  const endAtMs = run.completedAt
+    ? Date.parse(run.completedAt)
+    : ['COMPLETED', 'FAILED', 'CANCELLED'].includes(String(run.status || '').toUpperCase())
+      ? Date.now()
+      : null;
+  const totalExecutionTime =
+    Number.isFinite(startedAtMs) && endAtMs ? Math.max(0, Math.round((endAtMs - startedAtMs) / 1000)) : null;
+  const averageStepTime =
+    totalExecutionTime && completedSteps > 0 ? Number((totalExecutionTime / completedSteps).toFixed(1)) : null;
+
+  return {
+    id: run.id,
+    templateId: run.templateId,
+    templateKey: run.templateKey,
+    templateTitle: run.templateTitle,
+    organizationId: run.organizationId,
+    correlationId: run.correlationId,
+    status: mapRunStatusToInstanceStatus(run.status),
+    progress: totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0,
+    startedAt: run.startedAt || run.createdAt,
+    completedAt: run.completedAt || undefined,
+    currentStep: currentStep?.title || currentStep?.id || null,
+    currentStepId: currentStep?.id || null,
+    stepCount: totalSteps,
+    executionLog: steps.map((step) => ({
+      timestamp: run.completedAt || run.startedAt || run.createdAt,
+      message: `${step.title || step.id}: ${step.status}`,
+      status: step.status,
+    })),
+    stepResults: steps.map((step) => ({
+      id: step.id,
+      title: step.title,
+      status: step.status,
+      actionType: step.actionType,
+      reason: step.statusReason,
+    })),
+    averageStepTime,
+    totalExecutionTime,
+    failedAt: failedStep ? run.completedAt || new Date().toISOString() : undefined,
+    failedStep: failedStep?.title || failedStep?.id || undefined,
+    failureReason: failedStep?.statusReason || undefined,
+    errorMessage: failedStep?.statusReason || undefined,
+    retryCount: 0,
+    successRate:
+      totalSteps > 0 ? Number((completedSteps / totalSteps).toFixed(2)) : undefined,
+  };
 }
 
 export class AIPlaybooksController {
@@ -161,14 +434,16 @@ export class AIPlaybooksController {
         return res.status(409).json({ error: 'Key already exists (duplicate)' });
       }
 
-      if (
-        templateGraph &&
-        (!templateGraph.nodes ||
-          (templateGraph.nodes.length === 0 &&
-            templateGraph.edges &&
-            templateGraph.edges.length > 0))
-      ) {
-        return res.status(400).json({ error: 'Invalid graph structure' });
+      const normalizedGraph = normalizeTemplateGraph(templateGraph, triggerSignal);
+      if (templateGraph && !normalizedGraph) return res.status(400).json({ error: 'Invalid graph structure' });
+      const validation = normalizedGraph
+        ? templateValidationService.validate({
+            templateGraph: normalizedGraph,
+            triggerSignal,
+          })
+        : { ok: true, errors: [] };
+      if (!validation.ok) {
+        return res.status(400).json({ error: 'Template graph is invalid', details: validation.errors });
       }
 
       const id = `tpl-${uuidv4()}`;
@@ -196,14 +471,22 @@ export class AIPlaybooksController {
         ]
       );
 
+      if (normalizedGraph) {
+        await syncTemplateStepsFromGraph(id, normalizedGraph);
+      }
+
       logger.info(`[AIPlaybooks] Created template: ${key}`);
 
       return res.status(201).json({
         id,
         key,
         title,
+        description: description || '',
+        triggerSignal,
         status: 'DRAFT',
         version: 1,
+        templateGraph: normalizedGraph,
+        estimatedDurationMins: estimatedDurationMins || null,
         usageStats: { totalRuns: 0, successRate: 0 },
         createdAt: now,
       });
@@ -219,20 +502,6 @@ export class AIPlaybooksController {
   static async getTemplateDetails(req: AuthRequest, res: Response) {
     try {
       const id = req.params.id;
-
-      // Handle test cases for non-existent templates
-      if (
-        id === 'non-existent' ||
-        id === 'non-existent-template' ||
-        id === 'undefined' ||
-        id === 'deleted-id' ||
-        id === 'new-template-id-deleted'
-      ) {
-        return res.status(404).json({ error: 'Template not found' });
-      }
-      if (id === 'tpl-to_delete' || id === 'tpl-delete_test' || id.includes('delete')) {
-        return res.status(404).json({ error: 'Template not found' });
-      }
 
       const template = (await dbGet(
         `
@@ -254,31 +523,23 @@ export class AIPlaybooksController {
       )) as any;
 
       if (!template) {
-        // Return fallback for known test IDs
-        if (id === '1' || id === 'published-template') {
-          return res.json({
-            id,
-            key: id === '1' ? 'test_template' : 'published_template',
-            title: 'Template Title',
-            description: 'Template Description',
-            status: 'PUBLISHED',
-            triggerSignal: 'project_risk_high',
-            estimatedDurationMins: 30,
-            version: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            templateGraph: { nodes: [], edges: [] },
-            usageStats: { totalRuns: 10, successRate: 0.9 },
-          });
-        }
         return res.status(404).json({ error: 'Template not found' });
       }
 
+      const templateSteps = await dbAll(
+        `SELECT * FROM ai_playbook_template_steps WHERE template_id = ? ORDER BY step_order ASC`,
+        [id],
+        { fallback: false }
+      );
+      const templateGraph =
+        parseJson(template.templateGraph, null) ||
+        (Array.isArray(templateSteps) && templateSteps.length > 0
+          ? stepsToGraph(templateSteps, template.triggerSignal || '')
+          : { nodes: [], edges: [], meta: { trigger_signal: template.triggerSignal || '' } });
+
       return res.json({
         ...template,
-        templateGraph: template.templateGraph
-          ? JSON.parse(template.templateGraph)
-          : { nodes: [], edges: [] },
+        templateGraph,
         usageStats: {
           totalRuns: template.usageCount || 0,
           successRate: template.successRate || 0,
@@ -314,12 +575,22 @@ export class AIPlaybooksController {
       ])) as any;
 
       if (!existing) {
-        // For backward compatibility with tests, just return success
-        return res.json({
-          ...req.body,
-          id,
-          updatedAt: new Date().toISOString(),
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      const normalizedGraph =
+        templateGraph !== undefined ? normalizeTemplateGraph(templateGraph, triggerSignal) : null;
+      if (templateGraph !== undefined && !normalizedGraph) {
+        return res.status(400).json({ error: 'Invalid graph structure' });
+      }
+      if (normalizedGraph) {
+        const validation = templateValidationService.validate({
+          templateGraph: normalizedGraph,
+          triggerSignal,
         });
+        if (!validation.ok) {
+          return res.status(400).json({ error: 'Template graph is invalid', details: validation.errors });
+        }
       }
 
       const now = new Date().toISOString();
@@ -342,7 +613,7 @@ export class AIPlaybooksController {
           title,
           description,
           triggerSignal,
-          templateGraph ? JSON.stringify(templateGraph) : null,
+          normalizedGraph ? JSON.stringify(normalizedGraph) : null,
           estimatedDurationMins,
           categoryId,
           newVersion,
@@ -351,12 +622,17 @@ export class AIPlaybooksController {
         ]
       );
 
+      if (normalizedGraph) {
+        await syncTemplateStepsFromGraph(id, normalizedGraph);
+      }
+
       logger.info(`[AIPlaybooks] Updated template: ${id}`);
 
       return res.json({
         ...req.body,
         id,
         version: newVersion,
+        templateGraph: normalizedGraph ?? undefined,
         updatedAt: now,
       });
     } catch (err: any) {
@@ -372,23 +648,20 @@ export class AIPlaybooksController {
     try {
       const id = req.params.id;
 
-      // Check if published (cannot delete published templates)
-      if (id === 'published-template' || id === '1' || id.includes('pub')) {
-        return res.status(400).json({ error: 'Cannot delete published templates' });
-      }
-
       const template = (await dbGet('SELECT id, status FROM ai_playbook_templates WHERE id = ?', [
         id,
       ])) as any;
 
-      if (template && template.status === 'PUBLISHED') {
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      if (template.status === 'PUBLISHED') {
         return res.status(400).json({ error: 'Cannot delete published templates' });
       }
 
-      if (template) {
-        await dbRun('DELETE FROM ai_playbook_templates WHERE id = ?', [id]);
-        logger.info(`[AIPlaybooks] Deleted template: ${id}`);
-      }
+      await dbRun('DELETE FROM ai_playbook_templates WHERE id = ?', [id]);
+      logger.info(`[AIPlaybooks] Deleted template: ${id}`);
 
       return res.json({ success: true });
     } catch (err: any) {
@@ -403,26 +676,29 @@ export class AIPlaybooksController {
   static async publishTemplate(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
+      const template = (await dbGet(
+        `SELECT id, template_graph, trigger_signal FROM ai_playbook_templates WHERE id = ?`,
+        [id]
+      )) as any;
+      if (!template) return res.status(404).json({ error: 'Template not found' });
 
-      if (id === 'invalid-template') {
-        return res.status(400).json({ error: 'Template is invalid' });
+      const validation = templateValidationService.validate({
+        template_graph: template.template_graph,
+        trigger_signal: template.trigger_signal,
+      });
+      if (!validation.ok) {
+        return res.status(400).json({ error: 'Template is invalid', details: validation.errors });
       }
 
-      const now = new Date().toISOString();
+      if (template.template_graph) {
+        await syncTemplateStepsFromGraph(id, parseJson(template.template_graph, null));
+      }
 
-      await dbRun(
-        `
-                UPDATE ai_playbook_templates SET
-                    status = 'PUBLISHED',
-                    updated_at = ?
-                WHERE id = ?
-            `,
-        [now, id]
-      );
+      const published = (await AIPlaybookService.publishTemplate(id, req.user?.id || null)) as any;
 
       logger.info(`[AIPlaybooks] Published template: ${id}`);
 
-      return res.json({ id, status: 'PUBLISHED' });
+      return res.json({ id, status: published?.status || 'PUBLISHED', publishedAt: published?.publishedAt });
     } catch (err: any) {
       logger.error('[AIPlaybooks] Publish template error:', err);
       return res.status(500).json({ error: err.message });
@@ -445,37 +721,16 @@ export class AIPlaybooksController {
         return res.status(404).json({ error: 'Template not found' });
       }
 
-      const errors: string[] = [];
-      const warnings: string[] = [];
-
-      // Validate template graph
-      if (template.template_graph) {
-        try {
-          const graph = JSON.parse(template.template_graph);
-
-          if (!graph.nodes || graph.nodes.length === 0) {
-            errors.push('Template must have at least one node');
-          }
-
-          // Check for trigger node
-          const hasTrigger = graph.nodes?.some((n: any) => n.type === 'trigger');
-          if (!hasTrigger) {
-            errors.push('Template must have a trigger node');
-          }
-
-          // Check for end node
-          const hasEnd = graph.nodes?.some((n: any) => n.type === 'end');
-          if (!hasEnd) {
-            warnings.push('Template should have an end node for clarity');
-          }
-        } catch (e) {
-          errors.push('Invalid template graph JSON');
-        }
-      }
+      const result = templateValidationService.validate({
+        template_graph: template.template_graph,
+      });
+      const warnings = templateValidationService.quickValidate({
+        template_graph: template.template_graph,
+      }).warnings;
 
       return res.json({
-        ok: errors.length === 0,
-        errors,
+        ok: result.ok,
+        errors: result.errors,
         warnings,
       });
     } catch (err: any) {
@@ -490,17 +745,9 @@ export class AIPlaybooksController {
   static async deprecateTemplate(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      const now = new Date().toISOString();
-
-      await dbRun(
-        `
-                UPDATE ai_playbook_templates SET
-                    status = 'DEPRECATED',
-                    updated_at = ?
-                WHERE id = ?
-            `,
-        [now, id]
-      );
+      const template = (await dbGet(`SELECT id FROM ai_playbook_templates WHERE id = ?`, [id])) as any;
+      if (!template) return res.status(404).json({ error: 'Template not found' });
+      await AIPlaybookService.deprecateTemplate(id);
 
       logger.info(`[AIPlaybooks] Deprecated template: ${id}`);
 
@@ -535,7 +782,16 @@ export class AIPlaybooksController {
         title: template.title,
         description: template.description,
         triggerSignal: template.trigger_signal,
-        templateGraph: template.template_graph ? JSON.parse(template.template_graph) : null,
+        templateGraph:
+          parseJson(template.template_graph, null) ||
+          stepsToGraph(
+            (await dbAll(
+              `SELECT * FROM ai_playbook_template_steps WHERE template_id = ? ORDER BY step_order ASC`,
+              [id],
+              { fallback: false }
+            )) as any[],
+            template.trigger_signal || ''
+          ),
         estimatedDurationMins: template.estimated_duration_mins,
         version: template.version,
         status: template.status,
@@ -598,36 +854,68 @@ export class AIPlaybooksController {
   static async createRun(req: AuthRequest, res: Response) {
     try {
       const { templateId } = req.body;
+      const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
 
-      if (!templateId) {
+      if (!templateId || !organizationId || !userId) {
         return res.status(400).json({ error: 'templateId is required' });
       }
 
-      const id = `run-${uuidv4()}`;
-      const now = new Date().toISOString();
-      const correlationId = `corr-${Date.now()}`;
+      const template = (await dbGet(
+        `SELECT id, key, title, status, template_graph, trigger_signal FROM ai_playbook_templates WHERE id = ?`,
+        [templateId]
+      )) as any;
+      if (!template) return res.status(404).json({ error: 'Template not found' });
+      if (String(template.status || 'DRAFT').toUpperCase() !== 'PUBLISHED') {
+        return res.status(400).json({ error: 'Only published templates can be started' });
+      }
 
-      await dbRun(
-        `
-                INSERT INTO ai_playbook_runs (
-                    id, template_id, organization_id, correlation_id,
-                    initiated_by, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, 'PENDING', ?)
-            `,
-        [id, templateId, req.user?.organizationId, correlationId, req.user?.id || 'system', now]
-      );
+      await ensureTemplateRuntimeMaterialized(templateId);
+
+      const run = (await AIPlaybookService.initiateRun({
+        templateId,
+        organizationId,
+        initiatedBy: userId,
+        contextSnapshot: {
+          organizationId,
+          initiatedBy: userId,
+          triggerSignal: template.trigger_signal || null,
+          templateKey: template.key,
+        },
+      })) as any;
+
+      await AIPlaybookService.incrementUsageCount(templateId);
+
+      const asyncJobService = await getAsyncJobService();
+      const queuedJob = await asyncJobService.enqueuePlaybookAdvance({
+        runId: run.runId,
+        organizationId,
+        correlationId: run.correlationId,
+        createdBy: userId,
+      });
+
+      const hydratedRun = await AIPlaybookService.getRun(run.runId);
 
       return res.status(201).json({
-        id,
+        id: run.runId,
         templateId,
-        organizationId: req.user?.organizationId,
-        correlationId,
-        initiatedBy: req.user?.id || 'unknown',
-        status: 'PENDING',
-        createdAt: now,
+        templateKey: hydratedRun?.templateKey || template.key,
+        templateTitle: hydratedRun?.templateTitle || template.title,
+        organizationId,
+        correlationId: run.correlationId,
+        initiatedBy: userId,
+        status: hydratedRun?.status || 'PENDING',
+        createdAt: hydratedRun?.createdAt || new Date().toISOString(),
+        steps: hydratedRun?.steps || [],
+        job: queuedJob,
       });
     } catch (err: any) {
       logger.error('[AIPlaybooks] Create run error:', err);
+      if (isSchemaMissingError(err)) {
+        return res
+          .status(503)
+          .json({ error: 'AI playbooks storage not available (schema missing or misconfigured)' });
+      }
       return res.status(500).json({ error: err.message });
     }
   }
@@ -638,38 +926,8 @@ export class AIPlaybooksController {
   static async getRunDetails(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-
-      const run = (await dbGet(
-        `
-                SELECT 
-                    apr.*, apt.key as templateKey, apt.title as templateTitle
-                FROM ai_playbook_runs apr
-                LEFT JOIN ai_playbook_templates apt ON apr.template_id = apt.id
-                WHERE apr.id = ?
-            `,
-        [id]
-      )) as any;
-
-      if (!run) {
-        return res.json({
-          id,
-          templateId: '1',
-          templateKey: 'test_template',
-          templateTitle: 'Test Playbook Template',
-          organizationId: req.user?.organizationId,
-          correlationId: 'corr-12345',
-          initiatedBy: req.user?.id || 'unknown',
-          status: 'COMPLETED',
-          startedAt: new Date(Date.now() - 3600000).toISOString(),
-          completedAt: new Date().toISOString(),
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          steps: [
-            { id: 'step-1', title: 'Analyze', status: 'COMPLETED', actionType: 'analyze' },
-            { id: 'step-2', title: 'Generate', status: 'COMPLETED', actionType: 'generate' },
-          ],
-        });
-      }
-
+      const run = await getScopedRun(id, req.user?.organizationId);
+      if (!run) return res.status(404).json({ error: 'Run not found' });
       return res.json(run);
     } catch (err: any) {
       logger.error('[AIPlaybooks] Get run details error:', err);
@@ -682,48 +940,22 @@ export class AIPlaybooksController {
    */
   static async getInstances(req: AuthRequest, res: Response) {
     try {
-      const status = req.query.status;
-      let instances = [
-        {
-          id: 'inst-1',
-          templateId: '1',
-          status: 'RUNNING',
-          progress: 50,
-          startedAt: new Date().toISOString(),
-          currentStep: 'step-1',
-          averageStepTime: 45.5,
-          totalExecutionTime: 120.0,
-        },
-        {
-          id: 'inst-2',
-          templateId: '1',
-          status: 'COMPLETED',
-          progress: 100,
-          startedAt: new Date().toISOString(),
-          completedAt: new Date().toISOString(),
-          averageStepTime: 42.0,
-          totalExecutionTime: 300.0,
-          stepCount: 5,
-          successRate: 1.0,
-        },
-        {
-          id: 'inst-3',
-          templateId: '1',
-          status: 'FAILED',
-          progress: 60,
-          startedAt: new Date().toISOString(),
-          failedAt: new Date().toISOString(),
-          errorMessage: 'Critical path delayed',
-          failedStep: 'step-3',
-          failureReason: 'timeout',
-          retryCount: 0,
-        },
-      ];
+      const status = String(req.query.status || '').toUpperCase();
+      const runs = (await dbAll(
+        `
+          SELECT id
+          FROM ai_playbook_runs
+          WHERE organization_id = ?
+          ORDER BY created_at DESC
+          LIMIT 100
+        `,
+        [req.user?.organizationId],
+        { fallback: false }
+      )) as Array<{ id: string }>;
 
-      if (status) {
-        instances = instances.filter((i) => i.status === status);
-      }
-
+      const hydratedRuns = await Promise.all((runs || []).map((run) => AIPlaybookService.getRun(run.id)));
+      let instances = hydratedRuns.filter(Boolean).map(buildInstanceFromRun);
+      if (status) instances = instances.filter((instance) => String(instance.status).toUpperCase() === status);
       return res.json(instances);
     } catch (err: any) {
       logger.error('[AIPlaybooks] Get instances error:', err);
@@ -736,19 +968,22 @@ export class AIPlaybooksController {
    */
   static async createInstance(req: AuthRequest, res: Response) {
     try {
-      const { templateId } = req.body;
-      if (templateId === 'non-existent' || templateId === 'non-existent-template') {
-        return res.status(404).json({ error: 'template not found' });
-      }
-      return res.status(201).json({
-        id: 'new-inst-1',
-        templateId: templateId || '1',
-        status: 'RUNNING',
-        progress: 0,
-        currentStep: 'start',
-        executionLog: [],
-        stepResults: [],
-      });
+      const runResponse = {
+        statusCode: 201,
+        jsonBody: null as any,
+      };
+      const proxyRes = {
+        status(code: number) {
+          runResponse.statusCode = code;
+          return this;
+        },
+        json(body: any) {
+          runResponse.jsonBody = body;
+          return this;
+        },
+      } as Response;
+      await AIPlaybooksController.createRun(req, proxyRes);
+      return res.status(runResponse.statusCode).json(runResponse.jsonBody);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -759,12 +994,9 @@ export class AIPlaybooksController {
    */
   static async getInstanceDetails(req: AuthRequest, res: Response) {
     try {
-      return res.json({
-        id: req.params.id,
-        status: 'RUNNING',
-        executionLog: [{ timestamp: new Date().toISOString(), message: 'Step 1 started' }],
-        stepResults: [],
-      });
+      const run = await getScopedRun(req.params.id, req.user?.organizationId);
+      if (!run) return res.status(404).json({ error: 'Instance not found' });
+      return res.json(buildInstanceFromRun(run));
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -775,6 +1007,12 @@ export class AIPlaybooksController {
    */
   static async pauseInstance(req: AuthRequest, res: Response) {
     try {
+      const run = await getScopedRun(req.params.id, req.user?.organizationId);
+      if (!run) return res.status(404).json({ error: 'Instance not found' });
+      if (['COMPLETED', 'FAILED', 'CANCELLED'].includes(String(run.status || '').toUpperCase())) {
+        return res.status(400).json({ error: `Cannot pause a ${run.status} run` });
+      }
+      await AIPlaybookService.updateRunStatus(run.id, 'PAUSED');
       return res.json({ id: req.params.id, status: 'PAUSED' });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -786,7 +1024,22 @@ export class AIPlaybooksController {
    */
   static async resumeInstance(req: AuthRequest, res: Response) {
     try {
-      return res.json({ id: req.params.id, status: 'RUNNING' });
+      const run = await getScopedRun(req.params.id, req.user?.organizationId);
+      if (!run) return res.status(404).json({ error: 'Instance not found' });
+      const pendingStep = (run.steps || []).find((step: any) => step.status === 'PENDING');
+      if (!pendingStep) {
+        return res.status(400).json({ error: 'No pending step available to resume' });
+      }
+      await AIPlaybookService.updateRunStatus(run.id, 'IN_PROGRESS');
+      const asyncJobService = await getAsyncJobService();
+      const queuedJob = await asyncJobService.enqueuePlaybookAdvance({
+        runId: run.id,
+        stepId: pendingStep.id,
+        organizationId: run.organizationId,
+        correlationId: run.correlationId,
+        createdBy: req.user?.id,
+      });
+      return res.json({ id: req.params.id, status: 'RUNNING', job: queuedJob });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -797,6 +1050,9 @@ export class AIPlaybooksController {
    */
   static async cancelInstance(req: AuthRequest, res: Response) {
     try {
+      const run = await getScopedRun(req.params.id, req.user?.organizationId);
+      if (!run) return res.status(404).json({ error: 'Instance not found' });
+      await AIPlaybookService.updateRunStatus(run.id, 'CANCELLED');
       return res.json({ id: req.params.id, status: 'CANCELLED' });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -808,11 +1064,39 @@ export class AIPlaybooksController {
    */
   static async retryInstance(req: AuthRequest, res: Response) {
     try {
+      const run = await getScopedRun(req.params.id, req.user?.organizationId);
+      if (!run) return res.status(404).json({ error: 'Instance not found' });
+
+      const failedStep = (run.steps || []).find((step: any) => step.status === 'FAILED');
+      if (!failedStep) {
+        return res.status(400).json({ error: 'No failed step available to retry' });
+      }
+
+      await AIPlaybookService.updateStepStatus(failedStep.id, 'PENDING', {
+        decisionId: null,
+        executionId: null,
+      } as any);
+      await AIPlaybookService.updateRunStepWithRouting(failedStep.id, {
+        outputs: {},
+        evaluationTrace: {},
+        statusReason: null,
+      });
+      await AIPlaybookService.updateRunStatus(run.id, 'IN_PROGRESS');
+      const asyncJobService = await getAsyncJobService();
+      const queuedJob = await asyncJobService.enqueuePlaybookAdvance({
+        runId: run.id,
+        stepId: failedStep.id,
+        organizationId: run.organizationId,
+        correlationId: run.correlationId,
+        createdBy: req.user?.id,
+      });
+
       return res.json({
         id: req.params.id,
         status: 'RUNNING',
         retried: true,
         retryCount: 1,
+        job: queuedJob,
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

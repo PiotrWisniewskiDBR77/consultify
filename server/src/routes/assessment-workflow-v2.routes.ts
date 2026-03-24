@@ -31,10 +31,13 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import activityService from '../services/ActivityService.js';
+import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
+import BenchmarkingService from '../services/benchmarkingService.js';
 import NotificationService from '../services/notificationService.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   ApproveAssessmentAccessRequestSchema,
   ApproveAssessmentSchema,
@@ -328,6 +331,46 @@ router.post(
   validateBody(ApproveReportSchema),
   AssessmentController.approveReport
 );
+
+router.get('/:assessmentId/report/versions', async (req, res) => {
+  try {
+    const { assessmentId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const db = getDatabase();
+    const assessment = await db.get<any>(
+      `SELECT id FROM assessments WHERE id = ? AND organization_id = ?`,
+      [String(assessmentId), String(organizationId)]
+    );
+    if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
+
+    const rows = await db.all<any>(
+      `SELECT id, assessment_id, version, status, approved_by, approved_at, created_by, created_at, updated_at
+       FROM assessment_reports
+       WHERE assessment_id = ?
+       ORDER BY version DESC`,
+      [String(assessmentId)]
+    );
+
+    const versions = (rows || []).map((r: any) => ({
+      id: r.id,
+      assessmentId: r.assessment_id,
+      version: r.version,
+      status: r.status,
+      approvedBy: r.approved_by || null,
+      approvedAt: r.approved_at || null,
+      createdBy: r.created_by,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+
+    return res.json({ versions });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error listing report versions:', err);
+    return res.status(500).json({ error: 'Failed to list report versions', message: err.message });
+  }
+});
 router.post(
   '/:assessmentId/approve',
   validateBody(ApproveAssessmentSchema),
@@ -1414,6 +1457,151 @@ router.put('/:assessmentId/gate-decisions/:gateType', async (req, res) => {
   } catch (err: any) {
     logger.error('[AssessmentWorkflowV2] Error updating gate decision:', err);
     return res.status(500).json({ error: 'Failed to update gate decision', message: err.message });
+  }
+});
+
+// =============================================================================
+// V4-ASMT-01: BENCHMARK COMPARISON
+// =============================================================================
+
+const BENCHMARK_CATEGORY_TO_AXIS: Record<string, string> = {
+  digital_strategy: 'digital_strategy',
+  data_analytics: 'data_analytics',
+  cybersecurity: 'cybersecurity',
+  automation: 'automation',
+  digital_culture: 'digital_culture',
+  cloud_infrastructure: 'cloud_infrastructure',
+  iot_connectivity: 'iot_connectivity',
+  supply_chain: 'supply_chain',
+  PROCESS: 'automation',
+  PRODUCT: 'data_analytics',
+  ORGANIZATION: 'digital_culture',
+  CONNECTIVITY: 'iot_connectivity',
+  DATA: 'data_analytics',
+  INTELLIGENCE: 'automation',
+  WORKFORCE: 'digital_culture',
+};
+
+router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
+  try {
+    const { assessmentId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const db = getDatabase();
+    const assessment = await db.get<any>(
+      `SELECT id, assessment_type, overall_score, score_summary
+       FROM assessments
+       WHERE id = ? AND organization_id = ?`,
+      [String(assessmentId), String(organizationId)]
+    );
+    if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
+
+    const org = await db.get<any>(
+      `SELECT industry FROM organizations WHERE id = ?`,
+      [String(organizationId)]
+    );
+
+    const framework = String(assessment.assessment_type || 'SIRI').toUpperCase();
+    const industry = String(org?.industry || 'manufacturing').toLowerCase().replace(/[^a-z_]/g, '_');
+    const normalizedIndustry =
+      industry === 'manufacturing_discrete' || industry === 'manufacturing_process' ? 'manufacturing' : industry;
+
+    let orgScore = assessment.overall_score != null ? Number(assessment.overall_score) : 0;
+    const categories: Record<string, number> = {};
+
+    if (assessment.score_summary) {
+      try {
+        const ss = typeof assessment.score_summary === 'string'
+          ? JSON.parse(assessment.score_summary)
+          : assessment.score_summary;
+        if (typeof ss?.overall?.actual === 'number') {
+          orgScore = ss.overall.actual;
+        }
+        if (typeof ss === 'object') {
+          for (const [k, v] of Object.entries(ss)) {
+            const num = typeof v === 'number' ? v : (v as any)?.actual ?? (v as any)?.score ?? (v as any)?.value;
+            if (typeof num === 'number') categories[k] = num;
+          }
+        }
+      } catch { /* ignore parse */ }
+    }
+
+    const dataset = await queryHelpers.queryOne<any>(
+      `SELECT id, framework, industry, p25, p50, p75, p90, cohort_size, last_updated, version_tag
+       FROM benchmark_datasets
+       WHERE framework = ? AND industry = ?
+         AND (region IS NULL) AND (company_size IS NULL)
+       ORDER BY last_updated DESC
+       LIMIT 1`,
+      [framework, normalizedIndustry]
+    );
+
+    if (!dataset) {
+      return res.json({
+        assessmentId,
+        framework,
+        benchmark: { percentiles: null, cohortSize: 0, suppressed: true },
+        orgScore,
+        gap: null,
+      });
+    }
+
+    const cohortSize = Number(dataset.cohort_size || 0);
+    const suppressed = cohortSize < 5;
+
+    if (suppressed) {
+      return res.json({
+        assessmentId,
+        framework,
+        benchmark: { percentiles: null, cohortSize, suppressed: true },
+        orgScore,
+        gap: null,
+      });
+    }
+
+    const p25 = Number(dataset.p25 ?? 0);
+    const p50 = Number(dataset.p50 ?? 0);
+    const p75 = Number(dataset.p75 ?? 0);
+    const p90 = Number(dataset.p90 ?? p75);
+
+    let percentile: number;
+    if (orgScore <= p25) percentile = 25;
+    else if (orgScore <= p50) percentile = Math.round(25 + ((orgScore - p25) / Math.max(p50 - p25, 0.01)) * 25);
+    else if (orgScore <= p75) percentile = Math.round(50 + ((orgScore - p50) / Math.max(p75 - p50, 0.01)) * 25);
+    else if (orgScore <= p90) percentile = Math.round(75 + ((orgScore - p75) / Math.max(p90 - p75, 0.01)) * 15);
+    else percentile = 95;
+
+    const orgScores = Object.entries(categories).map(([k, v]) => ({
+      axis: BENCHMARK_CATEGORY_TO_AXIS[k] || k.toLowerCase().replace(/[^a-z_]/g, '_'),
+      score: Number(v),
+    }));
+    const comparisons = industryBenchmarkService.compareToBenchmarks(normalizedIndustry, orgScores);
+
+    const categoryComparison: Record<string, { score: number; benchmark: number; gap: number }> = {};
+    for (const c of comparisons) {
+      categoryComparison[c.axis] = { score: c.orgScore, benchmark: c.industryAverage, gap: c.gap };
+    }
+
+    return res.json({
+      assessmentId,
+      framework,
+      benchmark: {
+        percentiles: { p25, p50, p75, p90 },
+        cohortSize,
+        suppressed: false,
+        percentile,
+        percentileLabel: BenchmarkingService.getPercentileLabel(percentile),
+        lastUpdated: dataset.last_updated,
+        datasetVersion: dataset.version_tag,
+      },
+      orgScore,
+      gap: parseFloat((orgScore - p50).toFixed(2)),
+      categoryComparison,
+    });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error fetching benchmark comparison:', err);
+    return res.status(500).json({ error: 'Failed to fetch benchmark comparison', message: err.message });
   }
 });
 

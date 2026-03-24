@@ -9,11 +9,17 @@
  * @version 4.0.0
  */
 
-import { ChevronRight, ExternalLink, Plus, Upload } from 'lucide-react';
+import { ChevronRight, ExternalLink, Link2, Plus, Upload } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '../ui/primitives/Button';
+import { Modal } from '../ui/primitives/Modal';
+import {
+  SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+} from './chatAttachmentSupport';
 import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 
 // ─── Recent attachments (localStorage) ───────────────────────────────────────
@@ -141,6 +147,7 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
 
 interface AddFilesMenuProps {
   onFileSelect: (files: File[]) => void;
+  onUrlAdd?: (url: string) => void;
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
@@ -164,6 +171,7 @@ const PROVIDERS: ProviderDef[] = [
 
 export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onFileSelect,
+  onUrlAdd,
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
@@ -174,6 +182,8 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [recentHover, setRecentHover] = useState(false);
   const [recentItems, setRecentItems] = useState<RecentAttachment[]>([]);
+  const [urlModalOpen, setUrlModalOpen] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -199,6 +209,8 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       if (recentTimeoutRef.current) clearTimeout(recentTimeoutRef.current);
     };
   }, []);
+
+  const connectedCloudProviders = PROVIDERS.filter((provider) => connectedProviders.includes(provider.id));
 
   const handleRecentEnter = () => {
     if (recentTimeoutRef.current) clearTimeout(recentTimeoutRef.current);
@@ -240,24 +252,36 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   };
 
   const handleCloudClick = (provider: ProviderDef) => {
-    const connected = connectedProviders.includes(provider.id);
+    onCloudFileSelect?.(provider.id, '', '');
+    setIsOpen(false);
+  };
 
-    if (!isCloudImplemented) {
-      toast(t('aiChat.menu.toast.cloudComingSoon', 'Cloud integrations coming soon'), {
-        icon: '\u23F3',
-        duration: 3000,
-        style: { borderRadius: '10px', background: '#334155', color: '#fff' },
-      });
-      setIsOpen(false);
-      return;
-    }
-
-    if (connected) {
-      onCloudFileSelect?.(provider.id, '', '');
+  const openIntegrationsSettings = () => {
+    if (typeof window !== 'undefined') {
+      window.location.assign('/settings/integrations');
     } else {
-      onConnectCloud?.(provider.id);
+      onConnectCloud?.('google-drive');
     }
     setIsOpen(false);
+  };
+
+  const submitUrl = () => {
+    const raw = urlValue.trim();
+    if (!raw) return;
+    try {
+      const u = new URL(raw);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+        toast.error(t('aiChat.menu.urlUnsupportedProtocol', 'Only http(s) links are supported'));
+        return;
+      }
+      onUrlAdd?.(u.toString());
+      toast.success(t('aiChat.menu.toast.urlAdded', 'Link added to attachments'), { duration: 1500 });
+      setUrlValue('');
+      setUrlModalOpen(false);
+      setIsOpen(false);
+    } catch {
+      toast.error(t('aiChat.menu.urlInvalid', 'Invalid link'));
+    }
   };
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -280,7 +304,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         type="file"
         className="hidden"
         multiple
-        accept=".pdf,.txt,.md,.json,.csv,.docx,.xlsx,.doc,.xls,.pptx"
+        accept={SUPPORTED_CHAT_ATTACHMENT_ACCEPT}
         onChange={handleFileChange}
       />
 
@@ -298,20 +322,50 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload size={15} className="text-slate-500 dark:text-slate-400" />}
             label={t('aiChat.menu.uploadFile', 'Upload file')}
+            description={t(
+              'aiChat.menu.supportedLocalTypes',
+              'Supported: {{types}}',
+              { types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
+            )}
           />
 
-          {/* Divider */}
-          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
-
-          {/* Cloud providers — just name + link icon */}
-          {PROVIDERS.map((p) => (
-            <CloudMenuItem
-              key={p.id}
-              provider={p}
-              connected={connectedProviders.includes(p.id)}
-              onClick={() => handleCloudClick(p)}
+          {/* Add URL */}
+          {onUrlAdd && (
+            <MenuItem
+              onClick={() => setUrlModalOpen(true)}
+              icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
+              label={t('aiChat.menu.addLink', 'Add link')}
+              description={t('aiChat.menu.addLinkHint', 'Paste a URL to read and cite')}
             />
-          ))}
+          )}
+
+          {isCloudImplemented && connectedCloudProviders.length > 0 ? (
+            <>
+              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              {connectedCloudProviders.map((p) => (
+                <CloudMenuItem key={p.id} provider={p} connected={true} onClick={() => handleCloudClick(p)} />
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="px-3.5 py-2">
+                <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-400">
+                  {t(
+                    'aiChat.menu.cloudSetupHint',
+                    'Cloud files are available only from sources already connected in Integrations.'
+                  )}
+                </p>
+                <button
+                  type="button"
+                  onClick={openIntegrationsSettings}
+                  className="mt-2 text-[12px] font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
+                  {t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
@@ -368,6 +422,55 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
           </div>
         </div>
       )}
+
+      <Modal
+        open={urlModalOpen}
+        onClose={() => {
+          setUrlModalOpen(false);
+          setUrlValue('');
+        }}
+        title={t('aiChat.menu.addLink', 'Add link')}
+        description={t('aiChat.menu.addLinkModalDesc', 'We will fetch and attach the page content to this chat.')}
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setUrlModalOpen(false);
+                setUrlValue('');
+              }}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button variant="primary" onClick={submitUrl} disabled={!urlValue.trim()}>
+              {t('common.add', 'Add')}
+            </Button>
+          </div>
+        }
+      >
+        <div className="p-6 pt-4">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
+            {t('aiChat.menu.urlLabel', 'URL')}
+          </label>
+          <input
+            autoFocus
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitUrl();
+            }}
+            placeholder={t('aiChat.menu.urlPlaceholder', 'https://…')}
+            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500"
+          />
+          <p className="mt-2 text-[12px] text-slate-500 dark:text-slate-400">
+            {t(
+              'aiChat.menu.urlPrivacyHint',
+              'Only public http(s) links. Your organization policy may block internet access.'
+            )}
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -404,13 +507,21 @@ const MenuItem: React.FC<{
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
-}> = ({ onClick, icon, label }) => (
+  description?: string;
+}> = ({ onClick, icon, label, description }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+    className="w-full flex items-start gap-3 px-3.5 py-2 text-[13px] text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
   >
-    <span className="w-4 h-4 flex items-center justify-center shrink-0">{icon}</span>
-    <span className="flex-1 text-left">{label}</span>
+    <span className="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5">{icon}</span>
+    <span className="flex-1 text-left">
+      <span className="block">{label}</span>
+      {description && (
+        <span className="mt-0.5 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+          {description}
+        </span>
+      )}
+    </span>
   </button>
 );
 

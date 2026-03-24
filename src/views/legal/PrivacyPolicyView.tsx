@@ -31,8 +31,8 @@ export const PrivacyPolicyView: React.FC = () => {
           how we collect, use, store, and protect your information when you use our platform.
         </p>
         <p>
-          By using Consultify, you agree to the collection and use of information in accordance
-          with this policy.
+          By using Consultify, you agree to the collection and use of information in accordance with
+          this policy.
         </p>
       </section>
 

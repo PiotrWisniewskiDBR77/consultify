@@ -5,14 +5,7 @@
  * facts used, observations generated, and post-check pass/fail status.
  * Shown in the block footer when a section was generated via the V3 engine.
  */
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Database,
-  Eye,
-  Lightbulb,
-  XCircle,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Database, Eye, Lightbulb, XCircle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

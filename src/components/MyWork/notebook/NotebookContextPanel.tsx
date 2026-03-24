@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { NotebookPage } from '@/types/myWork';
@@ -135,6 +136,16 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       createdAt?: string;
     }>
   >([]);
+  const [backlinkChips, setBacklinkChips] = useState<
+    Record<
+      string,
+      {
+        title: string;
+        snippet?: string;
+        status?: string;
+      }
+    >
+  >({});
 
   const [expanded, setExpanded] = useState<Record<SectionKey, boolean>>({
     idea: false,
@@ -176,13 +187,14 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       try {
         const q = searchTerms.slice(0, 300);
 
-        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes] = await Promise.allSettled([
-          q ? Api.suggestMyIdeas(q, 12) : Api.getMyIdeas({ limit: 12 }),
-          Api.get(`/initiatives?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
-          Api.get(`/my-work/tasks?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
-          Api.get(`/decisions?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
-          Api.getLinkGraphBacklinks({ type: 'notebook', id: noteId, limit: 50 }),
-        ]);
+        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes] =
+          await Promise.allSettled([
+            q ? Api.suggestMyIdeas(q, 12) : Api.getMyIdeas({ limit: 12 }),
+            Api.get(`/initiatives?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
+            Api.get(`/my-work/tasks?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
+            Api.get(`/decisions?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
+            Api.getLinkGraphBacklinks({ type: 'notebook', id: noteId, limit: 50 }),
+          ]);
 
         if (!cancelled) {
           const ideasList = ideasRes.status === 'fulfilled' ? ideasRes.value : [];
@@ -236,17 +248,41 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             backlinksRes.status === 'fulfilled' && Array.isArray(backlinksRes.value)
               ? (backlinksRes.value as any[])
               : [];
-          setUsedIn(
-            backlinks
-              .map((x: any) => ({
-                id: String(x?.id || ''),
-                sourceType: String(x?.sourceType || ''),
-                sourceId: String(x?.sourceId || ''),
-                createdAt: x?.createdAt ? String(x.createdAt) : undefined,
-              }))
-              .filter((x: any) => x.sourceType && x.sourceId)
-              .slice(0, 50)
-          );
+          const backlinkRows = backlinks
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+              createdAt: x?.createdAt ? String(x.createdAt) : undefined,
+            }))
+            .filter((x: any) => x.sourceType && x.sourceId)
+            .slice(0, 50);
+          setUsedIn(backlinkRows);
+
+          if (backlinkRows.length > 0) {
+            try {
+              const chipRes = await Api.notebookResolveEmbedChips(
+                backlinkRows.slice(0, 20).map((row) => ({ type: row.sourceType, id: row.sourceId }))
+              );
+              if (!cancelled) {
+                const nextChips = Object.fromEntries(
+                  ((chipRes as any)?.chips || []).map((chip: any) => [
+                    `${chip.artifactType}:${chip.artifactId}`,
+                    {
+                      title: String(chip.title || `${chip.artifactType} ${chip.artifactId}`),
+                      snippet: chip.snippet ? String(chip.snippet) : undefined,
+                      status: chip.status ? String(chip.status) : undefined,
+                    },
+                  ])
+                );
+                setBacklinkChips(nextChips);
+              }
+            } catch {
+              if (!cancelled) setBacklinkChips({});
+            }
+          } else {
+            setBacklinkChips({});
+          }
 
           trackFunnelEvent('notebook_context_panel_opened', {
             noteId,
@@ -261,6 +297,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
           setTasks([]);
           setDecisions([]);
           setUsedIn([]);
+          setBacklinkChips({});
         }
       } finally {
         if (!cancelled) {
@@ -281,24 +318,43 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   const take = (key: SectionKey, arr: any[]) =>
     expanded[key] ? arr.slice(0, 12) : arr.slice(0, 4);
 
-  const insertCallout = (title: string, body?: string) => {
+  const insertEmbeddedRef = (payload: {
+    artifactType: string;
+    artifactId: string;
+    title: string;
+    label: string;
+    status?: string;
+    snippet?: string;
+    updatedAt?: string;
+  }) => {
     if (!editor) return;
     editor
       .chain()
       .focus()
       .insertContent({
-        type: 'callout',
-        attrs: { variant: 'info' },
-        content: [
-          { type: 'paragraph', content: [{ type: 'text', text: title }] },
-          ...(body ? [{ type: 'paragraph', content: [{ type: 'text', text: body }] }] : []),
-        ],
+        type: 'embeddedRef',
+        attrs: {
+          artifactType: payload.artifactType,
+          artifactId: payload.artifactId,
+          title: payload.title,
+          label: payload.label,
+          status: payload.status || '',
+          snippet: payload.snippet || '',
+          updatedAt: payload.updatedAt || '',
+        },
       })
+      .insertContent({ type: 'text', text: ' ' })
       .run();
   };
 
   const handleInsertIdea = (idea: SuggestedIdea) => {
-    insertCallout(`💡 ${idea.title}`, idea.body || undefined);
+    insertEmbeddedRef({
+      artifactType: 'idea',
+      artifactId: idea.id,
+      title: idea.title,
+      label: `💡 ${idea.title}`,
+      snippet: idea.body || undefined,
+    });
     Api.createLinkGraphEdge({
       source: { type: 'notebook', id: noteId },
       target: { type: 'idea', id: idea.id },
@@ -311,7 +367,13 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
   const handleInsertPulseRef = (item: PulseItem) => {
     const typeLabel = item.type === 'initiative' ? '🎯' : item.type === 'task' ? '✅' : '⚖️';
-    insertCallout(`${typeLabel} ${item.title} [${item.type}]`);
+    insertEmbeddedRef({
+      artifactType: item.type,
+      artifactId: item.id,
+      title: item.title,
+      label: `${typeLabel} ${item.title}`,
+      status: item.status,
+    });
     Api.createLinkGraphEdge({
       source: { type: 'notebook', id: noteId },
       target: { type: item.type, id: item.id },
@@ -322,10 +384,18 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   };
 
   const handleInsertNoteRef = (n: NotebookPage) => {
-    insertCallout(`📄 ${n.title || (pl ? 'Bez tytułu' : 'Untitled')}`, n.summary || undefined);
+    insertEmbeddedRef({
+      artifactType: 'notebook_page',
+      artifactId: n.id,
+      title: n.title || (pl ? 'Bez tytułu' : 'Untitled'),
+      label: `📄 ${n.title || (pl ? 'Bez tytułu' : 'Untitled')}`,
+      snippet: n.summary || undefined,
+      status: n.status,
+      updatedAt: n.updatedAt || undefined,
+    });
     Api.createLinkGraphEdge({
       source: { type: 'notebook', id: noteId },
-      target: { type: 'notebook', id: n.id },
+      target: { type: 'notebook_page', id: n.id },
       relation: 'ref',
       context: { containerType: 'notebook_embed', containerId: noteId },
     }).catch(() => undefined);
@@ -463,62 +533,73 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
         ) : (
           <>
             <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  <Link2 size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span>{pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}</span>
-                  <span className="bg-slate-500/10 px-1.5 py-0.5 rounded-full text-[10px]">
-                    {usedIn.length}
-                  </span>
-                </div>
-              </div>
-              {backlinksLoading ? (
-                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-2">
-                  <Loader2 size={14} className="animate-spin text-slate-400" />
-                  {pl ? 'Wczytuję…' : 'Loading…'}
-                </div>
-              ) : usedIn.length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak powiązań' : 'No links yet'}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {usedIn.slice(0, 8).map((x) => (
-                    <div
-                      key={x.id || `${x.sourceType}:${x.sourceId}`}
-                      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                            {x.sourceType}
-                          </div>
-                          <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                            {x.sourceId}
+              <EmbeddedView
+                title={pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
+                count={usedIn.length}
+                loading={backlinksLoading}
+                readOnly
+                viewModes={['list']}
+              >
+                {usedIn.length === 0 && !backlinksLoading ? (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                    {pl ? 'Brak powiązań' : 'No links yet'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {usedIn.slice(0, 8).map((x) => {
+                      const chip = backlinkChips[`${x.sourceType}:${x.sourceId}`];
+                      return (
+                        <div
+                          key={x.id || `${x.sourceType}:${x.sourceId}`}
+                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                                {chip?.title || x.sourceType}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                {chip?.snippet || x.sourceId}
+                              </div>
+                              {chip?.status ? (
+                                <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                  {chip.status}
+                                </div>
+                              ) : null}
+                              <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                                {x.sourceType} · {x.sourceId}
+                              </div>
+                            </div>
+                            {[
+                              'task',
+                              'decision',
+                              'idea',
+                              'initiative',
+                              'notebook',
+                              'report',
+                              'presentation',
+                            ].includes(String(x.sourceType)) ? (
+                              <button
+                                onClick={() =>
+                                  openItem(
+                                    x.sourceType as any,
+                                    x.sourceId,
+                                    `${x.sourceType} ${x.sourceId}`.slice(0, 120)
+                                  )
+                                }
+                                className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                              >
+                                <ExternalLink size={12} />
+                                {pl ? 'Otwórz' : 'Open'}
+                              </button>
+                            ) : null}
                           </div>
                         </div>
-                        {['task', 'decision', 'idea', 'initiative', 'notebook', 'report', 'presentation'].includes(
-                          String(x.sourceType)
-                        ) ? (
-                          <button
-                            onClick={() =>
-                              openItem(
-                                x.sourceType as any,
-                                x.sourceId,
-                                `${x.sourceType} ${x.sourceId}`.slice(0, 120)
-                              )
-                            }
-                            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
-                          >
-                            <ExternalLink size={12} />
-                            {pl ? 'Otwórz' : 'Open'}
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </EmbeddedView>
             </div>
 
             <Section k="idea" count={ideas.length}>

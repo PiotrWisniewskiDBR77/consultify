@@ -22,11 +22,13 @@ import {
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
   ChangePasswordRequestSchema,
+  ForgotPasswordRequestSchema,
   LoginRequestSchema,
   MFADisableRequestSchema,
   MFAEnableRequestSchema,
   MFASetupRequestSchema,
   RefreshTokenRequestSchema,
+  RegisterDemoRequestSchema,
   RegisterRequestSchema,
   ResetPasswordRequestSchema,
   RevokeAllTokensRequestSchema,
@@ -54,7 +56,7 @@ import logger from '../utils/Logger.js';
 router.use(authRateLimiter);
 
 const FORCED_SUPERADMIN_EMAILS = (() => {
-  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
   return new Set(
     raw
       .split(',')
@@ -255,6 +257,38 @@ router.get(
         }
       }
 
+      let remappedUserId = false;
+      if (!user && req.user?.email) {
+        const normalizedEmail = String(req.user.email).trim().toLowerCase();
+        if (normalizedEmail) {
+          try {
+            user = await dbGet<{
+              id: string;
+              email: string;
+              role: string;
+              organization_id: string;
+              first_name: string;
+              last_name: string;
+              avatar_url: string | null;
+              impersonator_id: string | null;
+              organization_name: string | null;
+              organization_plan: string | null;
+              organization_status: string | null;
+            }>(
+              `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, NULL as impersonator_id,
+                              o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+                       FROM users u
+                       LEFT JOIN organizations o ON u.organization_id = o.id
+                       WHERE lower(u.email) = lower(?)`,
+              [normalizedEmail]
+            );
+            remappedUserId = Boolean(user && user.id !== req.user!.id);
+          } catch {
+            // ignore fallback lookup failures and return the original 404 below
+          }
+        }
+      }
+
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -280,7 +314,8 @@ router.get(
 
       // Check if role changed in database - if so, generate new token
       let newToken: string | null = null;
-      if (user.role !== req.user!.role) {
+      let newRefreshToken: string | null = null;
+      if (user.role !== req.user!.role || remappedUserId) {
         const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
         const tokenPair = await refreshTokenService.generateTokenPair(
           {
@@ -296,6 +331,15 @@ router.get(
           }
         );
         newToken = tokenPair.accessToken;
+        newRefreshToken = tokenPair.refreshToken;
+      }
+
+      if (newToken) {
+        try {
+          setAuthCookies(res, newToken, newRefreshToken || req.cookies?.[REFRESH_TOKEN_COOKIE]);
+        } catch {
+          // ignore cookie write failures
+        }
       }
 
       const response: {
@@ -314,7 +358,9 @@ router.get(
           accessLevel: 'free' | 'full';
         };
         token?: string;
+        refreshToken?: string;
         roleChanged?: boolean;
+        userRemapped?: boolean;
       } = {
         user: {
           id: user.id,
@@ -339,7 +385,13 @@ router.get(
       // Include new token if role changed
       if (newToken) {
         response.token = newToken;
-        response.roleChanged = true;
+        if (newRefreshToken) {
+          response.refreshToken = newRefreshToken;
+        }
+        response.roleChanged = user.role !== req.user!.role;
+      }
+      if (remappedUserId) {
+        response.userRemapped = true;
       }
 
       return res.json(response);
@@ -485,14 +537,164 @@ router.post(
   })
 );
 
-// DEMO LOGIN - Auto-login as demo account
+// REGISTER DEMO - Sign up with email+password to try demo (track duration, contact for follow-up)
+router.post(
+  '/register-demo',
+  validateBody(RegisterDemoRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email, password, firstName } = req.body;
+
+    const existingUser = await dbGet<{ id: string; organization_id: string }>(
+      'SELECT id, organization_id FROM users WHERE email = ?',
+      [email]
+    );
+    if (existingUser) {
+      return res.status(400).json({
+        error: 'Email already in use. Please log in and click "Enter Demo".',
+        code: 'EMAIL_IN_USE',
+      });
+    }
+
+    const { default: setUserDemoPreference } = await import(
+      '../middleware/demoGuard.middleware.js'
+    ).then((m) => ({ default: m.setUserDemoPreference }));
+
+    const userId = uuidv4();
+    const hashedPassword = bcrypt.hashSync(password, 8);
+    const demoOrgId = process.env.DEMO_ORG_ID || 'demo-org';
+
+    // Ensure demo org exists
+    await dbRun(
+      `INSERT INTO organizations (id, name, plan, status, organization_type)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO NOTHING`,
+      [demoOrgId, process.env.DEMO_ORG_NAME || 'Atelier ToolToys', 'enterprise', 'active', 'DEMO'],
+      { fallback: true }
+    );
+
+    // Create user in demo org
+    const userResult = await dbRun(
+      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        demoOrgId,
+        email,
+        hashedPassword,
+        firstName || '',
+        '',
+        'ADMIN',
+        'active',
+      ],
+      { fallback: false }
+    );
+
+    if (!userResult.success) {
+      logger.error('[Auth] Register demo user failed:', userResult.error);
+      return res.status(500).json({ error: 'Failed to create account' });
+    }
+
+    try {
+      await setUserDemoPreference(userId, true, { setStartedAt: true });
+    } catch (prefErr: any) {
+      logger.warn('[Auth] Demo preference storage failed (non-blocking):', prefErr?.message || prefErr);
+      // Continue — user is created; preference is for analytics only
+    }
+
+    const user = await dbGet<{
+      id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      role: string;
+      organization_id: string;
+    }>('SELECT id, email, first_name, last_name, role, organization_id FROM users WHERE id = ?', [
+      userId,
+    ]);
+
+    if (!user) {
+      return res.status(500).json({ error: 'Account created but login failed' });
+    }
+
+    const tokenResult = await refreshTokenService.generateTokenPair(user, {
+      deviceInfo: 'Demo Signup',
+      ip: req.ip,
+      userAgent: req.get('user-agent') || null,
+    });
+
+    const language = String(req.get('Accept-Language') || '')
+      .split(',')[0]
+      ?.split('-')[0]
+      ?.toLowerCase();
+
+    await recordDemoTrialEvent({
+      eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
+      organizationId: demoOrgId,
+      userId,
+      source: 'register_demo',
+      language: language || undefined,
+      metadata: { entryPoint: 'demo_signup', hasContact: true },
+    });
+
+    const org = await dbGet<{ name: string }>(
+      'SELECT name FROM organizations WHERE id = ?',
+      [demoOrgId]
+    );
+
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
+      role: user.role,
+      status: 'active',
+      organizationId: user.organization_id,
+      companyName: org?.name || 'Atelier ToolToys',
+      isDemo: true,
+      hasWorkspace: true,
+      isAuthenticated: true,
+      accessLevel: 'full' as const,
+    };
+
+    try {
+      setAuthCookies(res, tokenResult.accessToken, tokenResult.refreshToken);
+    } catch {
+      /* ignore */
+    }
+
+    logger.info('[Auth] Demo signup successful', { userId, email });
+    return res.json({
+      user: safeUser,
+      token: tokenResult.accessToken,
+      refreshToken: tokenResult.refreshToken,
+      expiresIn: config.JWT_EXPIRES_IN,
+      isDemo: true,
+    });
+  })
+);
+
+// DEMO LOGIN - Anonymous demo (deprecated in production; use register-demo or login+demo/enter)
+// Kept for E2E and test gateway compatibility
 router.post(
   '/demo-login',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const isTestGateway =
+      process.env.NODE_ENV === 'test' ||
+      process.env.E2E_MODE === 'true' ||
+      process.env.ENABLE_TEST_GATEWAY === 'true';
+
+    if (!isTestGateway) {
+      return res.status(410).json({
+        error: 'Anonymous demo is no longer available. Please sign up or log in to try the demo.',
+        code: 'DEMO_LOGIN_DEPRECATED',
+        alternatives: ['/api/auth/register-demo', '/api/auth/login + /api/demo/toggle'],
+      });
+    }
+
     // Single demo account (do not use DBR77 domain)
     const DEMO_EMAILS = ['piotr.wisniewski@demo.com'];
 
-    logger.info('[Auth] Demo login request');
+    logger.info('[Auth] Demo login request (test mode)');
 
     try {
       let user = null as any;
@@ -993,7 +1195,11 @@ router.post(
           const emailVerificationService = (await import('../services/emailVerificationService.js'))
             .default;
           const token = await emailVerificationService.createVerificationToken(userId, email);
-          await emailVerificationService.sendVerificationEmail(email, firstName, token);
+          // Do not block registration on flaky SMTP/network.
+          await _withTimeout(
+            emailVerificationService.sendVerificationEmail(email, firstName, token),
+            1500
+          );
           emailVerificationSent = true;
           logger.info(`[Auth] Email verification sent to ${email}`);
         } catch (verifyErr) {
@@ -1004,12 +1210,16 @@ router.post(
         // GAP-AUTH-003: Send welcome email
         try {
           const welcomeEmailService = (await import('../services/welcomeEmailService.js')).default;
-          await welcomeEmailService.sendWelcomeEmail({
-            email,
-            firstName,
-            companyName: companyName || 'Your Organization',
-            isDemo,
-          });
+          // Do not block registration on flaky SMTP/network.
+          await _withTimeout(
+            welcomeEmailService.sendWelcomeEmail({
+              email,
+              firstName,
+              companyName: companyName || 'Your Organization',
+              isDemo,
+            }),
+            1500
+          );
           logger.info(`[Auth] Welcome email sent to ${email}`);
         } catch (welcomeErr) {
           logger.warn('[Auth] Failed to send welcome email:', welcomeErr);
@@ -1196,6 +1406,55 @@ router.post(
       logger.error('[Auth] Change password error:', error);
       return res.status(500).json({ error: 'Failed to change password' });
     }
+  })
+);
+
+// FORGOT PASSWORD — request a reset link (Public)
+router.post(
+  '/forgot-password',
+  validateBody(ForgotPasswordRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email } = req.body;
+
+    const user = await dbGet<{ id: string; email: string }>(
+      'SELECT id, email FROM users WHERE LOWER(email) = LOWER(?)',
+      [email]
+    );
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+    await dbRun('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
+    await dbRun(
+      'INSERT INTO password_resets (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
+      [uuidv4(), user.id, token, expiresAt]
+    );
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+    try {
+      const emailService = (await import('../services/emailService.js')).default;
+      await emailService.send({
+        to: user.email,
+        subject: 'Consultify — Password Reset',
+        html: `
+          <h2>Password Reset Request</h2>
+          <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>If you did not request this, you can safely ignore this email.</p>
+        `,
+      });
+    } catch (err) {
+      logger.error('[Auth] Failed to send password reset email:', err);
+    }
+
+    return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
   })
 );
 

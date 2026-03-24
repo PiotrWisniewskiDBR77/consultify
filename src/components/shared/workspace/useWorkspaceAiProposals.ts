@@ -16,19 +16,22 @@ export function useWorkspaceAiProposals<TPayload>() {
   }, []);
 
   const updateProposal = useCallback((id: string, fn: UpdateFn<TPayload>) => {
-    setProposals((prev) =>
-      prev
-        .map((p) => (p.id === id ? fn(p) : p))
-        .filter(Boolean) as WorkspaceAiProposal<TPayload>[]
+    setProposals(
+      (prev) =>
+        prev
+          .map((p) => (p.id === id ? fn(p) : p))
+          .filter(Boolean) as WorkspaceAiProposal<TPayload>[]
     );
   }, []);
 
-  const setStatus = useCallback((id: string, status: WorkspaceAiProposalStatus) => {
-    updateProposal(id, (p) => ({ ...p, status }));
-  }, [updateProposal]);
+  const setStatus = useCallback(
+    (id: string, status: WorkspaceAiProposalStatus) => {
+      updateProposal(id, (p) => ({ ...p, status }));
+    },
+    [updateProposal]
+  );
 
   const clearAll = useCallback(() => setProposals([]), []);
 
   return { proposals, pending, addProposal, updateProposal, setStatus, clearAll };
 }
-

@@ -36,6 +36,23 @@
 
 ---
 
+## FROZEN LAYOUTS — NIE ZMIENIAJ (MUST)
+
+**SSOT:** `docs/ui-standards/FROZEN_LAYOUTS.md`
+
+Przy tworzeniu nowych tasków i implementacji **NIGDY** nie zmieniaj:
+
+1. **Sidebar menu** — kolejność: Chat, My Work, Interview, Tools, Initiatives, Execution, Results… (SSOT: `menuConfig.ts`)
+2. **Module topbar** — kolejność od prawej: Area → Add → Tool → View → Filters
+3. **View modes** — kolejność ikon: table → kanban → timeline → calendar → matrix → grid
+4. **Command Row** — dokładnie 1 rząd pod topbarem (bulk/search/tabs/counters). Zero dodatkowych pasków między topbarem a tabelą.
+5. **App Table + Preview** — kanon Outlook style: single click = preview, double = full; anatomia preview (Header/Body/Footer)
+6. **Workspace 3-tools strip** — tylko: Tools | Context | AI Suggestions (single-select). Bez 4. przycisku, bez własnego layoutu.
+
+Przed każdą zmianą UI w tych obszarach — przeczytaj `FROZEN_LAYOUTS.md`.
+
+---
+
 ## UI/UX Standards & Documentation
 
 **KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`
@@ -73,3 +90,36 @@ Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/r
 4. **Przed napisaniem testu**: sprawdź, czy istnieje walidator/serwis/controller do przetestowania. Jeśli nie — testuj to, co jest (np. integrację z API).
 
 Zasada: test ma wykryć regresję w prawdziwym kodzie. Placeholder tego nie robi.
+
+---
+
+## Railway DB Targeting (MUST)
+
+Nigdy nie zgaduj targetu bazy dla Railway.
+
+1. **Poza Railway**:
+   - NIE używaj `*.railway.internal`
+   - używaj `DATABASE_PUBLIC_URL` / publicznego proxy Postgresa
+
+2. **W Railway runtime**:
+   - używaj `DATABASE_URL` / `DB_HOST=*.railway.internal`
+
+3. **Local staging / migracje / skrypty importu**:
+   - jeśli `DATABASE_URL` wskazuje na `*.railway.internal`, agent MUSI przełączyć się na `DATABASE_PUBLIC_URL` albo przerwać z jasnym błędem
+   - nie wolno uruchamiać skryptów “na próbę” przeciw prywatnemu hostowi z laptopa
+   - nie wolno tworzyć ani przywracać local-DB workflowów (`localhost`, `127.0.0.1`, `0.0.0.0`) dla runtime aplikacji, migracji ani importów
+   - jeśli external/public DB target jest niedostępny, run ma zostać przerwany; bez fallbacku do lokalnej bazy
+
+4. **Organization targeting consistency**:
+   - `dbr77` i `atelier` są równorzędnymi, realnymi tenantami
+   - nie zakładaj już jednego `PRIMARY_BUILD_ORG_ID`
+   - dla importów i seedów zawsze przekazuj jawny `ORG_ID` / `SEED_ORG_ID` / `FINANCE_IMPORT_ORG_ID`
+   - `DEMO_ORG_ID` rezerwuj wyłącznie dla osobnego tenant demo, jeśli faktycznie istnieje
+
+5. **Przed zmianą Railway/staging/prod**:
+   - sprawdź aktualny target DB i environment
+   - jeśli operacja dotyczy lokalnego uruchomienia przeciw Railway, upewnij się, że używany jest publiczny/external DB URL
+
+6. **Źródło prawdy dla resolvera**:
+   - `server/src/config/databaseTargetResolver.ts`
+   - nie duplikuj tej logiki w nowych skryptach; importuj wspólny resolver

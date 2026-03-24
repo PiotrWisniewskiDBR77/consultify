@@ -835,7 +835,9 @@ const TokenEconomyTab: React.FC = () => {
             </span>
             <Zap size={18} className="text-yellow-400" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.activeModels}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {stats.activeModels}
+          </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
           <div className="flex justify-between items-start mb-3">
@@ -844,7 +846,9 @@ const TokenEconomyTab: React.FC = () => {
             </span>
             <Package size={18} className="text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.activePackages}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {stats.activePackages}
+          </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
           <div className="flex justify-between items-start mb-3">

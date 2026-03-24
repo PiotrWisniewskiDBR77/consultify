@@ -25,3 +25,4 @@ export { SettingsApi } from './settings.api';
 export { TaskApi } from './tasks.api';
 export { TeamApi } from './teams.api';
 export { UserApi } from './users.api';
+export * from './tablePlatform.api';

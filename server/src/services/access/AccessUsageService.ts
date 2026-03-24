@@ -86,7 +86,17 @@ export class AccessUsageService {
         [`usage-${uuidv4()}`, organizationId, today, amount, amount]
       );
     } catch (err) {
-      // usage_counters table may not exist or have different schema
+      try {
+        await DbPromise.run(
+          this.db,
+          `UPDATE usage_counters
+             SET ${column} = COALESCE(${column}, 0) + ?
+           WHERE organization_id = ? AND counter_date = ?`,
+          [amount, organizationId, today]
+        );
+      } catch {
+        // usage_counters table may not exist or have different schema
+      }
     }
   }
 

@@ -81,6 +81,7 @@ const AICoach: {
           'help_events',
           'metrics_events',
           'organization_events',
+          ...(context.data?.organization_context_os ? ['organization_context_os'] : []),
         ],
         version: '1.0.0-governed',
       },

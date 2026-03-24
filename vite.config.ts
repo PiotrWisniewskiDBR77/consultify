@@ -4,7 +4,7 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
-  const apiTarget = env.VITE_API_TARGET || 'http://127.0.0.1:3001';
+  const apiTarget = env.VITE_API_TARGET || process.env.VITE_API_TARGET || 'http://127.0.0.1:3001';
   const stableDev = env.VITE_STABLE_DEV === '1' || process.env.VITE_STABLE_DEV === '1';
 
   const watchIgnored = [
@@ -45,19 +45,22 @@ export default defineConfig(({ mode }) => {
           './src/routes/AppRoutes.tsx',
           './src/views/AIChatWelcomeView.tsx',
           './src/views/MyWorkView.tsx',
+          './src/components/Interview/InterviewHub.tsx',
         ],
       },
-      watch: {
-        // Prevent dev-server reload loops caused by generated artifacts and iCloud/Finder duplicates.
-        ignored: watchIgnored,
-        // Reduce "save storm" events (esp. from sync tools) that can trigger cascaded reloads.
-        awaitWriteFinish: {
-          stabilityThreshold: stableDev ? 2000 : 200,
-          pollInterval: 100,
-        },
-        ...(stableDev ? { usePolling: true, interval: 2000 } : {}),
-      },
-      // In stable mode we disable HMR to prevent constant reconnect/reload loops.
+      watch: stableDev
+        ? {
+            // Stable mode: ignore ALL source files so Vite never triggers page reloads
+            // while another agent or IDE auto-save modifies files.
+            ignored: ['**/*'],
+          }
+        : {
+            ignored: watchIgnored,
+            awaitWriteFinish: {
+              stabilityThreshold: 200,
+              pollInterval: 100,
+            },
+          },
       hmr: stableDev ? false : undefined,
       proxy: {
         '/api': {
@@ -106,6 +109,9 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.NEXT_PUBLIC_GEMINI_API_KEY': JSON.stringify(
+        env.NEXT_PUBLIC_GEMINI_API_KEY || env.GEMINI_API_KEY
+      ),
     },
     resolve: {
       alias: {

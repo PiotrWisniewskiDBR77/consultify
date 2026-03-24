@@ -9,6 +9,8 @@ import { Router } from 'express';
 
 import DecisionControllerRaw from '../../controllers/DecisionController.js';
 const DecisionController = DecisionControllerRaw as any;
+import DecisionPlaybookControllerRaw from '../../controllers/DecisionPlaybookController.js';
+const DecisionPlaybookController = DecisionPlaybookControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -19,12 +21,23 @@ import {
   RemindDecisionSchema,
   UpdateDecisionSchema,
 } from '../../validators/decision.validators.js';
+import { PlaybookSchema } from '../../services/decisionPlaybookService.js';
 
 // Apply rate limiting
 const router = Router();
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+
+// ==========================================
+// PLAYBOOK CRUD (before /:id to avoid conflicts)
+// ==========================================
+
+router.get('/playbooks', DecisionPlaybookController.listPlaybooks);
+router.post('/playbooks', validateBody(PlaybookSchema), DecisionPlaybookController.createPlaybook);
+router.get('/playbooks/:playbookId', DecisionPlaybookController.getPlaybook);
+router.put('/playbooks/:playbookId', validateBody(PlaybookSchema), DecisionPlaybookController.updatePlaybook);
+router.delete('/playbooks/:playbookId', DecisionPlaybookController.deletePlaybook);
 
 // ==========================================
 // DECISION CRUD
@@ -41,6 +54,12 @@ router.get('/', DecisionController.getDecisions);
  * Get decision bottleneck analysis
  */
 router.get('/bottlenecks', DecisionController.getBottlenecks);
+
+/**
+ * GET /api/decisions/:id/required-fields-status
+ * Check required fields for a decision against its playbook
+ */
+router.get('/:id/required-fields-status', DecisionPlaybookController.getRequiredFieldsStatus);
 
 /**
  * GET /api/decisions/:id
@@ -87,5 +106,18 @@ router.post(
  * Send a nudge/reminder to the current decision owner (rate-limited server-side).
  */
 router.post('/:id/remind', validateBody(RemindDecisionSchema), DecisionController.remindDecision);
+
+/**
+ * GET /api/decisions/:id/created-tasks
+ * V4-EXEC-06: Get tasks auto-created from a published decision
+ */
+router.get('/:id/created-tasks', DecisionController.getCreatedTasks);
+
+/**
+ * PATCH /api/decisions/:id/workflow
+ * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
+ * Body: { toStatus: 'proposed'|'review'|'approve'|'published' }
+ */
+router.patch('/:id/workflow', DecisionController.transitionWorkflow);
 
 export default router;

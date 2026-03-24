@@ -1,8 +1,10 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
-import { useHelp, useHelpPlaybooks, useHelpSidePanel } from '../../contexts/HelpContext';
+import { useHelp, useHelpPlaybooks } from '../../contexts/HelpContext';
+import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 
 const shownKey = (userId: string) => `consultify_onboarding_cta_shown:${userId}`;
@@ -10,9 +12,9 @@ const dismissedKey = (userId: string) => `consultify_onboarding_cta_dismissed:${
 
 export const OnboardingFirstLoginCTA: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const currentUser = useAppStore((s) => s.currentUser);
   const { logEvent } = useHelp();
-  const { setOpen, setActiveTab } = useHelpSidePanel();
   const playbooks = useHelpPlaybooks();
 
   const hasShownRef = React.useRef(false);
@@ -71,19 +73,13 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
             </button>
             <button
               onClick={async () => {
-                try {
-                  localStorage.setItem('consultify_onboarding_autostart_playbook', 'first-30-min');
-                } catch {
-                  // ignore
-                }
-                await logEvent('first-30-min', 'STARTED', { source: 'first_login_toast' });
-                setActiveTab('onboarding');
-                setOpen(true);
+                await logEvent('first-30-min', 'INTRO_OPENED', { source: 'first_login_toast' });
                 toast.dismiss(toastInstance.id);
+                navigate(ROUTES.APP_INTRO);
               }}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors"
             >
-              {t('help.onboarding.cta.toast.start', 'Start')}
+              {t('help.onboarding.cta.toast.start', 'Open intro')}
             </button>
           </div>
         </div>
@@ -92,7 +88,7 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
     );
 
     return () => toast.dismiss(id);
-  }, [currentUser?.id, logEvent, playbooks, setActiveTab, setOpen, t]);
+  }, [currentUser?.id, logEvent, navigate, playbooks, t]);
 
   return null;
 };

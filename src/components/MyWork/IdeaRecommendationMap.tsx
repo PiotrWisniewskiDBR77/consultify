@@ -1,19 +1,25 @@
 import 'reactflow/dist/style.css';
+import './mindmap/mindmap-effects.css';
 
 import {
+  AlertTriangle,
   Bot,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  FileText,
   Flower2,
   GitBranch,
   Lightbulb,
   Link2,
   Loader2,
-  Minus,
+  Pencil,
   Plus,
-  RotateCcw,
   Sparkles,
+  StickyNote,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
@@ -23,6 +29,7 @@ import ReactFlow, {
   ConnectionMode,
   type Edge,
   Handle,
+  MiniMap,
   type Node,
   type NodeProps,
   Panel,
@@ -32,12 +39,106 @@ import ReactFlow, {
   useNodesState,
   useReactFlow,
 } from 'reactflow';
+import useStore from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { resolveTagColor } from './mindmap/tagColorMapping';
 import { Api } from '@/services/api';
-import type { CanvasToolType } from './IdeaCanvasToolSelector';
+import { useAppStore } from '@/store/useAppStore';
+import {
+  artifactLinkToOpenPayload,
+  buildArtifactLink,
+  getArtifactPath,
+  type ArtifactLink,
+  type ArtifactType,
+} from '@/utils/artifactLinks';
 
-type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import {
+  IDEA_STAGE_COLORS,
+  IDEA_STAGE_LABELS,
+  IDEA_STAGES_V5,
+  type IdeaStageV5,
+  normalizeStageToV5,
+} from './ideaEntryTypes';
+import {
+  type CanvasToolType,
+  IDEA_WORKSPACE_THEME_EVENT,
+  IDEA_WORKSPACE_INSERT_EVENT,
+  type IdeaWorkspaceInsertDetail,
+  type MapStructureType,
+  type MindMapInteractionMode,
+} from './ideaSelectionTypes';
+import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
+import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
+import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
+import { AIBlindSpotsDetector } from './mindmap/AIBlindSpotsDetector';
+import { AIBranchBalancer } from './mindmap/AIBranchBalancer';
+import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
+import { AIDependencyDetector, type DetectedDependency } from './mindmap/AIDependencyDetector';
+import { AIPriorityRecommender } from './mindmap/AIPriorityRecommender';
+import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentOverlay';
+import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
+import { BatchConvertModal } from './mindmap/BatchConvertModal';
+import { BranchComparison } from './mindmap/BranchComparison';
+import { BranchSummaryPanel } from './mindmap/BranchSummaryPanel';
+import { ClusterBubbles } from './mindmap/ClusterBubbles';
+import {
+  CollaborationOverlay,
+  type CollaborationSessionState,
+} from './mindmap/CollaborationOverlay';
+import { DocumentToMap } from './mindmap/DocumentToMap';
+import { EmbedInReports } from './mindmap/EmbedInReports';
+import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
+import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
+import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
+import { AssignPersonModal } from './mindmap/AssignPersonModal';
+import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
+import { ImageUrlModal } from './mindmap/ImageUrlModal';
+import { FloatingNodeToolbar } from './mindmap/FloatingNodeToolbar';
+import { GradientEdge } from './mindmap/GradientEdge';
+import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
+import { ImportExternalMap } from './mindmap/ImportExternalMap';
+import { InterviewToMap } from './mindmap/InterviewToMap';
+import { LabeledEdge } from './mindmap/LabeledEdge';
+import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
+import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
+import { MindMap3DView } from './mindmap/MindMap3DView';
+import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
+import { NodeContextMenu } from './mindmap/NodeContextMenu';
+import { PaneContextMenu } from './mindmap/PaneContextMenu';
+import { EdgeContextMenu } from './mindmap/EdgeContextMenu';
+import {
+  applyNodeStyle,
+  appendAIHistoryEntry,
+  collectDescendantIds,
+  copyNodeStyle,
+} from './mindmap/mindMapNodeModel';
+import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
+import {
+  GlowWrapper,
+  MaturityRing,
+  type NodeStatusType,
+  StatusDot,
+  VoteStars,
+} from './mindmap/NodeEnhancements';
+import { PresentationMode } from './mindmap/PresentationMode';
+import { SnapshotHistory } from './mindmap/SnapshotHistory';
+import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
+import { TimeHeatmap } from './mindmap/TimeHeatmap';
+import { TimelineView } from './mindmap/TimelineView';
+import { applyStructureLayout } from './mindmap/StructureLayouts';
+import { StructurePickerPopover } from './mindmap/toolbar-popovers/StructurePickerPopover';
+import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
+import { useAutoLayout } from './mindmap/useAutoLayout';
+import { useMapExport } from './mindmap/useMapExport';
+import { useMapExportPdf } from './mindmap/useMapExportPdf';
+import { hasMindMapClipboard, isRelationEdge, isStructuralEdge, useMindMapNodes } from './mindmap/useMindMapNodes';
+import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
+import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
+import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
+import { VoiceToNode } from './mindmap/VoiceToNode';
+import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 
 type AIMapProposal = {
   add: { nodes: Node[]; edges: Edge[] };
@@ -46,61 +147,138 @@ type AIMapProposal = {
   rationale?: string | null;
 };
 
-function buildLocalDefaultIdeaMap(
-  ideaId: string,
-  ideaTitle: string,
-  isPl: boolean
-): { nodes: Node[]; edges: Edge[] } {
-  const centerId = 'root';
-  const branchRadius = 320;
-  const branches = [
-    { key: 'problem', label: isPl ? 'Problem' : 'Problem', angle: -Math.PI / 2 },
-    { key: 'goal', label: isPl ? 'Cel / KPI' : 'Goal / KPI', angle: -Math.PI / 6 },
-    { key: 'options', label: isPl ? 'Opcje' : 'Options', angle: Math.PI / 6 },
-    { key: 'evidence', label: isPl ? 'Dowody' : 'Evidence', angle: Math.PI / 2 },
-    { key: 'risks', label: isPl ? 'Ryzyka' : 'Risks', angle: (5 * Math.PI) / 6 },
-    { key: 'experiments', label: isPl ? 'Eksperymenty' : 'Experiments', angle: (7 * Math.PI) / 6 },
-  ];
+type DebugSource =
+  | 'lifecycle'
+  | 'input'
+  | 'handler'
+  | 'keyboard'
+  | 'selection'
+  | 'persistence'
+  | 'custom'
+  | 'warning'
+  | 'error';
 
-  const nodes: Node[] = [
-    {
-      id: centerId,
-      type: 'center',
-      position: { x: 0, y: 0 },
-      data: {
-        label: ideaTitle || (isPl ? 'Mój pomysł' : 'My idea'),
-        hint: isPl ? 'Kliknij, aby edytować' : 'Click to edit',
-        ideaId,
-      },
-      draggable: false,
-    } as any,
-  ];
-  const edges: Edge[] = [];
+type DebugReaction = 'handled' | 'blocked' | 'silent';
+type DebugSeverity = 'info' | 'warn' | 'error';
 
-  for (const b of branches) {
-    const bx = Math.cos(b.angle) * branchRadius;
-    const by = Math.sin(b.angle) * branchRadius;
-    const branchId = `branch-${b.key}`;
-    nodes.push({
-      id: branchId,
-      type: 'branch',
-      position: { x: bx - 50, y: by - 20 },
-      data: { label: b.label, branchKey: b.key, count: 0 },
-      draggable: false,
-    } as any);
-    edges.push({
-      id: `edge-${centerId}-${branchId}`,
-      source: centerId,
-      target: branchId,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
-      data: { system: true, kind: 'frames' },
-    } as any);
+type DebugEntry = {
+  id: string;
+  ts: string;
+  source: DebugSource;
+  message: string;
+  detail?: string;
+  reaction?: DebugReaction;
+  severity: DebugSeverity;
+};
+
+type PendingInteraction = {
+  kind: 'click' | 'dblclick' | 'contextmenu';
+  target: string;
+  createdAt: number;
+  timeoutId: number;
+};
+
+const MAX_DEBUG_ENTRIES = 500;
+const DEBUG_SESSION_KEY = '__mm_debug_v2';
+const LEGACY_DEBUG_SESSION_KEY = '__mm_debug';
+
+function uid() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function truncateDebugText(value: string, max = 120) {
+  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  return normalized.length > max ? `${normalized.slice(0, max - 1)}...` : normalized;
+}
+
+function describeDebugTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return 'unknown-target';
+  if (target.closest('[data-mm-debug-overlay="true"]')) return 'debug-overlay';
+
+  const nodeEl = target.closest('.react-flow__node') as HTMLElement | null;
+  if (nodeEl) {
+    const nodeId = nodeEl.getAttribute('data-id') || 'unknown-node';
+    return `node:${nodeId}`;
   }
 
-  return { nodes, edges };
+  const edgeEl = target.closest('.react-flow__edge') as HTMLElement | null;
+  if (edgeEl) {
+    const edgeId = edgeEl.getAttribute('data-id') || 'unknown-edge';
+    return `edge:${edgeId}`;
+  }
+
+  if (target.closest('.react-flow__pane')) return 'canvas-pane';
+
+  const bits: string[] = [];
+  const role = target.getAttribute('role');
+  const testId = target.getAttribute('data-testid');
+  const ariaLabel = target.getAttribute('aria-label');
+  const tag = target.tagName.toLowerCase();
+  const cls = String(target.className || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 3)
+    .join('.');
+  const text = truncateDebugText(target.textContent || '', 40);
+
+  bits.push(tag);
+  if (role) bits.push(`role=${role}`);
+  if (testId) bits.push(`testid=${testId}`);
+  if (ariaLabel) bits.push(`label=${truncateDebugText(ariaLabel, 40)}`);
+  if (cls) bits.push(`.${cls}`);
+  if (text) bits.push(`text=${text}`);
+  return bits.join(' ');
 }
+
+function formatDebugKey(event: KeyboardEvent) {
+  const parts: string[] = [];
+  if (event.metaKey) parts.push('Meta');
+  if (event.ctrlKey) parts.push('Ctrl');
+  if (event.altKey) parts.push('Alt');
+  if (event.shiftKey) parts.push('Shift');
+  const key = event.key === ' ' ? 'Space' : event.key;
+  if (!['Meta', 'Control', 'Alt', 'Shift'].includes(key)) parts.push(key);
+  return parts.join('+') || key;
+}
+
+function summarizeDebugDetail(detail: unknown) {
+  try {
+    return truncateDebugText(JSON.stringify(detail), 160);
+  } catch {
+    return truncateDebugText(String(detail || ''), 160);
+  }
+}
+
+function normalizeLegacyDebugEntries(raw: unknown): DebugEntry[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item, index) => {
+      if (item && typeof item === 'object' && 'message' in item) {
+        const entry = item as Partial<DebugEntry>;
+        return {
+          id: String(entry.id || `legacy-${index}`),
+          ts: String(entry.ts || ''),
+          source: (entry.source as DebugSource) || 'lifecycle',
+          message: String(entry.message || ''),
+          detail: entry.detail ? String(entry.detail) : undefined,
+          reaction: entry.reaction as DebugReaction | undefined,
+          severity: (entry.severity as DebugSeverity) || 'info',
+        };
+      }
+      if (typeof item === 'string') {
+        return {
+          id: `legacy-${index}`,
+          ts: '',
+          source: item.includes('ERROR') || item.includes('REJECTION') ? 'error' : 'lifecycle',
+          message: item,
+          severity: item.includes('ERROR') || item.includes('REJECTION') ? 'error' : 'info',
+        };
+      }
+      return null;
+    })
+    .filter(Boolean) as DebugEntry[];
+}
+
 
 const BRANCH_COLORS: Record<
   string,
@@ -155,6 +333,337 @@ const BRANCH_COLORS: Record<
     ring: 'ring-blue-400',
     edge: '#60a5fa',
   },
+  // Consulting templates
+  strengths: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  weaknesses: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  opportunities: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  threats: {
+    bg: 'bg-purple-100 dark:bg-purple-900/25',
+    border: 'border-purple-400/70',
+    text: 'text-purple-700 dark:text-purple-300',
+    ring: 'ring-purple-400',
+    edge: '#a78bfa',
+  },
+  // 5 Whys
+  why1: {
+    bg: 'bg-orange-100 dark:bg-orange-900/25',
+    border: 'border-orange-400/70',
+    text: 'text-orange-700 dark:text-orange-300',
+    ring: 'ring-orange-400',
+    edge: '#fb923c',
+  },
+  why2: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  why3: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/25',
+    border: 'border-yellow-400/70',
+    text: 'text-yellow-700 dark:text-yellow-300',
+    ring: 'ring-yellow-400',
+    edge: '#facc15',
+  },
+  why4: {
+    bg: 'bg-lime-100 dark:bg-lime-900/25',
+    border: 'border-lime-400/70',
+    text: 'text-lime-700 dark:text-lime-300',
+    ring: 'ring-lime-400',
+    edge: '#a3e635',
+  },
+  root_cause: {
+    bg: 'bg-red-100 dark:bg-red-900/25',
+    border: 'border-red-400/70',
+    text: 'text-red-700 dark:text-red-300',
+    ring: 'ring-red-400',
+    edge: '#f87171',
+  },
+  // Ishikawa (6M)
+  man: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  machine: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/25',
+    border: 'border-indigo-400/70',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-400',
+    edge: '#818cf8',
+  },
+  material: {
+    bg: 'bg-teal-100 dark:bg-teal-900/25',
+    border: 'border-teal-400/70',
+    text: 'text-teal-700 dark:text-teal-300',
+    ring: 'ring-teal-400',
+    edge: '#2dd4bf',
+  },
+  method: {
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
+    edge: '#8b5cf6',
+  },
+  measurement: {
+    bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/25',
+    border: 'border-fuchsia-400/70',
+    text: 'text-fuchsia-700 dark:text-fuchsia-300',
+    ring: 'ring-fuchsia-400',
+    edge: '#d946ef',
+  },
+  environment: {
+    bg: 'bg-green-100 dark:bg-green-900/25',
+    border: 'border-green-400/70',
+    text: 'text-green-700 dark:text-green-300',
+    ring: 'ring-green-400',
+    edge: '#4ade80',
+  },
+  // Stakeholder map
+  high_influence: {
+    bg: 'bg-red-100 dark:bg-red-900/25',
+    border: 'border-red-400/70',
+    text: 'text-red-700 dark:text-red-300',
+    ring: 'ring-red-400',
+    edge: '#f87171',
+  },
+  medium_influence: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  low_influence: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  // Porter's 5 Forces
+  rivalry: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  new_entrants: {
+    bg: 'bg-orange-100 dark:bg-orange-900/25',
+    border: 'border-orange-400/70',
+    text: 'text-orange-700 dark:text-orange-300',
+    ring: 'ring-orange-400',
+    edge: '#fb923c',
+  },
+  substitutes: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  buyer_power: {
+    bg: 'bg-sky-100 dark:bg-sky-900/25',
+    border: 'border-sky-400/70',
+    text: 'text-sky-700 dark:text-sky-300',
+    ring: 'ring-sky-400',
+    edge: '#38bdf8',
+  },
+  supplier_power: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/25',
+    border: 'border-indigo-400/70',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-400',
+    edge: '#818cf8',
+  },
+  // Value Chain
+  inbound: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
+    border: 'border-cyan-400/70',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    ring: 'ring-cyan-400',
+    edge: '#22d3ee',
+  },
+  operations: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  outbound: {
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
+    edge: '#8b5cf6',
+  },
+  marketing: {
+    bg: 'bg-pink-100 dark:bg-pink-900/25',
+    border: 'border-pink-400/70',
+    text: 'text-pink-700 dark:text-pink-300',
+    ring: 'ring-pink-400',
+    edge: '#f472b6',
+  },
+  service: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  support: {
+    bg: 'bg-slate-200 dark:bg-slate-700/40',
+    border: 'border-slate-400/70',
+    text: 'text-slate-600 dark:text-slate-300',
+    ring: 'ring-slate-400',
+    edge: '#94a3b8',
+  },
+  // McKinsey 7S
+  strategy: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  structure: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/25',
+    border: 'border-indigo-400/70',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-400',
+    edge: '#818cf8',
+  },
+  systems: {
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
+    edge: '#8b5cf6',
+  },
+  shared_values: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  skills: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  style: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  staff: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
+    border: 'border-cyan-400/70',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    ring: 'ring-cyan-400',
+    edge: '#22d3ee',
+  },
+  // OKR
+  obj1: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  obj2: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  // Kotter's 8 Steps
+  urgency: {
+    bg: 'bg-red-100 dark:bg-red-900/25',
+    border: 'border-red-400/70',
+    text: 'text-red-700 dark:text-red-300',
+    ring: 'ring-red-400',
+    edge: '#f87171',
+  },
+  coalition: {
+    bg: 'bg-orange-100 dark:bg-orange-900/25',
+    border: 'border-orange-400/70',
+    text: 'text-orange-700 dark:text-orange-300',
+    ring: 'ring-orange-400',
+    edge: '#fb923c',
+  },
+  vision: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  communicate: {
+    bg: 'bg-sky-100 dark:bg-sky-900/25',
+    border: 'border-sky-400/70',
+    text: 'text-sky-700 dark:text-sky-300',
+    ring: 'ring-sky-400',
+    edge: '#38bdf8',
+  },
+  obstacles: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  wins: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  build: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  anchor: {
+    bg: 'bg-purple-100 dark:bg-purple-900/25',
+    border: 'border-purple-400/70',
+    text: 'text-purple-700 dark:text-purple-300',
+    ring: 'ring-purple-400',
+    edge: '#a78bfa',
+  },
   uncategorized: {
     bg: 'bg-slate-100 dark:bg-slate-800/40',
     border: 'border-slate-300/70',
@@ -164,27 +673,113 @@ const BRANCH_COLORS: Record<
   },
 };
 
-// ─────── Node Types (keep the living feel) ───────
-const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data }) => (
-  <div className="flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-xl shadow-amber-500/25 border-4 border-white dark:border-navy-800">
+// V5-IDEA-43: Hierarchical color system — depth-based opacity modulation
+const DEPTH_OPACITY = [1, 0.85, 0.7, 0.55, 0.4] as const;
+
+function branchColor(key: string, depth?: number) {
+  const base = BRANCH_COLORS[key] || BRANCH_COLORS.uncategorized;
+  if (depth == null || depth <= 0) return base;
+  const d = Math.min(depth, DEPTH_OPACITY.length - 1);
+  const opacity = DEPTH_OPACITY[d];
+  return {
+    ...base,
+    edge:
+      base.edge +
+      Math.round(opacity * 255)
+        .toString(16)
+        .padStart(2, '0'),
+  };
+}
+
+const SEMANTIC_ACCENT_RULES: Array<{ match: string[]; color: string }> = [
+  { match: ['risk', 'threat', 'blocker', 'issue'], color: '#ef4444' },
+  { match: ['opportunity', 'growth', 'upside'], color: '#10b981' },
+  { match: ['decision', 'choice', 'tradeoff'], color: '#8b5cf6' },
+  { match: ['action', 'task', 'next-step', 'plan'], color: '#22c55e' },
+  { match: ['hypothesis', 'assumption', 'idea'], color: '#f59e0b' },
+  { match: ['evidence', 'fact', 'proof', 'signal'], color: '#0ea5e9' },
+  { match: ['customer', 'user', 'persona'], color: '#ec4899' },
+];
+
+function withAlpha(color: string, alphaHex: string) {
+  if (!/^#([0-9a-f]{6})$/i.test(color)) return color;
+  return `${color}${alphaHex}`;
+}
+
+function inferNodeAccentColor(data: Record<string, any> | undefined): string | undefined {
+  if (!data) return undefined;
+  if (typeof data.color === 'string' && data.color.trim()) return data.color.trim();
+  const semanticTokens = [
+    typeof data.semanticType === 'string' ? data.semanticType : '',
+    ...(Array.isArray(data.tags) ? data.tags : []),
+  ]
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean);
+
+  for (const token of semanticTokens) {
+    const rule = SEMANTIC_ACCENT_RULES.find((entry) =>
+      entry.match.some((keyword) => token.includes(keyword))
+    );
+    if (rule) return rule.color;
+  }
+  return undefined;
+}
+
+// ─────── Node Types ───────
+
+const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => (
+  <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
     <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
     <div className="text-center px-2">
-      <Flower2 size={28} className="text-white mx-auto" />
-      <div className="text-[10px] font-semibold text-white mt-1 line-clamp-2">{data.label}</div>
-      <div className="text-[9px] text-white/80 mt-0.5">{data.hint}</div>
+      <Flower2 size={32} className="text-white mx-auto drop-shadow-sm" />
+      <div className="text-[11px] font-semibold text-white mt-1.5 line-clamp-2 drop-shadow-sm">{data.label}</div>
     </div>
+    {selected && (
+      <button
+        type="button"
+        className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white text-amber-600 shadow-lg shadow-amber-500/25 hover:bg-amber-50 hover:scale-110 transition-all flex items-center justify-center border-2 border-amber-200"
+        onClick={(e) => {
+          e.stopPropagation();
+          window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', { detail: { action: 'add_child', nodeId: id } }));
+        }}
+      >
+        <Plus size={20} strokeWidth={2.5} />
+      </button>
+    )}
   </div>
 ));
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
-const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) => {
-  const colors = BRANCH_COLORS[data.branchKey] || BRANCH_COLORS.uncategorized;
+const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
+  const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
+  const collapsed = data._collapsed;
+  const childCount = data.count || 0;
+  const rfNodes = useStore((state: any) => state.nodes);
+  const rfEdges = useStore((state: any) => state.edges);
+  const nodeCount = rfNodes.length;
+  const edgeCount = rfEdges.length;
+  const health = useMemo(
+    () => computeBranchHealth(id, rfNodes, rfEdges),
+    [id, nodeCount, edgeCount],
+  );
+
+  if (data._simplified) {
+    return (
+      <div className={`px-3 py-1.5 rounded-xl border ${colors.border} ${colors.bg} text-center min-w-[100px]`}>
+        <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
+        <div className={`text-xs font-semibold ${colors.text}`}>{data.label}</div>
+        <div className="text-[10px] text-slate-500 dark:text-slate-400">{childCount} nodes</div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
+      className={`relative px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
         selected ? `ring-2 ${colors.ring}` : ''
       } shadow-md min-w-[120px] text-center`}
     >
@@ -197,84 +792,617 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected })
         id="bottom"
         className="!opacity-0 !w-1 !h-1"
       />
+      <div className="absolute -top-1 -right-1 z-10">
+        <BranchHealthDot score={health.score} />
+      </div>
+      {selected && (
+        <button
+          type="button"
+          title={data._isPl ? 'Dodaj węzeł (Tab)' : 'Add node (Tab)'}
+          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'mm_add_child', nodeId: id }
+            }));
+          }}
+        >
+          <Plus size={12} strokeWidth={2.5} />
+        </button>
+      )}
       <div
         className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}
       >
+        {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
         <GitBranch size={12} />
         {data.label}
       </div>
       <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-        {data.count || 0} {data.count === 1 ? 'node' : 'nodes'}
+        {childCount} {childCount === 1 ? 'node' : 'nodes'}
+        {collapsed ? ` (${collapsed ? '...' : ''})` : ''}
       </div>
+      {selected && (
+        <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-medium shadow-lg hover:bg-violet-700 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
+                detail: { action: 'mm_ai_expand_node', nodeId: id }
+              }));
+            }}
+          >
+            <Sparkles size={10} />
+            <span>{childCount === 0 ? (data._isPl ? 'Rozwiń AI' : 'AI Expand') : (data._isPl ? 'Więcej AI' : 'More AI')}</span>
+          </button>
+          <button
+            type="button"
+            title={data._isPl ? 'Podsumuj gałąź' : 'Summarize branch'}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-medium shadow-lg hover:bg-emerald-700 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('idea-mindmap-summarize-branch', {
+                detail: { nodeId: id, nodeLabel: data.label || '' }
+              }));
+            }}
+          >
+            <FileText size={10} />
+            <span>{data._isPl ? 'Podsumuj' : 'Summarize'}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 });
 BranchNodeComponent.displayName = 'RecommendationBranchNode';
 
 const handleBase = '!w-2.5 !h-2.5 !border-2 transition-all duration-150';
-const handleTarget = `${handleBase} !bg-emerald-300 dark:!bg-emerald-600 !border-emerald-500 hover:!bg-emerald-400 hover:!scale-150`;
-const handleSource = `${handleBase} !bg-amber-300 dark:!bg-amber-600 !border-amber-500 hover:!bg-amber-400 hover:!scale-150`;
+const MINDMAP_NODE_QUICK_ACTION_EVENT = 'idea-mindmap-node-quick-action';
+const MindMapInteractionModeContext = React.createContext<MindMapInteractionMode>('select');
+const MindMapIdeaIdContext = React.createContext<string>('');
 
-const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) => {
-  const colors = BRANCH_COLORS[data.branchKey] || BRANCH_COLORS.uncategorized;
+const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const interactionMode = useContext(MindMapInteractionModeContext);
+  const ideaId = useContext(MindMapIdeaIdContext);
+  const { getNodes, getEdges } = useReactFlow();
+  const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
+  const tagColor = useMemo(() => resolveTagColor(data.tags || []), [data.tags]);
   const isAI =
     data.sourceType === 'ai_chat' ||
     data.sourceType === 'ai_hint' ||
     data.sourceType === 'ai_suggestion';
+  const isNew = data._isNew;
+  const nodeStatus: NodeStatusType = data.status || 'idea';
   const p = data.priority ?? 50;
   const priorityColor = p >= 75 ? 'bg-emerald-400' : p >= 50 ? 'bg-amber-400' : 'bg-slate-400';
-  return (
-    <div
-      className={`group px-3 py-2 rounded-xl border-2 ${colors.border} bg-white dark:bg-navy-900 ${
-        selected ? `ring-2 ${colors.ring}` : ''
-      } shadow-sm hover:shadow-lg cursor-pointer max-w-[210px]`}
-    >
-      <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
-      <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
-      <Handle type="source" position={Position.Right} id="source-right" className={handleSource} />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="source-bottom"
-        className={handleSource}
-      />
+  const votes = data.votes ?? 0;
+  const maturityScore =
+    nodeStatus === 'converted'
+      ? 100
+      : nodeStatus === 'ready_to_convert'
+        ? 80
+        : nodeStatus === 'validated'
+          ? 60
+          : nodeStatus === 'exploring'
+            ? 35
+            : 10;
 
-      <div className="flex items-start gap-1.5">
-        <div className="flex-shrink-0 mt-0.5">
-          {isAI ? (
-            <Bot size={10} className="text-purple-500" />
-          ) : (
-            <Lightbulb size={10} className="text-amber-500" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}>
-            {data.label}
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(String(data.label || ''));
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const suggestTimerRef = useRef<number | null>(null);
+  const suggestCacheRef = useRef<Map<string, string[]>>(new Map());
+
+  useEffect(() => {
+    if (data._startEditing) {
+      setEditValue(String(data.label || ''));
+      setEditing(true);
+    }
+  }, [data._startEditing, data.label]);
+
+  useEffect(() => {
+    if (editing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+    }
+  }, [editing]);
+
+  useEffect(() => {
+    if (suggestTimerRef.current) {
+      window.clearTimeout(suggestTimerRef.current);
+      suggestTimerRef.current = null;
+    }
+
+    if (!editing || editValue.trim() !== '') {
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return;
+    }
+
+    const branchKey = data.branchKey as string | undefined;
+    const cacheKey = branchKey || '__default__';
+
+    const cached = suggestCacheRef.current.get(cacheKey);
+    if (cached) {
+      setSuggestions(cached);
+      setLoadingSuggestions(false);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+
+    const branchSuggestionsFallback: Record<string, string[]> = {
+      causes: ['Market shift', 'Process gap', 'Resource constraint', 'Customer feedback', 'Competitor action'],
+      options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
+      validation: ['A/B test', 'User interview', 'Data analysis', 'Prototype test', 'Expert review'],
+      risks: ['Timeline risk', 'Budget overrun', 'Skill gap', 'Dependency', 'Market change'],
+      next: ['Research spike', 'Stakeholder review', 'Build prototype', 'Run pilot', 'Document findings'],
+    };
+    const defaultsFallback = ['Key insight', 'Open question', 'Action item', 'Evidence needed', 'Hypothesis'];
+
+    let cancelled = false;
+
+    suggestTimerRef.current = window.setTimeout(async () => {
+      if (cancelled) return;
+
+      const allEdges = getEdges();
+      const parentEdge = allEdges.find((e: Edge) => e.target === id);
+      const parentNode = parentEdge
+        ? getNodes().find((n: Node) => n.id === parentEdge.source)
+        : undefined;
+
+      try {
+        const res = await Api.getMyIdeaAISuggestions(ideaId, {
+          seedText: parentNode?.data?.label || '',
+          mapNodes: getNodes().map((n: Node) => ({ id: n.id, label: n.data?.label, type: n.type })),
+          mapEdges: allEdges.map((e: Edge) => ({ source: e.source, target: e.target })),
+          activeTool: 'mindmap',
+          language: i18n.language,
+          ...(branchKey ? { branchKey } : {}),
+          ...(parentNode?.data?.label ? { parentLabel: parentNode.data.label } : {}),
+        });
+        if (cancelled) return;
+        const texts = Array.isArray(res?.suggestions)
+          ? res.suggestions.map((s: any) => String(s.text)).filter(Boolean)
+          : [];
+        if (texts.length > 0) {
+          suggestCacheRef.current.set(cacheKey, texts);
+          setSuggestions(texts);
+        } else {
+          const fallback = branchKey && branchSuggestionsFallback[branchKey]
+            ? branchSuggestionsFallback[branchKey]
+            : defaultsFallback;
+          setSuggestions(fallback);
+        }
+      } catch {
+        if (cancelled) return;
+        const fallback = branchKey && branchSuggestionsFallback[branchKey]
+          ? branchSuggestionsFallback[branchKey]
+          : defaultsFallback;
+        setSuggestions(fallback);
+      }
+      if (!cancelled) setLoadingSuggestions(false);
+    }, 1500);
+
+    return () => {
+      cancelled = true;
+      if (suggestTimerRef.current) {
+        window.clearTimeout(suggestTimerRef.current);
+        suggestTimerRef.current = null;
+      }
+    };
+  }, [editing, editValue, data.branchKey, ideaId, id, getNodes, getEdges, i18n.language]);
+
+  const confirmEdit = useCallback(() => {
+    setEditing(false);
+    const trimmed = editValue.trim();
+    window.dispatchEvent(
+      new CustomEvent('idea-mindmap-node-edit', {
+        detail: { nodeId: id, label: trimmed, cancelled: false },
+      })
+    );
+  }, [editValue, id]);
+
+  const cancelEdit = useCallback(() => {
+    setEditing(false);
+    window.dispatchEvent(
+      new CustomEvent('idea-mindmap-node-edit', {
+        detail: { nodeId: id, label: data.label, cancelled: true },
+      })
+    );
+  }, [data.label, id]);
+
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setEditValue(String(data.label || ''));
+      setEditing(true);
+    },
+    [data.label]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      e.stopPropagation();
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        confirmEdit();
+      }
+      if (e.key === 'Escape') {
+        cancelEdit();
+      }
+    },
+    [cancelEdit, confirmEdit]
+  );
+
+  const shape = data.shape || 'default';
+  const canAddSibling = id !== 'root' && !id.startsWith('branch-');
+  const handleTarget = `${handleBase} ${
+    interactionMode === 'connect'
+      ? '!opacity-100 !bg-emerald-300 dark:!bg-emerald-600 !border-emerald-500 hover:!bg-emerald-400 hover:!scale-150'
+      : '!opacity-0 !pointer-events-none'
+  }`;
+  const handleSource = `${handleBase} ${
+    interactionMode === 'connect'
+      ? '!opacity-100 !bg-amber-300 dark:!bg-amber-600 !border-amber-500 hover:!bg-amber-400 hover:!scale-150'
+      : '!opacity-0 !pointer-events-none'
+  }`;
+  const shapeClass =
+    shape === 'circle'
+      ? 'rounded-full aspect-square flex items-center justify-center'
+      : shape === 'diamond'
+        ? 'rotate-45'
+        : shape === 'hexagon'
+          ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]'
+          : 'rounded-xl';
+
+  const innerRotate = shape === 'diamond' ? '-rotate-45' : '';
+
+  if (data._simplified) {
+    return (
+      <div className={`px-2 py-1 rounded-lg border ${colors.border} ${colors.bg} text-xs min-w-[80px] max-w-[180px]`}>
+        <div className={`font-semibold ${colors.text} line-clamp-1`}>{data.label || '...'}</div>
+        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" />
+      </div>
+    );
+  }
+
+  const depth = data._depth ?? 0;
+  const depthScale = depth <= 1 ? 1 : depth === 2 ? 0.95 : 0.9;
+  const depthOpacity = depth <= 1 ? '' : depth === 2 ? 'opacity-90' : 'opacity-80';
+  const accentColor = inferNodeAccentColor(data);
+  const accentChipStyle = accentColor
+    ? {
+        backgroundColor: withAlpha(accentColor, '18'),
+        borderColor: withAlpha(accentColor, '33'),
+        color: accentColor,
+      }
+    : undefined;
+  const nodeSurfaceStyle =
+    depthScale < 1 || accentColor
+      ? {
+          ...(depthScale < 1 ? { transform: `scale(${depthScale})` } : {}),
+          ...(accentColor
+            ? {
+                borderColor: accentColor,
+                backgroundImage: `linear-gradient(180deg, ${withAlpha(accentColor, '18')} 0px, transparent 34px)`,
+                boxShadow: selected
+                  ? `0 0 0 2px ${withAlpha(accentColor, '33')}, 0 10px 24px -16px ${withAlpha(accentColor, 'aa')}`
+                  : `0 10px 24px -18px ${withAlpha(accentColor, '99')}`,
+              }
+            : {}),
+        }
+      : undefined;
+
+  return (
+    <GlowWrapper isNew={isNew} isAI={isAI}>
+      <div
+        onDoubleClick={handleDoubleClick}
+        style={nodeSurfaceStyle}
+        className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
+          data._dropTarget
+            ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
+            : selected ? `ring-2 ${colors.ring}` : ''
+        } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative transition-shadow duration-150`}
+      >
+        <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
+        <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="source-right"
+          className={handleSource}
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="source-bottom"
+          className={handleSource}
+        />
+
+        {selected && !editing && interactionMode === 'select' && (
+          <>
+            <button
+              type="button"
+              aria-label={isPl ? 'Otwórz właściwości węzła' : 'Open node properties'}
+              title={isPl ? 'Otwórz właściwości węzła' : 'Open node properties'}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(
+                  new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                    detail: { action: 'open_properties', nodeId: id },
+                  })
+                );
+              }}
+              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-slate-200/80 bg-white text-slate-500 shadow-sm hover:text-primary-600 hover:border-primary-200 transition-colors flex items-center justify-center dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300"
+            >
+              <Pencil size={13} />
+            </button>
+          </>
+        )}
+        {selected && !editing && (
+          <div className="nodrag absolute -right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1">
+            <button
+              type="button"
+              title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                  detail: { action: 'mm_add_child', nodeId: id }
+                }));
+              }}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+            </button>
           </div>
-          {data.nodeType && (
-            <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
-              {String(data.nodeType).replace(/_/g, ' ')}
+        )}
+        {selected && !editing && canAddSibling && (
+          <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
+            <button
+              type="button"
+              title={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white shadow-md hover:bg-slate-600 hover:scale-110 transition-all opacity-70 hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                  detail: { action: 'mm_add_sibling', nodeId: id }
+                }));
+              }}
+            >
+              <Plus size={12} strokeWidth={2} />
+            </button>
+          </div>
+        )}
+
+        {/* Status dot */}
+        {nodeStatus !== 'idea' && (
+          <div className="absolute -top-1 -right-1">
+            <StatusDot status={nodeStatus} size={8} />
+          </div>
+        )}
+
+        {/* Artifact link badge */}
+        {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
+          <div
+            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[7px] font-bold shadow-sm cursor-pointer hover:bg-blue-600 transition-colors"
+            title={data.artifactLinks
+              .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
+              .join(', ')}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (data.artifactLinks.length === 1) {
+                const first = data.artifactLinks[0];
+                const artType = first?.artifactRef?.type || first?.type;
+                const artId = first?.artifactRef?.id || first?.id;
+                if (artType && artId) {
+                  window.dispatchEvent(
+                    new CustomEvent('mywork-open-item', { detail: { type: artType, id: artId, name: first?.label || artType } })
+                  );
+                }
+              } else {
+                window.dispatchEvent(
+                  new CustomEvent('idea-mindmap-open-drawer', { detail: { nodeId: id } })
+                );
+              }
+            }}
+          >
+            {data.artifactLinks.length}
+          </div>
+        )}
+
+        {/* MM-15: Converted indicator */}
+        {nodeStatus === 'converted' && data._convertedTo && (
+          <div
+            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-purple-500 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
+            title={isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`}
+          >
+            <ExternalLink size={8} />
+            <span className="uppercase">{String(data._convertedTo).replace('_', ' ')}</span>
+          </div>
+        )}
+
+        <div className={innerRotate}>
+          {/* Image thumbnail (R3.5) */}
+          {data.imageUrl && !editing && (
+            <div className="mb-1.5 -mx-1 -mt-1 rounded-lg overflow-hidden">
+              <img
+                src={data.imageUrl}
+                alt=""
+                className="w-full h-16 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
             </div>
           )}
+
+          {editing ? (
+            <>
+              <textarea
+                ref={textareaRef}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={confirmEdit}
+                onKeyDown={handleKeyDown}
+                rows={2}
+                className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
+                placeholder={isPl ? 'Wpisz…' : 'Type…'}
+              />
+              {loadingSuggestions && suggestions.length === 0 && editValue.trim() === '' && (
+                <div className="flex flex-wrap gap-1 mt-1 nodrag">
+                  {[72, 56, 64].map((w, i) => (
+                    <span
+                      key={i}
+                      className="inline-block h-[18px] rounded-full bg-violet-100 dark:bg-violet-900/30 animate-pulse"
+                      style={{ width: w }}
+                    />
+                  ))}
+                </div>
+              )}
+              {suggestions.length > 0 && editValue.trim() === '' && (
+                <div className="flex flex-wrap gap-1 mt-1 nodrag">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditValue(s);
+                        setSuggestions([]);
+                        textareaRef.current?.focus();
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-start gap-1.5">
+                <div className="flex-shrink-0 mt-0.5">
+                  {isAI ? (
+                    <Bot size={10} className="text-purple-500" />
+                  ) : (
+                    <Lightbulb size={10} className="text-amber-500" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-400 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
+                  >
+                    {data.label || (isPl ? 'Kliknij, aby wpisać…' : 'Click to type…')}
+                  </div>
+                  {data.nodeType && (
+                    <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
+                      {String(data.nodeType).replace(/_/g, ' ')}
+                    </div>
+                  )}
+                  {(data.semanticType || (Array.isArray(data.tags) && data.tags.length > 0)) && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {data.semanticType && (
+                        <span
+                          className="rounded-full border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300"
+                          style={accentChipStyle}
+                        >
+                          {String(data.semanticType)}
+                        </span>
+                      )}
+                      {Array.isArray(data.tags) &&
+                        data.tags.slice(0, 2).map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border bg-slate-100/90 dark:bg-white/[0.04] px-1.5 py-0.5 text-[8px] font-medium text-slate-500 dark:text-slate-400"
+                            style={accentChipStyle}
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      {Array.isArray(data.tags) && data.tags.length > 2 && (
+                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-400 dark:text-slate-500">
+                          +{data.tags.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Maturity ring */}
+                {nodeStatus !== 'idea' && (
+                  <div className="shrink-0">
+                    <MaturityRing score={maturityScore} size={16} strokeWidth={2} />
+                  </div>
+                )}
+              </div>
+              {/* Depth context snippet */}
+              {(data.context || data.goal) && (
+                <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
+                  {data.goal ? `🎯 ${data.goal}` : data.context}
+                </div>
+              )}
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${priorityColor}`}
+                    style={{ width: `${Math.max(10, p)}%` }}
+                  />
+                </div>
+                {votes > 0 && <VoteStars votes={votes} compact disabled />}
+                {data.assignee && (
+                  <div
+                    className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[7px] font-bold"
+                    title={data.assignee}
+                  >
+                    {String(data.assignee).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {/* Depth model indicators */}
+                {data.notes && (
+                  <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
+                )}
+                {data.riskNote && (
+                  <AlertTriangle size={9} className="text-red-400 dark:text-red-500 shrink-0" />
+                )}
+                {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 shrink-0" title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}>
+                    <Link2 size={8} className="text-blue-400 dark:text-blue-500" />
+                    <span className="text-[7px] font-bold text-blue-400 dark:text-blue-500">{data.evidenceLinks.length}</span>
+                  </span>
+                )}
+                {depth > 0 && (
+                  <div className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto" title={`Depth ${depth}`}>
+                    L{depth}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
-      <div className="mt-1.5 flex items-center gap-1">
-        <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-          <div
-            className={`h-full rounded-full ${priorityColor}`}
-            style={{ width: `${Math.max(10, p)}%` }}
-          />
-        </div>
-      </div>
-    </div>
+    </GlowWrapper>
   );
 });
-IdeaNodeComponent.displayName = 'RecommendationIdeaNode';
+EditableIdeaNodeComponent.displayName = 'EditableRecommendationIdeaNode';
 
 const nodeTypes = {
   center: CenterNodeComponent,
   branch: BranchNodeComponent,
-  idea: IdeaNodeComponent,
+  idea: EditableIdeaNodeComponent,
+  ...knowledgeNodeTypes,
+};
+
+const edgeTypes = {
+  labeled: LabeledEdge,
+  gradient: GradientEdge,
 };
 
 type IdeaRecommendationMapProps = {
@@ -285,15 +1413,53 @@ type IdeaRecommendationMapProps = {
   preferredTool?: CanvasToolType;
   extensions?: Record<string, unknown>;
   onPreferredToolLoaded?: (tool: CanvasToolType | null) => void;
-  /** Default: 'overlay' (full-screen). Use 'embedded' inside a workspace split. */
   variant?: 'overlay' | 'embedded';
-  /** Whether to show the close button in the top bar (default true). */
   showClose?: boolean;
-  /** Extra classes applied to the container in embedded mode. */
   className?: string;
-  /** When locked, map is read-only (challenge not accepted yet). */
   locked?: boolean;
+  onSelectionChange?: (sel: import('./ideaSelectionTypes').IdeaWorkspaceSelection) => void;
+  onViewportReport?: (viewport: { x: number; y: number; zoom: number }) => void;
+  focusMode?: 'system' | 'object' | null;
+  focusObjectId?: string | null;
+  /** When provided, fullscreen toggles the parent workspace (canvas + right panels) */
+  onFullscreenToggle?: () => void;
+  isFullscreen?: boolean;
+  /** Pinned card integration — stage, summary, actions */
+  stage?: string;
+  seedText?: string;
+  onEditCard?: () => void;
+  onAISummarize?: () => void;
+  onStageChange?: (newStage: IdeaStageV5) => void;
+  graphNodeCount?: number;
+  evidenceCount?: number;
+  /** Open AI chat with optional prompt */
+  onOpenChat?: (prompt?: string) => void;
+  interactionMode?: MindMapInteractionMode;
+  onInteractionModeChange?: (mode: MindMapInteractionMode) => void;
+  externalRuntime?: {
+    version: number;
+    loading: boolean;
+    saving: boolean;
+    lastSavedAt: number | null;
+    syncState: 'idle' | 'queued' | 'saving' | 'saved' | 'offline' | 'conflict';
+    nodes: Node[];
+    edges: Edge[];
+    extensions: Record<string, unknown>;
+    captureGraph: (
+      graph: { nodes: Node[]; edges: Edge[]; extensions?: Record<string, unknown> },
+      opts?: { reason?: 'draft' | 'manual' | 'semantic' | 'ai'; immediate?: boolean }
+    ) => void;
+    flushGraph: (opts?: {
+      reason?: 'draft' | 'manual' | 'semantic' | 'ai';
+      createSnapshot?: boolean;
+      snapshotLabel?: string;
+    }) => Promise<unknown>;
+    refresh: () => Promise<void>;
+  };
 };
+
+// ─────── Undo/Redo for map state ───────
+type MapSnapshot = { nodes: Node[]; edges: Edge[] };
 
 function MindMapInner({
   ideaId,
@@ -307,193 +1473,1648 @@ function MindMapInner({
   showClose = true,
   className,
   locked = false,
+  onSelectionChange,
+  onViewportReport,
+  focusMode,
+  focusObjectId,
+  onFullscreenToggle,
+  isFullscreen = false,
+  stage,
+  seedText,
+  onEditCard,
+  onAISummarize,
+  onStageChange,
+  graphNodeCount = 0,
+  evidenceCount = 0,
+  onOpenChat,
+  interactionMode: externalInteractionMode = 'select',
+  onInteractionModeChange,
+  externalRuntime,
 }: IdeaRecommendationMapProps) {
   const { i18n } = useTranslation();
+  const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
-  const { zoomIn, zoomOut, fitView } = useReactFlow();
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
-  const [persistence, setPersistence] = useState<PersistenceStatus>('online');
-
-  // Some environments type `reactflow` as `any` — avoid generic calls and cast the initial state.
-  const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
-
-  const saveTimerRef = useRef<number | null>(null);
-  const isHydratingRef = useRef(true);
-
-  const hydrate = useCallback(async () => {
-    setLoading(true);
-    try {
-      setPersistence('online');
-      const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
-      const map = res?.map || {};
-      const nextNodes = Array.isArray(map.nodes) ? map.nodes : [];
-      const nextEdges = Array.isArray(map.edges) ? map.edges : [];
-      const loadedPreferred = map?.preferredTool ? String(map.preferredTool) : null;
-      const loadedPreferredSafe =
-        loadedPreferred && ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(loadedPreferred)
-          ? (loadedPreferred as CanvasToolType)
-          : null;
-      onPreferredToolLoaded?.(loadedPreferredSafe);
-
-      // Keep center label consistent with current title (map stores a snapshot)
-      const patchedNodes = nextNodes.map((n: any) => {
-        if (String(n?.id) !== 'root') return n;
-        return {
-          ...n,
-          data: {
-            ...(n.data || {}),
-            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+  const debugEnabled = false;
+  const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } = useReactFlow();
+  const { autoLayout } = useAutoLayout();
+  const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
+  const { exportAsPdf } = useMapExportPdf();
+  const interactionMode = externalInteractionMode;
+  const [simplifiedMode, setSimplifiedMode] = useState(false);
+  const reactFlowNodeTypes = useRef(nodeTypes).current;
+  const reactFlowEdgeTypes = useMemo(
+    () => (simplifiedMode ? {} : edgeTypes),
+    [simplifiedMode],
+  );
+  const reactFlowFitViewOptions = useMemo(() => ({ padding: 0.3 }), []);
+  const reactFlowProOptions = useMemo(() => ({ hideAttribution: true }), []);
+  const reactFlowDefaultEdgeOptions = useMemo(
+    () =>
+      simplifiedMode
+        ? {
+            type: 'default',
+            style: { stroke: '#8b5cf6', strokeWidth: 1.5, opacity: 0.5 },
+            animated: false,
+          }
+        : {
+            type: 'gradient',
+            style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
+            animated: true,
+            data: { animated: true, showParticles: true },
           },
-        };
-      });
-
-      isHydratingRef.current = true;
-      setNodes(patchedNodes);
-      setEdges(nextEdges);
-      setTimeout(() => {
-        isHydratingRef.current = false;
-        try {
-          fitView({ padding: 0.3, duration: 300 });
-        } catch {
-          // ignore
-        }
-      }, 50);
-    } catch (err: any) {
-      const msg = String(err?.message || '');
-      const isNoRoute =
-        msg.toLowerCase().includes('route get') &&
-        msg.toLowerCase().includes('/my-work/my-ideas') &&
-        msg.toLowerCase().includes('/map');
-      const isMissingTable =
-        msg.toLowerCase().includes('database table missing') &&
-        msg.toLowerCase().includes('my_idea_maps');
-
-      if (isNoRoute) {
-        setPersistence('no_route');
-        toast(
-          (isPolish
-            ? 'Backend wymaga restartu (route mapy jeszcze nie działa).'
-            : 'Backend needs restart (map route not active).') as any
-        );
-      } else if (isMissingTable) {
-        setPersistence('missing_table');
-        toast(
-          (isPolish
-            ? 'Brakuje tabeli mapy — uruchom migracje DB.'
-            : 'Map table missing — run DB migrations.') as any
-        );
-      } else {
-        setPersistence('offline');
-        toast.error(msg || (isPolish ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
-      }
-
-      const def = buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish);
-      isHydratingRef.current = true;
-      setNodes(def.nodes);
-      setEdges(def.edges);
-      setTimeout(() => {
-        isHydratingRef.current = false;
-        try {
-          fitView({ padding: 0.3, duration: 250 });
-        } catch {
-          // ignore
-        }
-      }, 30);
-    } finally {
-      setLoading(false);
-    }
-  }, [fitView, i18n.language, ideaId, ideaTitle, isPolish, setEdges, setNodes]);
-
-  useEffect(() => {
-    hydrate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ideaId]);
-
-  // Keep center label consistent with current title (map stores a snapshot)
-  useEffect(() => {
-    const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
-    setNodes((prev: Node[]) =>
-      (prev || []).map((n: any) => {
-        if (String(n?.id) !== 'root') return n;
-        return {
-          ...n,
-          data: {
-            ...(n.data || {}),
-            label,
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
-          },
-        };
-      })
-    );
-  }, [ideaTitle, isPolish, setNodes]);
-
-  const scheduleSave = useCallback(
-    (nextNodes: Node[], nextEdges: Edge[]) => {
-      if (isHydratingRef.current) return;
-      if (persistence !== 'online') return;
-      if (locked) return;
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = window.setTimeout(async () => {
-        setSaving(true);
-        try {
-          await Api.saveMyIdeaMap(ideaId, {
-            nodes: nextNodes,
-            edges: nextEdges,
-            preferredTool: preferredTool || undefined,
-            extensions: extensions || undefined,
-          });
-          setLastSavedAt(Date.now());
-        } catch (err: any) {
-          toast.error(
-            err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
-          );
-        } finally {
-          setSaving(false);
-        }
-      }, 700);
+    [simplifiedMode]
+  );
+  const updateInteractionMode = useCallback(
+    (mode: MindMapInteractionMode) => {
+      onInteractionModeChange?.(mode);
     },
-    [extensions, ideaId, isPolish, locked, persistence, preferredTool]
+    [onInteractionModeChange]
   );
 
-  // Persist on changes (debounced)
-  useEffect(() => {
-    scheduleSave(nodes as any, edges as any);
-  }, [nodes, edges, scheduleSave]);
+  // ── Debug logger: live event stream + silent-interaction detector ─────────
+  const debugEntriesRef = useRef<DebugEntry[]>([]);
+  const pendingInteractionsRef = useRef<Map<string, PendingInteraction>>(new Map());
+  const debugPausedRef = useRef(false);
+  const lastInputSummaryRef = useRef('none');
+  const lastHandlerSummaryRef = useRef('none');
+  const [debugTick, setDebugTick] = useState(0);
+  const [debugPaused, setDebugPaused] = useState(false);
+  const [debugOverlayExpanded, setDebugOverlayExpanded] = useState(true);
 
+  useEffect(() => {
+    debugPausedRef.current = debugPaused;
+  }, [debugPaused]);
+
+  const persistDebugEntries = useCallback(() => {
+    if (!debugEnabled) return;
+    try {
+      sessionStorage.setItem(DEBUG_SESSION_KEY, JSON.stringify(debugEntriesRef.current));
+    } catch {
+      /* ignore */
+    }
+  }, [debugEnabled]);
+
+  const appendDebugEntry = useCallback(
+    (
+      message: string,
+      meta?: Partial<Pick<DebugEntry, 'source' | 'detail' | 'reaction' | 'severity'>>
+    ) => {
+      if (!debugEnabled) return;
+      const ts = new Date().toLocaleTimeString('en-GB', {
+        hour12: false,
+        fractionalSecondDigits: 3,
+      });
+      const severity =
+        meta?.severity ||
+        (message.includes('ERROR') || message.includes('REJECTION')
+          ? 'error'
+          : message.includes('NO_REACTION')
+            ? 'warn'
+            : 'info');
+      const entry: DebugEntry = {
+        id: uid(),
+        ts,
+        source: meta?.source || 'handler',
+        message,
+        detail: meta?.detail,
+        reaction: meta?.reaction,
+        severity,
+      };
+      console.log(`%c[MM] ${message}`, 'color: #f59e0b; font-weight: bold', meta?.detail || '');
+      debugEntriesRef.current = [...debugEntriesRef.current.slice(-(MAX_DEBUG_ENTRIES - 1)), entry];
+      persistDebugEntries();
+      if (!debugPausedRef.current) setDebugTick((t) => t + 1);
+    },
+    [debugEnabled, persistDebugEntries]
+  );
+
+  const debugLog = useCallback(
+    (
+      msg: string,
+      meta?: Partial<Pick<DebugEntry, 'source' | 'detail' | 'reaction' | 'severity'>>
+    ) => {
+      appendDebugEntry(msg, meta);
+    },
+    [appendDebugEntry]
+  );
+
+  const trackInputEvent = useCallback(
+    (
+      kind: PendingInteraction['kind'] | 'pointerdown' | 'pointerup' | 'keydown',
+      target: EventTarget | null,
+      detail?: string
+    ) => {
+      const targetLabel = describeDebugTarget(target);
+      if (targetLabel === 'debug-overlay') return;
+      lastInputSummaryRef.current = `${kind} -> ${targetLabel}`;
+      debugLog(`INPUT ${kind}`, {
+        source: kind === 'keydown' ? 'keyboard' : 'input',
+        detail: [targetLabel, detail].filter(Boolean).join(' | '),
+      });
+      if (kind === 'click' || kind === 'dblclick' || kind === 'contextmenu') {
+        const key = `${kind}:${targetLabel}`;
+        const previous = pendingInteractionsRef.current.get(key);
+        if (previous) window.clearTimeout(previous.timeoutId);
+        const timeoutId = window.setTimeout(() => {
+          const pending = pendingInteractionsRef.current.get(key);
+          if (!pending) return;
+          pendingInteractionsRef.current.delete(key);
+          debugLog(`NO_REACTION ${kind}`, {
+            source: 'warning',
+            reaction: 'silent',
+            severity: 'warn',
+            detail: targetLabel,
+          });
+        }, 260);
+        pendingInteractionsRef.current.set(key, {
+          kind,
+          target: targetLabel,
+          createdAt: Date.now(),
+          timeoutId,
+        });
+      }
+    },
+    [debugLog]
+  );
+
+  const markInputHandled = useCallback(
+    (
+      kind: PendingInteraction['kind'],
+      target: EventTarget | null,
+      handlerName: string,
+      detail?: string,
+      reaction: DebugReaction = 'handled'
+    ) => {
+      const targetLabel = describeDebugTarget(target);
+      const candidates = Array.from(pendingInteractionsRef.current.entries()).filter(
+        ([, pending]) =>
+          pending.kind === kind &&
+          Date.now() - pending.createdAt < 1200 &&
+          (pending.target === targetLabel ||
+            targetLabel.includes(pending.target) ||
+            pending.target.includes(targetLabel))
+      );
+      for (const [key, pending] of candidates) {
+        window.clearTimeout(pending.timeoutId);
+        pendingInteractionsRef.current.delete(key);
+      }
+      lastHandlerSummaryRef.current = `${handlerName} -> ${targetLabel}`;
+      debugLog(handlerName, {
+        source: 'handler',
+        reaction,
+        severity: reaction === 'blocked' ? 'warn' : 'info',
+        detail: [targetLabel, detail].filter(Boolean).join(' | '),
+      });
+    },
+    [debugLog]
+  );
+
+  useEffect(() => {
+    if (!debugEnabled) return;
+    let hadPreviousLogs = false;
+    try {
+      const prev = sessionStorage.getItem(DEBUG_SESSION_KEY) || sessionStorage.getItem(LEGACY_DEBUG_SESSION_KEY);
+      if (prev) {
+        const parsed = normalizeLegacyDebugEntries(JSON.parse(prev));
+        if (parsed.length > 0) {
+          hadPreviousLogs = true;
+          debugEntriesRef.current = [
+            ...parsed.slice(-(MAX_DEBUG_ENTRIES - 1)),
+            {
+              id: uid(),
+              ts: new Date().toLocaleTimeString('en-GB', {
+                hour12: false,
+                fractionalSecondDigits: 3,
+              }),
+              source: 'lifecycle',
+              message: 'REAL_PAGE_RELOAD',
+              detail: 'Recovered previous debug session',
+              severity: 'warn',
+            },
+          ];
+        }
+      }
+    } catch { /* */ }
+    persistDebugEntries();
+    debugLog(`${hadPreviousLogs ? 'REACT_REMOUNT' : 'REACT_MOUNT'} ideaId=${ideaId} locked=${locked}`, {
+      source: 'lifecycle',
+    });
+
+    const errorHandler = (e: ErrorEvent) => {
+      debugLog(`ERROR: ${e.message} at ${e.filename}:${e.lineno}`, { source: 'error', severity: 'error' });
+    };
+    const rejectionHandler = (e: PromiseRejectionEvent) => {
+      debugLog(`UNHANDLED REJECTION: ${String(e.reason).slice(0, 200)}`, {
+        source: 'error',
+        severity: 'error',
+      });
+    };
+    const beforeUnload = () => {
+      debugLog('REAL_PAGE_RELOAD beforeunload', { source: 'lifecycle', severity: 'warn' });
+      persistDebugEntries();
+      try {
+        const vp = getViewport();
+        localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(vp));
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', rejectionHandler);
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => {
+      for (const pending of pendingInteractionsRef.current.values()) {
+        window.clearTimeout(pending.timeoutId);
+      }
+      pendingInteractionsRef.current.clear();
+      debugLog('REACT_UNMOUNT', { source: 'lifecycle' });
+      persistDebugEntries();
+      try {
+        const vp = getViewport();
+        localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(vp));
+      } catch { /* ignore */ }
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+      window.removeEventListener('beforeunload', beforeUnload);
+    };
+  }, [debugEnabled, debugLog, ideaId, locked, persistDebugEntries]);
+
+  const debugEntries = useMemo(() => debugEntriesRef.current.slice(-140).reverse(), [debugTick]);
+  const debugStats = useMemo(() => {
+    const all = debugEntriesRef.current;
+    return {
+      total: all.length,
+      errors: all.filter((entry) => entry.severity === 'error').length,
+      warnings: all.filter((entry) => entry.severity === 'warn').length,
+      silent: all.filter((entry) => entry.reaction === 'silent').length,
+      blocked: all.filter((entry) => entry.reaction === 'blocked').length,
+      inputs: all.filter((entry) => entry.source === 'input' || entry.source === 'keyboard').length,
+      handlers: all.filter((entry) => entry.source === 'handler').length,
+      customs: all.filter((entry) => entry.source === 'custom').length,
+    };
+  }, [debugTick]);
+
+  const [showMiniMap, setShowMiniMap] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const pointerHandler = (event: PointerEvent) => {
+      trackInputEvent(
+        event.type as 'pointerdown' | 'pointerup',
+        event.target,
+        `button=${event.button} x=${Math.round(event.clientX)} y=${Math.round(event.clientY)}`
+      );
+    };
+
+    const clickHandler = (event: MouseEvent) => {
+      trackInputEvent(
+        event.type as 'click' | 'dblclick' | 'contextmenu',
+        event.target,
+        `button=${event.button} x=${Math.round(event.clientX)} y=${Math.round(event.clientY)}`
+      );
+    };
+
+    container.addEventListener('pointerdown', pointerHandler, true);
+    container.addEventListener('pointerup', pointerHandler, true);
+    container.addEventListener('click', clickHandler, true);
+    container.addEventListener('dblclick', clickHandler, true);
+    container.addEventListener('contextmenu', clickHandler, true);
+
+    return () => {
+      container.removeEventListener('pointerdown', pointerHandler, true);
+      container.removeEventListener('pointerup', pointerHandler, true);
+      container.removeEventListener('click', clickHandler, true);
+      container.removeEventListener('dblclick', clickHandler, true);
+      container.removeEventListener('contextmenu', clickHandler, true);
+    };
+  }, [trackInputEvent]);
+
+  const [nodes, setNodes, baseOnNodesChange] = useNodesState([] as Node[]) as [
+    Node[],
+    React.Dispatch<React.SetStateAction<Node[]>>,
+    (changes: unknown) => void,
+  ];
+  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]) as [
+    Edge[],
+    React.Dispatch<React.SetStateAction<Edge[]>>,
+    (changes: unknown) => void,
+  ];
+
+  // ── Graph CRUD collaboration ──────────────────────────────────────────────
+  const collabSendRef = useRef<((msg: any) => void) | null>(null);
+
+  const registerCollabSend = useCallback((sendFn: (msg: any) => void) => {
+    collabSendRef.current = sendFn;
+  }, []);
+
+  const broadcastGraphPatch = useCallback((operations: Array<{ op: string; data: any }>) => {
+    if (collabSendRef.current && operations.length > 0) {
+      collabSendRef.current({ type: 'graph_patch', operations });
+    }
+  }, []);
+
+  const updateNodeDataById = useCallback(
+    (nodeId: string, updater: (data: any) => any) => {
+      setNodes((prev: Node[]) =>
+        prev.map((n) => (n.id === nodeId ? { ...n, data: updater(n.data) } : n))
+      );
+    },
+    [setNodes]
+  );
+
+  // ── Collapse/Expand ──────────────────────────────────────────────────────
+  const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
+  const [drillPath, setDrillPath] = useState<BreadcrumbItem[]>([]);
+  const [remoteLockedNodeIds, setRemoteLockedNodeIds] = useState<Set<string>>(new Set());
+  const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
+
+
+  // Apply collapse visibility + drill-down filtering
+  const visibleNodes = useMemo(() => {
+    const childrenOf = new Map<string, string[]>();
+    for (const e of edges) {
+      if ((e as any)?.data?.edgeRole === 'relation') continue;
+      if (!childrenOf.has(e.source)) childrenOf.set(e.source, []);
+      childrenOf.get(e.source)!.push(e.target);
+    }
+
+    // Drill-down: only show the focused node and its descendants
+    let drillVisibleIds: Set<string> | null = null;
+    if (drillFocusId) {
+      drillVisibleIds = new Set<string>();
+      drillVisibleIds.add(drillFocusId);
+      function collectDescendants(parentId: string) {
+        const children = childrenOf.get(parentId) || [];
+        for (const cid of children) {
+          drillVisibleIds!.add(cid);
+          collectDescendants(cid);
+        }
+      }
+      collectDescendants(drillFocusId);
+    }
+
+    // Collapse: hide descendants of collapsed nodes
+    const hiddenIds = new Set<string>();
+    function hideDescendants(parentId: string) {
+      const children = childrenOf.get(parentId) || [];
+      for (const cid of children) {
+        if (cid === 'root' || cid.startsWith('branch-')) continue;
+        hiddenIds.add(cid);
+        hideDescendants(cid);
+      }
+    }
+    for (const nid of collapsedNodeIds) hideDescendants(nid);
+
+    return nodes.map((n) => {
+      const hiddenByDrill = drillVisibleIds ? !drillVisibleIds.has(n.id) : false;
+      const nextHidden = hiddenIds.has(n.id) || hiddenByDrill;
+      if (Boolean(n.hidden) === nextHidden) {
+        return n;
+      }
+      return {
+        ...n,
+        hidden: nextHidden,
+      };
+    });
+  }, [collapsedNodeIds, drillFocusId, edges, nodes]);
+
+  useEffect(() => {
+    const hiddenSelectedIds = new Set(
+      visibleNodes.filter((node) => node.hidden && node.selected).map((node) => node.id)
+    );
+    if (hiddenSelectedIds.size === 0) return;
+    setNodes((prev: Node[]) =>
+      prev.map((node) => (hiddenSelectedIds.has(node.id) ? { ...node, selected: false } : node))
+    );
+  }, [setNodes, visibleNodes]);
+
+  const visibleEdges = useMemo(() => {
+    const hiddenNodeIds = new Set(visibleNodes.filter((n) => n.hidden).map((n) => n.id));
+    if (hiddenNodeIds.size === 0) return edges;
+    return edges.map((e) => {
+      const nextHidden = hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target);
+      return e.hidden === nextHidden ? e : { ...e, hidden: nextHidden };
+    });
+  }, [edges, visibleNodes]);
+
+  // Focus filtering: when focusMode === 'object' and focusObjectId set, show only that node + direct connections
+  const focusFilteredNodes = useMemo(() => {
+    if (focusMode !== 'object' || !focusObjectId) return visibleNodes;
+    const allowedIds = new Set<string>([focusObjectId]);
+    for (const e of edges) {
+      if (e.source === focusObjectId) allowedIds.add(e.target);
+      if (e.target === focusObjectId) allowedIds.add(e.source);
+    }
+    return visibleNodes.map((n) => {
+      const nextHidden = n.hidden || !allowedIds.has(n.id);
+      return n.hidden === nextHidden ? n : { ...n, hidden: nextHidden };
+    });
+  }, [edges, focusMode, focusObjectId, visibleNodes]);
+
+  const focusFilteredEdges = useMemo(() => {
+    if (focusMode !== 'object' || !focusObjectId) return visibleEdges;
+    const hiddenNodeIds = new Set(
+      focusFilteredNodes.filter((n) => n.hidden).map((n) => n.id)
+    );
+    if (hiddenNodeIds.size === 0) return visibleEdges;
+    return visibleEdges.map((e) => {
+      const nextHidden = hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target);
+      return e.hidden === nextHidden ? e : { ...e, hidden: nextHidden };
+    });
+  }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
+
+  const enrichedNodes = useMemo(() => {
+    const structuralChildCount = new Map<string, number>();
+    for (const e of edges) {
+      if ((e as any)?.data?.edgeRole === 'relation') continue;
+      structuralChildCount.set(e.source, (structuralChildCount.get(e.source) || 0) + 1);
+    }
+    return focusFilteredNodes.map((n) => {
+      const extra: Record<string, unknown> = {};
+      if (simplifiedMode) extra._simplified = true;
+      if (n.type === 'branch') {
+        const count = structuralChildCount.get(n.id) || 0;
+        if (count !== n.data?.count || simplifiedMode) {
+          return { ...n, data: { ...n.data, count, ...extra } };
+        }
+      }
+      if (simplifiedMode) {
+        return { ...n, data: { ...n.data, ...extra } };
+      }
+      return n;
+    });
+  }, [edges, focusFilteredNodes, simplifiedMode]);
+
+  const visibleIdeaNodeCount = useMemo(
+    () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
+    [enrichedNodes]
+  );
+
+  // ── Undo/Redo (shared hook pattern) ──────────────────────────────────────
+  const undoStackRef = useRef<MapSnapshot[]>([]);
+  const redoStackRef = useRef<MapSnapshot[]>([]);
+  const MAX_UNDO = 50;
+
+  const pushUndo = useCallback(() => {
+    undoStackRef.current = [
+      ...undoStackRef.current.slice(-(MAX_UNDO - 1)),
+      { nodes: [...nodes], edges: [...edges] },
+    ];
+    redoStackRef.current = [];
+  }, [nodes, edges]);
+
+  const undo = useCallback(() => {
+    if (undoStackRef.current.length === 0) return;
+    const prev = undoStackRef.current[undoStackRef.current.length - 1];
+    undoStackRef.current = undoStackRef.current.slice(0, -1);
+    redoStackRef.current = [{ nodes: [...nodes], edges: [...edges] }, ...redoStackRef.current];
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+  }, [edges, nodes, setEdges, setNodes]);
+
+  const redo = useCallback(() => {
+    if (redoStackRef.current.length === 0) return;
+    const next = redoStackRef.current[0];
+    redoStackRef.current = redoStackRef.current.slice(1);
+    undoStackRef.current = [...undoStackRef.current, { nodes: [...nodes], edges: [...edges] }];
+    setNodes(next.nodes);
+    setEdges(next.edges);
+  }, [edges, nodes, setEdges, setNodes]);
+
+  const clearUndoHistory = useCallback(() => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+  }, []);
+
+  // ── Context menu ─────────────────────────────────────────────────────────
+  const [contextMenu, setContextMenu] = useState<{
+    nodeId: string;
+    nodeType: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [paneContextMenu, setPaneContextMenu] = useState<{
+    x: number;
+    y: number;
+    canvasX: number;
+    canvasY: number;
+  } | null>(null);
+  const [edgeContextMenu, setEdgeContextMenu] = useState<{
+    edgeId: string;
+    isUserCreated: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [styleClipboard, setStyleClipboard] = useState<{
+    shape?: string;
+    branchKey?: string;
+    priority?: number;
+  } | null>(null);
+
+  // ── Node Detail Drawer ──────────────────────────────────────────────────
+  const [drawerNodeId, setDrawerNodeId] = useState<string | null>(null);
+  const [nodeMetaMap, setNodeMetaMap] = useState<
+    Record<string, { notes?: string; status?: NodeStatus }>
+  >({});
+
+  const drawerNodeData = useMemo((): NodeDetailData | null => {
+    if (!drawerNodeId) return null;
+    const node = nodes.find((n) => n.id === drawerNodeId);
+    if (!node) return null;
+    const meta = nodeMetaMap[drawerNodeId] || {};
+    return {
+      nodeId: node.id,
+      label: node.data?.label || '',
+      branchKey: node.data?.branchKey || 'uncategorized',
+      sourceType: node.data?.sourceType,
+      nodeType: node.data?.nodeType || node.type,
+      priority: node.data?.priority,
+      notes: meta.notes || node.data?.notes || '',
+      status: meta.status || node.data?.status || 'idea',
+      childNodeIds: edges.filter((e) => e.source === node.id && isStructuralEdge(e)).map((e) => e.target),
+      parentNodeId: edges.find((e) => e.target === node.id && isStructuralEdge(e))?.source,
+      context: node.data?.context || '',
+      goal: node.data?.goal || '',
+      rationale: node.data?.rationale || '',
+      riskNote: node.data?.riskNote || '',
+      tags: Array.isArray(node.data?.tags) ? node.data.tags : [],
+      evidenceLinks: node.data?.evidenceLinks || [],
+      semanticType: node.data?.semanticType || '',
+      artifactLinks: Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks : [],
+      aiExpansionHistory: Array.isArray(node.data?.aiExpansionHistory)
+        ? node.data.aiExpansionHistory
+        : [],
+    };
+  }, [drawerNodeId, edges, nodeMetaMap, nodes]);
+
+  const handleUpdateNode = useCallback(
+    (nodeId: string, patch: Partial<NodeDetailData>) => {
+      if (patch.notes !== undefined || patch.status !== undefined) {
+        setNodeMetaMap((prev) => ({
+          ...prev,
+          [nodeId]: { ...prev[nodeId], ...patch },
+        }));
+      }
+      const depthFields: (keyof NodeDetailData)[] = [
+        'context',
+        'goal',
+        'rationale',
+        'riskNote',
+        'semanticType',
+        'tags',
+        'evidenceLinks',
+        'artifactLinks',
+        'aiExpansionHistory',
+      ];
+      const dataPatch: Record<string, unknown> = {};
+      if (patch.status) dataPatch.status = patch.status;
+      if (patch.notes !== undefined) dataPatch.notes = patch.notes;
+      for (const f of depthFields) {
+        if (patch[f] !== undefined) dataPatch[f] = patch[f];
+      }
+      if (Object.keys(dataPatch).length > 0) {
+        setNodes((prev: Node[]) =>
+          prev.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n
+          )
+        );
+      }
+    },
+    [setNodes]
+  );
+
+  const handleConvertNode = useCallback(
+    (nodeId: string, target: 'initiative' | 'decision') => {
+      const action = target === 'initiative' ? 'convert_initiative' : 'convert_decision';
+      setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, nodeIds: [nodeId] } }));
+      setDrawerNodeId(null);
+    },
+    [setNodes]
+  );
+
+  const handleNavigateToNode = useCallback(
+    (nodeId: string) => {
+      setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+      setDrawerNodeId(nodeId);
+      setTimeout(() => {
+        try {
+          fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+    },
+    [fitView, setNodes]
+  );
+
+  const handleDrillDown = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return;
+      setDrillPath((prev) => {
+        const existingIdx = prev.findIndex((p) => p.nodeId === nodeId);
+        if (existingIdx >= 0) return prev.slice(0, existingIdx + 1);
+        return [...prev, { nodeId, label: node.data?.label || nodeId }];
+      });
+      setDrawerNodeId(null);
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+    },
+    [fitView, nodes]
+  );
+
+  const handleBreadcrumbNavigate = useCallback(
+    (nodeId: string | null) => {
+      if (!nodeId) {
+        setDrillPath([]);
+      } else {
+        setDrillPath((prev) => {
+          const idx = prev.findIndex((p) => p.nodeId === nodeId);
+          return idx >= 0 ? prev.slice(0, idx + 1) : prev;
+        });
+      }
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+    },
+    [fitView]
+  );
+
+  // ── Selection ────────────────────────────────────────────────────────────
+  const prevSelectedIdsRef = useRef<string>('');
+
+  const reportSelection = useCallback(
+    (currentNodes: Node[]) => {
+      try {
+        if (!onSelectionChange) return;
+        const selected = currentNodes.filter((n: Node) => n.selected);
+        const key = selected.map((n) => n.id).sort().join(',');
+        if (key === prevSelectedIdsRef.current) return;
+        prevSelectedIdsRef.current = key;
+        debugLog(`reportSelection: ${selected.length} selected [${key.slice(0, 60)}]`, {
+          source: 'selection',
+        });
+        if (selected.length === 0) {
+          onSelectionChange({ type: 'none', count: 0, ids: [] });
+        } else {
+          onSelectionChange({
+            type: 'node',
+            count: selected.length,
+            ids: selected.map((n: Node) => n.id),
+            primaryId: selected[0]?.id,
+            meta: { nodeType: selected[0]?.type, label: selected[0]?.data?.label },
+          });
+        }
+      } catch (err: any) {
+        debugLog(`ERROR in reportSelection: ${err?.message || err}`, {
+          source: 'error',
+          severity: 'error',
+        });
+        console.error('[MindMap Debug] reportSelection error:', err);
+      }
+    },
+    [debugLog, onSelectionChange]
+  );
+
+  useEffect(() => {
+    reportSelection(nodes);
+  }, [nodes, reportSelection]);
+
+  const onNodesChange = useCallback(
+    (changes: import('reactflow').NodeChange[]) => {
+      try {
+        const types = changes.map((c) => c.type);
+        const uniqueTypes = [...new Set(types)];
+        if (uniqueTypes.some((t) => t !== 'position' && t !== 'dimensions')) {
+          debugLog(`onNodesChange: [${uniqueTypes.join(',')}] count=${changes.length}`, {
+            source: 'handler',
+          });
+        }
+        baseOnNodesChange(changes);
+      } catch (err: any) {
+        debugLog(`ERROR in onNodesChange: ${err?.message || err}`, {
+          source: 'error',
+          severity: 'error',
+        });
+        console.error('[MindMap Debug] onNodesChange error:', err);
+      }
+    },
+    [baseOnNodesChange, debugLog]
+  );
+
+  // ── GAP-3: Map structure type ─────────────────────────────────────
+  const [structureType, setStructureType] = useState<MapStructureType>(
+    () => ((extensions as any)?.mindmap?.structureType as MapStructureType) || 'mindmap'
+  );
+  const [showStructurePicker, setShowStructurePicker] = useState(false);
+
+  const {
+    loading,
+    saving,
+    lastSavedAt,
+    persistence,
+    setSaving,
+    setLastSavedAt,
+    scheduleSave,
+    saveViewportOnly,
+    localVersionRef,
+  } =
+    useMindMapPersistence({
+      ideaId,
+      ideaTitle,
+      isPolish,
+      locked,
+      preferredTool,
+      extensions,
+      structureType,
+      i18nLanguage: i18n.language,
+      nodes,
+      edges,
+      setNodes,
+      setEdges,
+      setCollapsedNodeIds,
+      collapsedNodeIds,
+      fitView,
+      setViewport,
+      getViewport,
+      onPreferredToolLoaded,
+      onViewportReport,
+      clearUndoHistory,
+      externalRuntime,
+    });
+
+  const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSave = useCallback(() => {
+    if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
+    debouncedSaveTimerRef.current = setTimeout(() => {
+      scheduleSave(nodes as any, edges as any);
+    }, 500);
+  }, [scheduleSave, nodes, edges]);
+
+  useEffect(() => {
+    return () => {
+      if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
+    };
+  }, []);
+
+  // ── Node operations (extracted to useMindMapNodes) ──────────────────────
+  const {
+    editingNodeIdRef,
+    isNodeLockedByPeer,
+    getSelectedNode,
+    selectedNodeIds,
+    findParentId,
+    findChildrenIds,
+    getSubtreeNodeIds,
+    addChildNode,
+    addSiblingNode,
+    deleteSelected,
+    duplicateSelected,
+    copySelected,
+    cutSelected,
+    pasteNodes,
+    focusSelectedNode,
+    reparentNode,
+    promoteNode,
+    demoteNode,
+    moveBetweenSiblings,
+    clearDropTargets,
+    isReparentable,
+    reparentSelectedPromote,
+    reparentSelectedDemote,
+    startEditingSelected,
+    toggleCollapse: toggleCollapseNode,
+    setFoldLevel: setFoldLevelRaw,
+    addRootTopic,
+  } = useMindMapNodes({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    locked,
+    isPolish,
+    pushUndo,
+    fitView,
+    remoteLockedNodeIds,
+    autoLayout,
+  });
+
+  // ── AI Sidekick context detection ──────────────────────────────────────
+  const sidekickCtx = useMemo<SidekickContext>(() => detectMindmapIntent({
+    nodes: nodes.map((n: Node) => ({ id: n.id, data: n.data, type: n.type })),
+    edges: edges.map((e: Edge) => ({ source: e.source, target: e.target })),
+    selectedNodeIds,
+    isEditing: editingNodeIdRef.current !== null,
+    hasTemplate: nodes.some((n: Node) => n.data?._fromTemplate === true),
+    activeTool: 'mindmap',
+  }), [nodes, edges, selectedNodeIds]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('idea-mindmap-sidekick-context', {
+      detail: sidekickCtx,
+    }));
+  }, [sidekickCtx]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      const { action } = detail;
+      if (action === 'add_child' && detail.nodeId) addChildNode(detail.nodeId);
+      if (action === 'add_sibling' && detail.nodeId) addSiblingNode(detail.nodeId);
+      if (action === 'open_properties' && detail.nodeId) setDrawerNodeId(detail.nodeId);
+      if (action === 'pane_fit_view') {
+        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+      }
+      if (action === 'pane_auto_layout') {
+        const laid = autoLayout(nodes as any, edges as any);
+        setNodes(laid);
+        setTimeout(() => { try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ } }, 50);
+      }
+      if (action === 'set_layout_mode' && detail.layoutMode) {
+        setLayoutMode(detail.layoutMode as 'tree' | 'radial' | 'force');
+        setStructureType('mindmap');
+      }
+      if (action === 'set_structure_type' && detail.structureType) {
+        setStructureType(detail.structureType as MapStructureType);
+        const laid = applyStructureLayout(detail.structureType as MapStructureType, nodes as any, edges as any, autoLayout);
+        setNodes(laid);
+        setTimeout(() => { try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ } }, 50);
+      }
+      if (action === 'set_map_theme' && detail.theme) {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-apply-theme', { detail: { themeId: detail.theme } })
+        );
+      }
+      if (action === 'apply_style') {
+        const selectedIds = (nodes as any[]).filter((n: any) => n.selected).map((n: any) => n.id);
+        if (selectedIds.length > 0) {
+          const { action: _a, ...stylePatch } = detail;
+          setNodes((prev: any[]) =>
+            prev.map((n: any) =>
+              selectedIds.includes(n.id) ? { ...n, data: { ...n.data, ...stylePatch } } : n
+            )
+          );
+        }
+      }
+    };
+    window.addEventListener(MINDMAP_NODE_QUICK_ACTION_EVENT, handler);
+    return () => window.removeEventListener(MINDMAP_NODE_QUICK_ACTION_EVENT, handler);
+  }, [addChildNode, addSiblingNode, autoLayout, edges, fitView, nodes, setNodes]);
+
+  const toggleCollapse = useCallback(
+    (nodeId: string) => toggleCollapseNode(nodeId, setCollapsedNodeIds),
+    [toggleCollapseNode, setCollapsedNodeIds]
+  );
+
+  const setFoldLevel = useCallback(
+    (maxLevel: number) => setFoldLevelRaw(maxLevel, setCollapsedNodeIds),
+    [setFoldLevelRaw, setCollapsedNodeIds]
+  );
+
+  // ── Manual drag tracking (disables auto-relayout for the session) ────────
+  const userDraggedRef = useRef(false);
+
+  const onNodeDrag = useCallback((_event: React.MouseEvent, node: Node) => {
+    if (!node || !isReparentable(node.id)) {
+      clearDropTargets();
+      return;
+    }
+    const intersecting = getIntersectingNodes(node) as Node[];
+    const subtree = new Set(getSubtreeNodeIds(node.id));
+    const currentParent = findParentId(node.id);
+    const validTarget = intersecting.find(
+      (n: Node) =>
+        n.id !== node.id &&
+        !subtree.has(n.id) &&
+        n.id !== currentParent &&
+        n.id !== 'root'
+    );
+    setNodes((prev: Node[]) =>
+      prev.map((n) => {
+        const shouldHighlight = validTarget?.id === n.id;
+        if (n.data?._dropTarget === shouldHighlight) return n;
+        return { ...n, data: { ...n.data, _dropTarget: shouldHighlight } };
+      })
+    );
+  }, [clearDropTargets, findParentId, getIntersectingNodes, getSubtreeNodeIds, isReparentable, setNodes]);
+
+  const onNodeDragStop = useCallback((event?: React.MouseEvent, node?: Node) => {
+    userDraggedRef.current = true;
+    clearDropTargets();
+    debugLog('NODE_DRAG_STOP', {
+      source: 'handler',
+      detail: node ? `node:${node.id}` : undefined,
+    });
+    if (event?.target) {
+      markInputHandled('click', event.target, 'onNodeDragStop', node ? `node:${node.id}` : undefined);
+    }
+    debouncedSave();
+    if (!node || !isReparentable(node.id)) return;
+
+    const intersecting = getIntersectingNodes(node) as Node[];
+    const subtree = new Set(getSubtreeNodeIds(node.id));
+    const currentParent = findParentId(node.id);
+    const validTarget = intersecting.find(
+      (n: Node) =>
+        n.id !== node.id &&
+        !subtree.has(n.id) &&
+        n.id !== currentParent &&
+        n.id !== 'root'
+    );
+    if (validTarget) {
+      const ok = reparentNode(node.id, validTarget.id);
+      if (ok) {
+        toast.success(
+          isPolish
+            ? `Przeniesiono pod „${validTarget.data?.label || validTarget.id}"`
+            : `Moved under "${validTarget.data?.label || validTarget.id}"`
+        );
+      }
+    }
+  }, [clearDropTargets, debouncedSave, debugLog, findParentId, getIntersectingNodes, getSubtreeNodeIds, isPolish, isReparentable, markInputHandled, reparentNode]);
+
+  const currentUserName = useMemo(() => {
+    const fullName = [currentUser?.firstName, currentUser?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return fullName || currentUser?.email || (isPolish ? 'Ty' : 'You');
+  }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPolish]);
+
+  const notifyLockedNode = useCallback(() => {
+    toast.error(
+      isPolish
+        ? 'Ten węzeł jest aktualnie zablokowany przez inną osobę'
+        : 'This node is currently locked by another collaborator'
+    );
+  }, [isPolish]);
+
+  const handleCollabSessionStateChange = useCallback(
+    (state: CollaborationSessionState | null) => {
+      const next = new Set(
+        Object.entries(state?.lockedNodes || {})
+          .filter(([, userId]) => userId !== currentUser?.id)
+          .map(([nodeId]) => nodeId)
+      );
+
+      setRemoteLockedNodeIds((prev) => {
+        if (prev.size === next.size && Array.from(next).every((nodeId) => prev.has(nodeId))) {
+          return prev;
+        }
+        return next;
+      });
+    },
+    [currentUser?.id]
+  );
+
+  useEffect(() => {
+    if (remoteLockedNodeIds.size === 0) return;
+
+    setNodes((prev: Node[]) => {
+      let hasChanges = false;
+      const nextNodes = prev.map((node) => {
+        if (!node.selected || !remoteLockedNodeIds.has(node.id)) {
+          return node;
+        }
+
+        hasChanges = true;
+        return { ...node, selected: false };
+      });
+
+      return hasChanges ? nextNodes : prev;
+    });
+
+    if (contextMenu && remoteLockedNodeIds.has(contextMenu.nodeId)) {
+      setContextMenu(null);
+    }
+    if (drawerNodeId && remoteLockedNodeIds.has(drawerNodeId)) {
+      setDrawerNodeId(null);
+    }
+  }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
+
+  // ── Apply incoming graph patches from collaborators ──────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail?.operations || detail.userId === currentUser?.id) return;
+
+      for (const op of detail.operations) {
+        switch (op.op) {
+          case 'add_node':
+            setNodes((prev: Node[]) => [...prev, op.data]);
+            break;
+          case 'remove_node':
+            setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
+            break;
+          case 'update_node':
+            setNodes((prev: Node[]) => prev.map((n: Node) => n.id === op.data.id ? { ...n, ...op.data } : n));
+            break;
+          case 'add_edge':
+            setEdges((prev: Edge[]) => [...prev, op.data]);
+            break;
+          case 'remove_edge':
+            setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
+            break;
+          case 'update_edge':
+            setEdges((prev: Edge[]) => prev.map((e: Edge) => e.id === op.data.id ? { ...e, ...op.data } : e));
+            break;
+        }
+      }
+    };
+    window.addEventListener('idea-collab-graph-patch', handler);
+    return () => window.removeEventListener('idea-collab-graph-patch', handler);
+  }, [currentUser?.id, setNodes, setEdges]);
+
+  // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
+  // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,
+  // reparentSelectedDemote, startEditingSelected) are now in useMindMapNodes hook above.
+
+  // ── Handle inline edit completion ────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { nodeId, label, cancelled } = (e as CustomEvent).detail;
+      console.log('[MindMap:edit] event:', { nodeId, label, cancelled });
+      debugLog(`CUSTOM_EVENT idea-mindmap-node-edit`, {
+        source: 'custom',
+        detail: summarizeDebugDetail({ nodeId, cancelled, label }),
+      });
+      editingNodeIdRef.current = null;
+
+      const rollbackNode = (nid: string) => {
+        setNodes((prev: Node[]) => prev.filter((n) => n.id !== nid));
+        setEdges((prev: Edge[]) => prev.filter((edge) => edge.source !== nid && edge.target !== nid));
+      };
+
+      if (cancelled) {
+        const target = nodes.find((n) => n.id === nodeId);
+        const hadNoLabel = !!target && !String(target.data?.label || '').trim();
+        if (hadNoLabel) {
+          rollbackNode(nodeId);
+        } else {
+          setNodes((prev: Node[]) =>
+            prev.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
+            )
+          );
+        }
+        return;
+      }
+      if (!label) {
+        const target = nodes.find((n) => n.id === nodeId);
+        const hadNoLabel = !!target && !String(target.data?.label || '').trim();
+        if (hadNoLabel) {
+          console.log('[MindMap:edit] empty label on new node → rollback (delete node)');
+          rollbackNode(nodeId);
+        } else {
+          setNodes((prev: Node[]) =>
+            prev.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
+            )
+          );
+        }
+        return;
+      }
+      setNodes((prev: Node[]) =>
+        prev.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n
+        )
+      );
+    };
+    window.addEventListener('idea-mindmap-node-edit', handler);
+    return () => window.removeEventListener('idea-mindmap-node-edit', handler);
+  }, [debugLog, isPolish, nodes, setEdges, setNodes]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const nodeId = String((e as CustomEvent).detail?.nodeId || '').trim();
+      if (!nodeId) return;
+      setDrawerNodeId(nodeId);
+    };
+    window.addEventListener('idea-mindmap-open-drawer', handler);
+    return () => window.removeEventListener('idea-mindmap-open-drawer', handler);
+  }, []);
+
+  // ── Handle edge label edits ──────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { edgeId, label } = (e as CustomEvent).detail;
+      debugLog(`CUSTOM_EVENT idea-mindmap-edge-label`, {
+        source: 'custom',
+        detail: summarizeDebugDetail({ edgeId, label }),
+      });
+      setEdges((prev: Edge[]) =>
+        prev.map((edge) => (edge.id === edgeId ? { ...edge, data: { ...edge.data, label } } : edge))
+      );
+    };
+    window.addEventListener('idea-mindmap-edge-label', handler);
+    return () => window.removeEventListener('idea-mindmap-edge-label', handler);
+  }, [debugLog, setEdges]);
+
+  // MM-15: Mark converted nodes with status: 'converted'
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const convertedIds = Array.isArray(detail.nodeIds) ? detail.nodeIds : [];
+      if (convertedIds.length === 0) return;
+      const convertedSet = new Set(convertedIds);
+      setNodes((prev: Node[]) => {
+        const next = prev.map((n) =>
+          convertedSet.has(n.id)
+            ? { ...n, data: { ...n.data, status: 'converted', _convertedTo: detail.target } }
+            : n
+        );
+        scheduleSave(next as any, edges as any);
+        return next;
+      });
+    };
+    window.addEventListener('idea-mindmap-mark-converted', handler);
+    return () => window.removeEventListener('idea-mindmap-mark-converted', handler);
+  }, [ideaId, edges, scheduleSave, setNodes]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.ideaId && detail.ideaId !== ideaId) return;
+      if (detail?.nodeId) {
+        setSummaryBranchId(detail.nodeId);
+        setSummaryBranchLabel(detail.nodeLabel || '');
+        setSummaryPanelOpen(true);
+      }
+    };
+    window.addEventListener('idea-mindmap-summarize-branch', handler);
+    return () => window.removeEventListener('idea-mindmap-summarize-branch', handler);
+  }, [ideaId]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      exportAsPdf(detail.title || ideaTitle || 'Mind Map');
+    };
+    window.addEventListener('idea-mindmap-export-pdf', handler);
+    return () => window.removeEventListener('idea-mindmap-export-pdf', handler);
+  }, [exportAsPdf, ideaTitle]);
+
+  // Quick action listener is wired below (after all state declarations).
+
+  // ── Insert from AI Suggestions panel ─────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail;
+      const { items, ideaId: evtIdeaId } = detail;
+      if (evtIdeaId && evtIdeaId !== ideaId) return;
+      if (!Array.isArray(items) || items.length === 0) return;
+      debugLog(`CUSTOM_EVENT ${IDEA_WORKSPACE_INSERT_EVENT}`, {
+        source: 'custom',
+        detail: summarizeDebugDetail({ count: items.length, ideaId: evtIdeaId || ideaId }),
+      });
+      pushUndo();
+
+      const branchMap: Record<string, string> = {
+        topics: 'options',
+        findings: 'evidence',
+        next_steps: 'experiments',
+      };
+
+      for (const item of items) {
+        const anchorId =
+          String(
+            item.anchorNodeId || detail.anchorNodeId || item.parentId || detail.parentId || ''
+          ).trim() || null;
+        const anchorNode = anchorId ? nodes.find((n) => n.id === anchorId) : null;
+        const branchKey =
+          String(anchorNode?.data?.branchKey || branchMap[item.type || ''] || 'options').trim() ||
+          'options';
+        const branchNode = nodes.find((n) => n.data?.branchKey === branchKey);
+        const sourceNode = anchorNode || branchNode || nodes.find((n) => n.id === 'root') || null;
+        const childrenOfSource = edges.filter((edge) => edge.source === sourceNode?.id && isStructuralEdge(edge));
+        const yOffset = childrenOfSource.length * 70;
+        const explicitPosition = item.position || detail.position;
+        const defaultPosition = sourceNode
+          ? sourceNode.id.startsWith('branch-')
+            ? { x: (sourceNode.position?.x ?? 0) + 220, y: (sourceNode.position?.y ?? 0) + yOffset }
+            : {
+                x: (sourceNode.position?.x ?? 0) + 180,
+                y: (sourceNode.position?.y ?? 0) + 60 + yOffset,
+              }
+          : { x: 220, y: yOffset };
+
+        const newId = `node-${uid()}`;
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: explicitPosition || defaultPosition,
+          data: {
+            label: item.text || item.label,
+            branchKey,
+            sourceType: 'ai_suggestion',
+            priority: 50,
+            ...(item.data || {}),
+            ...(anchorId ? { parentId: anchorId } : {}),
+          },
+        } as any;
+
+        const colors = branchColor(branchKey);
+        const newEdge: Edge = {
+          id: `edge-${uid()}`,
+          source: sourceNode?.id || `branch-${branchKey}`,
+          target: newId,
+          type: 'smoothstep',
+          style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: false },
+        } as any;
+
+        setNodes((prev: Node[]) => [...prev, newNode]);
+        setEdges((prev: Edge[]) => [...prev, newEdge]);
+      }
+      toast.success(isPolish ? 'Wstawiono do mapy' : 'Inserted into map', { duration: 1000 });
+    };
+    window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
+  }, [debugLog, edges, ideaId, isPolish, nodes, pushUndo, setEdges, setNodes]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const themeId = String(detail.themeId || '');
+      debugLog(`CUSTOM_EVENT ${IDEA_WORKSPACE_THEME_EVENT}`, {
+        source: 'custom',
+        detail: summarizeDebugDetail({ themeId, ideaId }),
+      });
+      if (themeId === 'ops') {
+        setLayoutMode('tree');
+        setHeatmapMode(false);
+      }
+      if (themeId === 'workshop') {
+        setShowClusterBubbles(true);
+        setHeatmapMode(false);
+      }
+      if (themeId === 'strategy') {
+        setLayoutMode('radial');
+        setShowClusterBubbles(false);
+      }
+    };
+    window.addEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
+  }, [debugLog, ideaId]);
+
+  // ── Keyboard shortcuts ───────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      const target = e.target as HTMLElement;
+      const container = containerRef.current;
+      const isWithinMap =
+        !!container &&
+        (container.contains(target) || (!!document.activeElement && container.contains(document.activeElement)));
+      if (!isWithinMap) return;
+
+      const keyLabel = formatDebugKey(e);
+      const isEditing = editingNodeIdRef.current !== null;
+      const isInput =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      trackInputEvent('keydown', target, keyLabel);
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED save', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        scheduleSave(nodes as any, edges as any);
+        if (externalRuntime) {
+          void externalRuntime.flushGraph({ reason: 'manual' });
+        }
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED redo', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        redo();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED snapshotHistory', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        setShowSnapshots((prev) => !prev);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED undo', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        undo();
+        return;
+      }
+      // V4-IDEA-07: Select all (Ctrl+A)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && !e.shiftKey) {
+        e.preventDefault();
+        debugLog('KEY_HANDLED selectAll', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id !== 'root' })));
+        return;
+      }
+      // V4-IDEA-07: Clear selection (Ctrl+D)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED clearSelection', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: false })));
+        return;
+      }
+
+      // GAP-9: Fold levels — Alt+0/1/2/3/9
+      if (e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey && /^[0-3]$/.test(e.key)) {
+        e.preventDefault();
+        const level = Number(e.key);
+        debugLog('KEY_HANDLED foldLevel', { source: 'keyboard', reaction: 'handled', detail: `Alt+${e.key} → level ${level}` });
+        setFoldLevel(level);
+        toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, { duration: 1200 });
+        return;
+      }
+      if (e.altKey && !e.metaKey && !e.ctrlKey && e.key === '9') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED foldExpandAll', { source: 'keyboard', reaction: 'handled', detail: 'Alt+9 → expand all' });
+        setFoldLevel(Infinity);
+        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+        return;
+      }
+
+      if (isEditing || isInput) {
+        debugLog('KEY_IGNORED editing_or_input', {
+          source: 'keyboard',
+          reaction: 'silent',
+          severity: 'warn',
+          detail: `${keyLabel} | editing=${isEditing} input=${isInput}`,
+        });
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED copy', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        copySelected();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED cut', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        cutSelected();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED paste', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        pasteNodes();
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        updateInteractionMode('select');
+        return;
+      }
+      if (e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        updateInteractionMode('pan');
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED addChild', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        addChildNode();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED addSibling', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        addSiblingNode();
+        return;
+      }
+      if (e.key === 'F2') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED startEditing', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
+        startEditingSelected();
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED deleteSelected', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
+        deleteSelected();
+        return;
+      }
+      if (e.key === 'Escape') {
+        debugLog('KEY_HANDLED escape', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: false })));
+        setContextMenu(null);
+        return;
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        const sel = getSelectedNode();
+        if (sel) {
+          debugLog('KEY_HANDLED toggleCollapse', {
+            source: 'keyboard',
+            reaction: 'handled',
+            detail: `${keyLabel} | ${sel.id}`,
+          });
+          toggleCollapse(sel.id);
+        } else {
+          debugLog('KEY_NO_SELECTION toggleCollapse', {
+            source: 'keyboard',
+            reaction: 'silent',
+            severity: 'warn',
+            detail: keyLabel,
+          });
+        }
+        return;
+      }
+
+      // Alt+Arrow: reparent operations
+      if (e.altKey && e.key.startsWith('Arrow')) {
+        e.preventDefault();
+        const rSel = getSelectedNode();
+        if (!rSel) return;
+        if (e.key === 'ArrowUp') {
+          debugLog('KEY_HANDLED promoteNode', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          promoteNode(rSel.id);
+          return;
+        }
+        if (e.key === 'ArrowDown') {
+          debugLog('KEY_HANDLED demoteNode', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          demoteNode(rSel.id);
+          return;
+        }
+        if (e.key === 'ArrowLeft') {
+          debugLog('KEY_HANDLED moveSiblingLeft', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          moveBetweenSiblings(rSel.id, 'left');
+          return;
+        }
+        if (e.key === 'ArrowRight') {
+          debugLog('KEY_HANDLED moveSiblingRight', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          moveBetweenSiblings(rSel.id, 'right');
+          return;
+        }
+      }
+
+      // Arrow key navigation
+      const sel = getSelectedNode();
+      if (!sel) {
+        if (e.key.startsWith('Arrow')) {
+          debugLog('KEY_NO_SELECTION navigation', {
+            source: 'keyboard',
+            reaction: 'silent',
+            severity: 'warn',
+            detail: keyLabel,
+          });
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED navRight', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: `${keyLabel} | from=${sel.id}`,
+        });
+        const children = findChildrenIds(sel.id);
+        if (children.length > 0) {
+          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === children[0] })));
+        }
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED navLeft', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: `${keyLabel} | from=${sel.id}`,
+        });
+        const parentId = findParentId(sel.id);
+        if (parentId) {
+          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === parentId })));
+        }
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        debugLog(`KEY_HANDLED ${e.key === 'ArrowDown' ? 'navDown' : 'navUp'}`, {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: `${keyLabel} | from=${sel.id}`,
+        });
+        const parentId = findParentId(sel.id);
+        if (!parentId) return;
+        const siblings = findChildrenIds(parentId);
+        const idx = siblings.indexOf(sel.id);
+        const nextIdx =
+          e.key === 'ArrowDown' ? Math.min(idx + 1, siblings.length - 1) : Math.max(idx - 1, 0);
+        if (nextIdx !== idx) {
+          setNodes((prev: Node[]) =>
+            prev.map((n) => ({ ...n, selected: n.id === siblings[nextIdx] }))
+          );
+        }
+        return;
+      }
+    };
+    const container = containerRef.current;
+    container?.addEventListener('keydown', handler, true);
+    window.addEventListener('keydown', handler);
+    return () => {
+      container?.removeEventListener('keydown', handler, true);
+      window.removeEventListener('keydown', handler);
+    };
+  }, [
+    addChildNode,
+    addSiblingNode,
+    copySelected,
+    cutSelected,
+    debugLog,
+    deleteSelected,
+    demoteNode,
+    edges,
+    findChildrenIds,
+    findParentId,
+    getSelectedNode,
+    isPolish,
+    moveBetweenSiblings,
+    nodes,
+    pasteNodes,
+    promoteNode,
+    redo,
+    scheduleSave,
+    setFoldLevel,
+    setNodes,
+    startEditingSelected,
+    trackInputEvent,
+    toggleCollapse,
+    undo,
+    updateInteractionMode,
+  ]);
+
+  // ── Connect ──────────────────────────────────────────────────────────────
   const onConnect = useCallback(
     (connection: Connection) => {
+      debugLog(`onConnect: ${connection.source} → ${connection.target}`, { source: 'handler' });
       if (locked) return;
       if (!connection.source || !connection.target) return;
       if (connection.source === connection.target) return;
-      const id = `edge-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      pushUndo();
+      const id = `edge-${uid()}`;
       const newEdge: Edge = {
         id,
         source: connection.source,
         target: connection.target,
         sourceHandle: connection.sourceHandle || undefined,
         targetHandle: connection.targetHandle || undefined,
-        type: 'smoothstep',
-        style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
-        animated: true,
-        data: { userCreated: true, flowState: 'forward' },
+        type: 'labeled',
+        style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
+        animated: false,
+        data: {
+          userCreated: true,
+          edgeRole: 'relation',
+          relationType: 'related',
+          flowState: 'forward',
+          label: '',
+        },
       };
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+      updateInteractionMode('select');
     },
-    [locked, setEdges]
+    [locked, pushUndo, setEdges, updateInteractionMode]
   );
 
   const onEdgeClick = useCallback(
-    (_: React.MouseEvent, edge: Edge) => {
+    (event: React.MouseEvent, edge: Edge) => {
+      markInputHandled('click', event.target, 'onEdgeClick', `edge:${edge.id}`);
       if (locked) return;
+      if (!isRelationEdge(edge)) return;
       const isUser = !!edge.data?.userCreated;
-      const currentState = edge.data?.flowState || 'forward'; // forward | stopped | reversed
+      const currentState = edge.data?.flowState || 'forward';
 
       if (currentState === 'reversed' && isUser) {
+        pushUndo();
         setEdges((prev: Edge[]) => (prev || []).filter((e: Edge) => e.id !== edge.id));
         toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 1200 });
         return;
@@ -540,7 +3161,124 @@ function MindMapInner({
           .filter(Boolean)
       );
     },
-    [isPolish, locked, setEdges]
+    [isPolish, locked, pushUndo, setEdges]
+  );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { edgeId, isUserCreated, x, y } = (e as CustomEvent).detail;
+      setContextMenu(null);
+      setPaneContextMenu(null);
+      setEdgeContextMenu({ edgeId, isUserCreated, x, y });
+    };
+    window.addEventListener('mindmap-edge-contextmenu', handler);
+    return () => window.removeEventListener('mindmap-edge-contextmenu', handler);
+  }, []);
+
+  const handleEdgeContextAction = useCallback(
+    (action: string) => {
+      if (!edgeContextMenu) return;
+      const targetEdge = (edges as Edge[]).find((e) => e.id === edgeContextMenu.edgeId);
+      if (!targetEdge) return;
+      const relationEdge = isRelationEdge(targetEdge);
+
+      if (action === 'edge_add_label') {
+        const current = targetEdge.data?.label || '';
+        const label = window.prompt(isPolish ? 'Etykieta połączenia:' : 'Connection label:', current);
+        if (label !== null) {
+          setEdges((prev: Edge[]) =>
+            prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e)),
+          );
+        }
+      }
+
+      if (action === 'edge_insert_node' && relationEdge) {
+        pushUndo();
+        const newId = `node-${uid()}`;
+        const midX = 0;
+        const midY = 0;
+        const sourceNode = (nodes as Node[]).find((n) => n.id === targetEdge.source);
+        const targetNode = (nodes as Node[]).find((n) => n.id === targetEdge.target);
+        const posX = sourceNode && targetNode
+          ? (sourceNode.position.x + targetNode.position.x) / 2
+          : midX;
+        const posY = sourceNode && targetNode
+          ? (sourceNode.position.y + targetNode.position.y) / 2
+          : midY;
+
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: { x: posX, y: posY },
+          data: { label: '', branchKey: 'uncategorized', sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+        } as any;
+
+        setEdges((prev: Edge[]) => {
+          const without = prev.filter((e) => e.id !== targetEdge.id);
+          return [
+            ...without,
+            { ...targetEdge, id: `edge-${uid()}`, target: newId } as Edge,
+            { ...targetEdge, id: `edge-${uid()}`, source: newId, target: targetEdge.target } as Edge,
+          ];
+        });
+        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+      }
+
+      if (action === 'edge_reverse' && relationEdge) {
+        pushUndo();
+        setEdges((prev: Edge[]) =>
+          prev.map((e) =>
+            e.id === targetEdge.id
+              ? { ...e, source: e.target, target: e.source, sourceHandle: e.targetHandle, targetHandle: e.sourceHandle }
+              : e,
+          ),
+        );
+        toast.success(isPolish ? 'Kierunek odwrócony' : 'Direction reversed', { duration: 800 });
+      }
+
+      if (action === 'edge_change_style') {
+        const styles = ['solid', 'dashed', 'dotted'];
+        const current = targetEdge.style?.strokeDasharray ? (targetEdge.style.strokeDasharray === '2 2' ? 'dotted' : 'dashed') : 'solid';
+        const nextIdx = (styles.indexOf(current) + 1) % styles.length;
+        const nextStyle = styles[nextIdx];
+        const dasharray = nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
+        setEdges((prev: Edge[]) =>
+          prev.map((e) =>
+            e.id === targetEdge.id
+              ? { ...e, style: { ...e.style, strokeDasharray: dasharray } }
+              : e,
+          ),
+        );
+        toast.success(`Style: ${nextStyle}`, { duration: 800 });
+      }
+
+      if (action === 'edge_edit_relation' && relationEdge) {
+        const current = targetEdge.data?.relation || '';
+        const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
+        const label = window.prompt(
+          isPolish
+            ? `Typ relacji (${relations.join(', ')}):`
+            : `Relation type (${relations.join(', ')}):`,
+          current,
+        );
+        if (label !== null) {
+          setEdges((prev: Edge[]) =>
+            prev.map((e) =>
+              e.id === targetEdge.id ? { ...e, data: { ...e.data, relation: label, label } } : e,
+            ),
+          );
+        }
+      }
+
+      if (action === 'edge_delete' && relationEdge) {
+        pushUndo();
+        setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
+        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 800 });
+      }
+
+      setEdgeContextMenu(null);
+    },
+    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes],
   );
 
   const selectedBranchKey = useMemo(() => {
@@ -551,7 +3289,102 @@ function MindMapInner({
     return 'options';
   }, [nodes]);
 
-  // AI suggestions modal state (propose → accept/reject)
+  // ── Visual modes ─────────────────────────────────────────────────────────
+  const [showClusterBubbles, setShowClusterBubbles] = useState(false);
+  const [heatmapMode, setHeatmapMode] = useState(false);
+  const [particleFlow, setParticleFlow] = useState(false);
+
+  // ── P4 modals ───────────────────────────────────────────────────────────
+  const [showBatchConvert, setShowBatchConvert] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [showPresentation, setShowPresentation] = useState(false);
+  const [showSnapshots, setShowSnapshots] = useState(false);
+
+  // ── P6 modals ───────────────────────────────────────────────────────────
+  const [showVoiceToNode, setShowVoiceToNode] = useState(false);
+  const [showDocToMap, setShowDocToMap] = useState(false);
+  const [showInterviewToMap, setShowInterviewToMap] = useState(false);
+
+  // ── What-If Scenarios ────────────────────────────────────────────────────
+  const [showWhatIf, setShowWhatIf] = useState(false);
+
+  // ── R1: AI Deep Intelligence ──────────────────────────────────────────
+  const [showDependencyDetector, setShowDependencyDetector] = useState(false);
+  const [showPriorityRecommender, setShowPriorityRecommender] = useState(false);
+  const [showAutoClustering, setShowAutoClustering] = useState(false);
+  const [showSentimentOverlay, setShowSentimentOverlay] = useState(false);
+
+  // ── Inline modals (replacing window.prompt) ─────────────────────────
+  const [assignModalNodeId, setAssignModalNodeId] = useState<string | null>(null);
+  const [attachArtifactNodeId, setAttachArtifactNodeId] = useState<string | null>(null);
+  const [imageUrlNodeId, setImageUrlNodeId] = useState<string | null>(null);
+
+  // ── R2: Collaboration ─────────────────────────────────────────────────
+  const [commentNodeId, setCommentNodeId] = useState<string | null>(null);
+  const [nodeComments, setNodeComments] = useState<Record<string, NodeComment[]>>({});
+  const [showActivityFeed, setShowActivityFeed] = useState(false);
+
+  useEffect(() => {
+    if (commentNodeId && remoteLockedNodeIds.has(commentNodeId)) {
+      setCommentNodeId(null);
+    }
+  }, [commentNodeId, remoteLockedNodeIds]);
+
+  // ── R5: Analytics ─────────────────────────────────────────────────────
+  const [showHealthScore, setShowHealthScore] = useState(true);
+  const [showFunnelAnalytics, setShowFunnelAnalytics] = useState(false);
+
+  // ── R4: Export & Embed ──────────────────────────────────────────────
+  const [showExportPPTX, setShowExportPPTX] = useState(false);
+  const [showEmbedInReports, setShowEmbedInReports] = useState(false);
+
+  // ── R1.2: Competitive Landscape ──────────────────────────────────────
+  const [showCompetitiveLandscape, setShowCompetitiveLandscape] = useState(false);
+
+  // ── R5.3: Branch Comparison ────────────────────────────────────────
+  const [showBranchComparison, setShowBranchComparison] = useState(false);
+
+  // ── R5.4: Time Heatmap ─────────────────────────────────────────────
+  const [showTimeHeatmap, setShowTimeHeatmap] = useState(false);
+
+  // ── R4.2: Export Diagram Code ──────────────────────────────────────
+  const [showExportDiagramCode, setShowExportDiagramCode] = useState(false);
+
+  // ── Export format menu (replacing window.prompt) ──────────────────
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+
+  // ── R3.1+R3: Layout modes ──────────────────────────────────────────
+  const [layoutMode, setLayoutMode] = useState<'tree' | 'radial' | 'force'>('tree');
+
+  // ── R4.3: Import External Map ──────────────────────────────────────
+  const [showImportExternalMap, setShowImportExternalMap] = useState(false);
+
+  // ── R3.3: 3D Mind Map ──────────────────────────────────────────────
+  const [showMindMap3D, setShowMindMap3D] = useState(false);
+
+  // ── R4.5: Webhook Settings ─────────────────────────────────────────
+  const [showWebhookSettings, setShowWebhookSettings] = useState(false);
+
+  // ── Branch Summary Panel ──────────────────────────────────────────
+  const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);
+  const [summaryBranchId, setSummaryBranchId] = useState('');
+  const [summaryBranchLabel, setSummaryBranchLabel] = useState('');
+
+  // ── Command palette ──────────────────────────────────────────────────────
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // ── AI expand ────────────────────────────────────────────────────────────
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIMapProposal | null>(null);
   const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>({});
@@ -566,8 +3399,10 @@ function MindMapInner({
 
   const selectedAddCount = useMemo(() => {
     if (!aiProposal) return 0;
-    const list = aiProposal.add?.nodes || [];
-    return list.reduce((sum, _n, idx) => sum + (selectedAddIdx[idx] ? 1 : 0), 0);
+    return (aiProposal.add?.nodes || []).reduce(
+      (sum, _n, idx) => sum + (selectedAddIdx[idx] ? 1 : 0),
+      0
+    );
   }, [aiProposal, selectedAddIdx]);
 
   const applyAIProposal = useCallback(async () => {
@@ -578,20 +3413,43 @@ function MindMapInner({
     }
     const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => selectedAddIdx[idx]);
     const toAddEdges = aiProposal.add?.edges || [];
-    const hasOrder = !!aiProposal.reorder?.order?.length;
 
-    if (toAddNodes.length === 0 && !(applySuggestedOrder && hasOrder)) {
+    if (toAddNodes.length === 0) {
       toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
       return;
     }
 
+    pushUndo();
     setSaving(true);
     try {
-      // Append selected nodes/edges (dedupe by id)
+      const aiSummaryBySource = new Map<string, string[]>();
+      for (const edge of toAddEdges as any[]) {
+        const targetNode = toAddNodes.find((node: any) => node.id === edge.target);
+        if (!edge?.source || !targetNode?.data?.label) continue;
+        aiSummaryBySource.set(edge.source, [
+          ...(aiSummaryBySource.get(edge.source) || []),
+          String(targetNode.data.label),
+        ]);
+      }
       const nextNodes = (() => {
         const byId = new Map<string, Node>();
         for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
         for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
+        for (const [sourceId, labels] of aiSummaryBySource.entries()) {
+          const existing = byId.get(String(sourceId));
+          if (!existing) continue;
+          byId.set(String(sourceId), {
+            ...existing,
+            data: {
+              ...(existing.data || {}),
+              aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
+                timestamp: new Date().toISOString(),
+                prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
+                resultSummary: labels.join(', '),
+              }),
+            },
+          } as Node);
+        }
         return Array.from(byId.values());
       })();
       const nextEdges = (() => {
@@ -604,14 +3462,27 @@ function MindMapInner({
       setNodes(nextNodes as any);
       setEdges(nextEdges as any);
 
-      // Persist immediately (modal apply should be explicit)
-      if (persistence === 'online') {
-        await Api.saveMyIdeaMap(ideaId, {
+      if (externalRuntime) {
+        externalRuntime.captureGraph(
+          {
+            nodes: nextNodes as any,
+            edges: nextEdges as any,
+            extensions: extensions || undefined,
+          },
+          { reason: 'ai', immediate: true }
+        );
+        await externalRuntime.flushGraph({ reason: 'ai' });
+      } else if (persistence === 'online') {
+        const response = await Api.syncMyIdeaMap(ideaId, {
           nodes: nextNodes as any,
           edges: nextEdges as any,
           preferredTool: preferredTool || undefined,
           extensions: extensions || undefined,
+          fromAI: true,
+          baseVersion: localVersionRef.current,
+          reason: 'ai',
         });
+        localVersionRef.current = Math.max(1, Number(response?.version || localVersionRef.current || 1));
         setLastSavedAt(Date.now());
       }
 
@@ -623,127 +3494,1031 @@ function MindMapInner({
       );
       closeAIModal();
     } catch (err: any) {
-      toast.error(
-        err?.message ||
-          (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
-      );
+      if (err?.status === 409) {
+        toast(
+          isPolish
+            ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+            : 'Change conflict detected. Refreshing map from server.',
+          { icon: '⚠️' }
+        );
+        closeAIModal();
+      } else {
+        toast.error(
+          err?.message ||
+            (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+        );
+      }
     } finally {
       setSaving(false);
     }
   }, [
     aiProposal,
-    applySuggestedOrder,
     closeAIModal,
     edges,
+    extensions,
     ideaId,
     isPolish,
+    localVersionRef,
     locked,
     nodes,
     persistence,
+    preferredTool,
+    pushUndo,
     selectedAddIdx,
     setEdges,
     setNodes,
   ]);
 
-  const handleAIExpand = useCallback(async () => {
-    if (locked) {
-      toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
-      return;
-    }
-    if (persistence !== 'online') {
-      toast(
-        (isPolish
-          ? 'AI wymaga działającego backendu (restart/migracje).'
-          : 'AI requires backend (restart/migrations).') as any
-      );
-      return;
-    }
-    setSaving(true);
-    try {
-      const anchor =
-        nodes.find((n: any) => n?.selected) || nodes.find((n: any) => String(n?.id) === 'root');
-      const res = await Api.expandMyIdeaMap(ideaId, {
-        anchorNodeId: String(anchor?.id || 'root'),
-        branchKey: selectedBranchKey,
-        count: 5,
-        language: i18n.language,
-        proposeOnly: true,
-      });
-      const proposedNodes = (() => {
-        // New shape: proposal.add.nodes
-        if (Array.isArray(res?.proposal?.add?.nodes)) return res.proposal.add.nodes;
-        // Back-compat: proposal.add is nodes[]
-        if (Array.isArray(res?.proposal?.add)) return res.proposal.add;
-        return [];
-      })();
-      const proposedEdges = (() => {
-        if (Array.isArray(res?.proposal?.add?.edges)) return res.proposal.add.edges;
-        // Back-compat: proposal.edges (older draft)
-        if (Array.isArray(res?.proposal?.edges)) return res.proposal.edges;
-        return [];
-      })();
-      if (!proposedNodes.length) {
-        toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any);
+  const handleAIExpand = useCallback(
+    async (targetNodeId?: string) => {
+      if (locked) {
+        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
         return;
       }
+      if (persistence !== 'online') {
+        toast((isPolish ? 'AI wymaga działającego backendu.' : 'AI requires backend.') as any);
+        return;
+      }
+      setSaving(true);
+      try {
+        const anchor = targetNodeId
+          ? nodes.find((n: any) => n?.id === targetNodeId)
+          : nodes.find((n: any) => n?.selected) || nodes.find((n: any) => String(n?.id) === 'root');
+        const anchorLabel = anchor?.data?.label || '';
+        const anchorBranch = anchor?.data?.branchKey || selectedBranchKey;
 
-      setAiProposal({
-        add: { nodes: proposedNodes, edges: proposedEdges },
-        remove: { nodeIds: [], edgeIds: [] },
-        reorder: null,
-        rationale: null,
-      });
-      setSelectedAddIdx(
-        Object.fromEntries(proposedNodes.map((_: any, idx: number) => [idx, true])) as Record<
-          number,
-          boolean
-        >
-      );
-      setApplySuggestedOrder(false);
-      setShowAIModal(true);
-    } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    i18n.language,
+        // Gather ancestor context for node-specific generation (structural tree only)
+        const ancestorLabels: string[] = [];
+        if (anchor && anchor.id !== 'root') {
+          let currentId = anchor.id;
+          for (let depth = 0; depth < 5; depth++) {
+            const parentEdge = edges.find((e) => e.target === currentId && isStructuralEdge(e));
+            if (!parentEdge) break;
+            const parentNode = nodes.find((n) => n.id === parentEdge.source);
+            if (parentNode?.data?.label) ancestorLabels.unshift(parentNode.data.label);
+            currentId = parentEdge.source;
+          }
+        }
+
+        const res = await Api.expandMyIdeaMap(ideaId, {
+          anchorNodeId: String(anchor?.id || 'root'),
+          branchKey: anchorBranch,
+          count: 5,
+          language: i18n.language,
+          proposeOnly: true,
+          context: anchorLabel
+            ? `Node: "${anchorLabel}"${ancestorLabels.length > 0 ? ` | Path: ${ancestorLabels.join(' → ')} → ${anchorLabel}` : ''}`
+            : undefined,
+        });
+        const proposedNodes = (() => {
+          if (Array.isArray(res?.proposal?.add?.nodes)) return res.proposal.add.nodes;
+          if (Array.isArray(res?.proposal?.add)) return res.proposal.add;
+          return [];
+        })();
+        const proposedEdges = (() => {
+          if (Array.isArray(res?.proposal?.add?.edges)) return res.proposal.add.edges;
+          if (Array.isArray(res?.proposal?.edges)) return res.proposal.edges;
+          return [];
+        })();
+        if (!proposedNodes.length) {
+          toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any);
+          return;
+        }
+
+        setAiProposal({
+          add: { nodes: proposedNodes, edges: proposedEdges },
+          remove: { nodeIds: [], edgeIds: [] },
+          reorder: null,
+          rationale: null,
+        });
+        setSelectedAddIdx(
+          Object.fromEntries(proposedNodes.map((_: any, idx: number) => [idx, true])) as Record<
+            number,
+            boolean
+          >
+        );
+        setApplySuggestedOrder(false);
+        setShowAIModal(true);
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [edges, i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey]
+  );
+
+  // ── Quick action listener (extracted to useMindMapQuickActions) ──────────
+  useMindMapQuickActions({
     ideaId,
+    ideaTitle,
     isPolish,
     locked,
     nodes,
-    persistence,
-    selectedBranchKey,
-    setEdges,
-    setNodes,
-  ]);
+    edges,
+    layoutMode,
+    structureType,
+    extensions,
+    handlers: {
+      addChildNode,
+      addSiblingNode,
+      addRootTopic,
+      duplicateSelected,
+      deleteSelected,
+      getSelectedNode,
+      toggleCollapse,
+      setFoldLevel,
+      focusSelectedNode,
+      reparentSelectedPromote,
+      reparentSelectedDemote,
+      pushUndo,
+      undo,
+      redo,
+      handleAIExpand,
+      autoLayout,
+      fitView,
+      exportAsSVG,
+      exportAsPNG,
+      exportAsJSON,
+      exportAsMarkdown,
+      onOpenChat,
+    },
+    setters: {
+      setNodes,
+      setEdges,
+      setInteractionMode: updateInteractionMode,
+      setLayoutMode,
+      setShowClusterBubbles,
+      setHeatmapMode,
+      setParticleFlow,
+      setShowWhatIf,
+      setShowBatchConvert,
+      setShowTimeline,
+      setShowPresentation,
+      setShowSnapshots,
+      setShowVoiceToNode,
+      setShowDocToMap,
+      setShowInterviewToMap,
+      setShowDependencyDetector,
+      setShowPriorityRecommender,
+      setShowAutoClustering,
+      setShowSentimentOverlay,
+      setShowActivityFeed,
+      setShowHealthScore,
+      setShowFunnelAnalytics,
+      setShowExportPPTX,
+      setShowEmbedInReports,
+      setShowCompetitiveLandscape,
+      setShowBranchComparison,
+      setShowTimeHeatmap,
+      setShowExportDiagramCode,
+      setShowImportExternalMap,
+      setShowMindMap3D,
+      setShowWebhookSettings,
+      setCommentNodeId,
+      setExportMenuOpen,
+      setShowMiniMap,
+      setStructureType,
+      setShowStructurePicker,
+    },
+  });
 
+  // ── Node click / context menu ────────────────────────────────────────────
   const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      if (node.type === 'center') {
-        onCenterEdit?.();
+    (event: React.MouseEvent, node: Node) => {
+      try {
+        markInputHandled('click', event.target, 'onNodeClick', `id=${node.id} type=${node.type}`);
+        window.setTimeout(() => containerRef.current?.focus(), 0);
+        if (isNodeLockedByPeer(node.id)) {
+          debugLog(`NODE_CLICK_BLOCKED locked node=${node.id}`, {
+            source: 'handler',
+            reaction: 'blocked',
+            severity: 'warn',
+          });
+          notifyLockedNode();
+          return;
+        }
+        setNodes((prev: Node[]) => {
+          let hasChanges = false;
+          const next = prev.map((candidate) => {
+            const shouldSelect = candidate.id === node.id;
+            if (Boolean(candidate.selected) === shouldSelect) return candidate;
+            hasChanges = true;
+            return { ...candidate, selected: shouldSelect };
+          });
+          return hasChanges ? next : prev;
+        });
+        if (node.type === 'center') {
+          debugLog(`NODE_CLICK_ACTION center -> onCenterEdit`, { source: 'handler' });
+          onCenterEdit?.();
+        }
+        if (node.type === 'branch') {
+          debugLog(`NODE_CLICK_ACTION branch -> selectOnly`, { source: 'handler' });
+        }
+        if (node.type === 'idea') {
+          debugLog(`NODE_CLICK_NOOP idea node=${node.id}`, {
+            source: 'handler',
+            reaction: 'silent',
+            severity: 'warn',
+          });
+        }
+        debugLog(`onNodeClick DONE`, { source: 'handler', detail: node.id });
+      } catch (err: any) {
+        debugLog(`ERROR in onNodeClick: ${err?.message || err}`, {
+          source: 'error',
+          severity: 'error',
+        });
+        console.error('[MindMap Debug] onNodeClick error:', err);
       }
     },
-    [onCenterEdit]
+    [debugLog, isNodeLockedByPeer, markInputHandled, notifyLockedNode, onCenterEdit, toggleCollapse]
+  );
+
+  const onNodeDoubleClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      try {
+        markInputHandled(
+          'dblclick',
+          event.target,
+          'onNodeDoubleClick',
+          `id=${node.id} type=${node.type}`
+        );
+        if (isNodeLockedByPeer(node.id)) {
+          debugLog(`NODE_DOUBLE_CLICK_BLOCKED locked node=${node.id}`, {
+            source: 'handler',
+            reaction: 'blocked',
+            severity: 'warn',
+          });
+          notifyLockedNode();
+          return;
+        }
+        if (node.type === 'idea') {
+          debugLog(`NODE_DOUBLE_CLICK_ACTION openDrawer ${node.id}`, { source: 'handler' });
+          setDrawerNodeId(node.id);
+        }
+        if (node.type === 'branch') {
+          debugLog(`NODE_DOUBLE_CLICK_ACTION branch -> toggleCollapse`, { source: 'handler' });
+          toggleCollapse(node.id);
+        }
+        debugLog(`onNodeDoubleClick DONE`, { source: 'handler', detail: node.id });
+      } catch (err: any) {
+        debugLog(`ERROR in onNodeDoubleClick: ${err?.message || err}`, {
+          source: 'error',
+          severity: 'error',
+        });
+        console.error('[MindMap Debug] onNodeDoubleClick error:', err);
+      }
+    },
+    [debugLog, isNodeLockedByPeer, markInputHandled, notifyLockedNode]
+  );
+
+  const preContextMenuSelectionRef = useRef<string[]>([]);
+
+  const onNodeContextMenu = useCallback(
+    (e: React.MouseEvent, node: Node) => {
+      markInputHandled('contextmenu', e.target, 'onNodeContextMenu', `id=${node.id} type=${node.type}`);
+      e.preventDefault();
+      setPaneContextMenu(null);
+      setEdgeContextMenu(null);
+      if (isNodeLockedByPeer(node.id)) {
+        debugLog(`NODE_CONTEXT_MENU_BLOCKED locked node=${node.id}`, {
+          source: 'handler',
+          reaction: 'blocked',
+          severity: 'warn',
+        });
+        notifyLockedNode();
+        return;
+      }
+      preContextMenuSelectionRef.current = (nodes as Node[])
+        .filter((n) => n.selected)
+        .map((n) => n.id);
+      setNodes((prev: Node[]) => prev.map((candidate) => ({ ...candidate, selected: candidate.id === node.id })));
+      setContextMenu({
+        nodeId: node.id,
+        nodeType: node.type || 'idea',
+        x: e.clientX,
+        y: e.clientY,
+      });
+    },
+    [isNodeLockedByPeer, markInputHandled, nodes, notifyLockedNode, setNodes]
+  );
+
+  const onPaneContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      markInputHandled('contextmenu', e.target, 'onPaneContextMenu');
+      e.preventDefault();
+      setContextMenu(null);
+      setEdgeContextMenu(null);
+      const reactFlowBounds = containerRef.current?.getBoundingClientRect();
+      const viewport = getViewport();
+      const canvasX = reactFlowBounds
+        ? (e.clientX - reactFlowBounds.left - viewport.x) / viewport.zoom
+        : 0;
+      const canvasY = reactFlowBounds
+        ? (e.clientY - reactFlowBounds.top - viewport.y) / viewport.zoom
+        : 0;
+      setPaneContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        canvasX,
+        canvasY,
+      });
+    },
+    [getViewport, markInputHandled],
+  );
+
+  const onPaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      markInputHandled('click', event.target, 'onPaneClick');
+      window.setTimeout(() => containerRef.current?.focus(), 0);
+      debugLog('PANE_CLICK', { source: 'handler' });
+    },
+    [debugLog, markInputHandled]
+  );
+
+  // V5-IDEA-17: Helper to get the context-menu target node (right-clicked) or fallback to selected
+  const getContextTargetNode = useCallback(() => {
+    if (contextMenu?.nodeId) {
+      return (nodes as Node[]).find((n) => n.id === contextMenu.nodeId) || getSelectedNode();
+    }
+    return getSelectedNode();
+  }, [contextMenu, getSelectedNode, nodes]);
+
+  // V5-IDEA-17: Collect all descendants of a node (for branch operations)
+  const collectDescendants = useCallback((nodeId: string): string[] => {
+    return collectDescendantIds(nodeId, edges as Edge[]);
+  }, [edges]);
+
+  // V5-IDEA-17: Detach branch — disconnect node from parent, make it a root-level node
+  const detachBranch = useCallback(
+    (nodeId?: string) => {
+      const targetId = nodeId || getContextTargetNode()?.id;
+      if (!targetId) return;
+      setEdges((prev: Edge[]) => prev.filter((e) => e.target !== targetId));
+      toast.success(isPolish ? 'Gałąź odłączona' : 'Branch detached', { duration: 800 });
+    },
+    [getContextTargetNode, isPolish, setEdges]
+  );
+
+  // V5-IDEA-17: Duplicate branch — clone node + all descendants
+  const duplicateBranch = useCallback(
+    (nodeId?: string) => {
+      const targetId = nodeId || getContextTargetNode()?.id;
+      if (!targetId) return;
+      const descendants = collectDescendants(targetId);
+      const allIds = [targetId, ...descendants];
+      const idMap = new Map<string, string>();
+      for (const id of allIds) {
+        idMap.set(id, `${id}-dup-${Date.now()}`);
+      }
+
+      const newNodes: Node[] = [];
+      for (const id of allIds) {
+        const orig = (nodes as Node[]).find((n) => n.id === id);
+        if (!orig) continue;
+        newNodes.push({
+          ...orig,
+          id: idMap.get(id)!,
+          position: { x: orig.position.x + 60, y: orig.position.y + 40 },
+          selected: false,
+          data: { ...orig.data },
+        });
+      }
+
+      const newEdges: Edge[] = [];
+      for (const e of edges as Edge[]) {
+        if (idMap.has(e.source) && idMap.has(e.target)) {
+          newEdges.push({
+            ...e,
+            id: `${e.id}-dup-${Date.now()}`,
+            source: idMap.get(e.source)!,
+            target: idMap.get(e.target)!,
+          });
+        }
+      }
+
+      // Connect duplicate root to the same structural parent as original
+      const parentEdge = (edges as Edge[]).find((e) => e.target === targetId && isStructuralEdge(e));
+      if (parentEdge) {
+        newEdges.push({
+          ...parentEdge,
+          id: `e-dup-root-${Date.now()}`,
+          target: idMap.get(targetId)!,
+        });
+      }
+
+      setNodes((prev: Node[]) => [...prev, ...newNodes]);
+      setEdges((prev: Edge[]) => [...prev, ...newEdges]);
+      toast.success(
+        isPolish
+          ? `Zduplikowano gałąź (${newNodes.length} węzłów)`
+          : `Duplicated branch (${newNodes.length} nodes)`,
+        { duration: 1000 }
+      );
+    },
+    [collectDescendants, edges, getContextTargetNode, isPolish, nodes, setEdges, setNodes]
+  );
+
+  // V5-IDEA-17: Summarize branch — send to AI chat
+  const summarizeBranch = useCallback(
+    (nodeId?: string) => {
+      const targetId = nodeId || getContextTargetNode()?.id;
+      if (!targetId) return;
+      const target = (nodes as Node[]).find((n) => n.id === targetId);
+      const descendants = collectDescendants(targetId);
+      const branchLabels = [targetId, ...descendants]
+        .map((id) => (nodes as Node[]).find((n) => n.id === id)?.data?.label)
+        .filter(Boolean);
+
+      const prompt = isPolish
+        ? `Podsumuj gałąź "${target?.data?.label || targetId}":\n${branchLabels.map((l) => `- ${l}`).join('\n')}`
+        : `Summarize the branch "${target?.data?.label || targetId}":\n${branchLabels.map((l) => `- ${l}`).join('\n')}`;
+
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-chat-prompt', { detail: { prompt, ideaId } })
+      );
+    },
+    [collectDescendants, getContextTargetNode, ideaId, isPolish, nodes]
+  );
+
+  const convertBranch = useCallback(
+    (target: string, nodeId?: string) => {
+      const targetNodeId = nodeId || getContextTargetNode()?.id;
+      if (!targetNodeId) return;
+      const descendants = collectDescendants(targetNodeId);
+      const branchNodeIds = [targetNodeId, ...descendants];
+
+      const actionMap: Record<string, string> = {
+        initiative: 'convert_initiative',
+        decision: 'convert_decision',
+        task_set: 'convert_task_set',
+        report: 'convert_report',
+        presentation: 'convert_presentation',
+      };
+      const action = actionMap[target] || `convert_${target}`;
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: { action, nodeIds: branchNodeIds, ideaId },
+        })
+      );
+      toast.success(isPolish ? `Konwersja gałęzi do ${target}` : `Converting branch to ${target}`, {
+        duration: 1000,
+      });
+    },
+    [collectDescendants, getContextTargetNode, ideaId, isPolish]
+  );
+
+  const handleContextAction = useCallback(
+    (action: string) => {
+      debugLog(`handleContextAction: "${action}"`);
+      console.log('[MindMap] handleContextAction:', action);
+      const ctxNode = getContextTargetNode();
+      console.log('[MindMap] ctxNode:', ctxNode?.id, ctxNode?.type);
+      const updateNodeData = (nodeId: string, updater: (data: any) => any) => {
+        setNodes((prev: Node[]) =>
+          prev.map((node) =>
+            node.id === nodeId ? { ...node, data: updater(node.data || {}) } : node
+          )
+        );
+      };
+
+      if (action === 'ctx_edit') startEditingSelected();
+      if (action === 'ctx_open_detail') {
+        if (ctxNode && ctxNode.type === 'idea') setDrawerNodeId(ctxNode.id);
+      }
+      if (action === 'ctx_toggle_collapse' && ctxNode) toggleCollapse(ctxNode.id);
+      if (action === 'ctx_focus_subtree' && ctxNode) handleDrillDown(ctxNode.id);
+      if (action === 'ctx_drill_down') {
+        if (ctxNode) handleDrillDown(ctxNode.id);
+      }
+      if (action === 'ctx_add_child') addChildNode(ctxNode?.id);
+      if (action === 'ctx_add_sibling') addSiblingNode(ctxNode?.id);
+      if (action === 'ctx_ai_expand' || action === 'ctx_ai_deepen') {
+        handleAIExpand(ctxNode?.id);
+      }
+      if (action === 'ctx_what_if') setShowWhatIf(true);
+      if (action === 'ctx_vote_up') {
+        if (ctxNode && ctxNode.type === 'idea') {
+          const currentVotes = ctxNode.data?.votes ?? 0;
+          const newVotes = currentVotes >= 5 ? 0 : currentVotes + 1;
+          updateNodeData(ctxNode.id, (data) => ({ ...data, votes: newVotes }));
+        }
+      }
+      if (action === 'ctx_assign') {
+        if (ctxNode && ctxNode.type === 'idea') {
+          setAssignModalNodeId(ctxNode.id);
+        }
+      }
+      if (action === 'ctx_comments') {
+        if (ctxNode && ctxNode.type === 'idea') setCommentNodeId(ctxNode.id);
+      }
+      if (action === 'ctx_quick_notes' || action === 'ctx_quick_tags') {
+        if (ctxNode && ctxNode.type === 'idea') setDrawerNodeId(ctxNode.id);
+      }
+      if (action === 'ctx_attach_knowledge') {
+        if (ctxNode) {
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-attach-knowledge', {
+              detail: { nodeId: ctxNode.id, ideaId },
+            })
+          );
+        }
+      }
+      if (action === 'ctx_attach_artifact' && ctxNode) {
+        setAttachArtifactNodeId(ctxNode.id);
+      }
+      if (action === 'ctx_open_linked_artifacts' && ctxNode) {
+        const links = Array.isArray(ctxNode.data?.artifactLinks) ? ctxNode.data.artifactLinks : [];
+        if (links.length === 0) {
+          toast(isPolish ? 'Ten wezel nie ma jeszcze artefaktow' : 'This node has no linked artifacts yet');
+        } else if (links.length === 1) {
+          const link = links[0];
+          window.dispatchEvent(
+            new CustomEvent('mywork-open-item', {
+              detail: artifactLinkToOpenPayload(link),
+            })
+          );
+        } else {
+          setDrawerNodeId(ctxNode.id);
+        }
+      }
+      if (action === 'ctx_dependencies') setShowDependencyDetector(true);
+      if (action === 'ctx_priority') setShowPriorityRecommender(true);
+      if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
+      if (action === 'ctx_change_shape') {
+        if (ctxNode && ctxNode.type === 'idea') {
+          const shapes = ['default', 'circle', 'diamond', 'hexagon'];
+          const current = ctxNode.data?.shape || 'default';
+          const nextIdx = (shapes.indexOf(current) + 1) % shapes.length;
+          updateNodeData(ctxNode.id, (data) => ({ ...data, shape: shapes[nextIdx] }));
+          toast.success(`Shape: ${shapes[nextIdx]}`, { duration: 800 });
+        }
+      }
+      if (action === 'ctx_connect_to_selected' && ctxNode) {
+        const priorIds = preContextMenuSelectionRef.current;
+        const peerId = priorIds.find((id) => id !== ctxNode.id);
+        const peer = peerId ? nodes.find((n) => n.id === peerId) : undefined;
+        if (!peer) {
+          toast(
+            isPolish
+              ? 'Zaznacz drugi wezel, aby utworzyc polaczenie'
+              : 'Select another node to create a connection'
+          );
+        } else {
+          setEdges((prev: Edge[]) => [
+            ...prev,
+            {
+              id: `edge-${uid()}`,
+              source: ctxNode.id,
+              target: peer.id,
+              type: 'labeled',
+              data: { userCreated: true, edgeRole: 'relation', relation: 'related' },
+            } as Edge,
+          ]);
+        }
+      }
+      // V5-IDEA-17: New branch operations
+      if (action === 'ctx_detach_branch') detachBranch(ctxNode?.id);
+      if (action === 'ctx_duplicate_branch') duplicateBranch(ctxNode?.id);
+      if (action === 'ctx_summarize_branch') summarizeBranch(ctxNode?.id);
+      if (action === 'ctx_convert_tasks') convertBranch('task_set', ctxNode?.id);
+      if (action === 'ctx_convert_initiative') convertBranch('initiative', ctxNode?.id);
+      if (action === 'ctx_convert_decision') convertBranch('decision', ctxNode?.id);
+      // MM-15: Subtree conversion actions
+      if (action === 'ctx_subtree_convert_decision') convertBranch('decision', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_tasks') convertBranch('task_set', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_task_set') convertBranch('task_set', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_initiative') convertBranch('initiative', ctxNode?.id);
+      if (action === 'ctx_add_image') {
+        if (ctxNode && ctxNode.type === 'idea') {
+          setImageUrlNodeId(ctxNode.id);
+        }
+      }
+      if (action === 'ctx_copy_style' && ctxNode) {
+        setStyleClipboard(copyNodeStyle(ctxNode));
+        toast.success(isPolish ? 'Styl skopiowany' : 'Style copied', { duration: 800 });
+      }
+      if (action === 'ctx_paste_style' && ctxNode && styleClipboard) {
+        setNodes((prev: Node[]) =>
+          prev.map((node) =>
+            node.id === ctxNode.id ? applyNodeStyle(node, styleClipboard) : node
+          )
+        );
+      }
+      if (action === 'ctx_share_branch') {
+        if (ctxNode) {
+          const url = `${window.location.origin}${window.location.pathname}?focusNode=${ctxNode.id}`;
+          navigator.clipboard
+            .writeText(url)
+            .then(() => {
+              toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!', { duration: 1200 });
+            })
+            .catch(() => {
+              window.prompt(isPolish ? 'Skopiuj link:' : 'Copy link:', url);
+            });
+        }
+      }
+      if (action === 'ctx_duplicate') duplicateSelected();
+      if (action === 'ctx_copy_nodes') copySelected();
+      if (action === 'ctx_cut_nodes') cutSelected();
+      if (action === 'ctx_paste_nodes') pasteNodes();
+      if (action === 'ctx_delete') deleteSelected();
+    },
+    [
+      addChildNode,
+      addSiblingNode,
+      convertBranch,
+      copySelected,
+      cutSelected,
+      deleteSelected,
+      detachBranch,
+      duplicateBranch,
+      duplicateSelected,
+      getContextTargetNode,
+      getSelectedNode,
+      handleAIExpand,
+      handleDrillDown,
+      isPolish,
+      ideaId,
+      nodes,
+      pasteNodes,
+      setEdges,
+      setNodes,
+      styleClipboard,
+      startEditingSelected,
+      summarizeBranch,
+      toggleCollapse,
+    ]
+  );
+
+  const handlePaneContextAction = useCallback(
+    (action: string) => {
+      const pos = paneContextMenu
+        ? { x: paneContextMenu.canvasX, y: paneContextMenu.canvasY }
+        : { x: 0, y: 0 };
+
+      if (action === 'pane_add_node') {
+        const newId = `node-${uid()}`;
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: pos,
+          data: { label: '', branchKey: 'uncategorized', sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+        } as any;
+        const rootEdge: Edge = {
+          id: `edge-${uid()}`,
+          source: 'root',
+          target: newId,
+          type: 'gradient',
+          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: true, edgeRole: 'structural' },
+        } as any;
+        pushUndo();
+        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setEdges((prev: Edge[]) => [...prev, rootEdge]);
+      }
+
+      if (action === 'pane_add_topic') {
+        const newId = `node-${uid()}`;
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: pos,
+          data: {
+            label: isPolish ? 'Nowy temat' : 'New topic',
+            branchKey: 'uncategorized',
+            sourceType: 'manual',
+            priority: 50,
+            semanticType: 'topic',
+            _startEditing: Date.now(),
+          },
+        } as any;
+        const rootEdge: Edge = {
+          id: `edge-${uid()}`,
+          source: 'root',
+          target: newId,
+          type: 'gradient',
+          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: true, edgeRole: 'structural' },
+        } as any;
+        pushUndo();
+        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setEdges((prev: Edge[]) => [...prev, rootEdge]);
+      }
+
+      if (action === 'pane_copy') copySelected();
+      if (action === 'pane_cut') cutSelected();
+      if (action === 'pane_paste') pasteNodes(paneContextMenu ? { x: paneContextMenu.canvasX, y: paneContextMenu.canvasY } : undefined);
+
+      if (action === 'pane_undo') undo();
+      if (action === 'pane_redo') redo();
+
+      if (action === 'pane_select_all') {
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: true })));
+      }
+
+      if (action === 'pane_collapse_all') {
+        setFoldLevel(0);
+        toast.success(isPolish ? 'Widok: poziom 0' : 'Showing level 0', { duration: 1200 });
+      }
+
+      if (action === 'pane_expand_all') {
+        setFoldLevel(Infinity);
+        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+      }
+
+      if (action === 'pane_fold_1') {
+        setFoldLevel(1);
+        toast.success(isPolish ? 'Widok: poziom 1' : 'Showing level 1', { duration: 1200 });
+      }
+      if (action === 'pane_fold_2') {
+        setFoldLevel(2);
+        toast.success(isPolish ? 'Widok: poziom 2' : 'Showing level 2', { duration: 1200 });
+      }
+
+      if (action === 'pane_auto_layout') {
+        const laid = autoLayout(nodes as Node[], edges as Edge[]);
+        setNodes(laid);
+        setTimeout(() => {
+          try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        }, 50);
+      }
+
+      if (action === 'pane_fit_view') {
+        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+      }
+
+      if (action === 'pane_center_root') {
+        const rootNode = (nodes as Node[]).find((n) => n.id === 'root');
+        if (rootNode) {
+          try {
+            fitView({ nodes: [{ id: 'root' } as any], padding: 0.5, duration: 400 });
+          } catch { /* */ }
+        }
+      }
+
+      if (action === 'pane_zoom_in') {
+        const vp = getViewport();
+        setViewport({ ...vp, zoom: Math.min(vp.zoom * 1.3, 4) }, { duration: 200 });
+      }
+
+      if (action === 'pane_zoom_out') {
+        const vp = getViewport();
+        setViewport({ ...vp, zoom: Math.max(vp.zoom / 1.3, 0.1) }, { duration: 200 });
+      }
+
+      if (action === 'pane_ai_suggest') {
+        handleAIExpand();
+      }
+
+      if (action === 'pane_auto_cluster') {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: 'mm_auto_cluster' },
+          }),
+        );
+      }
+
+      setPaneContextMenu(null);
+    },
+    [
+      autoLayout,
+      copySelected,
+      cutSelected,
+      edges,
+      fitView,
+      getSelectedNode,
+      getViewport,
+      handleAIExpand,
+      isPolish,
+      nodes,
+      paneContextMenu,
+      pasteNodes,
+      pushUndo,
+      redo,
+      setCollapsedNodeIds,
+      setEdges,
+      setFoldLevel,
+      setNodes,
+      setViewport,
+      undo,
+    ],
   );
 
   const savedLabel = useMemo(() => {
-    if (persistence !== 'online') {
-      return isPolish ? 'Tryb lokalny (bez zapisu)' : 'Local mode (not saved)';
-    }
+    if (persistence === 'no_route')
+      return isPolish ? 'Backend wymaga restartu' : 'Backend restart required';
+    if (persistence === 'missing_table')
+      return isPolish ? 'Brakuje tabeli mapy' : 'Map table missing';
+    if (persistence === 'offline')
+      return isPolish ? 'Offline - brak zapisu' : 'Offline - not saving';
     if (saving) return isPolish ? 'Zapisuję...' : 'Saving...';
     if (!lastSavedAt) return isPolish ? 'Nie zapisano' : 'Not saved yet';
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
   }, [isPolish, lastSavedAt, persistence, saving]);
+  const interactionModeLabel = useMemo(() => {
+    if (interactionMode === 'pan') return isPolish ? 'Tryb: przesuwanie' : 'Mode: pan';
+    if (interactionMode === 'connect') return isPolish ? 'Tryb: łączenie' : 'Mode: connect';
+    return isPolish ? 'Tryb: zaznaczanie' : 'Mode: select';
+  }, [interactionMode, isPolish]);
 
   const containerClassName =
     variant === 'overlay'
       ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
-      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 ${className || ''}`;
+      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 isolate z-0 ${className || ''}`;
+
+  const floatingToolbarInfo = useMemo(() => {
+    if (locked) return null;
+    if (selectedNodeIds.length !== 1) return null;
+    if (contextMenu) return null;
+    const nodeId = selectedNodeIds[0];
+    const node = (nodes as Node[]).find((n) => n.id === nodeId);
+    if (!node || !node.position) return null;
+    const vp = getViewport();
+    const screenX = node.position.x * vp.zoom + vp.x;
+    const screenY = node.position.y * vp.zoom + vp.y;
+    return {
+      nodeId,
+      node,
+      position: { x: screenX + ((node.width || 160) * vp.zoom) / 2, y: screenY },
+    };
+  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport]);
+
+  const handleFloatingToolbarUpdate = useCallback((patch: Record<string, any>) => {
+    debugLog(`floatingToolbarUpdate: ${JSON.stringify(patch).slice(0, 100)}`);
+    if (!floatingToolbarInfo) return;
+    updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
+  }, [debugLog, floatingToolbarInfo, updateNodeDataById]);
 
   return (
-    <div className={containerClassName}>
+    <div
+      ref={containerRef}
+      className={containerClassName}
+      tabIndex={-1}
+      data-mm-surface="mindmap"
+    >
+      {/* Floating node toolbar */}
+      {floatingToolbarInfo && (
+        <FloatingNodeToolbar
+          nodeId={floatingToolbarInfo.nodeId}
+          nodeData={floatingToolbarInfo.node.data}
+          disabled={locked || !!floatingToolbarInfo.node.data?.locked}
+          isProtected={floatingToolbarInfo.nodeId === 'root' || floatingToolbarInfo.nodeId.startsWith('branch-')}
+          hasChildren={findChildrenIds(floatingToolbarInfo.nodeId).length > 0}
+          style={{
+            color: floatingToolbarInfo.node.data?.color,
+            fillOpacity: floatingToolbarInfo.node.data?.fillOpacity,
+            lineStyle: floatingToolbarInfo.node.data?.lineStyle,
+            fontSize: floatingToolbarInfo.node.data?.fontSize,
+            bold: floatingToolbarInfo.node.data?.bold,
+            semanticType: floatingToolbarInfo.node.data?.semanticType,
+            branchTheme: floatingToolbarInfo.node.data?.branchTheme,
+            autoLayout: floatingToolbarInfo.node.data?.autoLayout,
+            locked: floatingToolbarInfo.node.data?.locked,
+          }}
+          position={floatingToolbarInfo.position}
+          onUpdate={handleFloatingToolbarUpdate}
+          onAddChild={() => addChildNode(floatingToolbarInfo.nodeId)}
+          onAddSibling={() => addSiblingNode(floatingToolbarInfo.nodeId)}
+          onOpenContextMenu={(pos) =>
+            setContextMenu({
+              nodeId: floatingToolbarInfo.nodeId,
+              nodeType: floatingToolbarInfo.node.type || 'idea',
+              x: pos.x,
+              y: pos.y,
+            })
+          }
+          onOpenArtifactModal={() => setAttachArtifactNodeId(floatingToolbarInfo.nodeId)}
+          onOpenNodeDetail={() => setDrawerNodeId(floatingToolbarInfo.nodeId)}
+          onRemoveArtifact={(link) => {
+            const artifactType = link?.artifactRef?.type;
+            const artifactId = link?.artifactRef?.id;
+            if (!artifactType || !artifactId) return;
+            void (async () => {
+              try {
+                await Api.detachArtifactFromObject(
+                  ideaId,
+                  floatingToolbarInfo.nodeId,
+                  artifactType,
+                  artifactId
+                );
+                if (externalRuntime) {
+                  await externalRuntime.refresh();
+                } else {
+                  updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({
+                    ...data,
+                    artifactLinks: (Array.isArray(data.artifactLinks) ? data.artifactLinks : []).filter(
+                      (item: ArtifactLink) =>
+                        !(
+                          item?.artifactRef?.type === link?.artifactRef?.type &&
+                          item?.artifactRef?.id === link?.artifactRef?.id &&
+                          item?.label === link?.label
+                        )
+                    ),
+                  }));
+                }
+                toast.success(isPolish ? 'Artefakt odłączony' : 'Artifact detached', { duration: 900 });
+              } catch (err: any) {
+                toast.error(
+                  err?.message || (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
+                );
+              }
+            })();
+          }}
+          onOpenLinkedArtifact={(link) => {
+            const artifactType = link?.artifactRef?.type;
+            const artifactId = link?.artifactRef?.id;
+            if (!artifactType || !artifactId) return;
+            window.dispatchEvent(
+              new CustomEvent('mywork-open-item', {
+                detail: {
+                  type: artifactType,
+                  id: artifactId,
+                  name: link.label || `${artifactType}:${artifactId}`,
+                },
+              })
+            );
+          }}
+          onOpenChatAboutNode={() => {
+            const label = floatingToolbarInfo.node.data?.label || '';
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'mm_chat_about_node', nodeId: floatingToolbarInfo.nodeId, label },
+              })
+            );
+          }}
+          onAction={(action) => {
+            const SUBTREE_MAP: Record<string, string> = {
+              ctx_subtree_convert_decision: 'decision',
+              ctx_subtree_convert_tasks: 'task_set',
+              ctx_subtree_convert_task_set: 'task_set',
+              ctx_subtree_convert_initiative: 'initiative',
+            };
+            if (SUBTREE_MAP[action]) {
+              convertBranch(SUBTREE_MAP[action], floatingToolbarInfo.nodeId);
+              return;
+            }
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action, nodeId: floatingToolbarInfo.nodeId },
+              })
+            );
+          }}
+        />
+      )}
+
+      {/* Node context menu */}
+      {contextMenu && (
+        <NodeContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          nodeId={contextMenu.nodeId}
+          nodeType={contextMenu.nodeType}
+          isLocked={locked}
+          isPl={isPolish}
+          canPasteStyle={!!styleClipboard}
+          canPasteNodes={hasMindMapClipboard()}
+          hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
+          onClose={() => setContextMenu(null)}
+          onAction={handleContextAction}
+        />
+      )}
+
+      {/* Pane (empty canvas) context menu */}
+      {paneContextMenu && (
+        <PaneContextMenu
+          x={paneContextMenu.x}
+          y={paneContextMenu.y}
+          canvasX={paneContextMenu.canvasX}
+          canvasY={paneContextMenu.canvasY}
+          isPl={isPolish}
+          isLocked={locked}
+          canUndo={undoStackRef.current.length > 0}
+          canRedo={redoStackRef.current.length > 0}
+          canPaste={hasMindMapClipboard()}
+          hasSelection={selectedNodeIds.length > 0}
+          onClose={() => setPaneContextMenu(null)}
+          onAction={handlePaneContextAction}
+        />
+      )}
+
+      {/* Edge context menu */}
+      {edgeContextMenu && (
+        <EdgeContextMenu
+          x={edgeContextMenu.x}
+          y={edgeContextMenu.y}
+          edgeId={edgeContextMenu.edgeId}
+          isPl={isPolish}
+          isLocked={locked}
+          isUserCreated={edgeContextMenu.isUserCreated}
+          onClose={() => setEdgeContextMenu(null)}
+          onAction={handleEdgeContextAction}
+        />
+      )}
+
       {/* AI suggestions modal */}
       {showAIModal && aiProposal && (
         <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
@@ -755,8 +4530,8 @@ function MindMapInner({
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {isPolish
-                    ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj”.'
-                    : 'Select items to add, then click “Apply”.'}
+                    ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj".'
+                    : 'Select items to add, then click "Apply".'}
                 </p>
               </div>
               <button
@@ -769,13 +4544,10 @@ function MindMapInner({
             </div>
 
             <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
-              {/* To remove (not used yet) */}
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do wywalenia' : 'To remove'} (0)
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {isPolish ? 'Do wywalenia' : 'To remove'} (0)
+                </span>
                 <EmptyStateInline
                   icon={GitBranch}
                   dashed={false}
@@ -784,7 +4556,6 @@ function MindMapInner({
                 />
               </div>
 
-              {/* To add */}
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -842,22 +4613,10 @@ function MindMapInner({
                 )}
               </div>
 
-              {/* Suggested order (not used yet) */}
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (0)
-                  </span>
-                  <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
-                    <input
-                      type="checkbox"
-                      checked={applySuggestedOrder}
-                      onChange={(e) => setApplySuggestedOrder(e.target.checked)}
-                      disabled
-                    />
-                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
-                  </label>
-                </div>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (0)
+                </span>
                 <EmptyStateInline
                   icon={Sparkles}
                   dashed={false}
@@ -866,7 +4625,6 @@ function MindMapInner({
                 />
               </div>
 
-              {/* Plan */}
               <Callout
                 variant="purple"
                 title={isPolish ? 'Plan' : 'Plan'}
@@ -901,64 +4659,49 @@ function MindMapInner({
         </div>
       )}
 
-      {/* Top bar (floating) */}
-      <div className="absolute top-3 left-3 right-3 z-[90] flex items-center justify-between">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
+      {/* Breadcrumb for drill-down — positioned below the unified header */}
+      {drillPath.length > 0 && (
+        <div className="absolute top-[110px] left-3 z-[91]">
+          <SubMapBreadcrumb
+            path={drillPath}
+            onNavigate={handleBreadcrumbNavigate}
+            isPl={isPolish}
+          />
+        </div>
+      )}
+
+      {/* Top-left minimal label: title + save status */}
+      <div className="absolute top-3 left-3 z-[90] max-w-[320px]">
+        <div className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-lg border border-slate-200/40 dark:border-white/[0.04] shadow-lg px-3 py-1.5">
           {showClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+              className="p-0.5 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
               title={isPolish ? 'Zamknij mapę' : 'Close map'}
             >
-              <X size={16} />
+              <X size={12} />
             </button>
           )}
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06]" />
-          <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[520px]">
-            {isPolish ? 'Mapa rekomendacji' : 'Recommendation map'} — {ideaTitle}
-          </div>
-          <div className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">{savedLabel}</div>
-        </div>
-
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
-          <button
-            onClick={() => zoomIn({ duration: 250 })}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Przybliż' : 'Zoom in'}
-          >
-            <Plus size={16} />
-          </button>
-          <button
-            onClick={() => zoomOut({ duration: 250 })}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Oddal' : 'Zoom out'}
-          >
-            <Minus size={16} />
-          </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button
-            onClick={() => fitView({ padding: 0.3, duration: 300 })}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Dopasuj widok' : 'Fit view'}
-          >
-            <RotateCcw size={14} />
-          </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button
-            onClick={handleAIExpand}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
-            title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'}
-            disabled={locked || saving || persistence !== 'online'}
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            AI
-          </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 px-1">
-            {isPolish ? 'Kliknij linię: stop→reverse→usuń' : 'Click edge: stop→reverse→remove'}
-          </div>
+          <h3 className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate flex-1 min-w-0">
+            {ideaTitle || (isPolish ? 'Bez tytułu' : 'Untitled')}
+          </h3>
+          <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
+            {interactionModeLabel}
+          </span>
+          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0">{savedLabel}</span>
         </div>
       </div>
+
+      {!loading && (
+        <CanvasZoomControls
+          isPolish={isPolish}
+          selectedNodeId={selectedNodeIds[0] || null}
+          showMiniMap={showMiniMap}
+          onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
+          onFullscreenToggle={onFullscreenToggle}
+          isFullscreen={isFullscreen}
+        />
+      )}
 
       {/* Canvas */}
       {loading ? (
@@ -966,51 +4709,1177 @@ function MindMapInner({
           <Loader2 className="animate-spin text-amber-500" size={34} />
         </div>
       ) : (
+        <MindMapIdeaIdContext.Provider value={ideaId}>
+        <MindMapInteractionModeContext.Provider value={interactionMode}>
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={enrichedNodes}
+          edges={focusFilteredEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
+            onViewportReport?.(viewport);
+            saveViewportOnly();
+            try { localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(viewport)); } catch { /* */ }
+          }}
           onNodeClick={onNodeClick}
+          onNodeDoubleClick={onNodeDoubleClick}
+          onNodeContextMenu={onNodeContextMenu}
+          onPaneClick={onPaneClick}
+          onPaneContextMenu={onPaneContextMenu}
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
-          nodeTypes={nodeTypes}
-          nodesConnectable={!locked}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
+          nodeTypes={reactFlowNodeTypes}
+          edgeTypes={reactFlowEdgeTypes}
+          nodesConnectable={!locked && interactionMode === 'connect'}
+          nodesDraggable={!locked && interactionMode === 'select'}
+          panOnDrag={interactionMode === 'pan'}
+          selectionOnDrag={interactionMode === 'select'}
+          nodesFocusable
+          edgesFocusable
           connectionMode={ConnectionMode.Loose}
-          fitView
-          fitViewOptions={{ padding: 0.3 }}
+          fitViewOptions={reactFlowFitViewOptions}
           minZoom={0.1}
           maxZoom={3}
-          proOptions={{ hideAttribution: true }}
-          className="bg-slate-50 dark:bg-navy-950"
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-            style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
-            animated: true,
+          proOptions={reactFlowProOptions}
+          className={`bg-slate-50 dark:bg-navy-950 ${
+            interactionMode === 'pan'
+              ? 'cursor-grab active:cursor-grabbing'
+              : interactionMode === 'connect'
+                ? 'cursor-crosshair'
+                : 'cursor-default'
+          }`}
+          aria-label={
+            isPolish
+              ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów'
+              : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
+          }
+          defaultEdgeOptions={reactFlowDefaultEdgeOptions}
+          onDragOver={(event: React.DragEvent) => {
+            if (event.dataTransfer.types.includes('application/idea-context-item')) {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'copy';
+            }
+          }}
+          onDrop={(event: React.DragEvent) => {
+            const raw = event.dataTransfer.getData('application/idea-context-item');
+            if (!raw) return;
+            event.preventDefault();
+            try {
+              const item = JSON.parse(raw);
+              const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+              });
+              const newId = `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+              const branchKey = item.type === 'initiative' ? 'options'
+                : item.type === 'gap' ? 'causes'
+                : item.type === 'insight' ? 'evidence'
+                : item.type === 'kpi' ? 'validation'
+                : 'uncategorized';
+              const newNode = {
+                id: newId,
+                type: 'idea' as const,
+                position,
+                data: {
+                  label: item.title || item.text || 'Dropped item',
+                  branchKey,
+                  sourceType: 'context_panel',
+                  priority: 50,
+                  notes: item.detail || '',
+                  context: item.source ? `Source: ${item.source}` : '',
+                  semanticType: item.type === 'gap' ? 'risk'
+                    : item.type === 'insight' ? 'evidence'
+                    : item.type === 'kpi' ? 'evidence'
+                    : item.type === 'initiative' ? 'action'
+                    : 'topic',
+                  status: 'idea',
+                  tags: item.type ? [item.type] : [],
+                },
+              };
+              const nearestNode = nodes.filter(n => !n.hidden).reduce((best, n) => {
+                const dx = n.position.x - position.x;
+                const dy = n.position.y - position.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (!best || dist < best.dist) return { node: n, dist };
+                return best;
+              }, null as { node: any; dist: number } | null);
+
+              const parentId = nearestNode && nearestNode.dist < 300 ? nearestNode.node.id : 'root';
+              const colors = branchColor(branchKey);
+              const newEdge = {
+                id: `edge-${newId}`,
+                source: parentId,
+                target: newId,
+                type: 'gradient',
+                style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+                animated: true,
+                data: { edgeRole: 'structural' },
+              };
+
+              pushUndo();
+              setNodes(prev => [...prev.map(n => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+              setEdges(prev => [...prev, newEdge]);
+            } catch { /* ignore bad data */ }
           }}
         >
-          <Background color="#1e293b" gap={22} size={1} />
+          {/* V5-IDEA-42: Unified canvas background */}
+          <Background color="rgba(148,163,184,0.06)" gap={24} size={1} />
+          {showMiniMap && (
+            <MiniMap
+              nodeStrokeWidth={3}
+              zoomable
+              pannable
+              className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
+            />
+          )}
 
-          {/* Branch key hint */}
-          <Panel position="bottom-left">
-            <div className="px-3 py-2 rounded-2xl bg-white/80 dark:bg-navy-900/75 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
-              <Link2 size={14} className="text-slate-400" />
-              <span className="font-semibold">{isPolish ? 'Aktywna gałąź' : 'Active branch'}:</span>
-              <span className="text-slate-500 dark:text-slate-400">{selectedBranchKey}</span>
-              <span className="text-slate-400">·</span>
-              <span>
-                {locked
-                  ? isPolish
-                    ? 'Zaakceptuj wyzwanie, aby odblokować edycję'
-                    : 'Accept the challenge to unlock editing'
-                  : isPolish
-                    ? 'AI dopina propozycje do tej gałęzi'
-                    : 'AI adds to this branch'}
-              </span>
-            </div>
-          </Panel>
+          {/* Empty state: pre-accept onboarding overlay OR post-accept quick-start */}
+          {visibleIdeaNodeCount === 0 && (
+            <>
+              {locked ? (
+                <Panel position="center">
+                  <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-white/80 dark:bg-navy-900/60 backdrop-blur-xl shadow-2xl border border-slate-200/30 dark:border-white/[0.06] p-8 text-center onboarding-overlay-enter">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                      <Lightbulb size={28} className="text-white" />
+                    </div>
+                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                      {isPolish ? 'Opisz swoje wyzwanie' : 'Describe your challenge'}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                      {isPolish
+                        ? 'Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.'
+                        : 'Fill in the title and description in the Tools panel on the right, then accept.'}
+                    </p>
+                    <div className="space-y-2 text-left mb-6">
+                      {[
+                        { n: '1', pl: 'Nadaj tytuł wyzwaniu', en: 'Name your challenge' },
+                        { n: '2', pl: 'Opisz problem lub pomysł', en: 'Describe the problem or idea' },
+                        { n: '3', pl: 'Kliknij „Akceptuj" w panelu Tools', en: 'Click "Accept" in the Tools panel' },
+                      ].map((step) => (
+                        <div key={step.n} className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
+                            {step.n}
+                          </span>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">
+                            {isPolish ? step.pl : step.en}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onCenterEdit?.()}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
+                    >
+                      <Sparkles size={16} />
+                      {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
+                    </button>
+                  </div>
+                </Panel>
+              ) : (
+                <Panel position="bottom-center">
+                  <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
+                    <Lightbulb size={16} className="text-amber-500 shrink-0" />
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {isPolish
+                        ? 'Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł'
+                        : 'Select a branch and press Tab to add the first node'}
+                    </span>
+                    <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                  </div>
+                </Panel>
+              )}
+            </>
+          )}
+
+          {/* Cluster Bubbles overlay */}
+          {showClusterBubbles && (
+            <ClusterBubbles
+              nodes={enrichedNodes
+                .filter((n) => !n.hidden)
+                .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
+              edges={focusFilteredEdges
+                .filter((e) => !e.hidden)
+                .map((e) => ({ source: e.source, target: e.target }))}
+              enabled={showClusterBubbles}
+            />
+          )}
+
+          {/* Active branch info removed — redundant with visual branch nodes on canvas */}
+
+          {/* AI Sidekick intent indicator */}
+          {sidekickCtx && nodes.length > 1 && (
+            <Panel position="top-center">
+              <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
+                <Sparkles size={10} className="text-violet-500 shrink-0" />
+                <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
+              </div>
+            </Panel>
+          )}
         </ReactFlow>
+        {showHealthScore && (
+          <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
+        )}
+        </MindMapInteractionModeContext.Provider>
+        </MindMapIdeaIdContext.Provider>
       )}
+
+      {/* AI Branch Balancer */}
+      <AIBranchBalancer
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
+        edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+        locked={locked}
+        onFocusBranch={(branchKey) => {
+          const branchNode = nodes.find(
+            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
+          );
+          if (branchNode) {
+            setNodes((prev: Node[]) =>
+              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+            );
+            setTimeout(() => {
+              try {
+                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+              } catch {
+                /* ignore */
+              }
+            }, 100);
+          }
+        }}
+      />
+
+      {/* AI What-If Scenarios */}
+      {showWhatIf &&
+        (() => {
+          const sel = nodes.find((n: any) => n?.selected);
+          return (
+            <AIWhatIfScenarios
+              open={showWhatIf}
+              onClose={() => setShowWhatIf(false)}
+              ideaId={ideaId}
+              ideaTitle={ideaTitle}
+              selectedNodeLabel={sel?.data?.label || ideaTitle}
+              selectedNodeId={sel?.id || 'root'}
+              branchKey={sel?.data?.branchKey || 'options'}
+              allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+              locked={locked}
+              onApplyScenario={(scenario) => {
+                pushUndo();
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-insert', {
+                    detail: {
+                      items: [
+                        {
+                          text: scenario.title,
+                          type: scenario.type === 'risk' ? 'risk_flags' : 'topics',
+                        },
+                      ],
+                      ideaId,
+                    },
+                  })
+                );
+              }}
+            />
+          );
+        })()}
+
+      {/* AI Blind Spots Detector */}
+      {enrichedNodes.length > 0 ? (
+        <AIBlindSpotsDetector
+          ideaId={ideaId}
+          ideaTitle={ideaTitle}
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+          persistence={persistence}
+          locked={locked}
+          onAddBlindSpot={(spot) => {
+            pushUndo();
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: {
+                  items: [{ text: spot.area, type: 'topics' }],
+                  ideaId,
+                },
+              })
+            );
+          }}
+        />
+      ) : null}
+
+      {/* Batch Convert Modal */}
+      {showBatchConvert ? (
+        <BatchConvertModal
+        open={showBatchConvert}
+        onClose={() => setShowBatchConvert(false)}
+        nodes={nodes
+          .filter((n) => n.type === 'idea')
+          .map((n) => ({
+            id: n.id,
+            label: n.data?.label || '',
+            branchKey: n.data?.branchKey || '',
+            status: n.data?.status,
+          }))}
+        locked={locked}
+        onConvert={(nodeIds, target) => {
+          for (const nid of nodeIds) {
+            setNodes((prev: Node[]) =>
+              prev.map((n) =>
+                n.id === nid ? { ...n, data: { ...n.data, status: 'converted' } } : n
+              )
+            );
+          }
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-quick-action', {
+              detail: {
+                action: target === 'initiative' ? 'convert_initiative' : 'convert_decision',
+                nodeIds,
+              },
+            })
+          );
+        }}
+        />
+      ) : null}
+
+      {/* Timeline View */}
+      {showTimeline ? (
+        <TimelineView
+        open={showTimeline}
+        onClose={() => setShowTimeline(false)}
+        nodes={nodes
+          .filter((n) => n.type === 'idea')
+          .map((n) => ({
+            id: n.id,
+            label: n.data?.label || '',
+            branchKey: n.data?.branchKey || '',
+            status: n.data?.status || 'idea',
+          }))}
+        onSelectNode={(nodeId) => {
+          setShowTimeline(false);
+          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+          setTimeout(() => {
+            try {
+              fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 });
+            } catch {
+              /* ignore */
+            }
+          }, 100);
+        }}
+        />
+      ) : null}
+
+      {/* Presentation Mode */}
+      {showPresentation ? (
+        <PresentationMode
+        open={showPresentation}
+        onClose={() => setShowPresentation(false)}
+        ideaTitle={ideaTitle}
+        branches={nodes
+          .filter((n) => n.id.startsWith('branch-'))
+          .map((bn) => ({
+            branchKey: bn.data?.branchKey || '',
+            label: bn.data?.label || '',
+            nodes: edges
+              .filter((e) => e.source === bn.id)
+              .map((e) => {
+                const child = nodes.find((n) => n.id === e.target);
+                return child
+                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status, notes: child.data?.notes || '' }
+                  : null;
+              })
+              .filter(Boolean) as Array<{ id: string; label: string; status?: string; notes?: string }>,
+          }))}
+        onFocusBranch={(branchKey) => {
+          setShowPresentation(false);
+          const branchNode = nodes.find(
+            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
+          );
+          if (branchNode) {
+            setNodes((prev: Node[]) =>
+              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+            );
+            setTimeout(() => {
+              try {
+                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+              } catch {
+                /* ignore */
+              }
+            }, 100);
+          }
+        }}
+        />
+      ) : null}
+
+      {/* Voice to Node */}
+      {showVoiceToNode ? (
+        <VoiceToNode
+        open={showVoiceToNode}
+        onClose={() => setShowVoiceToNode(false)}
+        locked={locked}
+        onAddNodes={(labels) => {
+          pushUndo();
+          for (const label of labels) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: { items: [{ text: label, type: 'topics' }], ideaId },
+              })
+            );
+          }
+        }}
+        />
+      ) : null}
+
+      {/* Document to Map */}
+      {showDocToMap ? (
+        <DocumentToMap
+        open={showDocToMap}
+        onClose={() => setShowDocToMap(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        locked={locked}
+        onAddNodes={(labels) => {
+          pushUndo();
+          for (const label of labels) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: { items: [{ text: label, type: 'topics' }], ideaId },
+              })
+            );
+          }
+        }}
+        />
+      ) : null}
+
+      {/* Interview to Map */}
+      {showInterviewToMap ? (
+        <InterviewToMap
+        open={showInterviewToMap}
+        onClose={() => setShowInterviewToMap(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        locked={locked}
+        onAddNodes={(items) => {
+          pushUndo();
+          const branchMap: Record<string, string> = {
+            problem: 'topics',
+            goal: 'topics',
+            options: 'topics',
+            evidence: 'findings',
+            risks: 'risk_flags',
+            experiments: 'next_steps',
+          };
+          for (const item of items) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: {
+                  items: [{ text: item.text, type: branchMap[item.branchKey] || 'topics' }],
+                  ideaId,
+                },
+              })
+            );
+          }
+        }}
+        />
+      ) : null}
+
+      {/* Snapshot History */}
+      {showSnapshots ? (
+        <SnapshotHistory
+          open={showSnapshots}
+          onClose={() => setShowSnapshots(false)}
+          ideaId={ideaId}
+          currentNodes={nodes}
+          currentEdges={edges}
+          onRestore={(restoredNodes, restoredEdges) => {
+            pushUndo();
+            setNodes(restoredNodes);
+            setEdges(restoredEdges);
+            scheduleSave(restoredNodes as any, restoredEdges as any);
+            setShowSnapshots(false);
+            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+          }}
+          onPreview={(previewNodes, previewEdges) => {
+            setNodes(previewNodes);
+            setEdges(previewEdges);
+          }}
+        />
+      ) : null}
+
+      {/* Node Detail Drawer */}
+      {drawerNodeId ? (
+        <NodeDetailDrawer
+        open={!!drawerNodeId}
+        onClose={() => setDrawerNodeId(null)}
+        nodeData={drawerNodeData}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        locked={locked}
+        allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+        onUpdateNode={handleUpdateNode}
+        onAIExpandNode={(nodeId) => {
+          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+          handleAIExpand();
+        }}
+        onConvertNode={handleConvertNode}
+        onNavigateToNode={handleNavigateToNode}
+        onDrillDown={handleDrillDown}
+        />
+      ) : null}
+
+      {/* R1.3: AI Dependency Detection */}
+      {showDependencyDetector ? (
+        <AIDependencyDetector
+        open={showDependencyDetector}
+        onClose={() => setShowDependencyDetector(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+        locked={locked}
+        onAddDependency={(dep) => {
+          pushUndo();
+          const edgeId = `dep-edge-${uid()}`;
+          const depType = dep.type || 'related_to';
+          const color =
+            depType === 'depends_on'
+              ? '#ef4444'
+              : depType === 'enables'
+                ? '#22c55e'
+                : depType === 'conflicts_with'
+                  ? '#f59e0b'
+                  : '#8b5cf6';
+          const newEdge: Edge = {
+            id: edgeId,
+            source: dep.sourceNodeId,
+            target: dep.targetNodeId,
+            type: 'labeled',
+            animated: true,
+            style: {
+              stroke: color,
+              strokeWidth: 2,
+              opacity: 0.7,
+              strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
+            },
+            data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
+          };
+          setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+          pushActivity(ideaId, {
+            type: 'node_edited',
+            actor: 'You',
+            nodeLabel: dep.sourceLabel,
+            nodeId: dep.sourceNodeId,
+            detail: `Dependency → ${dep.targetLabel}`,
+          });
+        }}
+        onAddAll={(deps) => {
+          pushUndo();
+          for (const dep of deps) {
+            const edgeId = `dep-edge-${uid()}`;
+            const depType = dep.type || 'related_to';
+            const color =
+              depType === 'depends_on'
+                ? '#ef4444'
+                : depType === 'enables'
+                  ? '#22c55e'
+                  : depType === 'conflicts_with'
+                    ? '#f59e0b'
+                    : '#8b5cf6';
+            const newEdge: Edge = {
+              id: edgeId,
+              source: dep.sourceNodeId,
+              target: dep.targetNodeId,
+              type: 'labeled',
+              animated: true,
+              style: {
+                stroke: color,
+                strokeWidth: 2,
+                opacity: 0.7,
+                strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
+              },
+              data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
+            };
+            setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+          }
+          pushActivity(ideaId, {
+            type: 'node_edited',
+            actor: 'You',
+            detail: `Added ${deps.length} dependencies`,
+          });
+        }}
+        />
+      ) : null}
+
+      {/* R1.5: AI Priority Recommender */}
+      {showPriorityRecommender ? (
+        <AIPriorityRecommender
+        open={showPriorityRecommender}
+        onClose={() => setShowPriorityRecommender(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        locked={locked}
+        onApplyPriorities={(updates) => {
+          pushUndo();
+          setNodes((prev: Node[]) =>
+            prev.map((n) => {
+              const upd = updates.find((u) => u.nodeId === n.id);
+              if (!upd) return n;
+              return { ...n, data: { ...n.data, priority: upd.priority } };
+            })
+          );
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Updated ${updates.length} node priorities`,
+          });
+        }}
+        />
+      ) : null}
+
+      {/* R1.1: AI Auto-Clustering */}
+      {showAutoClustering ? (
+        <AIAutoClustering
+        open={showAutoClustering}
+        onClose={() => setShowAutoClustering(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        locked={locked}
+        onApplyClusters={(clusters) => {
+          pushUndo();
+          setNodes((prev: Node[]) =>
+            prev.map((n) => {
+              const cluster = clusters.find((c) => c.nodeIds.includes(n.id));
+              if (!cluster) return n;
+              return {
+                ...n,
+                data: { ...n.data, clusterColor: cluster.color, clusterName: cluster.name },
+              };
+            })
+          );
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Applied ${clusters.length} clusters`,
+          });
+        }}
+        />
+      ) : null}
+
+      {/* R1.4: AI Sentiment Analysis */}
+      {showSentimentOverlay ? (
+        <AISentimentOverlay
+        open={showSentimentOverlay}
+        onClose={() => setShowSentimentOverlay(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        locked={locked}
+        onApplySentiment={(results) => {
+          pushUndo();
+          setNodes((prev: Node[]) =>
+            prev.map((n) => {
+              const r = results.find((s) => s.nodeId === n.id);
+              if (!r) return n;
+              const sentimentColor =
+                r.sentiment === 'positive'
+                  ? '#22c55e'
+                  : r.sentiment === 'negative'
+                    ? '#ef4444'
+                    : '#94a3b8';
+              return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
+            })
+          );
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Sentiment analysis applied to ${results.length} nodes`,
+          });
+        }}
+        />
+      ) : null}
+
+      {/* R2.3: Comment Threads */}
+      {commentNodeId &&
+        (() => {
+          const node = nodes.find((n) => n.id === commentNodeId);
+          return (
+            <NodeCommentThread
+              open={!!commentNodeId}
+              onClose={() => setCommentNodeId(null)}
+              ideaId={ideaId}
+              nodeId={commentNodeId}
+              nodeLabel={node?.data?.label || commentNodeId}
+              comments={nodeComments[commentNodeId] || []}
+              locked={locked}
+              currentUser="You"
+              onAddComment={(nid, comment) => {
+                setNodeComments((prev) => ({
+                  ...prev,
+                  [nid]: [...(prev[nid] || []), comment],
+                }));
+                pushActivity(ideaId, {
+                  type: 'comment',
+                  actor: comment.author,
+                  nodeLabel: node?.data?.label,
+                  nodeId: nid,
+                  detail: comment.text.slice(0, 60),
+                });
+              }}
+              onDeleteComment={(nid, commentId) => {
+                setNodeComments((prev) => ({
+                  ...prev,
+                  [nid]: (prev[nid] || []).filter((c) => c.id !== commentId),
+                }));
+              }}
+            />
+          );
+        })()}
+
+      {/* R2.4: Activity Feed */}
+      {showActivityFeed ? (
+        <ActivityFeed
+        open={showActivityFeed}
+        onClose={() => setShowActivityFeed(false)}
+        ideaId={ideaId}
+        onNavigateToNode={handleNavigateToNode}
+        />
+      ) : null}
+
+      {/* R5.1: Map Health Score — moved to IdeaWorkspaceTools panel */}
+
+      {/* R5.2: Idea Funnel Analytics */}
+      {showFunnelAnalytics ? (
+        <IdeaFunnelAnalytics
+        open={showFunnelAnalytics}
+        onClose={() => setShowFunnelAnalytics(false)}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        />
+      ) : null}
+
+      {/* R4.1: Export to PowerPoint */}
+      <ExportPowerPoint
+        open={showExportPPTX}
+        onClose={() => setShowExportPPTX(false)}
+        ideaTitle={ideaTitle}
+        branches={nodes
+          .filter((n) => n.id.startsWith('branch-'))
+          .map((bn) => ({
+            branchKey: bn.data?.branchKey || '',
+            label: bn.data?.label || '',
+            nodes: edges
+              .filter((e) => e.source === bn.id)
+              .map((e) => {
+                const child = nodes.find((n) => n.id === e.target);
+                return child
+                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status }
+                  : null;
+              })
+              .filter(Boolean) as Array<{ id: string; label: string; status?: string }>,
+          }))}
+      />
+
+      {/* R4.4: Embed in Reports */}
+      <EmbedInReports
+        open={showEmbedInReports}
+        onClose={() => setShowEmbedInReports(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+      />
+
+      {/* R1.2: AI Competitive Landscape */}
+      {showCompetitiveLandscape ? (
+        <AICompetitiveLandscape
+        open={showCompetitiveLandscape}
+        onClose={() => setShowCompetitiveLandscape(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        locked={locked}
+        onAddToMap={(items) => {
+          for (const item of items) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: { items: [item], ideaId },
+              })
+            );
+          }
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Competitive landscape: ${items.length} items`,
+          });
+        }}
+        />
+      ) : null}
+
+      {/* R5.3: Branch Comparison */}
+      {showBranchComparison ? (
+        <BranchComparison
+        open={showBranchComparison}
+        onClose={() => setShowBranchComparison(false)}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+        />
+      ) : null}
+
+      {/* R5.4: Time Heatmap */}
+      {showTimeHeatmap ? (
+        <TimeHeatmap
+        open={showTimeHeatmap}
+        onClose={() => setShowTimeHeatmap(false)}
+        ideaId={ideaId}
+        />
+      ) : null}
+
+      {/* R4.2: Export Diagram Code */}
+      {showExportDiagramCode ? (
+        <ExportDiagramCode
+        open={showExportDiagramCode}
+        onClose={() => setShowExportDiagramCode(false)}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+        />
+      ) : null}
+
+      {/* R4.3: Import External Map */}
+      {showImportExternalMap ? (
+        <ImportExternalMap
+        open={showImportExternalMap}
+        onClose={() => setShowImportExternalMap(false)}
+        locked={locked}
+        onImport={(items) => {
+          pushUndo();
+          for (const item of items) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: { items: [{ text: item.label, type: 'topics' }], ideaId },
+              })
+            );
+          }
+          pushActivity(ideaId, {
+            type: 'node_added',
+            actor: 'You',
+            detail: `Imported ${items.length} nodes from external file`,
+          });
+        }}
+        />
+      ) : null}
+
+      {/* GAP-3: Structure Picker Popover */}
+      {showStructurePicker && (
+        <div className="fixed inset-0 z-[90]" onClick={() => setShowStructurePicker(false)}>
+          <div
+            className="absolute top-16 left-1/2 -translate-x-1/2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <StructurePickerPopover
+              isPl={isPolish}
+              current={structureType}
+              onSelect={(type) => {
+                pushUndo();
+                setStructureType(type);
+                const laid = applyStructureLayout(type, nodes, edges, autoLayout);
+                setNodes(laid);
+                setTimeout(() => {
+                  try { fitView({ padding: 0.3, duration: 400 }); } catch { /* */ }
+                }, 50);
+              }}
+              onClose={() => setShowStructurePicker(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* R3.3: 3D Mind Map View */}
+      {showMindMap3D ? (
+        <MindMap3DView
+        open={showMindMap3D}
+        onClose={() => setShowMindMap3D(false)}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data, position: n.position }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+        />
+      ) : null}
+
+      {/* R2.1+R2.2: Collaboration Overlay (auto-hides when no connection) */}
+      {enrichedNodes.length > 0 ? (
+        <CollaborationOverlay
+          ideaId={ideaId}
+          currentUserId={currentUser?.id || 'anonymous'}
+          currentUserName={currentUserName}
+          selectedNodeIds={selectedNodeIds}
+          onSessionStateChange={handleCollabSessionStateChange}
+          onRegisterSend={registerCollabSend}
+        />
+      ) : null}
+
+      {/* R4.5: Webhook Settings */}
+      {showWebhookSettings ? (
+        <WebhookSettings
+        open={showWebhookSettings}
+        onClose={() => setShowWebhookSettings(false)}
+        ideaId={ideaId}
+        />
+      ) : null}
+
+      {/* Export format menu */}
+      {exportMenuOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20"
+          onClick={() => setExportMenuOpen(false)}
+        >
+          <div
+            className="w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-navy-700 dark:bg-navy-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {isPolish ? 'Format eksportu' : 'Export format'}
+            </div>
+            {[
+              { key: 'png', label: 'PNG', fn: () => exportAsPNG(`${ideaTitle || 'mindmap'}.png`) },
+              { key: 'svg', label: 'SVG', fn: () => exportAsSVG(`${ideaTitle || 'mindmap'}.svg`) },
+              { key: 'json', label: 'JSON', fn: () => exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`) },
+              { key: 'md', label: isPolish ? 'Markdown (konspekt)' : 'Markdown outline', fn: () => { exportAsMarkdown(nodes, edges, { includeMetadata: true }, `${ideaTitle || 'mindmap'}.md`); toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'); } },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => { opt.fn(); setExportMenuOpen(false); }}
+                className="w-full rounded px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-navy-800"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inline modals replacing window.prompt */}
+      {assignModalNodeId ? (
+        <AssignPersonModal
+        open={!!assignModalNodeId}
+        onClose={() => setAssignModalNodeId(null)}
+        currentAssignee={assignModalNodeId ? nodes.find((n) => n.id === assignModalNodeId)?.data?.assignee : undefined}
+        recentAssignees={nodes.filter((n) => n.data?.assignee).map((n) => n.data.assignee)}
+        onAssign={(name) => {
+          if (assignModalNodeId) {
+            updateNodeDataById(assignModalNodeId, (data: any) => ({ ...data, assignee: name }));
+            toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, { duration: 1000 });
+          }
+        }}
+        />
+      ) : null}
+      {attachArtifactNodeId ? (
+        <AttachArtifactModal
+        open={!!attachArtifactNodeId}
+        onClose={() => setAttachArtifactNodeId(null)}
+        onAttach={(type, id, label) => {
+          if (attachArtifactNodeId) {
+            void (async () => {
+              try {
+                await Api.attachArtifactToObject(ideaId, attachArtifactNodeId, {
+                  artifactRef: { type, id },
+                  label,
+                  linkRole: 'related',
+                });
+                if (externalRuntime) {
+                  await externalRuntime.refresh();
+                } else {
+                  updateNodeDataById(attachArtifactNodeId, (data: any) => ({
+                    ...data,
+                    artifactLinks: [
+                      ...(Array.isArray(data.artifactLinks) ? data.artifactLinks : []),
+                      buildArtifactLink(type, id, 'related', label),
+                    ],
+                  }));
+                }
+                toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', { duration: 900 });
+              } catch (err: any) {
+                toast.error(
+                  err?.message || (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
+                );
+              }
+            })();
+          }
+        }}
+        />
+      ) : null}
+      {imageUrlNodeId ? (
+        <ImageUrlModal
+        open={!!imageUrlNodeId}
+        onClose={() => setImageUrlNodeId(null)}
+        onSubmit={(url) => {
+          if (imageUrlNodeId) {
+            updateNodeDataById(imageUrlNodeId, (data: any) => ({ ...data, imageUrl: url }));
+            toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+          }
+        }}
+        />
+      ) : null}
+
+      {debugEnabled && (
+      <div
+        data-mm-debug-overlay="true"
+        className="absolute bottom-2 left-2 z-[200] w-[560px] max-w-[calc(100vw-1rem)] rounded-2xl bg-black/95 text-[10px] font-mono text-green-200 pointer-events-auto backdrop-blur-sm border border-green-500/30 shadow-2xl shadow-black/40 select-text"
+      >
+        <div className="sticky top-0 z-10 border-b border-green-500/20 bg-black/95 px-3 py-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-green-300">
+                DEBUG INSPECTOR ({debugStats.total})
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
+                <span className="rounded bg-white/5 px-1.5 py-0.5 text-cyan-300">
+                  inputs {debugStats.inputs}
+                </span>
+                <span className="rounded bg-white/5 px-1.5 py-0.5 text-emerald-300">
+                  handlers {debugStats.handlers}
+                </span>
+                <span className="rounded bg-white/5 px-1.5 py-0.5 text-violet-300">
+                  custom {debugStats.customs}
+                </span>
+                <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
+                  blocked {debugStats.blocked}
+                </span>
+                <span className="rounded bg-white/5 px-1.5 py-0.5 text-orange-300">
+                  silent {debugStats.silent}
+                </span>
+                <span className="rounded bg-white/5 px-1.5 py-0.5 text-red-300">
+                  errors {debugStats.errors}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-[9px]">
+              <button
+                onClick={() => {
+                  setDebugPaused((prev) => !prev);
+                  setDebugTick((t) => t + 1);
+                }}
+                className={debugPaused ? 'text-amber-300 hover:text-amber-200' : 'text-emerald-300 hover:text-emerald-200'}
+              >
+                {debugPaused ? 'resume' : 'pause'}
+              </button>
+              <button
+                onClick={() => setDebugOverlayExpanded((prev) => !prev)}
+                className="text-cyan-300 hover:text-cyan-200"
+              >
+                {debugOverlayExpanded ? 'collapse' : 'expand'}
+              </button>
+              <button
+                onClick={() => {
+                  const lines = debugEntriesRef.current.map((entry) =>
+                    [`[${entry.ts}]`, entry.source.toUpperCase(), entry.message, entry.detail || '']
+                      .filter(Boolean)
+                      .join(' | ')
+                  );
+                  navigator.clipboard?.writeText(lines.join('\n'));
+                }}
+                className="text-blue-300 hover:text-blue-200"
+              >
+                copy
+              </button>
+              <button
+                onClick={() => {
+                  for (const pending of pendingInteractionsRef.current.values()) {
+                    window.clearTimeout(pending.timeoutId);
+                  }
+                  pendingInteractionsRef.current.clear();
+                  debugEntriesRef.current = [];
+                  sessionStorage.removeItem(DEBUG_SESSION_KEY);
+                  sessionStorage.removeItem(LEGACY_DEBUG_SESSION_KEY);
+                  lastInputSummaryRef.current = 'none';
+                  lastHandlerSummaryRef.current = 'none';
+                  setDebugTick((t) => t + 1);
+                }}
+                className="text-red-300 hover:text-red-200"
+              >
+                clear
+              </button>
+            </div>
+          </div>
+          <div className="mt-2 space-y-1 text-[9px] text-slate-300">
+            <div>last input: {lastInputSummaryRef.current}</div>
+            <div>last handler: {lastHandlerSummaryRef.current}</div>
+            {debugPaused && <div className="text-amber-300">stream paused, logs still collected</div>}
+          </div>
+        </div>
+
+        {debugOverlayExpanded && (
+          <div className="max-h-[38vh] overflow-y-auto px-2 py-2">
+            {debugEntries.length === 0 ? (
+              <div className="px-2 py-3 text-slate-400">No events yet.</div>
+            ) : (
+              debugEntries.map((entry) => {
+                const lineClass =
+                  entry.severity === 'error'
+                    ? 'text-red-300'
+                    : entry.reaction === 'silent'
+                      ? 'text-orange-300'
+                      : entry.reaction === 'blocked'
+                        ? 'text-amber-300'
+                        : entry.source === 'input'
+                          ? 'text-cyan-300'
+                          : entry.source === 'keyboard'
+                            ? 'text-sky-300'
+                            : entry.source === 'custom'
+                              ? 'text-violet-300'
+                              : entry.source === 'persistence'
+                                ? 'text-teal-300'
+                                : entry.source === 'selection'
+                                  ? 'text-lime-300'
+                                  : 'text-green-200';
+                return (
+                  <div
+                    key={entry.id}
+                    className={`rounded-lg px-2 py-1 mb-1 bg-white/[0.03] border border-white/[0.04] ${lineClass}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="shrink-0 text-slate-500">[{entry.ts}]</span>
+                      <span className="shrink-0 uppercase opacity-70">{entry.source}</span>
+                      <span className="break-words">{entry.message}</span>
+                    </div>
+                    {entry.detail && (
+                      <div className="mt-0.5 pl-[88px] text-slate-400 break-words">{entry.detail}</div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+      )}
+
+      <BranchSummaryPanel
+        open={summaryPanelOpen}
+        onClose={() => setSummaryPanelOpen(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle || ''}
+        branchNodeId={summaryBranchId}
+        branchLabel={summaryBranchLabel}
+        nodes={nodes}
+        edges={edges}
+      />
+
+      <MindmapCommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onAction={(action) => {
+          setCommandPaletteOpen(false);
+          window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId } }));
+        }}
+      />
+
+      <LargeMapOptimizer
+        nodeCount={nodes.length}
+        edgeCount={edges.length}
+        onToggleSimplifiedMode={setSimplifiedMode}
+      />
     </div>
   );
 }

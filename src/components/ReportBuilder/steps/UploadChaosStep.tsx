@@ -7,14 +7,14 @@
  */
 
 import {
+  AlertCircle,
   ArrowRight,
+  CheckCircle2,
   FileText,
   Loader2,
   MapPin,
   Sparkles,
   Upload,
-  CheckCircle2,
-  AlertCircle,
   X,
 } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
@@ -134,9 +134,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
         setFiles((prev) =>
           prev.map((f) => {
             if (f.status !== 'uploading') return f;
-            const match = response.files?.find(
-              (rf: { name: string }) => rf.name === f.name
-            );
+            const match = response.files?.find((rf: { name: string }) => rf.name === f.name);
             if (match) {
               return { ...f, id: match.id, status: 'done' as const };
             }
@@ -144,10 +142,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           })
         );
 
-        const allFileIds = [
-          ...files.filter((f) => f.id).map((f) => f.id!),
-          ...uploadedFileIds,
-        ];
+        const allFileIds = [...files.filter((f) => f.id).map((f) => f.id!), ...uploadedFileIds];
 
         setIsBuildingMap(true);
         const map: KnowledgeMapResult = await Api.post('/report-builder/knowledge-map', {
@@ -245,16 +240,12 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
         <div
           className={`p-4 rounded-xl mb-4 ${
-            isDragging
-              ? 'bg-purple-100 dark:bg-purple-800/30'
-              : 'bg-slate-100 dark:bg-navy-700'
+            isDragging ? 'bg-purple-100 dark:bg-purple-800/30' : 'bg-slate-100 dark:bg-navy-700'
           }`}
         >
           <Upload
             className={`w-8 h-8 ${
-              isDragging
-                ? 'text-purple-500'
-                : 'text-slate-400 dark:text-slate-500'
+              isDragging ? 'text-purple-500' : 'text-slate-400 dark:text-slate-500'
             }`}
           />
         </div>
@@ -314,12 +305,8 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                       {isPl ? 'Przetwarzanie...' : 'Processing...'}
                     </span>
                   )}
-                  {f.status === 'done' && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  )}
-                  {f.status === 'error' && (
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                  )}
+                  {f.status === 'done' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                  {f.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

@@ -31,4 +31,16 @@ router.get('/:projectId/blockers', ExecutionController.getBlockers);
  */
 router.post('/:projectId/gate-check', ExecutionController.checkGate);
 
+/**
+ * GET /api/execution/:projectId/health
+ * V4-EXEC-01: Portfolio health with per-initiative whyRed chain
+ */
+router.get('/:projectId/health', ExecutionController.getPortfolioHealth);
+
+/**
+ * GET /api/execution/:projectId/action-queue
+ * V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks
+ */
+router.get('/:projectId/action-queue', ExecutionController.getActionQueue);
+
 export default router;

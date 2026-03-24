@@ -680,7 +680,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
         onOpenTask={onOpenTask}
         readOnly={!!readonly}
         onRefreshExternalDependencies={refresh}
-        showSampleDataWhenEmpty
+        showSampleDataWhenEmpty={false}
         initiativeId={initiativeId}
         initiativeTasks={initiativeTasks.map((t) => ({ id: t.id, title: t.title }))}
       />

@@ -63,10 +63,27 @@
     "src/views/admin/AdminSettingsModule 6.tsx",
     "src/views/settings/AppearanceModule 4.tsx",
     "**/* copy.*",
+    "**/* *.ts",
+    "**/* *.tsx",
+    "**/* *.d.ts",
     // Extra safety: exclude common "name 2.tsx" editor copies in src/
     "src/components/layout/ChatPanel *.tsx",
     "src/components/layout/NotificationDropdown *.tsx",
     "src/components/layout/SplitLayout *.tsx",
+    "src/components/Reports/ReportBuilder/ReportBuilder *.tsx",
+    "src/components/Reports/ReportBuilder/ReportPreview *.tsx",
+    "src/hooks/discovery/useToolAI *.ts",
+    "src/store/slices/authSlice *.ts",
+    "src/store/slices/chatSlice *.ts",
+    "src/store/slices/uiSlice *.ts",
+    "src/types/domain/ai *.ts",
+    "src/types/vendor/reactflow.d *.ts",
+    "src/views/admin/AdminView (*.tsx)",
+    "src/views/admin/AdminView (1).tsx",
+    "src/components/DiscoveryTools/tools/RiskUncertainty/AssumptionsStep (*.tsx)",
+    "src/components/DiscoveryTools/tools/RiskUncertainty/AssumptionsStep (1).tsx",
+    "src/components/DiscoveryTools/tools/RiskUncertainty/ScenariosStep (*.tsx)",
+    "src/components/DiscoveryTools/tools/RiskUncertainty/ScenariosStep (1).tsx",
     "**/*.icloud"
   ]
 }

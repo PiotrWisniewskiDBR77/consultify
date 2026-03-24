@@ -56,6 +56,7 @@ export const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilitySet>> = {
   },
 
   // Anthropic (tooling supported; structured JSON schema is not a guaranteed "contract" here)
+  'claude-sonnet-4-6': { tools: true, vision: true, streaming: true },
   'claude-3-5-sonnet': { tools: true, vision: true, streaming: true },
   'claude-3-5-sonnet-20241022': { tools: true, vision: true, streaming: true },
   'claude-3-opus': { tools: true, vision: true, streaming: true },

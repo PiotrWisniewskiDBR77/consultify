@@ -177,10 +177,18 @@ export const SSOConfigurationView: React.FC = () => {
     try {
       await Api.post('/sso/saml/config', samlConfig);
       toast.success('SAML configuration saved');
-      setSamlForm({ organizationId: '', metadataUrl: '', entityId: '', ssoUrl: '', certificate: '' });
+      setSamlForm({
+        organizationId: '',
+        metadataUrl: '',
+        entityId: '',
+        ssoUrl: '',
+        certificate: '',
+      });
       fetchSSOConfigs();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'Failed to save SAML configuration');
+      toast.error(
+        err?.response?.data?.error || err?.message || 'Failed to save SAML configuration'
+      );
     } finally {
       setSavingSaml(false);
     }
@@ -576,7 +584,8 @@ export const SSOConfigurationView: React.FC = () => {
                 SSO login flow not enabled
               </h4>
               <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-                This panel stores configuration in the database. OIDC callback processing is not implemented in this environment yet.
+                This panel stores configuration in the database. OIDC callback processing is not
+                implemented in this environment yet.
               </p>
             </div>
           </div>
@@ -716,7 +725,8 @@ export const SSOConfigurationView: React.FC = () => {
                 SSO login flow not enabled
               </h4>
               <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-                This panel stores configuration in the database. SAML callback processing is not implemented in this environment yet.
+                This panel stores configuration in the database. SAML callback processing is not
+                implemented in this environment yet.
               </p>
             </div>
           </div>
@@ -739,7 +749,9 @@ export const SSOConfigurationView: React.FC = () => {
                 </code>
                 <button
                   onClick={() =>
-                    copyToClipboard(`${window.location.origin}/sso/metadata/${samlForm.organizationId || '[ORG_ID]'}`)
+                    copyToClipboard(
+                      `${window.location.origin}/sso/metadata/${samlForm.organizationId || '[ORG_ID]'}`
+                    )
                   }
                   className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
                 >
@@ -757,7 +769,9 @@ export const SSOConfigurationView: React.FC = () => {
                 </code>
                 <button
                   onClick={() =>
-                    copyToClipboard(`${window.location.origin}/api/sso/callback/${samlForm.organizationId || '[ORG_ID]'}`)
+                    copyToClipboard(
+                      `${window.location.origin}/api/sso/callback/${samlForm.organizationId || '[ORG_ID]'}`
+                    )
                   }
                   className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
                 >
@@ -825,9 +839,16 @@ export const SSOConfigurationView: React.FC = () => {
                 onClick={async () => {
                   if (!samlForm.metadataUrl) return;
                   try {
-                    const res = await Api.post('/sso/saml/validate', { metadataUrl: samlForm.metadataUrl });
+                    const res = await Api.post('/sso/saml/validate', {
+                      metadataUrl: samlForm.metadataUrl,
+                    });
                     const data = res?.data ?? res;
-                    if (data?.entityId) setSamlForm((prev: any) => ({ ...prev, entityId: data.entityId, ssoUrl: data.ssoUrl || prev.ssoUrl }));
+                    if (data?.entityId)
+                      setSamlForm((prev: any) => ({
+                        ...prev,
+                        entityId: data.entityId,
+                        ssoUrl: data.ssoUrl || prev.ssoUrl,
+                      }));
                     toast.success('Metadata fetched successfully');
                   } catch (err: any) {
                     toast.error(err?.response?.data?.error || 'Failed to fetch metadata');
@@ -959,9 +980,7 @@ export const SSOConfigurationView: React.FC = () => {
                   </label>
                   <select
                     value={newDomain.organizationId}
-                    onChange={(e) =>
-                      setNewDomain({ ...newDomain, organizationId: e.target.value })
-                    }
+                    onChange={(e) => setNewDomain({ ...newDomain, organizationId: e.target.value })}
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   >
                     <option value="">Select organization...</option>
@@ -1034,7 +1053,10 @@ export const SSOConfigurationView: React.FC = () => {
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
             {domainMappings.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
+                >
                   No domain mappings configured yet
                 </td>
               </tr>

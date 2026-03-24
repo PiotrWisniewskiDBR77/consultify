@@ -86,7 +86,9 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             body: formData,
           });
-        } catch { /* silent */ }
+        } catch {
+          /* silent */
+        }
       }
       fetchMedia();
     };

@@ -50,7 +50,9 @@ export const useCloudIntegrations = () => {
   const connectProvider = useCallback(
     async (_providerId: CloudProviderId) => {
       await refreshProviders();
-      toast('Connect cloud source in Integrations first, then retry.', { icon: 'ℹ️' });
+      toast('Cloud connection is managed in Integrations settings. In-chat OAuth is not available here.', {
+        icon: 'ℹ️',
+      });
     },
     [refreshProviders]
   );

@@ -220,8 +220,9 @@ export const BulkOperationsView: React.FC = () => {
 
   const parseContentDispositionFilename = (headerValue: string | null): string | null => {
     if (!headerValue) return null;
-    const match =
-      /filename\*=UTF-8''([^;]+)|filename="([^"]+)"|filename=([^;]+)/i.exec(headerValue);
+    const match = /filename\*=UTF-8''([^;]+)|filename="([^"]+)"|filename=([^;]+)/i.exec(
+      headerValue
+    );
     const raw = decodeURIComponent(match?.[1] || match?.[2] || match?.[3] || '');
     return raw ? raw.trim() : null;
   };

@@ -10,6 +10,7 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
@@ -24,6 +25,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
@@ -35,7 +37,7 @@ import { ROUTES } from './routeConfig';
 const StudioView = React.lazy(() =>
   import('@/views/StudioView').then((m) => ({ default: m.StudioView }))
 );
-const MyWorkView = React.lazy(() =>
+const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
 const ContextBuilderView = React.lazy(() =>
@@ -46,30 +48,6 @@ const ContextBuilderView = React.lazy(() =>
 // Discovery Tools Module - New Hub
 const DiscoveryToolsHub = React.lazy(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
-);
-// Legacy Discovery Tools Views (keeping for backward compatibility)
-const DiscoveryToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/DiscoveryToolsView').then((m) => ({
-    default: m.DiscoveryToolsView,
-  }))
-);
-const StrategicToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/StrategicToolsView').then((m) => ({
-    default: m.StrategicToolsView,
-  }))
-);
-const OperationalToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/OperationalToolsView').then((m) => ({
-    default: m.OperationalToolsView,
-  }))
-);
-const DigitalToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/DigitalToolsView').then((m) => ({ default: m.DigitalToolsView }))
-);
-const ProcessAutomationView = React.lazy(() =>
-  import('@/views/discovery-tools/ProcessAutomationView').then((m) => ({
-    default: m.ProcessAutomationView,
-  }))
 );
 
 // T064 — Megatrends canonical workspace
@@ -148,6 +126,11 @@ const PresentationsHub = React.lazy(() =>
     default: m.PresentationsHub,
   }))
 );
+const SharedPresentationView = React.lazy(() =>
+  import('@/components/Presentations/SharedPresentationView').then((m) => ({
+    default: m.SharedPresentationView,
+  }))
+);
 const ReportsAndPresentationsHub = React.lazy(() =>
   import('@/components/ReportsAndPresentations/ReportsAndPresentationsHub').then((m) => ({
     default: m.ReportsAndPresentationsHub,
@@ -162,6 +145,9 @@ const PresentationWizard = React.lazy(() =>
   import('@/components/Presentations/PresentationWizard').then((m) => ({
     default: m.PresentationWizard,
   }))
+);
+const MeetingHub = React.lazy(() =>
+  import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
 );
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
 // Reports & Presentations hub under /presentations (tab=reports).
@@ -299,6 +285,12 @@ const LegalDocumentView = React.lazy(() =>
   import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
 );
 const OAuthCallbackView = React.lazy(() => import('@/views/OAuthCallback'));
+const ForgotPasswordView = React.lazy(() =>
+  import('@/views/auth/ForgotPasswordView').then((m) => ({ default: m.ForgotPasswordView }))
+);
+const ResetPasswordView = React.lazy(() =>
+  import('@/views/auth/ResetPasswordView').then((m) => ({ default: m.ResetPasswordView }))
+);
 
 // Status & Changelog
 const StatusPageView = React.lazy(() =>
@@ -345,6 +337,11 @@ const DocsSecurityView = React.lazy(() =>
   import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
 );
 
+// Public Form Page (Table Platform)
+const PublicFormPage = React.lazy(() =>
+  import('@/components/MyWork/table/forms/PublicFormPage').then((m) => ({ default: m.PublicFormPage }))
+);
+
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = React.lazy(() =>
   import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
@@ -363,6 +360,7 @@ const ResourcesPage = React.lazy(() =>
 const HowItWorksPage = React.lazy(() =>
   import('@/views/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage }))
 );
+const AppIntroView = React.lazy(() => import('@/views/AppIntroView'));
 
 const ForWhomPage = React.lazy(() =>
   import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
@@ -407,6 +405,35 @@ const ReportsBuilderLegacyRedirect: React.FC = () => {
   }, [reportId, to]);
 
   return <Navigate to={to} replace />;
+};
+
+/** Redirects /auth?action=trial to /trial/start */
+const AuthRouteWithTrialRedirect: React.FC<{
+  isAuthenticated: boolean;
+  authInitialStep: AuthStep;
+  sessionMode: SessionMode | null;
+  onAuthSuccess: (user: { status?: string; message?: string }) => void;
+  onBack: () => void;
+}> = ({ isAuthenticated, authInitialStep, sessionMode, onAuthSuccess, onBack }) => {
+  const [searchParams] = useSearchParams();
+  const action = searchParams.get('action');
+
+  if (isAuthenticated) {
+    return <Navigate to={ROUTES.AI_CHAT} replace />;
+  }
+  if (action === 'trial') {
+    return <Navigate to="/trial/start" replace />;
+  }
+  return (
+    <AuthLayout>
+      <AuthView
+        initialStep={authInitialStep}
+        targetMode={sessionMode || SessionMode.FREE}
+        onAuthSuccess={onAuthSuccess}
+        onBack={onBack}
+      />
+    </AuthLayout>
+  );
 };
 
 export const AppRoutes: React.FC = () => {
@@ -633,6 +660,16 @@ export const AppRoutes: React.FC = () => {
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
 
+        {/* Public Form Page (Table Platform) — no auth required */}
+        <Route
+          path="/forms/:slug"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading form..." />}>
+              <PublicFormPage />
+            </Suspense>
+          }
+        />
+
         {/* Public Mini Assessment (T015) */}
         <Route
           path="/assess/:token?"
@@ -811,22 +848,17 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Legacy /auth route */}
+        {/* Legacy /auth route — ?action=trial redirects to /trial/start */}
         <Route
           path={ROUTES.AUTH}
           element={
-            currentUser?.isAuthenticated ? (
-              <Navigate to={ROUTES.AI_CHAT} replace />
-            ) : (
-              <AuthLayout>
-                <AuthView
-                  initialStep={authInitialStep}
-                  targetMode={sessionMode || SessionMode.FREE}
-                  onAuthSuccess={handleAuthSuccess}
-                  onBack={() => navigate('/')}
-                />
-              </AuthLayout>
-            )
+            <AuthRouteWithTrialRedirect
+              isAuthenticated={!!currentUser?.isAuthenticated}
+              authInitialStep={authInitialStep}
+              sessionMode={sessionMode}
+              onAuthSuccess={handleAuthSuccess}
+              onBack={() => navigate('/')}
+            />
           }
         />
 
@@ -840,9 +872,47 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Forgot Password - Public */}
+        <Route
+          path="/forgot-password"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                <ForgotPasswordView />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
+        {/* Reset Password - Public */}
+        <Route
+          path="/reset-password"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                <ResetPasswordView />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
         {/* ============================================ */}
         {/* PROTECTED ROUTES - With MainLayout wrapper   */}
         {/* ============================================ */}
+
+        {/* Studio */}
+        <Route
+          path={ROUTES.APP_INTRO}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Intro']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <AppIntroView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
 
         {/* Studio */}
         <Route
@@ -860,7 +930,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* My Work */}
         <Route
-          path={ROUTES.MY_WORK}
+          path={`${ROUTES.MY_WORK}/*`}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['My Work']}>
               <RouteErrorBoundary>
@@ -969,7 +1039,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis']} noPadding>
               <RouteErrorBoundary>
-                <StrategicToolsView />
+                <DiscoveryToolsHub initialTab="library" initialCategory="strategic" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -999,7 +1069,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Operational']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="sessions" />
+                <DiscoveryToolsHub initialTab="library" initialCategory="operational" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1009,7 +1079,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Digital']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="sessions" />
+                <DiscoveryToolsHub initialTab="library" initialCategory="digital" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1019,7 +1089,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Process Automation']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="sessions" />
+                <DiscoveryToolsHub initialTab="library" initialCategory="automation" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1169,11 +1239,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ECONOMICS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Economics']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <EconomicsView />
-                </AnimationWrapper>
+                <EconomicsView />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1181,11 +1249,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.FINANCE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <EconomicsView />
-                </AnimationWrapper>
+                <EconomicsView />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1193,9 +1259,13 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.EXECUTION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Execution']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
               <RouteErrorBoundary>
-                <ExecutionHub />
+                <AnimationWrapper variant="slideUp">
+                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <FullExecutionView />
+                  </Suspense>
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1206,7 +1276,9 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <ImplementationView />
+                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <ExecutionHub />
+                  </Suspense>
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1218,7 +1290,9 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <FullRolloutView />
+                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <FullRolloutView />
+                  </Suspense>
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1292,7 +1366,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
-                <KpiOkrView />
+                <ResultsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1311,14 +1385,27 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path={ROUTES.MEETING}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
           path="/presentations/wizard"
           element={
             <MainLayout
               breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
-              noPadding
             >
               <RouteErrorBoundary>
-                <PresentationWizard />
+                <AnimationWrapper variant="slideUp">
+                  <PresentationWizard />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1326,8 +1413,30 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/builder/:deckId"
           element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
+            >
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <DeckBuilder />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/presentations/shared/:shareToken"
+          element={
             <RouteErrorBoundary>
-              <DeckBuilder />
+              <SharedPresentationView />
+            </RouteErrorBoundary>
+          }
+        />
+        <Route
+          path="/presentations/embed/:shareToken"
+          element={
+            <RouteErrorBoundary>
+              <SharedPresentationView />
             </RouteErrorBoundary>
           }
         />

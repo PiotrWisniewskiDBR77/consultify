@@ -10,7 +10,6 @@
 import {
   Activity,
   BarChart3,
-  Check,
   Copy,
   Cpu,
   Database,
@@ -21,7 +20,6 @@ import {
   Hand,
   Loader2,
   Plus,
-  RefreshCw,
   Settings,
   Trash2,
   TrendingUp,
@@ -29,25 +27,26 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { StatusBadge } from '../../components/Admin/shared/AdminTable';
 import { Button, IconButton } from '../../components/Admin/shared/Button';
 import { Card } from '../../components/Admin/shared/Card';
 import { MetricCard } from '../../components/Admin/shared/MetricCard';
-import { PageHeader, SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { SectionHeader } from '../../components/Admin/shared/PageHeader';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
-import { LLMProvider, LLMProviderConfig } from '../../types/domain/ai';
+import { LLMProviderConfig } from '../../types/domain/ai';
 
 type LLMConfigTab = 'providers' | 'routing' | 'usage' | 'health';
 
-const PROVIDER_MODELS: Record<string, { id: string; label: string; tier?: string }[]> = {
+const FALLBACK_PROVIDER_MODELS: Record<string, { id: string; label: string; tier?: string }[]> = {
   openrouter: [
     { id: 'openai/gpt-4o', label: 'GPT-4o', tier: 'STANDARD' },
     { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', tier: 'BUDGET' },
     { id: 'openai/o3-mini', label: 'o3-mini (Reasoning)', tier: 'REASONING' },
+    { id: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', tier: 'PREMIUM' },
     { id: 'anthropic/claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', tier: 'PREMIUM' },
     { id: 'anthropic/claude-3-5-haiku', label: 'Claude 3.5 Haiku', tier: 'STANDARD' },
     { id: 'anthropic/claude-3-7-sonnet', label: 'Claude 3.7 Sonnet', tier: 'PREMIUM' },
@@ -66,6 +65,7 @@ const PROVIDER_MODELS: Record<string, { id: string; label: string; tier?: string
     { id: 'gpt-4-turbo', label: 'GPT-4 Turbo', tier: 'PREMIUM' },
   ],
   anthropic: [
+    { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', tier: 'PREMIUM' },
     { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', tier: 'PREMIUM' },
     { id: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', tier: 'STANDARD' },
     { id: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet', tier: 'PREMIUM' },
@@ -108,6 +108,54 @@ const PROVIDER_MODELS: Record<string, { id: string; label: string; tier?: string
   ],
 };
 
+const formatModelLabel = (modelId: string) => {
+  const compact =
+    String(modelId || '')
+      .split('/')
+      .pop() || String(modelId || '');
+  return compact.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const getProviderModelChoices = (provider: string, providers: any[]) => {
+  const providerKey = String(provider || '')
+    .trim()
+    .toLowerCase();
+  const dynamic = Array.from(
+    new Map(
+      (providers || [])
+        .filter(
+          (row) =>
+            String(row?.provider || '')
+              .trim()
+              .toLowerCase() === providerKey
+        )
+        .map((row) => {
+          const modelId = String(row?.model_id || '').trim();
+          if (!modelId) return null;
+          return [
+            modelId,
+            {
+              id: modelId,
+              label: String(row?.name || '').trim() || formatModelLabel(modelId),
+              tier:
+                String(row?.tier || '')
+                  .trim()
+                  .toUpperCase() || undefined,
+            },
+          ] as const;
+        })
+        .filter(Boolean) as Array<readonly [string, { id: string; label: string; tier?: string }]>
+    ).values()
+  );
+
+  const fallback = FALLBACK_PROVIDER_MODELS[providerKey] || [];
+  const merged = new Map<string, { id: string; label: string; tier?: string }>();
+  for (const item of [...dynamic, ...fallback]) {
+    if (!merged.has(item.id)) merged.set(item.id, item);
+  }
+  return Array.from(merged.values());
+};
+
 export const LLMManagementView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<LLMConfigTab>('providers');
   const [loading, setLoading] = useState(true);
@@ -143,8 +191,14 @@ export const LLMManagementView: React.FC = () => {
   const [testingConnection, setTestingConnection] = useState(false);
   const [lastTestReport, setLastTestReport] = useState<string | null>(null);
   const [testingAll, setTestingAll] = useState(false);
-  type ProviderTestResult = { status: 'testing' | 'ok' | 'error'; message: string; latency?: number };
-  const [providerTestResults, setProviderTestResults] = useState<Record<string, ProviderTestResult>>({});
+  type ProviderTestResult = {
+    status: 'testing' | 'ok' | 'error';
+    message: string;
+    latency?: number;
+  };
+  const [providerTestResults, setProviderTestResults] = useState<
+    Record<string, ProviderTestResult>
+  >({});
   const canTestProviderForm = (() => {
     const isExistingRow =
       typeof (providerForm as any)?.id === 'string' && String((providerForm as any).id).trim();
@@ -161,6 +215,10 @@ export const LLMManagementView: React.FC = () => {
   const [healthStatus, setHealthStatus] = useState<any>(null);
   const [incidentsLoading, setIncidentsLoading] = useState(false);
   const [incidentsData, setIncidentsData] = useState<any>(null);
+  const providerModelChoices = useMemo(
+    () => getProviderModelChoices(String(providerForm.provider || ''), providers),
+    [providerForm.provider, providers]
+  );
 
   // Load initial data on mount
   useEffect(() => {
@@ -331,7 +389,11 @@ export const LLMManagementView: React.FC = () => {
     const pid = String((config as any)?.id || '');
     setTestingConnection(true);
     setLastTestReport('Testing connection…');
-    if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'testing', message: 'Testing…' } }));
+    if (pid)
+      setProviderTestResults((prev) => ({
+        ...prev,
+        [pid]: { status: 'testing', message: 'Testing…' },
+      }));
     try {
       const isExistingRow =
         typeof (config as any)?.id === 'string' && String((config as any).id).trim();
@@ -348,17 +410,26 @@ export const LLMManagementView: React.FC = () => {
       if (result.success) {
         toast.success(result.message);
         setLastTestReport(`OK: ${result.message}`);
-        if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'ok', message: result.message, latency: (result as any).latency } }));
+        if (pid)
+          setProviderTestResults((prev) => ({
+            ...prev,
+            [pid]: { status: 'ok', message: result.message, latency: (result as any).latency },
+          }));
       } else {
         toast.error(`Connection Failed: ${result.message}`);
         setLastTestReport(`ERROR: ${result.message}`);
-        if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'error', message: result.message } }));
+        if (pid)
+          setProviderTestResults((prev) => ({
+            ...prev,
+            [pid]: { status: 'error', message: result.message },
+          }));
       }
     } catch (err) {
       const msg = (err as any)?.message || 'Test failed to execute';
       toast.error(msg);
       setLastTestReport(`ERROR: ${msg}`);
-      if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'error', message: msg } }));
+      if (pid)
+        setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'error', message: msg } }));
     }
     setTestingConnection(false);
   };
@@ -369,13 +440,19 @@ export const LLMManagementView: React.FC = () => {
     setTestingAll(true);
     setProviderTestResults((prev) => {
       const next = { ...prev };
-      active.forEach((p) => { next[p.id] = { status: 'testing', message: 'Testing…' }; });
+      active.forEach((p) => {
+        next[p.id] = { status: 'testing', message: 'Testing…' };
+      });
       return next;
     });
     await Promise.allSettled(
       active.map(async (p) => {
         try {
-          const result = await Api.testLLMConnection({ providerId: p.id, provider: p.provider, model_id: (p as any).model_id } as any);
+          const result = await Api.testLLMConnection({
+            providerId: p.id,
+            provider: p.provider,
+            model_id: (p as any).model_id,
+          } as any);
           setProviderTestResults((prev) => ({
             ...prev,
             [p.id]: result.success
@@ -600,60 +677,75 @@ export const LLMManagementView: React.FC = () => {
                             <td className="px-4 py-3">
                               {!p.is_active ? (
                                 <StatusBadge variant="neutral" label="Inactive" />
-                              ) : (() => {
-                                const live = providerTestResults[p.id];
-                                const hs = (p as any).health_status as string | null | undefined;
-                                const lastCheck = (p as any).last_health_check as string | null | undefined;
-                                const checkedAgo = lastCheck
-                                  ? (() => {
-                                      const diff = Date.now() - new Date(lastCheck).getTime();
-                                      const mins = Math.floor(diff / 60000);
-                                      return mins < 1 ? 'just now' : `${mins}m ago`;
-                                    })()
-                                  : null;
+                              ) : (
+                                (() => {
+                                  const live = providerTestResults[p.id];
+                                  const hs = (p as any).health_status as string | null | undefined;
+                                  const lastCheck = (p as any).last_health_check as
+                                    | string
+                                    | null
+                                    | undefined;
+                                  const checkedAgo = lastCheck
+                                    ? (() => {
+                                        const diff = Date.now() - new Date(lastCheck).getTime();
+                                        const mins = Math.floor(diff / 60000);
+                                        return mins < 1 ? 'just now' : `${mins}m ago`;
+                                      })()
+                                    : null;
 
-                                // Live test result takes priority
-                                if (live) {
+                                  // Live test result takes priority
+                                  if (live) {
+                                    const badge =
+                                      live.status === 'testing' ? (
+                                        <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
+                                          <Loader2 size={11} className="animate-spin" /> Testing…
+                                        </span>
+                                      ) : live.status === 'ok' ? (
+                                        <StatusBadge
+                                          variant="success"
+                                          label={live.latency ? `OK · ${live.latency}ms` : 'OK'}
+                                        />
+                                      ) : (
+                                        <StatusBadge variant="error" label="Failed" />
+                                      );
+                                    return (
+                                      <div className="flex flex-col gap-0.5">
+                                        {badge}
+                                        {live.status === 'error' && (
+                                          <span
+                                            className="text-[10px] text-red-400 max-w-[140px] truncate"
+                                            title={live.message}
+                                          >
+                                            {live.message}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+
+                                  // Fallback to sentinel health_status
                                   const badge =
-                                    live.status === 'testing' ? (
-                                      <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
-                                        <Loader2 size={11} className="animate-spin" /> Testing…
-                                      </span>
-                                    ) : live.status === 'ok' ? (
-                                      <StatusBadge variant="success" label={live.latency ? `OK · ${live.latency}ms` : 'OK'} />
+                                    hs === 'healthy' ? (
+                                      <StatusBadge variant="success" label="Healthy" />
+                                    ) : hs === 'degraded' ? (
+                                      <StatusBadge variant="warning" label="Degraded" />
+                                    ) : hs === 'unhealthy' ? (
+                                      <StatusBadge variant="error" label="Unhealthy" />
                                     ) : (
-                                      <StatusBadge variant="error" label="Failed" />
+                                      <StatusBadge variant="neutral" label="Untested" />
                                     );
                                   return (
                                     <div className="flex flex-col gap-0.5">
                                       {badge}
-                                      {live.status === 'error' && (
-                                        <span className="text-[10px] text-red-400 max-w-[140px] truncate" title={live.message}>{live.message}</span>
+                                      {checkedAgo && (
+                                        <span className="text-[10px] text-slate-500">
+                                          {checkedAgo}
+                                        </span>
                                       )}
                                     </div>
                                   );
-                                }
-
-                                // Fallback to sentinel health_status
-                                const badge =
-                                  hs === 'healthy' ? (
-                                    <StatusBadge variant="success" label="Healthy" />
-                                  ) : hs === 'degraded' ? (
-                                    <StatusBadge variant="warning" label="Degraded" />
-                                  ) : hs === 'unhealthy' ? (
-                                    <StatusBadge variant="error" label="Unhealthy" />
-                                  ) : (
-                                    <StatusBadge variant="neutral" label="Untested" />
-                                  );
-                                return (
-                                  <div className="flex flex-col gap-0.5">
-                                    {badge}
-                                    {checkedAgo && (
-                                      <span className="text-[10px] text-slate-500">{checkedAgo}</span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
+                                })()
+                              )}
                             </td>
                             <td className="px-4 py-3">
                               <StatusBadge
@@ -913,7 +1005,9 @@ export const LLMManagementView: React.FC = () => {
                       key={idx}
                       className="flex items-center justify-between py-2 border-b border-slate-200/70 dark:border-white/[0.04] last:border-0"
                     >
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{check.name}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {check.name}
+                      </span>
                       <span
                         className={`text-sm ${
                           check.status === 'OK'
@@ -944,7 +1038,9 @@ export const LLMManagementView: React.FC = () => {
                       className="flex items-center gap-3 p-4 border border-slate-200 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] dark:hover:border-white/[0.08] transition-colors"
                     >
                       <cap.icon size={18} className="text-slate-700 dark:text-slate-300" />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{cap.label}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {cap.label}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -989,14 +1085,17 @@ export const LLMManagementView: React.FC = () => {
                     value={providerForm.provider}
                     onChange={(e) => {
                       const newProvider = e.target.value as any;
-                      const defaultModel = PROVIDER_MODELS[newProvider]?.[0];
+                      const nextChoices = getProviderModelChoices(newProvider, providers);
+                      const defaultModel = nextChoices[0];
                       setProviderForm({
                         ...providerForm,
                         provider: newProvider,
-                        ...(defaultModel && !providerForm.model_id ? {
-                          model_id: defaultModel.id,
-                          tier: defaultModel.tier || providerForm.tier,
-                        } : {}),
+                        ...(defaultModel && !providerForm.model_id
+                          ? {
+                              model_id: defaultModel.id,
+                              tier: defaultModel.tier || providerForm.tier,
+                            }
+                          : {}),
                       });
                     }}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
@@ -1114,21 +1213,17 @@ export const LLMManagementView: React.FC = () => {
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Model ID
                   </label>
-                  {PROVIDER_MODELS[providerForm.provider || '']?.length ? (
+                  {providerModelChoices.length ? (
                     <>
                       <select
                         value={
-                          PROVIDER_MODELS[providerForm.provider || '']?.find(
-                            (m) => m.id === providerForm.model_id
-                          )
+                          providerModelChoices.find((m) => m.id === providerForm.model_id)
                             ? providerForm.model_id
                             : '__custom__'
                         }
                         onChange={(e) => {
                           if (e.target.value === '__custom__') return;
-                          const chosen = PROVIDER_MODELS[providerForm.provider || '']?.find(
-                            (m) => m.id === e.target.value
-                          );
+                          const chosen = providerModelChoices.find((m) => m.id === e.target.value);
                           setProviderForm({
                             ...providerForm,
                             model_id: e.target.value,
@@ -1137,7 +1232,7 @@ export const LLMManagementView: React.FC = () => {
                         }}
                         className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50 mb-1.5"
                       >
-                        {PROVIDER_MODELS[providerForm.provider || '']?.map((m) => (
+                        {providerModelChoices.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.label} — {m.id}
                           </option>

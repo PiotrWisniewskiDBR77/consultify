@@ -3,9 +3,15 @@ import { Queue } from 'bullmq';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import redisConfig from '../config/QueueConfig.js';
 import { aiLogger } from '../services/ai/logger.js';
 import { AppError } from '../utils/ErrorHandler.js';
+
+let redisConfig;
+try {
+  redisConfig = (await import('../config/QueueConfig.js')).default;
+} catch {
+  redisConfig = (await import('../config/QueueConfig.ts')).default;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

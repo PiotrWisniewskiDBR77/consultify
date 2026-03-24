@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api, API_URL, getHeaders } from '@/services/api';
+import { Api } from '@/services/api';
 
 interface KPICreateModalProps {
   onClose: () => void;
@@ -45,11 +45,9 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/initiatives`, { headers: getHeaders() });
-        if (res.ok) {
-          const data = await res.json();
-          setInitiatives((data || []).map((i: any) => ({ id: i.id, name: i.name || i.title })));
-        }
+        const res: any = await Api.get('/initiatives');
+        const data = (res?.data ?? res) as any;
+        setInitiatives((data || []).map((i: any) => ({ id: i.id, name: i.name || i.title })));
       } catch {
         // silently fail
       }
@@ -235,7 +233,11 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
               {(() => {
                 const q = initiativeSearch.trim().toLowerCase();
                 const list = q
-                  ? initiatives.filter((i) => String(i.name || '').toLowerCase().includes(q))
+                  ? initiatives.filter((i) =>
+                      String(i.name || '')
+                        .toLowerCase()
+                        .includes(q)
+                    )
                   : initiatives;
                 if (list.length === 0) {
                   return (
@@ -279,8 +281,8 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
               })()}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              {t('results.createModal.globalKpi', 'Global KPI if nothing selected.')} ({initiativeIds.length}/
-              {initiatives.length})
+              {t('results.createModal.globalKpi', 'Global KPI if nothing selected.')} (
+              {initiativeIds.length}/{initiatives.length})
             </div>
           </div>
 

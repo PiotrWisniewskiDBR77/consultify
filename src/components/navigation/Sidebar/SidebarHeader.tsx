@@ -23,7 +23,10 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   onToggleCollapse,
   t,
 }) => {
-  const logoSrc = theme === 'dark' ? '/assets/logos/logo-dark.svg' : '/assets/logos/logo-light.svg';
+  const logoSrc =
+    theme === 'dark'
+      ? '/assets/logos/logo-dark.svg?v=20260319'
+      : '/assets/logos/logo-light.svg?v=20260319';
 
   return (
     <div

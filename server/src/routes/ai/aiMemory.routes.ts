@@ -155,6 +155,11 @@ router.get(
         memories: memories.map((m) => ({ key: m.key, value: m.value })),
       });
     } catch (err: any) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('does not exist') || message.includes('no such table')) {
+        logger.warn('[AIMemory] Context table unavailable, returning empty context');
+        return res.json({ context: null, memories: [] });
+      }
       logger.error('[AIMemory] Context error:', err);
       return res.status(500).json({ error: 'Failed to generate context' });
     }

@@ -9,12 +9,18 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  FilterableTable,
+  type FilterChip,
+  type GridItem,
+  GridView,
+  type TableColumn,
+  type ViewMode,
+} from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
-import { FilterableTable, type FilterChip, type GridItem, GridView, type TableColumn, type ViewMode } from '../shared/ModuleHub';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-
-import { PresentationPreview } from './previews/PresentationPreview';
-import { PRESENTATION_STATUS_META, SOURCE_TYPE_META, type PresentationItem } from './types';
+import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
+import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
 import type { useRapActions } from './useRapData';
 
 interface PresentationsTabContentProps {
@@ -24,6 +30,7 @@ interface PresentationsTabContentProps {
   onFilterChange: (filters: FilterChip[]) => void;
   presentations: PresentationItem[];
   loading: boolean;
+  error?: string | null;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
 }
@@ -35,6 +42,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   onFilterChange,
   presentations,
   loading,
+  error,
   onRefresh,
   actions,
 }) => {
@@ -52,6 +60,8 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     for (const f of activeFilters) {
       if (f.column === 'sourceType') data = data.filter((item) => item.sourceType === f.value);
       if (f.column === 'status') data = data.filter((item) => item.status === f.value);
+      if (f.column === 'presentationMode')
+        data = data.filter((item) => (item.presentationMode || 'briefing') === f.value);
     }
     return data;
   }, [presentations, searchQuery, activeFilters]);
@@ -105,11 +115,19 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         filterable: true,
         filterOptions: [
           { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
-          { value: 'generated', label: isPolish ? 'Wygenerowana' : 'Generated', color: 'bg-blue-400' },
+          {
+            value: 'generated',
+            label: isPolish ? 'Wygenerowana' : 'Generated',
+            color: 'bg-blue-400',
+          },
           { value: 'editing', label: isPolish ? 'Edycja' : 'Editing', color: 'bg-amber-400' },
           { value: 'ready', label: isPolish ? 'Gotowa' : 'Ready', color: 'bg-emerald-400' },
           { value: 'shared', label: isPolish ? 'Udostępniona' : 'Shared', color: 'bg-purple-400' },
-          { value: 'archived', label: isPolish ? 'Zarchiwizowana' : 'Archived', color: 'bg-slate-500' },
+          {
+            value: 'archived',
+            label: isPolish ? 'Zarchiwizowana' : 'Archived',
+            color: 'bg-slate-500',
+          },
         ],
         render: (row: PresentationItem) => {
           const meta = PRESENTATION_STATUS_META[row.status] || PRESENTATION_STATUS_META.draft;
@@ -124,6 +142,23 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         },
       },
       {
+        id: 'presentationMode',
+        label: t('rap.columns.mode', 'Tryb'),
+        width: '120px',
+        filterable: true,
+        filterOptions: [
+          { value: 'show', label: 'Show', color: 'bg-blue-400' },
+          { value: 'document', label: 'Document', color: 'bg-emerald-400' },
+          { value: 'briefing', label: 'Briefing', color: 'bg-amber-400' },
+          { value: 'workshop', label: 'Workshop', color: 'bg-purple-400' },
+        ],
+        render: (row: PresentationItem) => (
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300 capitalize">
+            {row.presentationMode || 'briefing'}
+          </span>
+        ),
+      },
+      {
         id: 'createdAt',
         label: t('rap.columns.date', 'Data'),
         width: '130px',
@@ -132,7 +167,11 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           const d = new Date(row.createdAt);
           return (
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
             </span>
           );
         },
@@ -177,7 +216,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     },
     {
       id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
+      label: t('rap.actions.delete', 'Usuń'),
       icon: Archive,
       divider: true,
       variant: 'danger',
@@ -188,9 +227,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     },
   ];
 
-  const selectedItem = selectedId
-    ? filteredData.find((i) => i.id === selectedId) || null
-    : null;
+  const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
   const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;
   const itemIds = filteredData.map((i) => i.id);
 
@@ -202,12 +239,36 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     );
   }
 
+  if (error && presentations.length === 0 && !searchQuery && activeFilters.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('rap.errors.realPresentationsTitle', 'Real presentations source needs attention')}
+          </div>
+          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
+          <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t(
+              'rap.errors.realSourceHint',
+              'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (viewMode === 'grid') {
     const gridItems: GridItem[] = filteredData.map((item) => ({
       id: item.id,
       name: item.title,
       type: item.sourceType,
-      typeColor: item.sourceType === 'tool' ? 'strategic' : item.sourceType === 'assessment' ? 'digital' : 'operational',
+      typeColor:
+        item.sourceType === 'tool'
+          ? 'strategic'
+          : item.sourceType === 'assessment'
+            ? 'digital'
+            : 'operational',
       status: item.status.toUpperCase(),
       progress: 0,
       updatedAt: item.updatedAt,
@@ -233,11 +294,19 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         selectedItem={previewItem}
         onSelect={setSelectedId}
         itemIds={itemIds}
+        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
         renderPreview={(item) => (
-          <PresentationPreview
+          <PresentationPreviewBody
+            presentation={item}
+          />
+        )}
+        renderPreviewFooter={(item) => (
+          <PresentationPreviewFooter
             presentation={item}
             onOpen={() => navigate(`/presentations/builder/${item.id}`)}
-            onExport={() => { actions.exportDeckPptx(item.id); }}
+            onExport={() => {
+              actions.exportDeckPptx(item.id);
+            }}
           />
         )}
       >
@@ -246,6 +315,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           data={filteredData}
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(row.id)}
+          onRowDoubleClick={(row) => navigate(`/presentations/builder/${row.id}`)}
           getRowActions={(row) => getRowActions(row as unknown as PresentationItem)}
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}

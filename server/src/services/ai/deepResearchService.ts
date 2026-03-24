@@ -89,6 +89,9 @@ export interface DeepResearchOutput {
     queriesExecuted: number;
     /** Number of iterative deepening rounds */
     rounds: number;
+    citationCount?: number;
+    evidenceCoverage?: number;
+    unsupportedClaimRate?: number;
   };
 }
 
@@ -112,6 +115,9 @@ export interface DeepResearchOptions {
     maturityLevel?: string;
     organizationName?: string;
     terminology?: Record<string, string>;
+    strategicPriorities?: string[];
+    openGaps?: string[];
+    keyMetrics?: string[];
   };
   /** Clarification answers from user (used to focus queries) */
   clarificationAnswers?: Record<string, string>;
@@ -245,7 +251,9 @@ async function generateSubQueries(
 - Industry: ${options.orgContext.industry || 'Unknown'}
 - Region: ${options.orgContext.region || 'Global'}
 - Maturity level: ${options.orgContext.maturityLevel || 'Unknown'}
-- Name: ${options.orgContext.organizationName || 'Unknown'}`
+- Name: ${options.orgContext.organizationName || 'Unknown'}
+- Strategic priorities: ${(options.orgContext.strategicPriorities || []).join(', ') || 'Unknown'}
+- Open gaps: ${(options.orgContext.openGaps || []).join(', ') || 'Unknown'}`
       : '';
 
     const clarificationBlock = options.clarificationAnswers
@@ -693,6 +701,9 @@ function buildSynthesisPrompt(
 - Industry: ${options.orgContext.industry || 'N/A'}
 - Region: ${options.orgContext.region || 'N/A'}
 - Digital maturity: ${options.orgContext.maturityLevel || 'N/A'}
+- Strategic priorities: ${(options.orgContext.strategicPriorities || []).join(', ') || 'N/A'}
+- Key metrics: ${(options.orgContext.keyMetrics || []).join(', ') || 'N/A'}
+- Open gaps: ${(options.orgContext.openGaps || []).join(', ') || 'N/A'}
 Tailor recommendations specifically to this organization's context.`
     : '';
 
@@ -1306,6 +1317,14 @@ export async function conductDeepResearch(
   const uniqueDomains = new Set(sources.map((s) => s.domain)).size;
   const avgConfidence =
     results.length > 0 ? results.reduce((acc, r) => acc + r.confidence, 0) / results.length : 0;
+  const synthesisSentences = synthesis
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 40);
+  const citedSentences = synthesisSentences.filter((sentence) => /\[\d+\]/.test(sentence)).length;
+  const evidenceCoverage =
+    synthesisSentences.length > 0 ? citedSentences / synthesisSentences.length : citations.length > 0 ? 1 : 0;
+  const unsupportedClaimRate = synthesisSentences.length > 0 ? 1 - evidenceCoverage : 0;
 
   const output: DeepResearchOutput = {
     topic,
@@ -1323,6 +1342,9 @@ export async function conductDeepResearch(
       researchDuration: duration,
       queriesExecuted: allQueries.filter((q) => q.status === 'done').length,
       rounds,
+      citationCount: citations.length,
+      evidenceCoverage: Math.round(evidenceCoverage * 10000) / 10000,
+      unsupportedClaimRate: Math.round(unsupportedClaimRate * 10000) / 10000,
     },
   };
 

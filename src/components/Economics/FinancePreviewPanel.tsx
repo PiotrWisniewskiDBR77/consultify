@@ -1,28 +1,56 @@
-import { Clock, MoreVertical, Sparkles } from 'lucide-react';
-import React, { useCallback } from 'react';
+import { BarChart3, Calculator, Clock, FileText, MoreVertical, Target, TrendingUp } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type ActionRow,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
 
 import {
-  type FinanceRow,
-  type FinanceModelRow,
   type FinanceAnalysisRow,
+  type FinanceModelRow,
+  type FinanceRow,
+  type FinanceStatementRow,
   type FinanceValuationRow,
-  type PreviewDataState,
-  KIND_ICONS,
-  getTypeCode,
   formatAge,
+  getTypeCode,
+  type FinanceKind,
+  type PreviewDataState,
 } from './financeTypes';
 
+const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
+  statements: FileText,
+  models: Calculator,
+  analysis: BarChart3,
+  investment: Target,
+  prediction: TrendingUp,
+  valuation: Target,
+};
+
 interface FinancePreviewPanelProps {
+  statementPreviewDetail: PreviewDataState['statementPreviewDetail'];
+  statementPreviewRatios: PreviewDataState['statementPreviewRatios'];
+  modelPreviewDetail: PreviewDataState['modelPreviewDetail'];
   predictionValidations: PreviewDataState['predictionValidations'];
   analysisPreviewRatios: PreviewDataState['analysisPreviewRatios'];
   budgetPreviewScenarios: PreviewDataState['budgetPreviewScenarios'];
   valuationPreviewResults: PreviewDataState['valuationPreviewResults'];
   valuationPreviewDetail: PreviewDataState['valuationPreviewDetail'];
   handleOpenFull: (row: FinanceRow) => void;
+  handleExport: (row: FinanceRow) => void;
+  handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
+  handleCreateAnalysisFromStatements: (row: FinanceStatementRow) => void;
+  loadStatements: () => Promise<void>;
+  loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
   loadAnalysisPreviewRatios: (id: string) => Promise<void>;
   loadBudgets: () => Promise<void>;
@@ -34,47 +62,230 @@ interface FinancePreviewPanelProps {
 }
 
 export function useFinancePreview({
-  predictionValidations, analysisPreviewRatios, budgetPreviewScenarios,
-  valuationPreviewResults, valuationPreviewDetail,
-  handleOpenFull, loadAnalyses, loadAnalysisPreviewRatios,
-  loadBudgets, loadBudgetPreviewScenarios, loadPredictionPreview,
-  loadValuations, loadValuationPreviewResults, getBudgetRawId,
+  statementPreviewDetail,
+  statementPreviewRatios,
+  modelPreviewDetail,
+  predictionValidations,
+  analysisPreviewRatios,
+  budgetPreviewScenarios,
+  valuationPreviewResults,
+  valuationPreviewDetail,
+  handleOpenFull,
+  handleExport,
+  handleCreateModelFromStatement,
+  handleCreateAnalysisFromStatements,
+  loadStatements,
+  loadModels,
+  loadAnalyses,
+  loadAnalysisPreviewRatios,
+  loadBudgets,
+  loadBudgetPreviewScenarios,
+  loadPredictionPreview,
+  loadValuations,
+  loadValuationPreviewResults,
+  getBudgetRawId,
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+
+  const ModelStatementPreview: React.FC<{
+    detail: NonNullable<PreviewDataState['modelPreviewDetail']>;
+  }> = ({ detail }) => {
+    const [selectedVariant, setSelectedVariant] = useState<'base' | 'optimistic' | 'conservative'>(
+      detail.variants.includes(detail.selectedScenario as 'base' | 'optimistic' | 'conservative')
+        ? (detail.selectedScenario as 'base' | 'optimistic' | 'conservative')
+        : 'base'
+    );
+    const [selectedStatement, setSelectedStatement] = useState<'P&L' | 'BS' | 'CF'>('P&L');
+
+    const rows = detail.scenarioTables[selectedVariant]?.[selectedStatement] || [];
+    const variantLabels = {
+      base: isPl ? 'Base' : 'Base',
+      optimistic: isPl ? 'Optymistyczny' : 'Optimistic',
+      conservative: isPl ? 'Konserwatywny' : 'Conservative',
+    };
+    const statementLabels = {
+      'P&L': 'P&L',
+      BS: isPl ? 'Bilans' : 'Balance Sheet',
+      CF: isPl ? 'Cash Flow' : 'Cash Flow',
+    };
+
+    return (
+      <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+              {isPl ? 'Dokument bazowy' : 'Source document'}
+            </div>
+            <div className="text-sm font-medium text-slate-900 dark:text-white">
+              {detail.sourceDocumentTitle}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {detail.sourcePeriodLabel} • {detail.sourceStatementCount}{' '}
+              {isPl ? 'dokumenty składowe' : 'source statements'}
+            </div>
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPl ? 'Poziomy analityczne' : 'Analytical levels'}: {detail.analyticalDepthLabel}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {detail.variants.map((variant) => (
+            <button
+              key={variant}
+              onClick={() => setSelectedVariant(variant)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                selectedVariant === variant
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white/80 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'
+              }`}
+            >
+              {variantLabels[variant]}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(['P&L', 'BS', 'CF'] as const).map((statement) => (
+            <button
+              key={statement}
+              onClick={() => setSelectedStatement(statement)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                selectedStatement === statement
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                  : 'bg-white/80 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'
+              }`}
+            >
+              {statementLabels[statement]}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[620px] text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-100/80 dark:bg-white/[0.04]">
+                <th className="min-w-[220px] px-3 py-2 text-left font-semibold text-slate-500 dark:text-slate-400">
+                  {isPl ? 'Linia' : 'Line'}
+                </th>
+                {detail.forecastYears.map((year) => (
+                  <th
+                    key={year}
+                    className="px-3 py-2 text-right font-semibold text-slate-500 dark:text-slate-400"
+                  >
+                    {year}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.06]">
+              {rows.map((line) => (
+                <tr
+                  key={`${selectedVariant}-${selectedStatement}-${line.lineCode}`}
+                  className={
+                    line.isTotal
+                      ? 'bg-slate-100/60 dark:bg-white/[0.06]'
+                      : line.isSubtotal
+                        ? 'bg-slate-50/80 dark:bg-white/[0.03]'
+                        : ''
+                  }
+                >
+                  <td
+                    className="px-3 py-2 text-slate-800 dark:text-slate-200"
+                    style={{ paddingLeft: `${12 + line.level * 16}px` }}
+                  >
+                    <span className={line.isTotal || line.isSubtotal ? 'font-semibold' : ''}>
+                      {line.lineName}
+                    </span>
+                  </td>
+                  {detail.forecastYears.map((year) => {
+                    const value = line.values[year] ?? 0;
+                    return (
+                      <td
+                        key={`${line.lineCode}-${year}`}
+                        className={`px-3 py-2 text-right font-mono ${
+                          value < 0
+                            ? 'text-rose-600 dark:text-rose-300'
+                            : 'text-slate-900 dark:text-white'
+                        }`}
+                      >
+                        {new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+                          maximumFractionDigits: 0,
+                        }).format(value)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   const renderPreviewBody = useCallback(
     (row: FinanceRow) => {
       const metaPills: { label: string; value: string }[] = [];
 
-      if (row.kind === 'models') {
+      if (row.kind === 'statements') {
+        const sRow = row as FinanceStatementRow;
         metaPills.push(
-          { label: t('finance.columns.scenario', 'Scenario'), value: row.scenario },
-          { label: t('common.currency', 'Currency'), value: row.currency },
-          { label: t('finance.columns.horizon', 'Horizon'), value: `${row.horizonMonths} ${t('finance.units.mo', 'mo')}` },
+          { label: t('finance.columns.type', 'Type'), value: isPl ? 'Pack' : 'Pack' },
+          { label: t('finance.columns.period', 'Period'), value: sRow.periodLabel || sRow.periodEnd },
+          { label: t('common.currency', 'Currency'), value: sRow.currency },
+          { label: t('finance.columns.scaling', 'Scaling'), value: sRow.scaling }
         );
-        if (row.startDate) metaPills.push({ label: t('finance.columns.start', 'Start'), value: new Date(row.startDate).toLocaleDateString() });
+      } else if (row.kind === 'models') {
+        metaPills.push(
+          {
+            label: t('finance.columns.variants', 'Variants'),
+            value: row.variantLabel || 'base / optimistic / conservative',
+          },
+          { label: t('common.currency', 'Currency'), value: row.currency },
+          {
+            label: t('finance.columns.forecastWindow', 'Forecast'),
+            value: row.forecastWindowLabel || `${row.horizonMonths} ${t('finance.units.mo', 'mo')}`,
+          }
+        );
+        metaPills.push({
+          label: t('finance.columns.document', 'Document'),
+          value: modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—',
+        });
+        if (row.startDate)
+          metaPills.push({
+            label: t('finance.columns.start', 'Start'),
+            value: new Date(row.startDate).toLocaleDateString(),
+          });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;
         if (pRow.predictionType === 'budget') {
           metaPills.push(
             { label: t('finance.prediction.subtype', 'Type'), value: isPl ? 'Budżet' : 'Budget' },
-            { label: t('common.currency', 'Currency'), value: pRow.currency },
+            { label: t('common.currency', 'Currency'), value: pRow.currency }
           );
-          if (pRow.periodStart && pRow.periodEnd) metaPills.push({ label: t('finance.columns.period', 'Period'), value: `${pRow.periodStart} → ${pRow.periodEnd}` });
+          if (pRow.periodStart && pRow.periodEnd)
+            metaPills.push({
+              label: t('finance.columns.period', 'Period'),
+              value: `${pRow.periodStart} → ${pRow.periodEnd}`,
+            });
         } else {
           metaPills.push(
             { label: t('finance.prediction.subtype', 'Type'), value: 'Model' },
             { label: t('finance.columns.scenario', 'Scenario'), value: pRow.scenario },
             { label: t('common.currency', 'Currency'), value: pRow.currency },
-            { label: t('finance.columns.horizon', 'Horizon'), value: `${pRow.horizonMonths} ${t('finance.units.mo', 'mo')}` },
+            {
+              label: t('finance.columns.horizon', 'Horizon'),
+              value: `${pRow.horizonMonths} ${t('finance.units.mo', 'mo')}`,
+            }
           );
         }
-      } else if (row.kind === 'analysis') {
+      } else if (row.kind === 'analysis' || row.kind === 'investment') {
         metaPills.push(
           { label: t('finance.columns.analysisType', 'Type'), value: row.analysisType },
           { label: t('common.currency', 'Currency'), value: row.currency },
-          { label: t('finance.columns.periods', 'Periods'), value: String(row.periodCount) },
+          { label: t('finance.columns.periods', 'Periods'), value: String(row.periodCount) }
         );
       } else {
         const vRow = row as FinanceValuationRow;
@@ -82,149 +293,329 @@ export function useFinancePreview({
           { label: t('finance.columns.source', 'Source'), value: vRow.sourceType },
           { label: t('finance.columns.method', 'Method'), value: vRow.method },
           { label: t('common.currency', 'Currency'), value: vRow.currency },
-          { label: t('finance.columns.horizonYears', 'Horizon'), value: `${vRow.horizonYears} ${t('finance.units.yr', 'yr')}` },
+          {
+            label: t('finance.columns.horizonYears', 'Horizon'),
+            value: `${vRow.horizonYears} ${t('finance.units.yr', 'yr')}`,
+          }
         );
+      }
+
+      const metaPillsForCard: MetaPill[] = [
+        {
+          label: getTypeCode(row.kind),
+          icon: KIND_ICON_MAP[row.kind],
+          className:
+            'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
+        },
+        {
+          label: row.status,
+          dot:
+            row.status === 'APPROVED'
+              ? 'bg-emerald-500'
+              : row.status === 'REVIEW'
+                ? 'bg-amber-500'
+                : 'bg-slate-400',
+          className:
+            row.status === 'APPROVED'
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              : row.status === 'REVIEW'
+                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+        },
+        ...metaPills.map((mp) => ({
+          label: mp.value,
+          className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+        })) as MetaPill[],
+      ];
+
+      let detailsText = '';
+      if (row.kind === 'statements') {
+        const sRow = row as FinanceStatementRow;
+        const detail = statementPreviewDetail;
+        detailsText = isPl
+          ? `Pakiet sprawozdań\nFirma: ${detail?.entityName || sRow.entityName || '—'}\nOkres: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nWaluta: ${detail?.currency || sRow.currency}\nDokumenty: ${detail?.sourceStatementCount || sRow.sourceStatementCount || 0}`
+          : `Statement pack\nEntity: ${detail?.entityName || sRow.entityName || '—'}\nPeriod: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nCurrency: ${detail?.currency || sRow.currency}\nDocuments: ${detail?.sourceStatementCount || sRow.sourceStatementCount || 0}`;
+        if (detail?.mappedLineCount || sRow.mappedLineCount) {
+          detailsText += isPl
+            ? `\nZmapowane linie: ${detail?.mappedLineCount || sRow.mappedLineCount} • Kompletność: ${sRow.completenessLabel || '—'}`
+            : `\nMapped lines: ${detail?.mappedLineCount || sRow.mappedLineCount} • Completeness: ${sRow.completenessLabel || '—'}`;
+        }
+      } else if (row.kind === 'models') {
+        detailsText = isPl
+          ? `Model prognostyczny w układzie P&L / Bilans / CF.\nDokument bazowy: ${modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—'}\nOkno prognozy: ${row.forecastWindowLabel || '3Y'}\nWarianty: ${row.variantLabel || 'base / optimistic / conservative'}\nPoziomy analityczne: ${modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}`
+          : `Forecast model in P&L / BS / CF format.\nSource document: ${modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—'}\nForecast window: ${row.forecastWindowLabel || '3Y'}\nVariants: ${row.variantLabel || 'base / optimistic / conservative'}\nAnalytical depth: ${modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}`;
+      } else if (row.kind === 'analysis' || row.kind === 'investment') {
+        detailsText = isPl
+          ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
+          : `${row.kind === 'investment' ? 'Investment case' : 'Financial analysis'}: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`;
+      } else if (row.kind === 'prediction') {
+        const pRow = row as FinanceModelRow;
+        detailsText =
+          pRow.predictionType === 'budget'
+            ? isPl
+              ? `Budżet / Prognoza\nOkres: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nWaluta: ${pRow.currency}\nScenarze: base / optimistic / conservative`
+              : `Budget / Forecast\nPeriod: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nCurrency: ${pRow.currency}\nScenarios: base / optimistic / conservative`
+            : isPl
+              ? `Predykcja / scenariusz: ${pRow.scenario}\nWaluta: ${pRow.currency}\nHoryzont: ${pRow.horizonMonths} miesięcy`
+              : `Forecast / scenario: ${pRow.scenario}\nCurrency: ${pRow.currency}\nHorizon: ${pRow.horizonMonths} months`;
+      } else if (row.kind === 'valuation') {
+        const vRow = row as FinanceValuationRow;
+        detailsText = isPl
+          ? `Wycena przedsiębiorstwa\nMetoda: ${vRow.method}\nŹródło: ${vRow.sourceType}\nWaluta: ${row.currency}\nHoryzont: ${vRow.horizonYears} lat`
+          : `Enterprise valuation\nMethod: ${vRow.method}\nSource: ${vRow.sourceType}\nCurrency: ${row.currency}\nHorizon: ${vRow.horizonYears} years`;
       }
 
       return (
         <div className="space-y-4">
-          {/* Entity Meta Bar */}
-          <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
-                  {KIND_ICONS[row.kind]}
-                  {getTypeCode(row.kind)}
-                </span>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                  row.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                    : row.status === 'REVIEW' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                      : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'APPROVED' ? 'bg-emerald-500' : row.status === 'REVIEW' ? 'bg-amber-500' : 'bg-slate-400'}`} />
-                  {row.status}
-                </span>
-                {metaPills.map((mp) => (
-                  <span key={mp.label} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-                    {mp.value}
-                  </span>
-                ))}
-              </div>
-              <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 shrink-0 inline-flex items-center gap-1.5">
+          <PreviewMetaCard
+            pills={metaPillsForCard}
+            trailing={
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5">
                 <Clock size={14} className="text-slate-400" />
-                <span>{formatAge(row.updatedAt, isPl)}</span>
-              </div>
-            </div>
-          </div>
+                {formatAge(row.updatedAt, isPl)}
+              </span>
+            }
+          />
 
-          {/* Details section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                {t('common.details', 'Details')}
-              </div>
-              <button className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                title={t('common.more', 'More')} onClick={() => toast(t('common.comingSoon', 'Coming soon'))}>
-                <MoreVertical size={14} />
-              </button>
-            </div>
-            <div className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-              {row.kind === 'models' && (isPl
-                ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}`
-                : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}`)}
-              {row.kind === 'analysis' && (isPl
-                ? `Analiza finansowa: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
-                : `Financial analysis: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`)}
-              {row.kind === 'prediction' && (() => {
-                const pRow = row as FinanceModelRow;
-                if (pRow.predictionType === 'budget') return isPl
-                  ? `Budżet / Prognoza\nOkres: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nWaluta: ${pRow.currency}\nScenarze: base / optimistic / conservative`
-                  : `Budget / Forecast\nPeriod: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nCurrency: ${pRow.currency}\nScenarios: base / optimistic / conservative`;
-                return isPl
-                  ? `Predykcja / scenariusz: ${pRow.scenario}\nWaluta: ${pRow.currency}\nHoryzont: ${pRow.horizonMonths} miesięcy`
-                  : `Forecast / scenario: ${pRow.scenario}\nCurrency: ${pRow.currency}\nHorizon: ${pRow.horizonMonths} months`;
-              })()}
-              {row.kind === 'valuation' && (isPl
-                ? `Wycena przedsiębiorstwa\nMetoda: ${(row as FinanceValuationRow).method}\nŹródło: ${(row as FinanceValuationRow).sourceType}\nWaluta: ${row.currency}\nHoryzont: ${(row as FinanceValuationRow).horizonYears} lat`
-                : `Enterprise valuation\nMethod: ${(row as FinanceValuationRow).method}\nSource: ${(row as FinanceValuationRow).sourceType}\nCurrency: ${row.currency}\nHorizon: ${(row as FinanceValuationRow).horizonYears} years`)}
-            </div>
-          </div>
+          <PreviewDetailsSection
+            text={detailsText}
+            customActions={[
+              {
+                id: 'more',
+                label: t('common.more', 'More'),
+                icon: MoreVertical,
+                onClick: () => handleOpenFull(row),
+              },
+            ]}
+          />
 
-          {/* Prediction: validation summary */}
-          {row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'model' && predictionValidations && (
-            <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-1">
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                {t('finance.prediction.validations', 'Validations')}
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className="text-emerald-600 dark:text-emerald-400">✓ {predictionValidations.pass} {t('finance.prediction.pass', 'pass')}</span>
-                <span className="text-amber-600 dark:text-amber-400">⚠ {predictionValidations.warning} {t('finance.prediction.warn', 'warn')}</span>
-                <span className="text-red-600 dark:text-red-400">✗ {predictionValidations.fail} {t('finance.prediction.fail', 'fail')}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Prediction: budget scenario cards */}
-          {row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'budget' && budgetPreviewScenarios && budgetPreviewScenarios.length > 0 && (
+          {row.kind === 'statements' && (
             <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
               <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                {t('finance.prediction.scenarios', 'Scenarios')}
+                {t('finance.statements.previewTitle', 'Pack health')}
               </div>
-              <div className="grid grid-cols-1 gap-2">
-                {budgetPreviewScenarios.map((sc) => {
-                  const colorMap: Record<string, string> = {
-                    base: 'border-l-blue-500 bg-blue-50/50 dark:bg-blue-900/10',
-                    optimistic: 'border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10',
-                    conservative: 'border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10',
-                  };
-                  return (
-                    <div key={sc.scenarioType} className={`border-l-2 rounded-r-md p-2 ${colorMap[sc.scenarioType] || 'border-l-slate-400 bg-slate-50/50 dark:bg-slate-900/10'}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 capitalize">{sc.name || sc.scenarioType}</span>
-                        {sc.isActive && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                            {isPl ? 'aktywny' : 'active'}
-                          </span>
-                        )}
+              {statementPreviewDetail ? (
+                <>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {t('finance.statements.mappedLines', 'Mapped lines')}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {statementPreviewDetail.mappedLineCount}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {t('finance.statements.validation', 'Pack status')}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
+                        {statementPreviewDetail.validationStatus}
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Nieprzypisane' : 'Unmapped'}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {statementPreviewDetail.unmappedLineCount || 0}
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Wszystkie linie' : 'Total lines'}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {statementPreviewDetail.totalLineCount || 0}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                      {t('finance.statements.ratios', 'Statements')}
+                    </div>
+                    {(statementPreviewDetail.childStatements || []).map((statement) => (
+                      <div key={statement.id} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-600 dark:text-slate-300">
+                          {statement.statementType}
+                        </span>
+                        <span className="font-mono text-slate-900 dark:text-white">
+                          {statement.readinessStatus || 'pending'} / {statement.mappedLineCount}
+                        </span>
+                      </div>
+                    ))}
+                    {Array.isArray(statementPreviewDetail.missingStatementTypes) &&
+                      statementPreviewDetail.missingStatementTypes.length > 0 && (
+                        <div className="text-xs text-amber-600 dark:text-amber-400">
+                          {isPl ? 'Braki:' : 'Missing:'} {statementPreviewDetail.missingStatementTypes.join(', ')}
+                        </div>
+                      )}
+                    {Array.isArray(statementPreviewDetail.packValidations) &&
+                      statementPreviewDetail.packValidations.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {statementPreviewDetail.packValidations.slice(0, 3).map((validation) => (
+                            <span
+                              key={`${validation.checkCode}-${validation.computedAt || ''}`}
+                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                validation.status === 'fail'
+                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                                  : validation.status === 'warning'
+                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                              }`}
+                            >
+                              {validation.checkName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPl ? 'Ładowanie podglądu pakietu…' : 'Loading pack preview…'}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Analysis: ratio summary */}
-          {row.kind === 'analysis' && analysisPreviewRatios && analysisPreviewRatios.length > 0 && (() => {
-            const categoryLabels: Record<string, { en: string; pl: string; color: string }> = {
-              liquidity: { en: 'Liquidity', pl: 'Płynność', color: 'text-blue-600 dark:text-blue-400' },
-              profitability: { en: 'Profitability', pl: 'Rentowność', color: 'text-emerald-600 dark:text-emerald-400' },
-              leverage: { en: 'Leverage', pl: 'Zadłużenie', color: 'text-amber-600 dark:text-amber-400' },
-              efficiency: { en: 'Efficiency', pl: 'Efektywność', color: 'text-purple-600 dark:text-purple-400' },
-              growth: { en: 'Growth', pl: 'Wzrost', color: 'text-cyan-600 dark:text-cyan-400' },
-            };
-            const grouped: Record<string, typeof analysisPreviewRatios> = {};
-            for (const r of analysisPreviewRatios) { if (!grouped[r.category]) grouped[r.category] = []; grouped[r.category]!.push(r); }
-            return (
+          {row.kind === 'models' &&
+            (modelPreviewDetail ? (
+              <ModelStatementPreview detail={modelPreviewDetail} />
+            ) : (
+              <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 text-xs text-slate-500 dark:text-slate-400">
+                {isPl
+                  ? 'Ładowanie prognozowanego układu sprawozdania…'
+                  : 'Loading forecast statement layout…'}
+              </div>
+            ))}
+
+          {/* Prediction: validation summary */}
+          {row.kind === 'prediction' &&
+            (row as FinanceModelRow).predictionType === 'model' &&
+            predictionValidations && (
+              <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-1">
+                <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                  {t('finance.prediction.validations', 'Validations')}
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✓ {predictionValidations.pass} {t('finance.prediction.pass', 'pass')}
+                  </span>
+                  <span className="text-amber-600 dark:text-amber-400">
+                    ⚠ {predictionValidations.warning} {t('finance.prediction.warn', 'warn')}
+                  </span>
+                  <span className="text-red-600 dark:text-red-400">
+                    ✗ {predictionValidations.fail} {t('finance.prediction.fail', 'fail')}
+                  </span>
+                </div>
+              </div>
+            )}
+
+          {/* Prediction: budget scenario cards */}
+          {row.kind === 'prediction' &&
+            (row as FinanceModelRow).predictionType === 'budget' &&
+            budgetPreviewScenarios &&
+            budgetPreviewScenarios.length > 0 && (
               <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
                 <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                  {t('finance.analysis.ratioSummary', 'Financial Ratios')}
+                  {t('finance.prediction.scenarios', 'Scenarios')}
                 </div>
-                {Object.entries(grouped).map(([cat, items]) => {
-                  const meta = categoryLabels[cat] || { en: cat, pl: cat, color: 'text-slate-600' };
-                  const topRatio = items?.find((r) => r.value != null);
-                  return (
-                    <div key={cat} className="flex items-center justify-between text-xs">
-                      <span className={`font-medium ${meta.color}`}>{isPl ? meta.pl : meta.en}</span>
-                      <span className="text-slate-600 dark:text-slate-300 font-mono">
-                        {topRatio ? `${topRatio.ratio_name}: ${topRatio.value?.toFixed(2)}` : `${items?.length || 0} ${isPl ? 'wsk.' : 'ratios'}`}
-                      </span>
-                    </div>
-                  );
-                })}
+                <div className="grid grid-cols-1 gap-2">
+                  {budgetPreviewScenarios.map((sc) => {
+                    const colorMap: Record<string, string> = {
+                      base: 'border-l-blue-500 bg-blue-50/50 dark:bg-blue-900/10',
+                      optimistic: 'border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10',
+                      conservative: 'border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10',
+                    };
+                    return (
+                      <div
+                        key={sc.scenarioType}
+                        className={`border-l-2 rounded-r-md p-2 ${colorMap[sc.scenarioType] || 'border-l-slate-400 bg-slate-50/50 dark:bg-slate-900/10'}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 capitalize">
+                            {sc.name || sc.scenarioType}
+                          </span>
+                          {sc.isActive && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                              {isPl ? 'aktywny' : 'active'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            );
-          })()}
+            )}
+
+          {/* Analysis: ratio summary */}
+          {(row.kind === 'analysis' || row.kind === 'investment') &&
+            analysisPreviewRatios &&
+            analysisPreviewRatios.length > 0 &&
+            (() => {
+              const categoryLabels: Record<string, { en: string; pl: string; color: string }> = {
+                liquidity: {
+                  en: 'Liquidity',
+                  pl: 'Płynność',
+                  color: 'text-blue-600 dark:text-blue-400',
+                },
+                profitability: {
+                  en: 'Profitability',
+                  pl: 'Rentowność',
+                  color: 'text-emerald-600 dark:text-emerald-400',
+                },
+                leverage: {
+                  en: 'Leverage',
+                  pl: 'Zadłużenie',
+                  color: 'text-amber-600 dark:text-amber-400',
+                },
+                efficiency: {
+                  en: 'Efficiency',
+                  pl: 'Efektywność',
+                  color: 'text-purple-600 dark:text-purple-400',
+                },
+                investment: {
+                  en: 'Investment',
+                  pl: 'Inwestycja',
+                  color: 'text-fuchsia-600 dark:text-fuchsia-400',
+                },
+                growth: { en: 'Growth', pl: 'Wzrost', color: 'text-cyan-600 dark:text-cyan-400' },
+              };
+              const grouped: Record<string, typeof analysisPreviewRatios> = {};
+              for (const r of analysisPreviewRatios) {
+                if (!grouped[r.category]) grouped[r.category] = [];
+                grouped[r.category]!.push(r);
+              }
+              return (
+                <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                    {t('finance.analysis.ratioSummary', 'Financial Ratios')}
+                  </div>
+                  {Object.entries(grouped).map(([cat, items]) => {
+                    const meta = categoryLabels[cat] || {
+                      en: cat,
+                      pl: cat,
+                      color: 'text-slate-600',
+                    };
+                    const topRatio = items?.find((r) => r.value != null);
+                    return (
+                      <div key={cat} className="flex items-center justify-between text-xs">
+                        <span className={`font-medium ${meta.color}`}>
+                          {isPl ? meta.pl : meta.en}
+                        </span>
+                        <span className="text-slate-600 dark:text-slate-300 font-mono">
+                          {topRatio
+                            ? `${topRatio.ratio_name}: ${topRatio.value?.toFixed(2)}`
+                            : `${items?.length || 0} ${isPl ? 'wsk.' : 'ratios'}`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
           {/* Valuation: DCF results + sensitivity + advisory */}
           {row.kind === 'valuation' && (
@@ -236,120 +627,171 @@ export function useFinancePreview({
                 {valuationPreviewResults ? (
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { label: 'EV', value: valuationPreviewResults.enterpriseValue, color: 'text-amber-600 dark:text-amber-400' },
-                      { label: 'Equity', value: valuationPreviewResults.equityValue, color: 'text-emerald-600 dark:text-emerald-400' },
-                      { label: 'EV/EBITDA', value: valuationPreviewResults.evEbitda, color: 'text-blue-600 dark:text-blue-400' },
+                      {
+                        label: 'EV',
+                        value: valuationPreviewResults.enterpriseValue,
+                        color: 'text-amber-600 dark:text-amber-400',
+                      },
+                      {
+                        label: 'Equity',
+                        value: valuationPreviewResults.equityValue,
+                        color: 'text-emerald-600 dark:text-emerald-400',
+                      },
+                      {
+                        label: 'EV/EBITDA',
+                        value: valuationPreviewResults.evEbitda,
+                        color: 'text-blue-600 dark:text-blue-400',
+                      },
                     ].map((item) => (
                       <div key={item.label} className="text-center">
                         <div className={`text-[10px] font-medium ${item.color}`}>{item.label}</div>
                         <div className="text-sm font-bold text-slate-900 dark:text-white">
-                          {item.value != null ? (item.label === 'EV/EBITDA' ? `${item.value.toFixed(1)}x` : `${(item.value / 1_000_000).toFixed(1)}M`) : '—'}
+                          {item.value != null
+                            ? item.label === 'EV/EBITDA'
+                              ? `${item.value.toFixed(1)}x`
+                              : `${(item.value / 1_000_000).toFixed(1)}M`
+                            : '—'}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {isPl ? 'Nie obliczono jeszcze — kliknij "Oblicz DCF"' : 'Not computed yet — click "Compute DCF"'}
+                    {isPl
+                      ? 'Nie obliczono jeszcze — kliknij "Oblicz DCF"'
+                      : 'Not computed yet — click "Compute DCF"'}
                   </div>
                 )}
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                    (row as FinanceValuationRow).sourceType === 'financial_model' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                      : (row as FinanceValuationRow).sourceType === 'budget' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300'
-                  }`}>
-                    {(row as FinanceValuationRow).sourceType === 'financial_model' ? (isPl ? 'Model' : 'Model')
-                      : (row as FinanceValuationRow).sourceType === 'budget' ? (isPl ? 'Budżet' : 'Budget')
-                        : (isPl ? 'Ręczne' : 'Manual')}
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                      (row as FinanceValuationRow).sourceType === 'financial_model'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        : (row as FinanceValuationRow).sourceType === 'budget'
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300'
+                    }`}
+                  >
+                    {(row as FinanceValuationRow).sourceType === 'financial_model'
+                      ? isPl
+                        ? 'Model'
+                        : 'Model'
+                      : (row as FinanceValuationRow).sourceType === 'budget'
+                        ? isPl
+                          ? 'Budżet'
+                          : 'Budget'
+                        : isPl
+                          ? 'Ręczne'
+                          : 'Manual'}
                   </span>
                 </div>
               </div>
 
               {/* Sensitivity heatmap */}
-              {valuationPreviewDetail?.sensitivity && (() => {
-                const sens = valuationPreviewDetail.sensitivity;
-                const matrix = sens?.matrix || sens?.grid;
-                if (!Array.isArray(matrix) || matrix.length === 0) return null;
-                return (
-                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
-                    <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                      {t('finance.valuation.sensitivity', 'Sensitivity Analysis')}
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-[10px]">
-                        <thead>
-                          <tr>
-                            <th className="text-left text-slate-500 py-0.5 pr-1">WACC \ g</th>
-                            {(matrix[0] || []).map((_: any, ci: number) => (
-                              <th key={ci} className="text-center text-slate-500 py-0.5 px-1">
-                                {sens?.colHeaders?.[ci] ?? `${ci + 1}`}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {matrix.map((matRow: number[], ri: number) => (
-                            <tr key={ri}>
-                              <td className="text-slate-500 py-0.5 pr-1 font-medium">{sens?.rowHeaders?.[ri] ?? `${ri + 1}`}</td>
-                              {matRow.map((val: number, ci: number) => {
-                                const maxVal = Math.max(...matrix.flat());
-                                const minVal = Math.min(...matrix.flat());
-                                const norm = maxVal === minVal ? 0.5 : (val - minVal) / (maxVal - minVal);
-                                const bg = norm > 0.66 ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
-                                  : norm > 0.33 ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-                                    : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300';
-                                return (
-                                  <td key={ci} className={`text-center py-0.5 px-1 rounded ${bg} font-mono`}>
-                                    {(val / 1_000_000).toFixed(1)}M
-                                  </td>
-                                );
-                              })}
+              {valuationPreviewDetail?.sensitivity &&
+                (() => {
+                  const sens = valuationPreviewDetail.sensitivity;
+                  const matrix = sens?.matrix || sens?.grid;
+                  if (!Array.isArray(matrix) || matrix.length === 0) return null;
+                  return (
+                    <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
+                      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                        {t('finance.valuation.sensitivity', 'Sensitivity Analysis')}
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[10px]">
+                          <thead>
+                            <tr>
+                              <th className="text-left text-slate-500 py-0.5 pr-1">WACC \ g</th>
+                              {(matrix[0] || []).map((_: any, ci: number) => (
+                                <th key={ci} className="text-center text-slate-500 py-0.5 px-1">
+                                  {sens?.colHeaders?.[ci] ?? `${ci + 1}`}
+                                </th>
+                              ))}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {matrix.map((matRow: number[], ri: number) => (
+                              <tr key={ri}>
+                                <td className="text-slate-500 py-0.5 pr-1 font-medium">
+                                  {sens?.rowHeaders?.[ri] ?? `${ri + 1}`}
+                                </td>
+                                {matRow.map((val: number, ci: number) => {
+                                  const maxVal = Math.max(...matrix.flat());
+                                  const minVal = Math.min(...matrix.flat());
+                                  const norm =
+                                    maxVal === minVal ? 0.5 : (val - minVal) / (maxVal - minVal);
+                                  const bg =
+                                    norm > 0.66
+                                      ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+                                      : norm > 0.33
+                                        ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
+                                        : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300';
+                                  return (
+                                    <td
+                                      key={ci}
+                                      className={`text-center py-0.5 px-1 rounded ${bg} font-mono`}
+                                    >
+                                      {(val / 1_000_000).toFixed(1)}M
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
 
               {/* Advisory summary */}
-              {valuationPreviewDetail?.advisory && (() => {
-                const recs = Array.isArray(valuationPreviewDetail.advisory?.recommendations)
-                  ? valuationPreviewDetail.advisory.recommendations
-                  : Array.isArray(valuationPreviewDetail.advisory) ? valuationPreviewDetail.advisory : [];
-                if (recs.length === 0) return null;
-                const topTwo = recs.slice(0, 2);
-                return (
-                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                        {t('finance.valuation.advisory', 'Advisory')}
-                        <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                          {recs.length}
-                        </span>
+              {valuationPreviewDetail?.advisory &&
+                (() => {
+                  const recs = Array.isArray(valuationPreviewDetail.advisory?.recommendations)
+                    ? valuationPreviewDetail.advisory.recommendations
+                    : Array.isArray(valuationPreviewDetail.advisory)
+                      ? valuationPreviewDetail.advisory
+                      : [];
+                  if (recs.length === 0) return null;
+                  const topTwo = recs.slice(0, 2);
+                  return (
+                    <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                          {t('finance.valuation.advisory', 'Advisory')}
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                            {recs.length}
+                          </span>
+                        </div>
+                        <button
+                          className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
+                          onClick={() => handleOpenFull(row)}
+                        >
+                          {isPl ? 'Zobacz wszystkie' : 'View all'}
+                        </button>
                       </div>
-                      <button className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
-                        onClick={() => handleOpenFull(row)}>
-                        {isPl ? 'Zobacz wszystkie' : 'View all'}
-                      </button>
+                      {topTwo.map((rec: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-xs">
+                          <span
+                            className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                              rec.priority === 'high'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                : rec.priority === 'medium'
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                            }`}
+                          >
+                            {(rec.priority || 'low').toUpperCase()}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-200 line-clamp-1">
+                            {rec.title || rec.description || rec.text || ''}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    {topTwo.map((rec: any, i: number) => (
-                      <div key={i} className="flex items-start gap-2 text-xs">
-                        <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                          rec.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                            : rec.priority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                        }`}>
-                          {(rec.priority || 'low').toUpperCase()}
-                        </span>
-                        <span className="text-slate-700 dark:text-slate-200 line-clamp-1">{rec.title || rec.description || rec.text || ''}</span>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+                  );
+                })()}
 
               {/* Negotiation pack badge */}
               {valuationPreviewDetail?.negotiationPack && (
@@ -364,129 +806,367 @@ export function useFinancePreview({
         </div>
       );
     },
-    [t, isPl, predictionValidations, analysisPreviewRatios, budgetPreviewScenarios, valuationPreviewResults, valuationPreviewDetail, handleOpenFull]
+    [
+      t,
+      isPl,
+      statementPreviewDetail,
+      statementPreviewRatios,
+      modelPreviewDetail,
+      predictionValidations,
+      analysisPreviewRatios,
+      budgetPreviewScenarios,
+      valuationPreviewResults,
+      valuationPreviewDetail,
+      handleOpenFull,
+    ]
   );
 
   const renderPreviewFooter = useCallback(
     (row: FinanceRow) => {
-      const divider = <div className="h-px bg-slate-200/70 dark:bg-white/[0.06]" />;
-
-      const hintChip = (label: string) => (
-        <button className="h-7 px-2.5 rounded-full border border-slate-200/70 dark:border-white/[0.08] text-[11px] font-medium text-slate-500 dark:text-slate-300 bg-transparent hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]"
-          onClick={() => toast(t('common.comingSoon', 'Coming soon'))}>{label}</button>
-      );
-
-      const primaryPill = (label: string, onClick: () => void) => (
-        <button onClick={onClick}
-          className="inline-flex items-center justify-center h-9 px-4 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900">
-          {label}
-        </button>
-      );
-
-      const secondaryPill = (label: string, onClick: () => void) => (
-        <button onClick={onClick}
-          className="inline-flex items-center justify-center h-9 px-4 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900">
-          {label}
-        </button>
-      );
-
       const aiHints: string[] = (() => {
         switch (row.kind) {
-          case 'models': return [isPl ? 'Sprawdź spójność' : 'Check consistency', isPl ? 'Zaproponuj scenariusz' : 'Suggest scenario', isPl ? 'Porównaj z baseline' : 'Compare to baseline'];
-          case 'analysis': return [isPl ? 'Podsumuj wyniki' : 'Summarize results', isPl ? 'Znajdź anomalie' : 'Find anomalies', isPl ? 'Zaproponuj działania' : 'Suggest actions'];
-          case 'prediction': return [isPl ? 'Oceń założenia' : 'Evaluate assumptions', isPl ? 'Analiza wrażliwości' : 'Sensitivity analysis', isPl ? 'Porównaj scenariusze' : 'Compare scenarios'];
-          case 'valuation': return [isPl ? 'Zweryfikuj WACC' : 'Verify WACC', isPl ? 'Porównaj z rynkiem' : 'Compare to market', isPl ? 'Jak poprawić wycenę?' : 'How to improve?'];
+          case 'statements':
+            return [
+              isPl ? 'Sprawdź mapowanie' : 'Review mapping',
+              isPl ? 'Zbuduj model' : 'Create model',
+              isPl ? 'Porównaj okresy' : 'Compare periods',
+            ];
+          case 'models':
+            return [
+              isPl ? 'Sprawdź spójność' : 'Check consistency',
+              isPl ? 'Zaproponuj scenariusz' : 'Suggest scenario',
+              isPl ? 'Porównaj z baseline' : 'Compare to baseline',
+            ];
+          case 'analysis':
+            return [
+              isPl ? 'Podsumuj wyniki' : 'Summarize results',
+              isPl ? 'Znajdź anomalie' : 'Find anomalies',
+              isPl ? 'Zaproponuj działania' : 'Suggest actions',
+            ];
+          case 'investment':
+            return [
+              isPl ? 'Oceń NPV i IRR' : 'Evaluate NPV and IRR',
+              isPl ? 'Sprawdź payback' : 'Check payback',
+              isPl ? 'Rekomendacja go/no-go' : 'Go/no-go recommendation',
+            ];
+          case 'prediction':
+            return [
+              isPl ? 'Oceń założenia' : 'Evaluate assumptions',
+              isPl ? 'Analiza wrażliwości' : 'Sensitivity analysis',
+              isPl ? 'Porównaj scenariusze' : 'Compare scenarios',
+            ];
+          case 'valuation':
+            return [
+              isPl ? 'Zweryfikuj WACC' : 'Verify WACC',
+              isPl ? 'Porównaj z rynkiem' : 'Compare to market',
+              isPl ? 'Jak poprawić wycenę?' : 'How to improve?',
+            ];
         }
       })();
 
-      return (
-        <div className="space-y-0">
-          <div className="py-1.5">
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                <Sparkles size={12} />
-                <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-              </div>
-              <button className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                title={t('common.more', 'More')} onClick={() => toast(t('common.comingSoon', 'Coming soon'))}>
-                <MoreVertical size={14} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {aiHints.map((hint) => <React.Fragment key={hint}>{hintChip(hint)}</React.Fragment>)}
-            </div>
-          </div>
-          {divider}
-          <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1.5">
-            <span className="text-xs text-slate-400 dark:text-slate-500">{t('common.noRelations', 'No relations')}</span>
-          </div>
-          {divider}
-          <div className="space-y-2.5 py-1.5">
-            <div className="flex flex-wrap gap-2">
-              {row.kind === 'models' && row.status !== 'APPROVED' && primaryPill(t('finance.actions.approve', 'Zatwierdź'), () => toast(t('common.comingSoon', 'Coming soon')))}
-              {row.kind === 'analysis' && (
-                <>
-                  {primaryPill(t('finance.actions.reanalyze', 'Przelicz ponownie'), async () => {
-                    try { await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {}); await loadAnalyses(); await loadAnalysisPreviewRatios(row.id); toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona')); }
-                    catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.reanalyzeFailed', 'Nie udało się przeliczyć')); }
-                  })}
-                  {row.status !== 'APPROVED' && primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                    try { await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {}); await loadAnalyses(); toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona')); }
-                    catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')); }
-                  })}
-                </>
-              )}
-              {row.kind === 'prediction' && (() => {
-                const pRow = row as FinanceModelRow;
-                if (pRow.predictionType === 'budget') {
-                  const rawId = getBudgetRawId(row.id);
-                  return (
-                    <>
-                      {primaryPill(t('finance.actions.generateProjections', 'Generuj prognozy'), async () => {
-                        try { const detail = await Api.get(`/api/economics/budgets/${rawId}`); const scens = (detail as any)?.scenarios || [];
-                          for (const sc of scens) await Api.post(`/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`, {});
-                          await loadBudgetPreviewScenarios(rawId); toast.success(t('finance.toast.projected', 'Prognozy wygenerowane')); }
-                        catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.projectionFailed', 'Nie udało się wygenerować')); }
-                      })}
-                      {pRow.status !== 'APPROVED' && primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                        try { await Api.post(`/api/economics/budgets/${rawId}/approve`, {}); await loadBudgets(); toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony')); }
-                        catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')); }
-                      })}
-                    </>
+      const relationItems: RelationItem[] = [];
+
+      const actionButtons: ActionRow['buttons'] = [];
+
+      if (row.kind === 'statements') {
+        const statementRow = row as FinanceStatementRow;
+        relationItems.push(
+          {
+            label: `${isPl ? 'Źródła' : 'Sources'}: ${
+              statementPreviewDetail?.sourceFileName || statementRow.sourceFileName || '—'
+            }`,
+          },
+          {
+            label: `${isPl ? 'Gotowość do modelu' : 'Model readiness'}: ${
+              statementRow.isWorkable
+                ? isPl
+                  ? 'Gotowy do seedowania'
+                  : 'Ready for seeding'
+                : String(statementRow.readinessStatus || '').toLowerCase() === 'rejected'
+                  ? isPl
+                    ? 'Import odrzucony'
+                    : 'Rejected import'
+                : isPl
+                  ? 'Recovery queue'
+                  : 'Recovery queue'
+            }`,
+          }
+        );
+        actionButtons.push(
+          {
+            label: t('finance.actions.createModelFromStatement', 'Utwórz model'),
+            onClick: () => handleCreateModelFromStatement(statementRow),
+            colorScheme: 'primary',
+            disabled: !statementRow.isWorkable,
+          },
+          {
+            label: t('finance.actions.createAnalysis', 'Utwórz analizę'),
+            onClick: () => handleCreateAnalysisFromStatements(statementRow),
+            colorScheme: 'emerald',
+            disabled: !statementRow.isWorkable,
+          }
+        );
+        if (!statementRow.isWorkable) {
+          actionButtons.push({
+            label: t('finance.actions.openRecoveryQueue', 'Otwórz recovery queue'),
+            onClick: () => handleOpenFull(statementRow),
+            colorScheme: 'neutral',
+          });
+        }
+      }
+
+      if (row.kind === 'models' && row.status !== 'APPROVED') {
+        actionButtons.push({
+          label: t('finance.actions.approve', 'Zatwierdź'),
+          onClick: async () => {
+            try {
+              await Api.post(`/api/financial-modeling/models/${row.id}/approve`, {});
+              await loadModels();
+              toast.success(t('finance.toast.modelApproved', 'Model zatwierdzony'));
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+              );
+            }
+          },
+          colorScheme: 'emerald',
+        });
+      }
+
+      if (row.kind === 'analysis' || row.kind === 'investment') {
+        actionButtons.push({
+          label: t('finance.actions.reanalyze', 'Przelicz ponownie'),
+          onClick: async () => {
+            try {
+              await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
+              await loadAnalyses();
+              await loadAnalysisPreviewRatios(row.id);
+              toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.reanalyzeFailed', 'Nie udało się przeliczyć')
+              );
+            }
+          },
+          colorScheme: 'primary',
+        });
+        actionButtons.push({
+          label: t('finance.actions.createValuation', 'Utwórz wycenę'),
+          onClick: () =>
+            window.location.assign(
+              `/economics?tab=valuation&createFrom=financial_analysis&sourceId=${row.id}`
+            ),
+          colorScheme: 'neutral',
+        });
+        if (row.status !== 'APPROVED') {
+          actionButtons.push({
+            label: t('finance.actions.approve', 'Zatwierdź'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
+                await loadAnalyses();
+                toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                );
+              }
+            },
+            colorScheme: 'emerald',
+          });
+        }
+      }
+
+      if (row.kind === 'prediction') {
+        const pRow = row as FinanceModelRow;
+        if (pRow.predictionType === 'budget') {
+          const rawId = getBudgetRawId(row.id);
+          actionButtons.push({
+            label: t('finance.actions.generateProjections', 'Generuj prognozy'),
+            onClick: async () => {
+              try {
+                const detail = await Api.get(`/api/economics/budgets/${rawId}`);
+                const scens = (detail as any)?.scenarios || [];
+                for (const sc of scens)
+                  await Api.post(
+                    `/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`,
+                    {}
+                  );
+                await loadBudgetPreviewScenarios(rawId);
+                toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.projectionFailed', 'Nie udało się wygenerować')
+                );
+              }
+            },
+            colorScheme: 'primary',
+          });
+          if (pRow.status !== 'APPROVED') {
+            actionButtons.push({
+              label: t('finance.actions.approve', 'Zatwierdź'),
+              onClick: async () => {
+                try {
+                  await Api.post(`/api/economics/budgets/${rawId}/approve`, {});
+                  await loadBudgets();
+                  toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
+                } catch (e: any) {
+                  toast.error(
+                    e?.response?.data?.error ||
+                      t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
                   );
                 }
-                return primaryPill(t('finance.actions.compute', 'Przelicz'), async () => {
-                  try { await Api.post(`/api/financial-modeling/models/${row.id}/compute`, {}); await loadPredictionPreview(row.id); toast.success(t('finance.toast.computed', 'Prognoza przeliczona')); }
-                  catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.computeFailed', 'Nie udało się przeliczyć')); }
-                });
-              })()}
-              {row.kind === 'valuation' && (
-                <>
-                  {primaryPill(t('finance.actions.computeDcf', 'Oblicz DCF'), async () => {
-                    try { await Api.post(`/api/economics/valuations/${row.id}/compute`, {}); await loadValuations(); await loadValuationPreviewResults(row.id); toast.success(t('finance.toast.valuationComputed', 'Wycena obliczona')); }
-                    catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.computeFailed', 'Nie udało się obliczyć')); }
-                  })}
-                  {row.status !== 'APPROVED' && primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                    try { await Api.post(`/api/economics/valuations/${row.id}/approve`, {}); await loadValuations(); toast.success(t('finance.toast.valuationApproved', 'Wycena zatwierdzona')); }
-                    catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')); }
-                  })}
-                  {secondaryPill(t('finance.actions.exportPptx', 'Eksportuj PPTX'), async () => {
-                    try {
-                      const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, { language: isPl ? 'pl' : 'en', theme: 'corporate', confidentiality: 'confidential' });
-                      toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
-                      const downloadUrl = (result as any)?.downloadUrl; if (downloadUrl) window.open(downloadUrl, '_blank');
-                    } catch (e: any) { toast.error(e?.response?.data?.error || t('finance.toast.exportFailed', 'Nie udało się wyeksportować')); }
-                  })}
-                </>
-              )}
-              {row.kind !== 'valuation' && secondaryPill(t('finance.actions.export', 'Eksportuj'), () => toast(t('common.comingSoon', 'Coming soon')))}
-              {secondaryPill(t('common.open', 'Otwórz'), () => handleOpenFull(row))}
-            </div>
+              },
+              colorScheme: 'emerald',
+            });
+          }
+        } else {
+          actionButtons.push({
+            label: t('finance.actions.compute', 'Przelicz'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/financial-modeling/models/${row.id}/compute`, {});
+                await loadPredictionPreview(row.id);
+                toast.success(t('finance.toast.computed', 'Prognoza przeliczona'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.computeFailed', 'Nie udało się przeliczyć')
+                );
+              }
+            },
+            colorScheme: 'primary',
+          });
+        }
+      }
+
+      if (row.kind === 'valuation') {
+        actionButtons.push({
+          label: t('finance.actions.computeDcf', 'Oblicz DCF'),
+          onClick: async () => {
+            try {
+              await Api.post(`/api/economics/valuations/${row.id}/compute`, {});
+              await loadValuations();
+              await loadValuationPreviewResults(row.id);
+              toast.success(t('finance.toast.valuationComputed', 'Wycena obliczona'));
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.computeFailed', 'Nie udało się obliczyć')
+              );
+            }
+          },
+          colorScheme: 'primary',
+        });
+        if (row.status !== 'APPROVED') {
+          actionButtons.push({
+            label: t('finance.actions.approve', 'Zatwierdź'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/economics/valuations/${row.id}/approve`, {});
+                await loadValuations();
+                toast.success(t('finance.toast.valuationApproved', 'Wycena zatwierdzona'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                );
+              }
+            },
+            colorScheme: 'emerald',
+          });
+        }
+        actionButtons.push({
+          label: t('finance.actions.exportPptx', 'Eksportuj PPTX'),
+          onClick: async () => {
+            try {
+              const result = await Api.post(
+                `/api/economics/valuations/${row.id}/export/pptx`,
+                {
+                  language: isPl ? 'pl' : 'en',
+                  theme: 'corporate',
+                  confidentiality: 'confidential',
+                }
+              );
+              toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
+              const downloadUrl = (result as any)?.downloadUrl;
+              if (downloadUrl) window.open(downloadUrl, '_blank');
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.exportFailed', 'Nie udało się wyeksportować')
+              );
+            }
+          },
+          colorScheme: 'neutral',
+        });
+      }
+
+      if (
+        row.kind !== 'statements' &&
+        (row.kind !== 'prediction' ||
+        (row as FinanceModelRow).predictionType === 'model'
+        )
+      ) {
+        actionButtons.push({
+          label: t('finance.actions.export', 'Eksportuj'),
+          onClick: () => handleExport(row),
+          colorScheme: 'neutral',
+        });
+      }
+
+      actionButtons.push({
+        label: t('common.open', 'Otwórz'),
+        onClick: () => handleOpenFull(row),
+        colorScheme: 'primary',
+        shortcut: 'O',
+      });
+
+      return (
+        <div className="space-y-0">
+          <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+            <PreviewAIHintStrip
+              hints={aiHints}
+              onRunHint={(hint) =>
+                window.location.assign(
+                  `/chat?context=finance&prompt=${encodeURIComponent(hint)}`
+                )
+              }
+            />
           </div>
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+          <PreviewRelations
+            items={relationItems}
+            emptyLabel={t('common.noRelations', 'No relations')}
+          />
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+          <PreviewActionBar rows={[{ buttons: actionButtons }]} />
         </div>
       );
     },
-    [t, isPl, handleOpenFull, loadPredictionPreview, loadAnalyses, loadAnalysisPreviewRatios, loadBudgetPreviewScenarios, loadBudgets, getBudgetRawId, loadValuations, loadValuationPreviewResults]
+    [
+      t,
+      isPl,
+      statementPreviewDetail,
+      handleOpenFull,
+      handleExport,
+      handleCreateModelFromStatement,
+      handleCreateAnalysisFromStatements,
+      loadStatements,
+      loadModels,
+      loadPredictionPreview,
+      loadAnalyses,
+      loadAnalysisPreviewRatios,
+      loadBudgetPreviewScenarios,
+      loadBudgets,
+      getBudgetRawId,
+      loadValuations,
+      loadValuationPreviewResults,
+    ]
   );
 
   return { renderPreviewBody, renderPreviewFooter };

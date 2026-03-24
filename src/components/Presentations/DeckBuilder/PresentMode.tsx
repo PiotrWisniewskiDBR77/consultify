@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
-
 import { CardRenderer } from './CardRenderer';
 
 interface PresentModeProps {
@@ -30,8 +29,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const theme =
-    CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
+  const theme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
 
   const goNext = useCallback(() => {
     if (currentIndex < cards.length - 1 && !isAnimating) {
@@ -117,13 +115,24 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Navigation */}
           <div className="flex items-center justify-between p-3 border-t border-slate-700">
-            <button onClick={goPrev} disabled={currentIndex === 0} className="p-2 rounded-lg text-white hover:bg-slate-700 disabled:opacity-30">
+            <button
+              onClick={goPrev}
+              disabled={currentIndex === 0}
+              className="p-2 rounded-lg text-white hover:bg-slate-700 disabled:opacity-30"
+            >
               <ChevronLeft size={20} />
             </button>
-            <button onClick={onExit} className="p-2 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white">
+            <button
+              onClick={onExit}
+              className="p-2 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white"
+            >
               <X size={20} />
             </button>
-            <button onClick={goNext} disabled={currentIndex === cards.length - 1} className="p-2 rounded-lg text-white hover:bg-slate-700 disabled:opacity-30">
+            <button
+              onClick={goNext}
+              disabled={currentIndex === cards.length - 1}
+              className="p-2 rounded-lg text-white hover:bg-slate-700 disabled:opacity-30"
+            >
               <ChevronRight size={20} />
             </button>
           </div>

@@ -19,6 +19,7 @@ import {
   SendBackSchema,
   UpdateToolSessionSchema,
 } from '../validators/tool.validators.js';
+import { ApproveDoDGateSchema } from '../validators/toolRuntime.validators.js';
 
 const router = Router();
 
@@ -28,6 +29,15 @@ router.use(demoContextMiddleware);
 
 router.post('/', validateBody(CreateToolSessionSchema), ToolController.createToolSession);
 router.get('/', ToolController.listToolSessions);
+/** V4-TOOL-01: Tools hub — sessions + library in one response */
+router.get('/hub', ToolController.getToolsHub);
+router.get('/:toolId/dod-check', ToolController.getToolDoDCheck);
+router.get('/:toolId/dod-status', ToolController.getRuntimeDoDStatus);
+router.post(
+  '/:toolId/dod-gate/:gateId/approve',
+  validateBody(ApproveDoDGateSchema),
+  ToolController.approveDoDGate
+);
 router.get('/:toolId', ToolController.getToolSession);
 router.put('/:toolId', validateBody(UpdateToolSessionSchema), ToolController.updateToolSession);
 router.post(

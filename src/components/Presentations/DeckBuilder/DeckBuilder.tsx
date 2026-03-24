@@ -7,12 +7,14 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { Api } from '@/services/api';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
-
 import { AgentPanel } from './AgentPanel';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
@@ -22,17 +24,16 @@ import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
-import { MOCK_DECK } from './mockDeckData';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
+import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -51,6 +52,7 @@ function deckFromUnifiedJson(params: {
   deckId: string;
   title?: string;
   unifiedJson: unknown;
+  sourceRefs?: Deck['source_refs'];
   orgId?: string;
   createdBy?: string;
   createdAt?: string;
@@ -65,30 +67,34 @@ function deckFromUnifiedJson(params: {
   const intentMap: Record<string, DeckCard['intent']> = {
     cover: 'cover',
     executive_summary: 'executive_summary',
-    section_intro: 'section_divider',
-    key_messages: 'content',
-    performance_overview: 'kpi_dashboard',
-    single_insight: 'data',
+    section_intro: 'section_intro',
+    key_messages: 'key_messages',
+    performance_overview: 'performance_overview',
+    single_insight: 'single_insight',
     comparison: 'comparison',
-    assessment: 'data',
-    roadmap: 'timeline',
-    risk_management: 'risk_overview',
-    recommendation_portfolio: 'recommendation',
-    recommendation_single: 'recommendation',
-    initiative_portfolio: 'content',
+    assessment: 'assessment',
+    roadmap: 'roadmap',
+    risk_management: 'risk_management',
+    recommendation_portfolio: 'recommendation_portfolio',
+    recommendation_single: 'recommendation_portfolio',
+    initiative_portfolio: 'initiative_portfolio',
     next_steps: 'next_steps',
-    appendix: 'content',
-    root_cause: 'content',
-    prioritization_matrix: 'data',
+    appendix: 'appendix',
+    root_cause: 'assessment',
+    prioritization_matrix: 'prioritization_matrix',
   };
 
   const cards: DeckCard[] = parsed.slides.map((slide: any, idx: number) => {
     const cardId = `card-${params.deckId}-${idx}`;
-    const intent = intentMap[String(slide.intent || '')] || 'content';
+    const intent = intentMap[String(slide.intent || '')] || 'key_messages';
     const contentType = String(slide?.content?.type || slide?.intent || '');
 
     const blocks: CardBlock[] = [];
-    const pushBlock = (type: CardBlock['type'], content: Record<string, unknown>, isRefreshable = false) => {
+    const pushBlock = (
+      type: CardBlock['type'],
+      content: Record<string, unknown>,
+      isRefreshable = false
+    ) => {
       blocks.push({
         block_id: `block-${params.deckId}-${idx}-${blocks.length}`,
         card_id: cardId,
@@ -118,7 +124,9 @@ function deckFromUnifiedJson(params: {
       const parts = [subtitle, org, date, conf].filter(Boolean);
       if (parts.length) pushBlock('paragraph', { text: parts.join(' · ') });
     } else if (contentType === 'executive_summary') {
-      const findings = Array.isArray(slide?.content?.key_findings) ? slide.content.key_findings : [];
+      const findings = Array.isArray(slide?.content?.key_findings)
+        ? slide.content.key_findings
+        : [];
       if (findings.length) pushBlock('bullet_list', { items: findings.map((x: any) => String(x)) });
       const kpis = Array.isArray(slide?.content?.kpis) ? slide.content.kpis : [];
       if (kpis.length) {
@@ -134,18 +142,20 @@ function deckFromUnifiedJson(params: {
           true
         );
       }
-      if (slide?.content?.recommendation) pushBlock('callout', { text: String(slide.content.recommendation), kind: 'info' });
+      if (slide?.content?.recommendation)
+        pushBlock('callout', { text: String(slide.content.recommendation), kind: 'info' });
     } else if (contentType === 'key_messages') {
       const msgs = Array.isArray(slide?.content?.messages) ? slide.content.messages : [];
       if (msgs.length) {
-        pushBlock(
-          'bullet_list',
-          {
-            items: msgs.slice(0, 10).map((m: any) =>
-              m?.description ? `${String(m.title || '')}: ${String(m.description)}` : String(m?.title || m)
+        pushBlock('bullet_list', {
+          items: msgs
+            .slice(0, 10)
+            .map((m: any) =>
+              m?.description
+                ? `${String(m.title || '')}: ${String(m.description)}`
+                : String(m?.title || m)
             ),
-          }
-        );
+        });
       }
     } else if (contentType === 'performance_overview') {
       const kpis = Array.isArray(slide?.content?.kpis) ? slide.content.kpis : [];
@@ -167,12 +177,19 @@ function deckFromUnifiedJson(params: {
     } else if (contentType === 'single_insight') {
       const insight = slide?.content?.insight_text ? String(slide.content.insight_text) : '';
       if (insight) pushBlock('callout', { text: insight, kind: 'info' });
-      if (slide?.content?.chart_data) pushBlock('chart', { chartType: slide?.content?.chart_type || 'bar', data: slide.content.chart_data }, true);
+      if (slide?.content?.chart_data)
+        pushBlock(
+          'chart',
+          { chartType: slide?.content?.chart_type || 'bar', data: slide.content.chart_data },
+          true
+        );
     } else {
       // Generic fallback (still editable)
       try {
         const pretty = JSON.stringify(slide?.content ?? slide, null, 2);
-        pushBlock('paragraph', { text: pretty.length > 1200 ? `${pretty.slice(0, 1200)}…` : pretty });
+        pushBlock('paragraph', {
+          text: pretty.length > 1200 ? `${pretty.slice(0, 1200)}…` : pretty,
+        });
       } catch {
         pushBlock('paragraph', { text: String(slide?.key_message || '') });
       }
@@ -185,12 +202,20 @@ function deckFromUnifiedJson(params: {
       deck_id: params.deckId,
       order_index: idx,
       intent,
-      layout_id: intent === 'cover' ? 'cover_centered' : intent === 'kpi_dashboard' ? 'data_grid' : 'content_full',
+      layout_id:
+        intent === 'cover'
+          ? 'cover_centered'
+          : intent === 'performance_overview'
+            ? 'data_grid'
+            : 'content_full',
       title: String(headingText || 'Slide'),
       blocks,
       source_refs: [],
       has_refreshable_data: hasRefreshable,
-      background: { type: intent === 'cover' ? 'gradient' : 'theme', value: intent === 'cover' ? 'linear-gradient(135deg, #0B3D91, #1A8A8A)' : undefined },
+      background: {
+        type: intent === 'cover' ? 'gradient' : 'theme',
+        value: intent === 'cover' ? 'linear-gradient(135deg, #0B3D91, #1A8A8A)' : undefined,
+      },
       animations: { entrance: 'fade', block_stagger: false },
       is_locked: false,
     };
@@ -208,7 +233,7 @@ function deckFromUnifiedJson(params: {
     status: params.status || 'draft',
     card_size: '16:9',
     cards,
-    source_refs: [],
+    source_refs: Array.isArray(params.sourceRefs) ? params.sourceRefs : [],
     generation_settings: {
       text_mode: 'preserve',
       content_depth: 'concise',
@@ -227,7 +252,9 @@ function deckFromUnifiedJson(params: {
 }
 
 export const DeckBuilder: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { deckId } = useParams<{ deckId: string }>();
+  const isPolish = i18n.language?.startsWith('pl');
   const {
     deck,
     setDeck,
@@ -246,6 +273,7 @@ export const DeckBuilder: React.FC = () => {
   } = useDeckState(null);
 
   const [loadingDeck, setLoadingDeck] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
 
@@ -260,14 +288,13 @@ export const DeckBuilder: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [deckBacklinks, setDeckBacklinks] = useState<
+    Array<{ id: string; sourceType: string; sourceId: string }>
+  >([]);
+  const [deckBacklinksLoading, setDeckBacklinksLoading] = useState(false);
 
-  const {
-    versions,
-    hasUnsavedChanges,
-    lastSavedAt,
-    restoreVersion,
-    saveManualCheckpoint,
-  } = useVersionHistory(deck);
+  const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
+    useVersionHistory(deck);
 
   const { isCardOutdated, refreshCard, refreshAllCards } = useDataRefresh(deck, updateCard);
 
@@ -282,12 +309,15 @@ export const DeckBuilder: React.FC = () => {
     const load = async () => {
       if (!deckId) return;
       setLoadingDeck(true);
+      setLoadError(null);
       hasLoadedInitialRef.current = false;
       setDeck(null);
 
       try {
         const res = (await Api.get(`/presentations/decks/${deckId}`)) as any;
-        const row = res?.data ?? res;
+        const payload = res?.data;
+        const row =
+          payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
         const title = row?.title ? String(row.title) : undefined;
@@ -300,11 +330,17 @@ export const DeckBuilder: React.FC = () => {
             deck_id: deckId,
             title: title || deckJson.title || 'Untitled',
             status,
+            source_refs: Array.isArray(deckJson.source_refs)
+              ? deckJson.source_refs
+              : Array.isArray(row?.source_refs)
+                ? row.source_refs
+                : [],
             updated_at: row?.updated_at || deckJson.updated_at || new Date().toISOString(),
           };
           if (!cancelled) {
             setDeck(loaded);
             setLoadingDeck(false);
+            setLoadError(null);
             hasLoadedInitialRef.current = true;
           }
           return;
@@ -316,6 +352,7 @@ export const DeckBuilder: React.FC = () => {
           deckId,
           title,
           unifiedJson: unified,
+          sourceRefs: Array.isArray(row?.source_refs) ? row.source_refs : [],
           orgId: row?.organization_id,
           createdBy: row?.generated_by || row?.created_by,
           createdAt: row?.created_at,
@@ -326,30 +363,56 @@ export const DeckBuilder: React.FC = () => {
           if (!cancelled) {
             setDeck(converted);
             setLoadingDeck(false);
+            setLoadError(null);
             hasLoadedInitialRef.current = true;
           }
           return;
         }
 
-        // 3) Final fallback: mock deck (so UI still opens), but keep real deckId/title.
-        const fallback: Deck = {
-          ...MOCK_DECK,
+        // 3) No valid deck data found — show empty deck shell.
+        const nowIso = new Date().toISOString();
+        const emptyDeck: Deck = {
           deck_id: deckId,
-          title: title || MOCK_DECK.title || 'Untitled',
+          organization_id: String(row?.organization_id || ''),
+          title: title || 'Untitled',
+          theme_id: 'default',
+          presentation_mode: 'show',
+          communication_register: 'professional',
+          image_style_preset: 'minimal_no_images',
+          color_set_id: 'midnight_navy',
           status,
-          updated_at: row?.updated_at || new Date().toISOString(),
-        } as Deck;
+          card_size: '16:9',
+          cards: [],
+          source_refs: Array.isArray(row?.source_refs) ? row.source_refs : [],
+          generation_settings: {
+            text_mode: 'preserve',
+            content_depth: 'concise',
+            audience: 'internal',
+            tone: 'professional',
+            language: 'en',
+            image_source: 'none',
+          },
+          animations_enabled: true,
+          share_settings: { is_shared: false, permissions: 'view' },
+          speaker_notes_generated: false,
+          created_by: String(row?.generated_by || row?.created_by || ''),
+          created_at: String(row?.created_at || nowIso),
+          updated_at: String(row?.updated_at || nowIso),
+        };
         if (!cancelled) {
-          setDeck(fallback);
+          setDeck(emptyDeck);
           setLoadingDeck(false);
+          setLoadError(null);
           hasLoadedInitialRef.current = true;
+          toast.error('Deck has no content yet. Generate slides first.');
         }
       } catch (e: any) {
         if (!cancelled) {
-          toast.error(e?.message ? String(e.message) : 'Failed to load presentation deck');
-          setDeck({ ...(MOCK_DECK as any), deck_id: deckId || 'unknown' });
+          const message = e?.message ? String(e.message) : 'Failed to load presentation deck';
+          toast.error(message);
+          setDeck(null);
           setLoadingDeck(false);
-          hasLoadedInitialRef.current = true;
+          setLoadError(message);
         }
       }
     };
@@ -375,7 +438,10 @@ export const DeckBuilder: React.FC = () => {
 
     autosaveTimerRef.current = setTimeout(async () => {
       try {
-        await Api.put(`/presentations/decks/${deckForAutosave.deckId}/autosave`, deckForAutosave.deck);
+        await Api.put(
+          `/presentations/decks/${deckForAutosave.deckId}/autosave`,
+          deckForAutosave.deck
+        );
       } catch {
         // Non-blocking; builder remains usable offline-ish.
       }
@@ -402,6 +468,26 @@ export const DeckBuilder: React.FC = () => {
     collab.updatePresence({ activeCardIndex });
   }, [activeCardIndex, collab]);
 
+  useEffect(() => {
+    const targetDeckId = String(deckId || deck?.deck_id || '').trim();
+    if (!targetDeckId) return;
+    setDeckBacklinksLoading(true);
+    Api.getLinkGraphBacklinks({ type: 'presentation', id: targetDeckId, limit: 50 })
+      .then((rows: any) => {
+        setDeckBacklinks(
+          (Array.isArray(rows) ? rows : [])
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+            }))
+            .filter((x) => x.sourceType && x.sourceId)
+        );
+      })
+      .catch(() => setDeckBacklinks([]))
+      .finally(() => setDeckBacklinksLoading(false));
+  }, [deck?.deck_id, deckId]);
+
   const handleTitleChange = useCallback(
     (title: string) => {
       setDeck((prev) => (prev ? { ...prev, title } : prev));
@@ -416,7 +502,7 @@ export const DeckBuilder: React.FC = () => {
         card_id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         deck_id: deck?.deck_id || '',
         order_index: idx,
-        intent: 'content',
+        intent: 'key_messages',
         layout_id: 'content_full',
         title: 'New Slide',
         blocks: [],
@@ -466,15 +552,34 @@ export const DeckBuilder: React.FC = () => {
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
-        const response = await fetch(`/api/presentations/decks/${deck.deck_id}/export/${format}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
+        const request =
+          format === 'pptx'
+            ? {
+                url: `/api/presentations/decks/${deck.deck_id}/download`,
+                init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
+                extension: 'pptx',
+              }
+            : format === 'png'
+              ? {
+                  url: `/api/presentations/decks/${deck.deck_id}/export/png`,
+                  init: {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                  },
+                  extension: 'zip',
+                }
+              : {
+                  url: `/api/presentations/decks/${deck.deck_id}/export/pdf`,
+                  init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
+                  extension: 'pdf',
+                };
+        const response = await fetch(request.url, request.init);
         if (!response.ok) throw new Error('Export failed');
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${deck.title || 'presentation'}.${format}`;
+        a.download = `${deck.title || 'presentation'}.${request.extension}`;
         a.click();
         window.URL.revokeObjectURL(url);
       } catch {
@@ -493,13 +598,48 @@ export const DeckBuilder: React.FC = () => {
   );
 
   const handleAiPrompt = useCallback(
-    (_prompt: string) => {
-      setAgentOpen(true);
+    async (prompt: string) => {
+      if (!deck) return { reply: 'No deck loaded.' };
+      const res = (await Api.post(`/presentations/decks/${deck.deck_id}/agent-edit`, {
+        prompt,
+      })) as any;
+      const payload = res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
+      const nextDeck = payload?.deck;
+      if (nextDeck) {
+        setDeck(nextDeck);
+      }
+      return {
+        reply:
+          payload?.reply ||
+          (isPolish
+            ? 'Zastosowałem zmiany w decku.'
+            : 'I applied the requested changes to the deck.'),
+      };
     },
-    []
+    [deck, isPolish, setDeck]
   );
 
   if (loadingDeck || !deck) {
+    if (!loadingDeck && loadError) {
+      return (
+        <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
+          <div className="max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-center shadow-xl">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Failed to load deck
+            </h1>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
         <div className="animate-pulse text-slate-400">Loading deck...</div>
@@ -545,10 +685,46 @@ export const DeckBuilder: React.FC = () => {
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
           />
-          <ThemeSwitcher
-            isOpen={themeSwitcherOpen}
-            onClose={() => setThemeSwitcherOpen(false)}
-          />
+          <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
+        </div>
+
+        <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/40 px-4 py-2">
+          <EmbeddedView
+            title={t('presentations.builder.usedIn', 'Used in (backlinks)')}
+            count={deckBacklinks.length}
+            loading={deckBacklinksLoading}
+            readOnly
+            viewModes={['list']}
+          >
+            {deckBacklinks.length === 0 && !deckBacklinksLoading ? (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Brak powiązań' : 'No links yet'}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {deckBacklinks.slice(0, 8).map((bl) => (
+                  <button
+                    key={bl.id}
+                    type="button"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: bl.sourceType,
+                            id: bl.sourceId,
+                            name: `${bl.sourceType} ${bl.sourceId}`,
+                          },
+                        })
+                      )
+                    }
+                    className="rounded-full border border-slate-200 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500/50"
+                  >
+                    {getSourceDisplayLabel(bl.sourceType, i18n.language === 'pl')}: {bl.sourceId}
+                  </button>
+                ))}
+              </div>
+            )}
+          </EmbeddedView>
         </div>
 
         {/* Main Content */}
@@ -642,6 +818,7 @@ export const DeckBuilder: React.FC = () => {
         <ShareModal
           isOpen={shareModalOpen}
           onClose={() => setShareModalOpen(false)}
+          deckId={deck.deck_id}
           deckTitle={deck.title}
           onExport={handleExport}
         />
@@ -688,7 +865,12 @@ function getDefaultContent(blockType: string): Record<string, unknown> {
     case 'kpi_widget':
       return { label: 'Metric', value: '0', trend: 'stable' };
     case 'metric_strip':
-      return { metrics: [{ label: 'A', value: '0' }, { label: 'B', value: '0' }] };
+      return {
+        metrics: [
+          { label: 'A', value: '0' },
+          { label: 'B', value: '0' },
+        ],
+      };
     case 'callout':
       return { variant: 'info', text: 'Important note' };
     case 'smart_layout':
@@ -699,7 +881,13 @@ function getDefaultContent(blockType: string): Record<string, unknown> {
         items: [{ label: 'Step 1' }, { label: 'Step 2' }, { label: 'Step 3' }],
       };
     case 'timeline_block':
-      return { items: [{ date: 'Q1', title: 'Start' }, { date: 'Q2', title: 'Mid' }, { date: 'Q3', title: 'End' }] };
+      return {
+        items: [
+          { date: 'Q1', title: 'Start' },
+          { date: 'Q2', title: 'Mid' },
+          { date: 'Q3', title: 'End' },
+        ],
+      };
     case 'divider':
       return { style: 'line' };
     case 'image':

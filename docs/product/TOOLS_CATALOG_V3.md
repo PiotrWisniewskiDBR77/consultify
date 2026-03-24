@@ -198,3 +198,15 @@ Poniżej mapujemy Twoją listę (z mapy) na aktualny kod i to-be v3.
 3. **Workspace tools panel**: wspólny shell (`WorkspaceTools`) + sekcje shared + sekcje per-workspace.
 4. **Konwersje muszą być spójne**: “Create from … / Convert to …” zawsze w panelu narzędzi lub w kanonicznym miejscu na ekranie.
 
+
+---
+
+## 5) V8 Program Decisions
+
+### 5.1 Classic framework templates registry
+
+> V8 Decision W7-5 applied — 2026-03-23
+
+The Known Tools table is the primary shared registry for all tool types, including classic framework templates. Do not create a disconnected parallel registry unless a later scale problem forces it. Classic framework templates (the 60 frameworks from `CONSULTING_TEMPLATES_LIBRARY_V3.md`) live as a typed family/subtype inside the shared tools registry.
+
+Rule: `one shared registry, typed families`. Templates are stored in the same `tools` table with a `tool_class` or family/subtype discriminator, not in a separate catalog surface.

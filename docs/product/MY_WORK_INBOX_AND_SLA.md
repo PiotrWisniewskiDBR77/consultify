@@ -7,6 +7,12 @@ This document defines:
 - how SLA, reminders, and escalations work
 - how Inbox enforces governance and decisions
 
+Canonical v8 runtime extensions for this area now live in:
+
+- `docs/product/PROJECT_TASKS_AND_WORKFLOW_SOFTS_BENCHMARK_V8.md`
+- `docs/product/INBOX_AND_WORKFLOW_RUNTIME_CONTRACT_V8.md`
+- `docs/product/INTAKE_AND_TRIAGE_RUNTIME_V8.md`
+
 Inbox is a **control mechanism**, not a task list.
 
 ---
@@ -134,4 +140,30 @@ AI Assistant:
 Users cannot ignore Inbox:
 - unread critical items persist
 - system reminds until resolved
+
+---
+
+## 9. V8 Program Decisions
+
+### 9.1 Cross-surface state propagation
+
+> V8 Decision W7-1 applied — 2026-03-23
+
+One object keeps one canonical state across Home, Calendar, and Inbox. Surfaces may show different projections, not different truths. Deduplication by canonical object identity; state updates propagate to all surfaces. Surface-local UI state may differ; object state may not. Inbox may hold pre-materialized intake state, but once promoted, canonical object truth wins.
+
+Triage actions in Inbox (e.g. `schedule`, `delegate`, `done`) are authoritative state changes. Home and Calendar must reflect the resulting state.
+
+### 9.2 Inbox materialization model
+
+> V8 Decision W7-3 applied — 2026-03-23
+
+Inbox materialization is event-driven through the notification/signal spine. Latency targets:
+
+| Level | Latency |
+|---|---|
+| Target | Near-real-time |
+| Acceptable operational | ≤ 60 seconds |
+| Degraded but acceptable | ≤ 5 minutes |
+
+Beyond degraded threshold, the surface must show delayed/degraded state honestly. Inbox items are not polled — they are materialized from upstream events (execution signals, AI proposals, async notifications).
 

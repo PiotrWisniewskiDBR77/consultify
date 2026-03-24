@@ -60,6 +60,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [isPending, setIsPending] = useState(false);
   const [showDemoRedirect, setShowDemoRedirect] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
 
   // --- QUICK ACCESS BACKDOOR (Dev only) ---
   const [showQuickAccess, setShowQuickAccess] = useState(false);
@@ -68,19 +69,25 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   // Quick access login handler (dev/staging: 4-digit codes 7777/7776/7778)
   const handleQuickAccess = async (code: string) => {
-    const quickAccessCodes: Record<string, { email: string; password: string }> = {
+    const quickAccessCodes: Record<string, { email: string; password: string } | { demo: true }> = {
       '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
       '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
       '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
       '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
-      '7778': { email: 'piotr.wisniewski@demo.com', password: '123456' }, // Demo
+      // Demo uses a dedicated endpoint (doesn't rely on seeded user credentials).
+      '7778': { demo: true },
     };
 
     const credentials = quickAccessCodes[code];
     if (credentials) {
       setIsDemoLoading(true);
       try {
-        const user = await Api.login(credentials.email, credentials.password);
+        let user;
+        if ('email' in credentials) {
+          user = await Api.login(credentials.email, credentials.password);
+        } else {
+          user = await Api.demoLogin();
+        }
         onAuthSuccess(user);
       } catch (err: any) {
         setError('Quick access failed: ' + err.message);
@@ -97,14 +104,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   }, [showQuickAccess]);
 
-  // Auto-trigger demo redirect when in DEMO mode
-  // Auto-trigger demo Login when in DEMO mode
-  React.useEffect(() => {
-    if (targetMode === SessionMode.DEMO) {
-      // Auto-login for seamless demo experience
-      startDemo();
-    }
-  }, [targetMode]);
+  // When targetMode === DEMO: show signup/login form (no anonymous demo)
+  // User must sign up or log in to try demo — we track duration and contact for follow-up
 
   // OAuth Login Handlers
   const handleGoogleLogin = () => {
@@ -162,6 +163,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Demo mode or from demo redirect: use register-demo (minimal signup, demo org, track contact)
+    if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
+      setIsDemoLoading(true);
+      try {
+        const { user } = await Api.registerDemo({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName || undefined,
+        });
+        onAuthSuccess({ ...user, hasWorkspace: true } as any);
+      } catch (err: any) {
+        setError(err?.message || 'Demo signup failed');
+      } finally {
+        setIsDemoLoading(false);
+      }
+      return;
+    }
+
     // Check if email is from DBR77 domain
     if (!isDBR77Domain(formData.email)) {
       // Non-DBR77 users should use demo mode
@@ -201,41 +220,52 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   };
 
-  const startDemo = async () => {
-    setIsDemoLoading(true);
-    try {
-      // Use the new demo login endpoint
-      const user = await Api.demoLogin();
-      onAuthSuccess(user);
-    } catch (err: any) {
-      setError('Failed to start demo: ' + err.message);
-    } finally {
-      setIsDemoLoading(false);
+  const startDemoFlow = () => {
+    setFromDemoRedirect(true);
+    setError(null);
+    if (step === AuthStep.REGISTER) {
+      // Already on register — will use registerDemo on submit
+      return;
     }
+    setStep(AuthStep.REGISTER);
   };
 
   // Handle demo redirect for non-DBR77 users
-  const handleDemoRedirect = async () => {
-    setIsDemoLoading(true);
-    try {
-      const user = await Api.demoLogin();
-      onAuthSuccess(user);
-    } catch (err: any) {
-      setError('Failed to start demo: ' + err.message);
-      setShowDemoRedirect(false);
-    } finally {
-      setIsDemoLoading(false);
-    }
+  const handleDemoRedirectToForm = () => {
+    setFromDemoRedirect(true);
+    setShowDemoRedirect(false);
+    setStep(AuthStep.REGISTER);
+    setError(null);
+  };
+
+  const handleDemoRedirectToLogin = () => {
+    setFromDemoRedirect(true);
+    setShowDemoRedirect(false);
+    setStep(AuthStep.LOGIN);
+    setError(null);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    console.log('handleLogin called with:', formData.email);
 
-    // Validate input
     if (!formData.email || !formData.password) {
       setError('Email and password are required');
+      return;
+    }
+
+    // Demo mode or from demo redirect: login then enter demo
+    if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
+      setIsDemoLoading(true);
+      try {
+        const user = await Api.login(formData.email, formData.password);
+        await Api.enterDemo();
+        onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
+      } catch (err: any) {
+        setError(err?.message || 'Login failed');
+      } finally {
+        setIsDemoLoading(false);
+      }
       return;
     }
 
@@ -341,54 +371,31 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto leading-relaxed">
           {t(
-            'auth.demoModeDescription',
-            'For commercial purposes, please contact our sales team. You can explore the platform in demo mode now.'
+            'auth.demoModeDescriptionSigned',
+            'Sign up or log in to try the demo. We will follow up with you.'
           )}
         </p>
       </div>
-
-      {/* Demo Credentials Info */}
-      <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-xl p-4 border border-indigo-200 dark:border-indigo-500/20">
-        <p className="text-sm text-indigo-800 dark:text-indigo-300 text-center">
-          <span className="font-medium">{t('auth.loginAs', 'You will be logged in as:')}</span>
-          <br />
-          <code className="text-indigo-600 dark:text-indigo-400 font-mono">
-            demo@consultify.com
-          </code>
-        </p>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm justify-center bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/20">
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
 
       <div className="flex flex-col gap-3">
         <button
-          onClick={handleDemoRedirect}
-          disabled={isDemoLoading}
-          className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+          onClick={handleDemoRedirectToForm}
+          className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
         >
-          {isDemoLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              {t('auth.loading', 'Loading...')}
-            </>
-          ) : (
-            <>
-              {t('auth.enterDemo', 'Enter Demo Mode')}
-              <ArrowRight size={16} />
-            </>
-          )}
+          {t('auth.signUpForDemo', 'Sign up for Demo')}
+          <ArrowRight size={16} />
         </button>
-
+        <button
+          onClick={handleDemoRedirectToLogin}
+          className="w-full py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-navy-900 dark:text-white font-semibold rounded-lg hover:border-purple-300 dark:hover:border-purple-500/30 transition-all"
+        >
+          {t('auth.logInForDemo', 'Log in for Demo')}
+        </button>
         <a
           href="https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-navy-900 dark:text-white font-semibold rounded-lg hover:border-purple-300 dark:hover:border-purple-500/30 transition-all text-center text-sm"
+          className="w-full py-2.5 bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-all text-center text-sm"
         >
           {t('auth.contactSales', 'Contact Sales for Full Access')}
         </a>
@@ -397,6 +404,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <button
         onClick={() => {
           setShowDemoRedirect(false);
+          setFromDemoRedirect(false);
           setError(null);
         }}
         className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-medium hover:underline text-sm transition-colors"
@@ -612,7 +620,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
           <button
-            onClick={startDemo}
+            onClick={startDemoFlow}
             className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-medium hover:underline flex items-center justify-center gap-1 mx-auto transition-colors"
           >
             {t('auth.tryDemo')}
@@ -762,12 +770,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             title="DBR77"
           >
             <img
-              src="/assets/logos/logo-dark.svg"
+              src="/assets/logos/logo-dark.svg?v=20260319"
               className="h-16 md:h-20 w-auto object-contain hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
               alt="Consultify"
             />
             <img
-              src="/assets/logos/logo-light.svg"
+              src="/assets/logos/logo-light.svg?v=20260319"
               className="h-16 md:h-20 w-auto object-contain block dark:hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
               alt="Consultify"
             />

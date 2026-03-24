@@ -15,6 +15,13 @@ import { Response, Router } from 'express';
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import {
+  getAllOrgPolicies,
+  getOrgPolicy,
+  requireNoLegalHold,
+  upsertOrgPolicy,
+} from '../services/OrgPoliciesService.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
@@ -54,9 +61,76 @@ router.put(
 router.delete(
   '/organizations/:id',
   requireConfirmation('delete_organization', 'critical'),
-  SuperAdminController.deleteOrganization
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    try {
+      await requireNoLegalHold(req.params.id, 'Organization deletion');
+    } catch (e: any) {
+      if (e?.code === 'LEGAL_HOLD') {
+        return res.status(403).json({ error: e.message, code: 'LEGAL_HOLD' });
+      }
+      throw e;
+    }
+    return SuperAdminController.deleteOrganization(req, res, next);
+  })
 );
 router.get('/organizations/:id/billing', SuperAdminController.getOrgBilling);
+
+// ==========================================
+// ORG POLICIES (V4-ENT-04) — retention, legal hold, residency
+// ==========================================
+
+router.get(
+  '/org-policies',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const policies = await getAllOrgPolicies();
+    res.json({ policies });
+  })
+);
+
+router.get(
+  '/org-policies/:orgId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const policy = await getOrgPolicy(req.params.orgId);
+    if (!policy) return res.status(404).json({ error: 'Policy not found' });
+    res.json(policy);
+  })
+);
+
+router.put(
+  '/org-policies/:orgId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { retentionDays, legalHoldEnabled, residencyRegion } = req.body || {};
+    const before = await getOrgPolicy(req.params.orgId);
+    const policy = await upsertOrgPolicy(req.params.orgId, {
+      retentionDays: retentionDays != null ? Number(retentionDays) : undefined,
+      legalHoldEnabled:
+        legalHoldEnabled !== undefined ? Boolean(legalHoldEnabled) : undefined,
+      residencyRegion:
+        residencyRegion !== undefined ? (residencyRegion === null ? null : String(residencyRegion)) : undefined,
+    });
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: before ? 'update' : 'create',
+      resourceType: 'org_policy',
+      resourceId: req.params.orgId,
+      before: before
+        ? {
+            retentionDays: before.retention_days,
+            legalHoldEnabled: Boolean(before.legal_hold_enabled),
+            residencyRegion: before.residency_region,
+          }
+        : undefined,
+      after: {
+        retentionDays: policy.retention_days,
+        legalHoldEnabled: Boolean(policy.legal_hold_enabled),
+        residencyRegion: policy.residency_region,
+      },
+      metadata: { organizationId: req.params.orgId },
+    });
+    res.json(policy);
+  })
+);
 
 // ==========================================
 // USERS

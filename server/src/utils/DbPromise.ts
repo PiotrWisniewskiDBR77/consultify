@@ -73,7 +73,40 @@ interface DbLogger {
 // CONSTANTS
 // ==========================================
 
-const DEFAULT_TIMEOUT = 5000; // 5 seconds
+const DEFAULT_TIMEOUT = Number(process.env.DB_QUERY_TIMEOUT) || 15000;
+
+// ==========================================
+// PLACEHOLDER TRANSLATION
+// ==========================================
+
+/**
+ * Translates SQLite-style `?` placeholders to Postgres-style `$1`, `$2`, ...
+ * Only translates `?` that are NOT inside string literals (single quotes).
+ * If the SQL already contains `$1` (Postgres-style), it's returned unchanged.
+ */
+function translatePlaceholders(sql: string): string {
+  if (/\$\d+/.test(sql)) return sql;
+
+  let counter = 0;
+  let inString = false;
+  let result = '';
+
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql[i];
+
+    if (char === "'" && sql[i - 1] !== '\\') {
+      inString = !inString;
+      result += char;
+    } else if (char === '?' && !inString) {
+      counter++;
+      result += `$${counter}`;
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
+}
 
 // ==========================================
 // LOGGER
@@ -139,6 +172,7 @@ export function all<T = any>(
   }
 
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
+  sql = translatePlaceholders(sql);
 
   return new Promise<T[]>((resolve, reject) => {
     // Timeout protection
@@ -247,6 +281,7 @@ export function get<T = any>(
   }
 
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
+  sql = translatePlaceholders(sql);
 
   return new Promise<T | null>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -325,6 +360,7 @@ export function run(
   }
 
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
+  sql = translatePlaceholders(sql);
 
   return new Promise<RunResult>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -403,13 +439,16 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
 }
 
 /**
- * Check if a table exists (PostgreSQL)
+ * Check if a table exists (PostgreSQL).
+ * Tables prefixed with `v8_` are looked up in the `v8` schema first,
+ * then fall back to `public`. All other tables check `public` only.
  */
 export async function tableExists(tableName: string): Promise<boolean> {
+  const schemas = tableName.startsWith('v8_') ? ['v8', 'public'] : ['public'];
   const result = await get<{ table_name: string }>(
-    `SELECT table_name FROM information_schema.tables 
-     WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name = $1`,
-    [tableName]
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = ANY($1) AND table_type = 'BASE TABLE' AND table_name = $2`,
+    [schemas, tableName]
   );
   return result !== null;
 }

@@ -28,7 +28,10 @@ export const MetricStripBlock: React.FC<Props> = ({ block, theme }) => {
           className="flex-1 text-center p-3 rounded-lg"
           style={{ backgroundColor: theme.colors.primary + '06' }}
         >
-          <p className="text-[10px] font-medium mb-0.5" style={{ color: theme.colors.textSecondary }}>
+          <p
+            className="text-[10px] font-medium mb-0.5"
+            style={{ color: theme.colors.textSecondary }}
+          >
             {m.label}
           </p>
           <p className="text-xl font-bold" style={{ color: theme.colors.heading }}>

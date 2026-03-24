@@ -48,7 +48,9 @@ export const CustomerSuccessNotesView: React.FC = () => {
     setLoading(true);
     try {
       const data = await Api.getCustomerSuccessNotes(selectedOrgId);
-      const normalized = Array.isArray(data) ? data : (data as any)?.notes || (data as any)?.items || [];
+      const normalized = Array.isArray(data)
+        ? data
+        : (data as any)?.notes || (data as any)?.items || [];
       setNotes(normalized);
     } catch (err) {
       toast.error('Failed to fetch notes');

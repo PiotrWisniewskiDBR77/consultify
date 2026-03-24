@@ -41,16 +41,14 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
           connectionStatus === 'connected'
             ? 'bg-green-50 text-green-600'
             : connectionStatus === 'connecting'
-            ? 'bg-amber-50 text-amber-600'
-            : connectionStatus === 'error'
-            ? 'bg-red-50 text-red-600'
-            : 'bg-slate-100 text-slate-400'
+              ? 'bg-amber-50 text-amber-600'
+              : connectionStatus === 'error'
+                ? 'bg-red-50 text-red-600'
+                : 'bg-slate-100 text-slate-400'
         }`}
       >
         {isConnected ? <Wifi size={10} /> : <WifiOff size={10} />}
-        {connectionStatus === 'connected' && users.length > 0 && (
-          <span>{users.length + 1}</span>
-        )}
+        {connectionStatus === 'connected' && users.length > 0 && <span>{users.length + 1}</span>}
       </div>
 
       {/* User avatars */}

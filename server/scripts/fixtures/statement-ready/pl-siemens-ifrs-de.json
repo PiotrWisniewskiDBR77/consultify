@@ -1,0 +1,9 @@
+{
+  "name": "siemens-konzern-guv-2024",
+  "fileName": "Siemens-Jahresfinanzbericht-GJ2024.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 18,
+  "expectedMinMapped": 14,
+  "text": "Siemens Aktiengesellschaft\nKonzern-Gewinn- und Verlustrechnung\nfür das Geschäftsjahr vom 1. Oktober 2023 bis 30. September 2024\n(in Mio. EUR)\n\n2024 2023\n\nUmsatzerlöse 75.900 77.769\nUmsatzkosten -51.200 -53.400\nBruttoergebnis vom Umsatz 24.700 24.369\n\nForschungs- und Entwicklungskosten -6.400 -6.100\nVertriebskosten -8.900 -8.700\nAllgemeine Verwaltungskosten -3.200 -3.100\nSonstige betriebliche Erträge 1.150 980\nSonstige betriebliche Aufwendungen -1.850 -1.650\n\nErgebnis aus nach der Equity-Methode bilanzierten Beteiligungen 2.100 1.800\n\nErgebnis vor Finanzergebnis und Ertragsteuern (EBIT) 7.600 7.599\n\nFinanzerträge 850 720\nFinanzaufwendungen -1.200 -1.100\nFinanzergebnis -350 -380\n\nErgebnis vor Ertragsteuern 7.250 7.219\n\nErtragsteuern -1.750 -1.680\n\nErgebnis nach Steuern 5.500 5.539\n\ndavon Aktionären der Siemens AG zuzurechnen 5.200 5.249\ndavon nicht beherrschenden Anteilen zuzurechnen 300 290\n\nErgebnis je Aktie (unverwässert) in EUR 6.56 6.49\nErgebnis je Aktie (verwässert) in EUR 6.51 6.43\n\nSonstiges Ergebnis nach Steuern -980 -750\n\nGesamtergebnis 4.520 4.789"
+}

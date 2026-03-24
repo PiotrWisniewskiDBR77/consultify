@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { getFinOpsOverview } from '../../services/ai/llmFinOpsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -47,6 +48,28 @@ async function getOrganizationBudget(
  * Get AI cost breakdown
  */
 router.get(
+  '/finops/overview',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const organizationId = req.user?.organizationId;
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const overview = await getFinOpsOverview(organizationId);
+      return res.json({ success: true, overview });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIAnalytics',
+          `finops overview error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      return res.status(500).json({ error: 'Failed to fetch FinOps overview' });
+    }
+  })
+);
+
+router.get(
   '/costs',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
@@ -63,35 +86,38 @@ router.get(
       else if (period === '90d') daysBack = 90;
       else if (period === '1y') daysBack = 365;
 
-      // Get cost data from ai_audit_logs
+      const costExpr = 'COALESCE(estimated_cost_usd, cost_usd, 0)';
+      const capabilityExpr = "COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown')";
+
+      // Get cost data from ai_usage_logs (runtime SSOT)
       let sql = '';
       if (groupBy === 'day') {
         sql = `
                 SELECT 
-                    DATE(timestamp) as date,
+                    DATE(created_at) as date,
                     SUM(tokens_used) as total_tokens,
-                    SUM(cost_usd) as total_cost,
+                    SUM(${costExpr}) as total_cost,
                     COUNT(*) as request_count,
-                    capability,
+                    ${capabilityExpr} as capability,
                     model
-                FROM ai_audit_logs
+                FROM ai_usage_logs
                 WHERE organization_id = ?
-                AND timestamp > datetime('now', '-${daysBack} days')
-                GROUP BY DATE(timestamp), capability
+                AND created_at > datetime('now', '-${daysBack} days')
+                GROUP BY DATE(created_at), ${capabilityExpr}, model
                 ORDER BY date DESC
             `;
       } else if (groupBy === 'capability') {
         sql = `
                 SELECT 
-                    capability,
+                    ${capabilityExpr} as capability,
                     SUM(tokens_used) as total_tokens,
-                    SUM(cost_usd) as total_cost,
+                    SUM(${costExpr}) as total_cost,
                     COUNT(*) as request_count,
                     AVG(latency_ms) as avg_latency
-                FROM ai_audit_logs
+                FROM ai_usage_logs
                 WHERE organization_id = ?
-                AND timestamp > datetime('now', '-${daysBack} days')
-                GROUP BY capability
+                AND created_at > datetime('now', '-${daysBack} days')
+                GROUP BY ${capabilityExpr}
                 ORDER BY total_cost DESC
             `;
       } else if (groupBy === 'model') {
@@ -99,12 +125,12 @@ router.get(
                 SELECT 
                     model,
                     SUM(tokens_used) as total_tokens,
-                    SUM(cost_usd) as total_cost,
+                    SUM(${costExpr}) as total_cost,
                     COUNT(*) as request_count,
                     AVG(latency_ms) as avg_latency
-                FROM ai_audit_logs
+                FROM ai_usage_logs
                 WHERE organization_id = ?
-                AND timestamp > datetime('now', '-${daysBack} days')
+                AND created_at > datetime('now', '-${daysBack} days')
                 GROUP BY model
                 ORDER BY total_cost DESC
             `;
@@ -117,13 +143,13 @@ router.get(
         `
             SELECT 
                 SUM(tokens_used) as total_tokens,
-                SUM(cost_usd) as total_cost,
+                SUM(COALESCE(estimated_cost_usd, cost_usd, 0)) as total_cost,
                 COUNT(*) as total_requests,
                 AVG(latency_ms) as avg_latency,
-                SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests
-            FROM ai_audit_logs
+                SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_requests
+            FROM ai_usage_logs
             WHERE organization_id = ?
-            AND timestamp > datetime('now', '-${daysBack} days')
+            AND created_at > datetime('now', '-${daysBack} days')
         `,
         [organizationId]
       )) as {
@@ -199,11 +225,11 @@ router.get(
                 u.email,
                 COUNT(*) as request_count,
                 SUM(a.tokens_used) as total_tokens,
-                SUM(a.cost_usd) as total_cost
-            FROM ai_audit_logs a
+                SUM(COALESCE(a.estimated_cost_usd, a.cost_usd, 0)) as total_cost
+            FROM ai_usage_logs a
             LEFT JOIN users u ON a.user_id = u.id
             WHERE a.organization_id = ?
-            AND a.timestamp > datetime('now', '-${daysBack} days')
+            AND a.created_at > datetime('now', '-${daysBack} days')
             GROUP BY a.user_id
             ORDER BY total_tokens DESC
             LIMIT 20
@@ -215,14 +241,14 @@ router.get(
       const dailyTrends = await dbAll(
         `
             SELECT 
-                DATE(timestamp) as date,
+                DATE(created_at) as date,
                 COUNT(*) as requests,
                 SUM(tokens_used) as tokens,
-                SUM(cost_usd) as cost
-            FROM ai_audit_logs
+                SUM(COALESCE(estimated_cost_usd, cost_usd, 0)) as cost
+            FROM ai_usage_logs
             WHERE organization_id = ?
-            AND timestamp > datetime('now', '-${daysBack} days')
-            GROUP BY DATE(timestamp)
+            AND created_at > datetime('now', '-${daysBack} days')
+            GROUP BY DATE(created_at)
             ORDER BY date ASC
         `,
         [organizationId]
@@ -232,13 +258,13 @@ router.get(
       const capabilityDistribution = await dbAll(
         `
             SELECT 
-                capability,
+                COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown') as capability,
                 COUNT(*) as count,
                 SUM(tokens_used) as tokens
-            FROM ai_audit_logs
+            FROM ai_usage_logs
             WHERE organization_id = ?
-            AND timestamp > datetime('now', '-${daysBack} days')
-            GROUP BY capability
+            AND created_at > datetime('now', '-${daysBack} days')
+            GROUP BY COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown')
             ORDER BY count DESC
         `,
         [organizationId]
@@ -367,16 +393,16 @@ router.get(
         `
             SELECT 
                 model,
-                capability,
+                COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown') as capability,
                 AVG(latency_ms) as avg_latency,
                 MIN(latency_ms) as min_latency,
                 MAX(latency_ms) as max_latency,
                 COUNT(*) as sample_count
-            FROM ai_audit_logs
+            FROM ai_usage_logs
             WHERE organization_id = ?
-            AND timestamp > datetime('now', '-${daysBack} days')
-            AND success = 1
-            GROUP BY model, capability
+            AND created_at > datetime('now', '-${daysBack} days')
+            AND status = 'success'
+            GROUP BY model, COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown')
         `,
         [organizationId]
       )) as Array<{
@@ -390,13 +416,13 @@ router.get(
         `
             SELECT 
                 model,
-                capability,
+                COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown') as capability,
                 COUNT(*) as total,
-                SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors
-            FROM ai_audit_logs
+                SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) as errors
+            FROM ai_usage_logs
             WHERE organization_id = ?
-            AND timestamp > datetime('now', '-${daysBack} days')
-            GROUP BY model, capability
+            AND created_at > datetime('now', '-${daysBack} days')
+            GROUP BY model, COALESCE(NULLIF(purpose, ''), NULLIF(action, ''), 'unknown')
         `,
         [organizationId]
       )) as Array<{
@@ -409,10 +435,10 @@ router.get(
         `
             SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN has_screen_context = 1 THEN 1 ELSE 0 END) as with_context
-            FROM ai_audit_logs
+                SUM(CASE WHEN metadata IS NOT NULL AND TRIM(metadata) != '' THEN 1 ELSE 0 END) as with_context
+            FROM ai_usage_logs
             WHERE organization_id = ?
-            AND timestamp > datetime('now', '-${daysBack} days')
+            AND created_at > datetime('now', '-${daysBack} days')
         `,
         [organizationId]
       )) as {

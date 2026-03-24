@@ -49,11 +49,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
 
   const actionTypes = [
     'TASK_CREATE',
-    'MEETING_SCHEDULE',
     'PLAYBOOK_ASSIGN',
-    'NOTIFICATION_SEND',
-    'EMAIL_SEND',
-    'WEBHOOK_TRIGGER',
   ];
 
   return (

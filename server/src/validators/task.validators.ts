@@ -44,6 +44,7 @@ export const CreateTaskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   projectId: FlexibleId.optional().nullable(),
   organizationId: FlexibleId.optional(),
+  programId: FlexibleId.optional().nullable(),
   description: z.string().optional().nullable(),
   status: TaskStatusEnum.optional().default('todo'),
   priority: PriorityEnum.optional().default('medium'),
@@ -61,6 +62,8 @@ export const CreateTaskSchema = z.object({
   taskType: TaskTypeEnum.optional().default('execution'),
   source: TaskSourceEnum.optional().default('manual'),
   initiativeId: FlexibleId.optional().nullable(),
+  listId: FlexibleId.optional().nullable(),
+  workstreamId: FlexibleId.optional().nullable(),
   ownerId: FlexibleId.optional().nullable(),
   requiresAcceptance: z.boolean().optional(),
   acceptanceType: z.enum(['manual', 'automatic']).optional().nullable(),
@@ -80,6 +83,7 @@ export const CreateTaskSchema = z.object({
   roadmapInitiativeId: FlexibleId.optional().nullable(),
   kpiId: FlexibleId.optional().nullable(),
   raidItemId: FlexibleId.optional().nullable(),
+  customFields: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
@@ -106,6 +110,15 @@ export const ResolveEscalationSchema = z.object({
   resolution: z.string().min(1, 'Resolution is required'),
 });
 
+export const BlockTaskSchema = z.object({
+  reason: z.string().min(1, 'Block reason is required'),
+  decisionId: FlexibleId.optional().nullable(),
+});
+
+export const UnblockTaskSchema = z.object({
+  newStatus: TaskStatusEnum.optional(),
+});
+
 export const AddTaskCommentSchema = z.object({
   content: z.string().min(1, 'Comment content is required').max(5000),
   mentions: z.array(FlexibleId).optional(),
@@ -115,8 +128,11 @@ export const AddTaskCommentSchema = z.object({
 // QUERY SCHEMAS
 // ==========================================
 
+export const ScopeEnum = z.enum(['personal', 'initiative', 'program']);
 export const GetTasksQuerySchema = z.object({
   projectId: FlexibleId.optional(),
+  programId: FlexibleId.optional(),
+  listId: FlexibleId.optional(),
   status: TaskStatusEnum.optional(),
   assigneeId: FlexibleId.optional(),
   reporterId: FlexibleId.optional(),
@@ -124,6 +140,7 @@ export const GetTasksQuerySchema = z.object({
   initiativeId: FlexibleId.optional(),
   taskType: TaskTypeEnum.optional(),
   search: z.string().optional(),
+  scope: ScopeEnum.optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(100),
 });
@@ -138,5 +155,7 @@ export type AssignTaskRequest = z.infer<typeof AssignTaskSchema>;
 export type ReassignTaskRequest = z.infer<typeof ReassignTaskSchema>;
 export type EscalateTaskRequest = z.infer<typeof EscalateTaskSchema>;
 export type ResolveEscalationRequest = z.infer<typeof ResolveEscalationSchema>;
+export type BlockTaskRequest = z.infer<typeof BlockTaskSchema>;
+export type UnblockTaskRequest = z.infer<typeof UnblockTaskSchema>;
 export type AddTaskCommentRequest = z.infer<typeof AddTaskCommentSchema>;
 export type GetTasksQuery = z.infer<typeof GetTasksQuerySchema>;

@@ -1,70 +1,54 @@
-/**
- * Help Side Panel
- *
- * A sliding panel that displays contextual help documentation.
- * Contains 3 tabs: Overview, FAQ, Knowledge Base
- *
- * Features:
- * - Overview with intro, video button, and quick guides
- * - FAQ with searchable questions
- * - Knowledge Base with coming soon categories and notify CTA
- */
-
 import {
+  ArrowRight,
   Bell,
   BookOpen,
+  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   ExternalLink,
-  FolderOpen,
   HelpCircle,
   Keyboard,
   Library,
-  Loader2,
   PlayCircle,
-  Rocket,
   Search,
   Sparkles,
-  Wrench,
   X,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import {
-  getGuides,
-  getKnowledgeBaseCategories,
-  getVideoUrl,
-  HELP_CONFIG,
-} from '../../config/helpContent';
+  getLocalizedText,
+  getOverviewCards,
+  getOverviewGuides,
+  HELP_SYSTEM_OVERVIEW,
+} from '../../config/helpExperience';
+import { getHelpConfig } from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { getRouteFromAppView, ROUTES } from '../../routes/routeConfig';
+import { useAppStore } from '../../store/useAppStore';
+import { useConversationStore } from '../../store/useConversationStore';
+import { AppView } from '../../types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
 import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
 import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
-import { OnboardingPlaybooksPanel } from './OnboardingPlaybooksPanel';
 
-// Tab configuration - 3 tabs: Overview, FAQ, Knowledge Base
-const TABS: { id: HelpTab; icon: typeof BookOpen; label: string; labelKey: string }[] = [
-  { id: 'overview', icon: BookOpen, label: 'Overview', labelKey: 'help.sidePanel.tabs.overview' },
-  {
-    id: 'onboarding',
-    icon: Rocket,
-    label: 'Onboarding',
-    labelKey: 'help.sidePanel.tabs.onboarding',
-  },
-  { id: 'updates', icon: Bell, label: "What's new", labelKey: 'help.sidePanel.tabs.updates' },
-  { id: 'faq', icon: HelpCircle, label: 'FAQ', labelKey: 'help.sidePanel.tabs.faq' },
-  {
-    id: 'knowledge',
-    icon: Library,
-    label: 'Knowledge Base',
-    labelKey: 'help.sidePanel.tabs.knowledge',
-  },
+const HELP_CONFIG = getHelpConfig();
+
+const TABS: { id: Exclude<HelpTab, 'onboarding'>; icon: typeof BookOpen; label: string }[] = [
+  { id: 'overview', icon: BookOpen, label: 'Overview' },
+  { id: 'this_step', icon: Sparkles, label: 'This Step' },
+  { id: 'guides', icon: CircleHelp, label: 'Quick Guides' },
+  { id: 'faq', icon: HelpCircle, label: 'FAQ' },
+  { id: 'knowledge', icon: Library, label: 'Knowledge Base' },
+  { id: 'updates', icon: Bell, label: 'Updates' },
 ];
 
 // Dynamic icon component
@@ -145,34 +129,6 @@ const FAQItem: React.FC<{ question: string; answer: string; searchQuery?: string
   );
 };
 
-// Knowledge Base Category Item
-const KBCategoryItem: React.FC<{
-  icon: string;
-  labelKey: string;
-  enabled: boolean;
-}> = ({ icon, labelKey, enabled }) => {
-  const { t } = useTranslation();
-
-  return (
-    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-          <DynamicIcon name={icon} size={16} className="text-purple-600 dark:text-purple-400" />
-        </div>
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {t(`help.sidePanel.knowledge.categories.${labelKey}`, labelKey)}
-        </span>
-      </div>
-      {!enabled && (
-        <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[10px] font-semibold rounded-full uppercase">
-          {t('help.sidePanel.knowledge.browseArticles', 'Browse articles')}
-        </span>
-      )}
-    </div>
-  );
-};
-
-// Knowledge Tab Content - Full library with article detail view
 interface KnowledgeTabContentProps {
   initialArticleSlug?: string | null;
   onBack?: () => void;
@@ -231,74 +187,160 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
   );
 };
 
+const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <section className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+      {title}
+    </h4>
+    {children}
+  </section>
+);
+
+const GuideCard: React.FC<{
+  icon?: string;
+  title: string;
+  description: string;
+  onClick: () => void;
+}> = ({ icon = 'ChevronRight', title, description, onClick }) => (
+  <button
+    onClick={onClick}
+    className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors"
+  >
+    <div className="flex items-start gap-3">
+      <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+        <DynamicIcon name={icon} size={16} className="text-purple-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+        <div className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+          {description}
+        </div>
+      </div>
+      <ChevronRight size={14} className="text-slate-400 mt-1" />
+    </div>
+  </button>
+);
+
+type RenderGuide = {
+  id: string;
+  title: string;
+  description: string;
+  articleSlug?: string;
+  targetModuleId?: string;
+};
+
 export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const navigate = useNavigate();
+  const { isDesktop, isMobile, isTablet } = useDeviceType();
 
   const { isOpen, setOpen, activeTab, setActiveTab, help, knowledgeModuleIdOverride } =
     useHelpSidePanel();
+  const currentView = useAppStore((s) => s.currentView);
+  const currentProjectId = useAppStore((s) => s.currentProjectId);
+  const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
+  const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const navigateFn = useAppStore((s) => s.navigateFn);
+  const setChatKickoffMessage = useAppStore((s) => s.setChatKickoffMessage);
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifyEmail, setNotifyEmail] = useState('');
-  const [isSubscribing, setIsSubscribing] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [selectedGuideArticle, setSelectedGuideArticle] = useState<string | null>(null);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
 
-  // Handle Quick Guide click - navigate to KB article
-  const handleGuideClick = (articleSlug: string | undefined) => {
-    if (articleSlug) {
-      setSelectedGuideArticle(articleSlug);
-      setActiveTab('knowledge');
-    }
-  };
+  const currentDocument = help.document;
+  const nextDocument = help.nextDocument;
+  const currentStageLabel = currentDocument.stageId
+    ? getLocalizedText(currentDocument.shortLabel, lang)
+    : null;
+  const overviewCards = getOverviewCards(lang);
+  const overviewGuides = getOverviewGuides(lang);
 
-  // Reset search and selected article when tab changes
+  useEffect(() => {
+    if (!isOpen) return;
+    if (activeTab !== 'onboarding') return;
+    setActiveTab('this_step');
+  }, [activeTab, isOpen, setActiveTab]);
+
   useEffect(() => {
     setSearchQuery('');
-    // Only reset selected article if leaving knowledge tab
     if (activeTab !== 'knowledge') {
       setSelectedGuideArticle(null);
     }
   }, [activeTab]);
 
-  // Handle notify me subscription
-  const handleNotifySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!notifyEmail.trim() || isSubscribing) return;
-
-    setIsSubscribing(true);
-    try {
-      const response = await fetch(HELP_CONFIG.notifyEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: notifyEmail }),
-      });
-
-      if (response.ok) {
-        setIsSubscribed(true);
-        toast.success(
-          t('help.sidePanel.knowledge.notify.success', "You'll be notified when ready!")
-        );
-      } else {
-        toast.error(t('common.error', 'Something went wrong'));
-      }
-    } catch {
-      // For now, just show success (endpoint might not exist yet)
-      setIsSubscribed(true);
-      toast.success(t('help.sidePanel.knowledge.notify.success', "You'll be notified when ready!"));
-    } finally {
-      setIsSubscribing(false);
+  const handleGuideClick = (guide: RenderGuide) => {
+    if (guide.articleSlug) {
+      setSelectedGuideArticle(guide.articleSlug);
+      setActiveTab('knowledge');
+      return;
     }
+
+    if (guide.targetModuleId) {
+      setActiveTab('knowledge');
+    }
+  };
+
+  const openAiNow = async () => {
+    const prompt = getLocalizedText(help.promptAction.prompt, lang);
+    const defaultWorkspaceType = getDefaultWorkspaceType(currentView);
+    const workspaceType = defaultWorkspaceType === 'empty' ? 'general' : defaultWorkspaceType;
+
+    setWorkspaceContext(
+      createWorkspaceContext(currentView, workspaceType, {
+        projectId: currentProjectId || undefined,
+        entityName: getLocalizedText(currentDocument.title, lang),
+        entityData: {
+          helpDocumentId: currentDocument.id,
+          helpStage: currentDocument.stageId,
+          helpSupportModule: currentDocument.supportModuleId,
+          helpModuleId: help.moduleId,
+        },
+      })
+    );
+    setChatKickoffMessage(prompt);
+    setOpen(false);
+
+    if (!isDesktop || isMobile || isTablet) {
+      setCurrentViewState(AppView.AI_CHAT);
+      const route = getRouteFromAppView(AppView.AI_CHAT);
+      if (navigateFn) {
+        navigateFn(route);
+      } else {
+        navigate(route);
+      }
+      return;
+    }
+
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+  };
+
+  const openIntroScreen = () => {
+    setOpen(false);
+    navigate(ROUTES.APP_INTRO);
   };
 
   if (!isOpen) return null;
 
   const faqs = help?.faqs || [];
-  const guides = getGuides();
-  const kbCategories = getKnowledgeBaseCategories();
-  const videoUrl = getVideoUrl();
+  const guideGroups = [
+    {
+      title: t('help.sidePanel.guides.global', 'Start here'),
+      guides: overviewGuides,
+    },
+    {
+      title: t('help.sidePanel.guides.current', 'For this step'),
+      guides: currentDocument.quickGuides.map((guide) => ({
+        ...guide,
+        title: getLocalizedText(guide.title, lang),
+        description: getLocalizedText(guide.description, lang),
+      })),
+    },
+  ];
 
-  // Filter FAQs by search
   const filteredFAQs = searchQuery
     ? faqs.filter((faq) => {
         const question = lang === 'pl' ? faq.questionPl : faq.question;
@@ -320,7 +362,6 @@ export const HelpSidePanel: React.FC = () => {
 
       {/* Panel */}
       <div className="fixed right-0 top-0 h-full w-[380px] max-w-[90vw] bg-slate-50 dark:bg-navy-950 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-navy-700">
-        {/* Header */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-navy-700 shrink-0 bg-white dark:bg-navy-900">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <HelpCircle size={18} className="text-purple-500" />
@@ -334,156 +375,156 @@ export const HelpSidePanel: React.FC = () => {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-slate-200 dark:border-navy-700 px-2 shrink-0">
-          {TABS.map(({ id, icon: Icon, label, labelKey }) => (
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shrink-0">
+          <div className="text-xs font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+            {currentStageLabel || t('help.sidePanel.context.default', 'Current context')}
+          </div>
+          <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+            {getLocalizedText(currentDocument.title, lang)}
+          </div>
+          <div className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+            {getLocalizedText(currentDocument.summary, lang)}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-b border-slate-200 dark:border-navy-700 px-2 shrink-0">
+          {TABS.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
                 activeTab === id
                   ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               <Icon size={14} />
-              {t(labelKey, label)}
+              {t(`help.sidePanel.tabs.${id}`, label)}
             </button>
           ))}
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-5">
-              {/* Welcome Title */}
+              <SectionCard title={t('help.sidePanel.overview.startHere', 'Start here')}>
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {lang === 'pl'
+                    ? 'Najpierw zobacz logikę systemu albo przejdź od razu do bieżącego kroku pracy.'
+                    : 'Start with the system map or jump straight into the work that matters on this screen.'}
+                </p>
+                <div className="mt-3 grid gap-2">
+                  <button
+                    onClick={openIntroScreen}
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors text-left"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {lang === 'pl' ? 'Otwórz intro aplikacji' : 'Open app intro'}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {lang === 'pl'
+                          ? 'Krótka mapa pracy w Consultify: 5 etapów i moduły wspierające.'
+                          : 'A short map of Consultify work: 5 steps and supporting modules.'}
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-purple-500" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('this_step')}
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors text-left"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {lang === 'pl' ? 'Pokaż ten ekran' : 'Show this screen'}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {lang === 'pl'
+                          ? 'Najkrótsza wersja: po co ten ekran istnieje i co teraz zrobić.'
+                          : 'The shortest version: why this screen exists and what to do next.'}
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-purple-500" />
+                  </button>
+                </div>
+              </SectionCard>
+
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {t('help.sidePanel.overview.title', 'Welcome to Consultify')}
+                  {getLocalizedText(HELP_SYSTEM_OVERVIEW.title, lang)}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {t(
-                    'help.sidePanel.overview.intro',
-                    "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies."
-                  )}
+                  {getLocalizedText(HELP_SYSTEM_OVERVIEW.summary, lang)}
                 </p>
               </div>
 
-              {/* Video Button */}
-              <a
-                href={videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl text-white hover:from-purple-600 hover:to-indigo-700 transition-all group"
-              >
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl text-white">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <PlayCircle size={24} />
                 </div>
                 <div>
                   <div className="font-semibold">
-                    {t('help.sidePanel.overview.watchVideo', 'Watch Introduction Video')}
+                    {getLocalizedText(HELP_SYSTEM_OVERVIEW.video.label, lang)}
                   </div>
                   <div className="text-sm text-white/80">
-                    {t('help.sidePanel.overview.videoDuration', '3 min overview')}
+                    {getLocalizedText(HELP_SYSTEM_OVERVIEW.video.durationLabel, lang)}
                   </div>
                 </div>
-                <ExternalLink size={16} className="ml-auto opacity-60" />
-              </a>
+              </div>
 
-              {/* Quick Guides */}
-              <div>
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                  <BookOpen size={16} className="text-purple-500" />
-                  {t('help.sidePanel.overview.guides', 'Quick Guides')}
-                </h4>
-                <div className="space-y-2">
-                  {guides.map((guide) => (
-                    <button
-                      key={guide.id}
-                      onClick={() => handleGuideClick(guide.articleSlug)}
-                      className="w-full flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
-                        <DynamicIcon
-                          name={guide.icon}
-                          size={16}
-                          className="text-slate-500 dark:text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400"
-                        />
+              <SectionCard title={t('help.sidePanel.overview.journey', 'Main journey')}>
+                <div className="space-y-3">
+                  {overviewCards.journey.map((card) => (
+                    <div key={card.id} className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <DynamicIcon name={card.icon} size={16} className="text-purple-500" />
                       </div>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300">
-                        {t(`help.sidePanel.overview.guidesList.${guide.id}`, guide.id)}
-                      </span>
-                      <ChevronRight
-                        size={14}
-                        className="ml-auto text-slate-400 group-hover:text-purple-500"
-                      />
-                    </button>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {card.title}
+                        </div>
+                        <div className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                          {card.description}
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
+              </SectionCard>
 
-              {/* What to Know */}
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200 mb-3">
-                  <Sparkles size={16} className="text-amber-600 dark:text-amber-400" />
-                  {t('help.sidePanel.overview.whatToKnow', 'Key Things to Know')}
-                </h4>
-                <ul className="space-y-2.5">
-                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2
-                      size={14}
-                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
-                    />
-                    {t(
-                      'help.sidePanel.overview.tip1',
-                      'Start with Quick Assessment (5 min) for instant AI recommendations'
-                    )}
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2
-                      size={14}
-                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
-                    />
-                    {t(
-                      'help.sidePanel.overview.tip2',
-                      'AI generates initiatives from assessment gaps - review in Roadmap'
-                    )}
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2
-                      size={14}
-                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
-                    />
-                    {t(
-                      'help.sidePanel.overview.tip3',
-                      'Track implementation in Execution module with real-time dashboards'
-                    )}
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2
-                      size={14}
-                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
-                    />
-                    {t(
-                      'help.sidePanel.overview.tip4',
-                      'Use AI Chat anytime to ask questions or get recommendations'
-                    )}
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2
-                      size={14}
-                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
-                    />
-                    {t(
-                      'help.sidePanel.overview.tip5',
-                      'Export reports in PDF/PowerPoint for stakeholder presentations'
-                    )}
-                  </li>
-                </ul>
-              </div>
+              <SectionCard title={t('help.sidePanel.overview.support', 'Supporting modules')}>
+                <div className="space-y-3">
+                  {overviewCards.support.map((card) => (
+                    <div key={card.id} className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                        <DynamicIcon name={card.icon} size={16} className="text-purple-500" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {card.title}
+                        </div>
+                        <div className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                          {card.description}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
 
-              {/* Keyboard Shortcuts */}
+              <SectionCard title={t('help.sidePanel.overview.ai', 'AI is always available')}>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {getLocalizedText(HELP_SYSTEM_OVERVIEW.intro, lang)}
+                </p>
+                <button
+                  onClick={openAiNow}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+                >
+                  <Bot size={16} />
+                  {getLocalizedText(help.promptAction.label, lang)}
+                </button>
+              </SectionCard>
+
               <button
                 onClick={() => setShowKeyboardShortcuts(true)}
                 className="w-full flex items-center gap-3 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
@@ -509,18 +550,98 @@ export const HelpSidePanel: React.FC = () => {
             </div>
           )}
 
-          {/* Onboarding Tab */}
-          {activeTab === 'onboarding' && (
-            <OnboardingPlaybooksPanel onClose={() => setOpen(false)} />
+          {(activeTab === 'this_step' || activeTab === 'onboarding') && (
+            <div className="space-y-4">
+              <SectionCard title={t('help.sidePanel.thisStep.whatThisIs', 'What this is')}>
+                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                  {getLocalizedText(currentDocument.whatThisIs, lang)}
+                </p>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {getLocalizedText(currentDocument.whyItMatters, lang)}
+                </p>
+              </SectionCard>
+
+              <SectionCard title={t('help.sidePanel.thisStep.whatYouDo', 'What you do here')}>
+                <div className="space-y-2">
+                  {currentDocument.whatYouDoHere.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <CheckCircle2 size={14} className="text-purple-500 flex-shrink-0 mt-0.5" />
+                      <span>{getLocalizedText(item, lang)}</span>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title={t('help.sidePanel.thisStep.aiHelp', 'How AI helps here')}>
+                <div className="space-y-2">
+                  {currentDocument.howAiHelpsHere.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <Sparkles size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                      <span>{getLocalizedText(item, lang)}</span>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title={t('help.sidePanel.thisStep.next', 'What comes next')}>
+                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                  {getLocalizedText(currentDocument.whatComesNext, lang)}
+                </p>
+                {nextDocument && (
+                  <button
+                    onClick={() => setActiveTab('guides')}
+                    className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 text-left transition-colors"
+                  >
+                    <div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('help.sidePanel.thisStep.nextStep', 'Next step')}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {getLocalizedText(nextDocument.title, lang)}
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-purple-500" />
+                  </button>
+                )}
+              </SectionCard>
+
+              <button
+                onClick={openAiNow}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+              >
+                <Bot size={16} />
+                {getLocalizedText(help.promptAction.label, lang)}
+              </button>
+            </div>
           )}
 
-          {/* Updates Tab */}
+          {activeTab === 'guides' && (
+            <div className="space-y-4">
+              {guideGroups.map((group) => (
+                <div key={group.title}>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                    {group.title}
+                  </h3>
+                  <div className="space-y-2">
+                    {group.guides.map((guide) => (
+                      <GuideCard
+                        key={guide.id}
+                        icon="BookOpen"
+                        title={guide.title}
+                        description={guide.description}
+                        onClick={() => handleGuideClick(guide)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {activeTab === 'updates' && <FeatureUpdatesPanel onClose={() => setOpen(false)} />}
 
-          {/* FAQ Tab */}
           {activeTab === 'faq' && (
             <div className="space-y-4">
-              {/* Search */}
               <div className="relative">
                 <Search
                   size={14}
@@ -535,7 +656,6 @@ export const HelpSidePanel: React.FC = () => {
                 />
               </div>
 
-              {/* FAQ List */}
               {filteredFAQs.length > 0 ? (
                 <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
                   {filteredFAQs.map((faq) => (
@@ -563,10 +683,11 @@ export const HelpSidePanel: React.FC = () => {
             </div>
           )}
 
-          {/* Knowledge Base Tab */}
           {activeTab === 'knowledge' && (
             <KnowledgeTabContent
-              moduleId={knowledgeModuleIdOverride || help.moduleId}
+              moduleId={
+                knowledgeModuleIdOverride || currentDocument.relatedKnowledgeModuleId || help.moduleId
+              }
               initialArticleSlug={selectedGuideArticle}
               onBack={() => setSelectedGuideArticle(null)}
             />
@@ -590,7 +711,7 @@ export const HelpSidePanel: React.FC = () => {
             <span className="hidden sm:inline">
               {t('help.sidePanel.fullDocs', 'Full Documentation')}
             </span>
-            <ChevronRight size={12} />
+            <ExternalLink size={12} />
           </Link>
         </div>
       </div>

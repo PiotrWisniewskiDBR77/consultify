@@ -12,7 +12,7 @@ interface AgentMessage {
 interface AgentPanelProps {
   onClose: () => void;
   sourceNames?: string[];
-  onSendMessage?: (message: string) => void;
+  onSendMessage?: (message: string) => Promise<{ reply?: string } | string | void>;
 }
 
 const SUGGESTION_KEYS = [
@@ -38,28 +38,47 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
   ]);
   const [input, setInput] = useState('');
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     if (!input.trim()) return;
+    const message = input.trim();
     const userMsg: AgentMessage = {
       id: `msg-${Date.now()}`,
       role: 'user',
-      text: input.trim(),
+      text: message,
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
-    onSendMessage?.(input.trim());
     setInput('');
-
-    setTimeout(() => {
+    try {
+      const response = await onSendMessage?.(message);
+      const reply =
+        typeof response === 'string'
+          ? response
+          : response?.reply ||
+            t(
+              'presentations.agent.updated',
+              'Deck updated. Review the applied changes on the canvas.'
+            );
       const agentMsg: AgentMessage = {
         id: `msg-${Date.now()}-agent`,
         role: 'agent',
-        text: `I'll work on that. Processing your request: "${userMsg.text}"...`,
+        text: reply,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, agentMsg]);
-    }, 800);
-  }, [input, onSendMessage]);
+    } catch {
+      const agentMsg: AgentMessage = {
+        id: `msg-${Date.now()}-agent-error`,
+        role: 'agent',
+        text: t(
+          'presentations.agent.failed',
+          'I could not apply that edit to the deck. Please try a different instruction.'
+        ),
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, agentMsg]);
+    }
+  }, [input, onSendMessage, t]);
 
   const handleSuggestion = (key: string) => {
     const text = t(key, '');

@@ -20,9 +20,12 @@ export const ROUTES = {
   WELCOME: '/',
   AUTH: '/auth',
   BECOME_PARTNER: '/become-partner',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
 
   // Main App Routes
   AI_CHAT: '/chat',
+  APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
@@ -95,6 +98,7 @@ export const ROUTES = {
     MANAGEMENT: '/reports/management',
   },
   PRESENTATIONS: '/presentations',
+  MEETING: '/meeting',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
   MCP_IRIS: '/mcp/iris',
@@ -143,6 +147,7 @@ export const ROUTES = {
     CONFIGURATION: '/superadmin/configuration',
     REVENUE: '/superadmin/revenue',
     ANALYTICS: '/superadmin/analytics',
+    VIRTUAL_WORKERS: '/superadmin/virtual-workers',
   },
 
   // Partner Portal
@@ -206,6 +211,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // Main
   [AppView.AI_CHAT]: ROUTES.AI_CHAT,
+  [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -265,6 +271,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.REPORTS_MANAGEMENT]: ROUTES.REPORTS.MANAGEMENT,
   [AppView.DRD_AUDIT_REPORT]: ROUTES.REPORTS.BUILDER,
   [AppView.PRESENTATIONS]: ROUTES.PRESENTATIONS,
+  [AppView.MEETING]: ROUTES.MEETING,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
@@ -364,6 +371,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SUPERADMIN_SECURITY]: ROUTES.SUPERADMIN.SECURITY,
   [AppView.SUPERADMIN_CONFIGURATION]: ROUTES.SUPERADMIN.CONFIGURATION,
   [AppView.SUPERADMIN_ANALYTICS]: ROUTES.SUPERADMIN.ANALYTICS,
+  [AppView.SUPERADMIN_VIRTUAL_WORKERS]: ROUTES.SUPERADMIN.VIRTUAL_WORKERS,
   [AppView.SUPERADMIN_DASHBOARD]: ROUTES.SUPERADMIN.ROOT,
   [AppView.SUPERADMIN_ORGANIZATIONS]: ROUTES.SUPERADMIN.CUSTOMERS,
   [AppView.SUPERADMIN_USERS]: ROUTES.SUPERADMIN.CUSTOMERS,
@@ -468,6 +476,7 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
+  if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;
@@ -483,6 +492,7 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS)) return AppView.SUPERADMIN_VIRTUAL_WORKERS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_OVERVIEW;
   if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;

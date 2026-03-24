@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Clock,
   DollarSign,
+  ExternalLink,
   Eye,
   FileText,
   Flag,
@@ -51,6 +52,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 
 // Status metadata for UI
 const STATUS_META: Record<
@@ -262,7 +264,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isSaving, setIsSaving] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Fetch initiative data
   const fetchInitiative = useCallback(async () => {
@@ -693,7 +695,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   {initiative.sourceType && (
                     <span className="text-xs text-slate-500 flex items-center gap-1">
                       <Zap size={10} />
-                      from {initiative.sourceType}
+                      from {getSourceDisplayLabel(initiative.sourceType, i18n.language === 'pl')}
                     </span>
                   )}
                 </div>
@@ -865,11 +867,23 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     <span>
                       Generated from:{' '}
                       <span className="text-slate-900 dark:text-white capitalize">
-                        {initiative.sourceType}
+                        {getSourceDisplayLabel(initiative.sourceType, i18n.language === 'pl')}
                       </span>
                     </span>
                     {initiative.sourceId && (
-                      <span className="text-slate-500">({initiative.sourceId.slice(0, 8)}...)</span>
+                      <a
+                        href={
+                          ['tool', 'tool_session', 'idea'].includes(initiative.sourceType.toLowerCase())
+                            ? `/my-work?tab=ideas&sessionId=${initiative.sourceId}`
+                            : initiative.sourceType.toLowerCase() === 'assessment'
+                              ? `/interview?assessmentId=${initiative.sourceId}`
+                              : '#'
+                        }
+                        className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline ml-1"
+                      >
+                        <ExternalLink size={10} />
+                        {i18n.language === 'pl' ? 'Otwórz źródło' : 'View source'}
+                      </a>
                     )}
                   </div>
                 </div>

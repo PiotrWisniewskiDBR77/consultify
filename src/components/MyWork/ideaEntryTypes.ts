@@ -1,0 +1,157 @@
+import type { CanvasToolType } from './ideaSelectionTypes';
+
+// ── V5 §9.3: Idea stage model ──────────────────────────────────────────────
+export type IdeaStageV5 =
+  | 'spark'
+  | 'framing'
+  | 'exploring'
+  | 'structuring'
+  | 'validating'
+  | 'ready_to_convert'
+  | 'converted';
+
+export const IDEA_STAGES_V5: IdeaStageV5[] = [
+  'spark',
+  'framing',
+  'exploring',
+  'structuring',
+  'validating',
+  'ready_to_convert',
+  'converted',
+];
+
+export const IDEA_STAGE_LABELS: Record<IdeaStageV5, { en: string; pl: string }> = {
+  spark: { en: 'Spark', pl: 'Iskra' },
+  framing: { en: 'Framing', pl: 'Ramowanie' },
+  exploring: { en: 'Exploring', pl: 'Eksploracja' },
+  structuring: { en: 'Structuring', pl: 'Strukturyzacja' },
+  validating: { en: 'Validating', pl: 'Walidacja' },
+  ready_to_convert: { en: 'Ready to convert', pl: 'Gotowy do konwersji' },
+  converted: { en: 'Converted', pl: 'Skonwertowany' },
+};
+
+export const IDEA_STAGE_COLORS: Record<IdeaStageV5, string> = {
+  spark: 'from-amber-400/20 to-orange-400/10 text-amber-600 dark:text-amber-400',
+  framing: 'from-sky-400/20 to-blue-400/10 text-sky-600 dark:text-sky-400',
+  exploring: 'from-violet-400/20 to-purple-400/10 text-violet-600 dark:text-violet-400',
+  structuring: 'from-teal-400/20 to-emerald-400/10 text-teal-600 dark:text-teal-400',
+  validating: 'from-indigo-400/20 to-blue-400/10 text-indigo-600 dark:text-indigo-400',
+  ready_to_convert: 'from-emerald-400/20 to-green-400/10 text-emerald-600 dark:text-emerald-400',
+  converted: 'from-slate-400/20 to-gray-400/10 text-slate-600 dark:text-slate-400',
+};
+
+const LEGACY_STAGE_MAP: Record<string, IdeaStageV5> = {
+  seed: 'spark',
+  spark: 'spark',
+  incubating: 'framing',
+  shaping: 'structuring',
+  ready: 'ready_to_convert',
+  promoted: 'converted',
+  idea: 'spark',
+  exploring: 'exploring',
+  validated: 'validating',
+  ready_to_convert: 'ready_to_convert',
+  converted: 'converted',
+  framing: 'framing',
+  structuring: 'structuring',
+  validating: 'validating',
+};
+
+export function normalizeStageToV5(raw?: string | null): IdeaStageV5 {
+  const s = String(raw || '')
+    .toLowerCase()
+    .trim();
+  return LEGACY_STAGE_MAP[s] || 'spark';
+}
+
+// ── Entry types ─────────────────────────────────────────────────────────────
+export type IdeaStartMode = 'describe_with_ai' | 'blank_canvas' | 'use_template';
+
+export type IdeaStructuredBrief = {
+  problem?: string;
+  currentState?: string;
+  desiredOutcome?: string;
+  constraints?: string;
+  evidenceNotes?: string;
+};
+
+export type IdeaWorkspaceSeedIntent = {
+  startMode: IdeaStartMode;
+  seedText: string;
+  preferredSystem?: CanvasToolType | null;
+  templateId?: string | null;
+  popularStartId?: string | null;
+  popularStartLabel?: string | null;
+  structuredBrief?: IdeaStructuredBrief | null;
+  source?: 'seed_surface' | 'chat_handoff';
+};
+
+export type IdeaWorkspaceCreationPayload = {
+  title?: string;
+  body?: string;
+  tags?: string[];
+  sourceType?: string | null;
+  sourceConversationId?: string | null;
+  sourceMessageId?: string | null;
+};
+
+function nonEmpty(value?: string | null): string | null {
+  const trimmed = String(value || '').trim();
+  return trimmed ? trimmed : null;
+}
+
+export function normalizePreferredSystem(system?: string | null): CanvasToolType | null {
+  if (
+    system === 'mindmap' ||
+    system === 'process_flow' ||
+    system === 'table' ||
+    system === 'whiteboard'
+  ) {
+    return system;
+  }
+  return null;
+}
+
+export function composeIdeaBodyFromSeedIntent(intent?: IdeaWorkspaceSeedIntent | null): string {
+  if (!intent) return '';
+
+  const sections: string[] = [];
+  const seedText = nonEmpty(intent.seedText);
+  if (seedText) sections.push(seedText);
+
+  if (intent.popularStartLabel) {
+    sections.push(`Intent: ${intent.popularStartLabel}`);
+  }
+
+  const brief = intent.structuredBrief;
+  if (brief) {
+    const rows = [
+      ['Problem', brief.problem],
+      ['Current state', brief.currentState],
+      ['Desired outcome', brief.desiredOutcome],
+      ['Constraints', brief.constraints],
+      ['Evidence / notes', brief.evidenceNotes],
+    ]
+      .map(([label, value]) => {
+        const normalized = nonEmpty(value);
+        return normalized ? `${label}: ${normalized}` : null;
+      })
+      .filter(Boolean) as string[];
+
+    if (rows.length > 0) {
+      sections.push(['Structured brief', ...rows].join('\n'));
+    }
+  }
+
+  return sections.join('\n\n').trim();
+}
+
+export function deriveIdeaTitleFromSeedIntent(
+  intent?: IdeaWorkspaceSeedIntent | null,
+  fallback = 'New challenge'
+): string {
+  const primary =
+    nonEmpty(intent?.seedText)?.split('\n')[0] || nonEmpty(intent?.popularStartLabel) || fallback;
+
+  return primary.slice(0, 120);
+}

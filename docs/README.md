@@ -5,6 +5,21 @@
 
 ---
 
+## Documentation Authority
+
+- `docs/product/DOCUMENTATION_REGISTRY.md` is the canonical registry for product behavior and readiness packages.
+- `docs/ui-standards/README.md` and `docs/ui-standards/FROZEN_LAYOUTS.md` are the canonical UI/UX authority.
+- `docs/strategy/README.md` is the canonical strategy index.
+- `docs/plans/README.md` explains working and historical plan material.
+- `docs/cleanup/README.md` is the canonical repository hygiene and cleanup index.
+
+Historical parallel trees are preserved, but they are not the default source of truth:
+
+- `wdrozenia/` = tracked implementation history
+- `Consulitinity przegląd/` = tracked audit evidence
+
+---
+
 ## �� Executive Navigation (For Investors & Leadership)
 
 ### Quick Start for VC Due Diligence

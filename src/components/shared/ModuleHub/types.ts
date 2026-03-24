@@ -19,10 +19,12 @@ export type ModuleTab =
   | 'decisions'
   | 'assignments'
   // Finance (ECONOMICS module) — v3 functional areas
+  | 'statements'
   | 'models'
   | 'analysis'
   | 'prediction'
   | 'valuation'
+  | 'investment'
   // V3-J02 — Presentations Hub
   | 'all_decks'
   | 'recent'

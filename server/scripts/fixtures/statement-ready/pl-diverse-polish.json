@@ -1,0 +1,9 @@
+{
+  "name": "diverse-polish-profit-loss",
+  "fileName": "diverse-polish-pl.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 20,
+  "expectedMinMapped": 18,
+  "text": "Skonsolidowany rachunek zysków i strat\nza okres od 1 stycznia do 31 grudnia 2024 roku\nw tysiącach złotych\n\nPrzychody ze sprzedaży ogółem 2024 2 500 000 2023 2 300 000\nKoszt własny sprzedaży 2024 -1 750 000 2023 -1 600 000\nZysk brutto ze sprzedaży 2024 750 000 2023 700 000\n\nKoszty sprzedaży 2024 -120 000 2023 -110 000\nKoszty ogólnego zarządu 2024 -180 000 2023 -165 000\nPozostałe przychody operacyjne 2024 25 000 2023 22 000\nPozostałe koszty operacyjne 2024 -35 000 2023 -30 000\nZysk z działalności operacyjnej 2024 440 000 2023 417 000\n\nPrzychody finansowe 2024 15 000 2023 12 000\nKoszty finansowe 2024 -45 000 2023 -40 000\nUdział w zyskach jednostek wycenianych metodą praw własności 2024 8 000 2023 7 000\n\nZysk przed opodatkowaniem 2024 418 000 2023 396 000\nBieżący podatek dochodowy 2024 -82 000 2023 -78 000\nOdroczony podatek dochodowy 2024 3 000 2023 2 000\nZysk netto za okres 2024 339 000 2023 320 000\n\nZysk netto przypadający akcjonariuszom jednostki dominującej 2024 325 000 2023 308 000\nZysk netto przypadający udziałom niesprawującym kontroli 2024 14 000 2023 12 000\n\nInne całkowite dochody ogółem 2024 -8 000 2023 5 000\nRóżnice kursowe z przeliczenia jednostek zagranicznych 2024 -3 000 2023 2 000\nWycena instrumentów zabezpieczających 2024 -2 000 2023 1 000\nZyski i straty aktuarialne 2024 -3 000 2023 2 000\nCałkowite dochody ogółem 2024 331 000 2023 325 000\n\nZysk na jedną akcję podstawowy (PLN) 2024 6.50 2023 6.16\nZysk na jedną akcję rozwodniony (PLN) 2024 6.48 2023 6.14\nŚrednia ważona liczba akcji 2024 50 000 000 2023 50 000 000"
+}

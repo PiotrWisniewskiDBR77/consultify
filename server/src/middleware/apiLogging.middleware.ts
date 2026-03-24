@@ -15,13 +15,16 @@ interface AuthRequest extends Request {
 
 const SKIP_PATHS = ['/api/health', '/favicon.ico', '/api/analytics/journey'];
 
+// Disable DB logging when DISABLE_API_LOGGING=true (avoids slow INSERT on remote DB)
+const DB_LOGGING_DISABLED = process.env.DISABLE_API_LOGGING === 'true';
+
 export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunction): void {
   const start = Date.now();
   const correlationId = uuidv4();
   (req as any).correlationId = correlationId;
   res.setHeader('X-Correlation-Id', correlationId);
 
-  if (SKIP_PATHS.some((p) => req.path.startsWith(p))) {
+  if (DB_LOGGING_DISABLED || SKIP_PATHS.some((p) => req.path.startsWith(p))) {
     next();
     return;
   }

@@ -3,14 +3,24 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { assertNoLocalDatabaseOutsideTests } from '../src/config/databaseTargetResolver.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
-const DB_HOST = process.env.DB_HOST || 'localhost';
+assertNoLocalDatabaseOutsideTests(process.env);
+
+const DB_HOST = process.env.DB_HOST;
 const DB_PORT = process.env.DB_PORT || '5432';
-const DB_NAME = process.env.DB_NAME || 'consultinity';
-const DB_USER = process.env.DB_USER || 'postgres';
+const DB_NAME = process.env.DB_NAME;
+const DB_USER = process.env.DB_USER;
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(__dirname, '../../backups');
+
+if (!DB_HOST || !DB_NAME || !DB_USER) {
+  throw new Error(
+    'DB_HOST, DB_NAME and DB_USER are required. This backup script only supports explicitly configured external Postgres targets.'
+  );
+}
 
 // Ensure backup dir exists
 if (!fs.existsSync(BACKUP_DIR)) {

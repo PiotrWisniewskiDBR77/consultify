@@ -1,0 +1,459 @@
+/**
+ * DistributionBuilder — Create, manage, and execute data distributions
+ * via email, Slack, Teams, or webhook.
+ */
+import {
+  Globe,
+  Loader2,
+  Mail,
+  MessageSquare,
+  Pause,
+  Play,
+  Plus,
+  Power,
+  Send,
+  Trash2,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+
+interface DistributionBuilderProps {
+  baseId: string;
+  onClose: () => void;
+}
+
+type Channel = 'email' | 'slack' | 'teams' | 'webhook';
+type Format = 'csv' | 'xlsx' | 'pdf' | 'png' | 'json';
+
+interface DistributionFormState {
+  name: string;
+  sourceType: 'view' | 'table';
+  sourceId: string;
+  channel: Channel;
+  channelConfig: Record<string, unknown>;
+  format: Format;
+  schedule: string;
+}
+
+const CHANNELS: { id: Channel; labelEn: string; labelPl: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { id: 'email', labelEn: 'Email', labelPl: 'Email', icon: Mail },
+  { id: 'slack', labelEn: 'Slack', labelPl: 'Slack', icon: MessageSquare },
+  { id: 'teams', labelEn: 'Teams', labelPl: 'Teams', icon: MessageSquare },
+  { id: 'webhook', labelEn: 'Webhook', labelPl: 'Webhook', icon: Globe },
+];
+
+const FORMATS: { id: Format; label: string }[] = [
+  { id: 'csv', label: 'CSV' },
+  { id: 'xlsx', label: 'XLSX' },
+  { id: 'json', label: 'JSON' },
+  { id: 'pdf', label: 'PDF' },
+  { id: 'png', label: 'PNG' },
+];
+
+const INITIAL_FORM: DistributionFormState = {
+  name: '',
+  sourceType: 'table',
+  sourceId: '',
+  channel: 'email',
+  channelConfig: {},
+  format: 'csv',
+  schedule: '',
+};
+
+export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProps) {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const [distributions, setDistributions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<DistributionFormState>({ ...INITIAL_FORM });
+  const [executingId, setExecutingId] = useState<string | null>(null);
+
+  const loadDistributions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const list = await TablePlatformApi.listDistributions(baseId);
+      setDistributions(Array.isArray(list) ? list : []);
+    } catch {
+      toast.error(isPl ? 'Nie udało się załadować dystrybucji' : 'Failed to load distributions');
+    } finally {
+      setLoading(false);
+    }
+  }, [baseId, isPl]);
+
+  useEffect(() => {
+    loadDistributions();
+  }, [loadDistributions]);
+
+  const handleCreate = async () => {
+    if (!form.name.trim()) {
+      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
+      return;
+    }
+    try {
+      setCreating(true);
+      await TablePlatformApi.createDistribution(baseId, {
+        name: form.name.trim(),
+        sourceType: form.sourceType,
+        sourceId: form.sourceId || baseId,
+        channel: form.channel,
+        channelConfig: form.channelConfig,
+        format: form.format,
+        schedule: form.schedule || undefined,
+      });
+      toast.success(isPl ? 'Dystrybucja utworzona' : 'Distribution created');
+      setShowForm(false);
+      setForm({ ...INITIAL_FORM });
+      await loadDistributions();
+    } catch {
+      toast.error(isPl ? 'Nie udało się utworzyć' : 'Failed to create');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await TablePlatformApi.deleteDistribution(id);
+      toast.success(isPl ? 'Usunięto' : 'Deleted');
+      setDistributions((prev) => prev.filter((d) => d.id !== id));
+    } catch {
+      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+    }
+  };
+
+  const handleToggle = async (id: string) => {
+    try {
+      const updated = await TablePlatformApi.toggleDistribution(id);
+      setDistributions((prev) => prev.map((d) => (d.id === id ? updated : d)));
+    } catch {
+      toast.error(isPl ? 'Nie udało się przełączyć' : 'Failed to toggle');
+    }
+  };
+
+  const handleExecute = async (id: string) => {
+    try {
+      setExecutingId(id);
+      const result = await TablePlatformApi.executeDistribution(id);
+      toast.success(
+        isPl
+          ? `Wysłano ${result.recordCount} rekordów przez ${result.channel}`
+          : `Sent ${result.recordCount} records via ${result.channel}`
+      );
+      await loadDistributions();
+    } catch {
+      toast.error(isPl ? 'Wysyłka nie powiodła się' : 'Send failed');
+    } finally {
+      setExecutingId(null);
+    }
+  };
+
+  const updateChannelConfig = (key: string, value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      channelConfig: { ...prev.channelConfig, [key]: value },
+    }));
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2">
+            <Send size={16} className="text-blue-600 dark:text-blue-400" />
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              {isPl ? 'Dystrybucja' : 'Distributions'}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* Create button */}
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={12} />
+              {isPl ? 'Nowa dystrybucja' : 'New Distribution'}
+            </button>
+          )}
+
+          {/* Create form */}
+          {showForm && (
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 p-4 space-y-3 bg-slate-50 dark:bg-navy-900">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {isPl ? 'Nazwa' : 'Name'}
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                  placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
+                />
+              </div>
+
+              {/* Source type */}
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {isPl ? 'Typ źródła' : 'Source Type'}
+                </label>
+                <select
+                  value={form.sourceType}
+                  onChange={(e) => setForm((p) => ({ ...p, sourceType: e.target.value as any }))}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 outline-none"
+                >
+                  <option value="table">{isPl ? 'Tabela' : 'Table'}</option>
+                  <option value="view">{isPl ? 'Widok' : 'View'}</option>
+                </select>
+              </div>
+
+              {/* Source ID */}
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {isPl ? 'ID źródła' : 'Source ID'}
+                </label>
+                <input
+                  type="text"
+                  value={form.sourceId}
+                  onChange={(e) => setForm((p) => ({ ...p, sourceId: e.target.value }))}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                  placeholder={isPl ? 'ID tabeli lub widoku' : 'Table or view ID'}
+                />
+              </div>
+
+              {/* Channel */}
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {isPl ? 'Kanał' : 'Channel'}
+                </label>
+                <div className="flex gap-1.5">
+                  {CHANNELS.map((ch) => {
+                    const Icon = ch.icon;
+                    return (
+                      <button
+                        key={ch.id}
+                        onClick={() => setForm((p) => ({ ...p, channel: ch.id, channelConfig: {} }))}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                          form.channel === ch.id
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                        }`}
+                      >
+                        <Icon size={12} />
+                        {isPl ? ch.labelPl : ch.labelEn}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Channel config */}
+              <div>
+                {form.channel === 'email' && (
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {isPl ? 'Adresy email (oddzielone przecinkami)' : 'Email addresses (comma-separated)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={(form.channelConfig.to as string) || ''}
+                      onChange={(e) => updateChannelConfig('to', e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                      placeholder="user@example.com, team@example.com"
+                    />
+                  </div>
+                )}
+                {(form.channel === 'slack' || form.channel === 'teams') && (
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      Webhook URL
+                    </label>
+                    <input
+                      type="url"
+                      value={(form.channelConfig.webhookUrl as string) || ''}
+                      onChange={(e) => updateChannelConfig('webhookUrl', e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                      placeholder="https://hooks.slack.com/services/..."
+                    />
+                  </div>
+                )}
+                {form.channel === 'webhook' && (
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      Webhook URL
+                    </label>
+                    <input
+                      type="url"
+                      value={(form.channelConfig.url as string) || ''}
+                      onChange={(e) => updateChannelConfig('url', e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                      placeholder="https://api.example.com/webhook"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Format */}
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {isPl ? 'Format' : 'Format'}
+                </label>
+                <div className="flex gap-1.5">
+                  {FORMATS.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setForm((p) => ({ ...p, format: f.id }))}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                        form.format === f.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Schedule */}
+              <div>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {isPl ? 'Harmonogram (cron, opcjonalnie)' : 'Schedule (cron, optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={form.schedule}
+                  onChange={(e) => setForm((p) => ({ ...p, schedule: e.target.value }))}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-blue-500 outline-none"
+                  placeholder="0 9 * * 1 (Mon 9am)"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={handleCreate}
+                  disabled={creating}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {creating && <Loader2 size={12} className="animate-spin" />}
+                  {isPl ? 'Utwórz' : 'Create'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowForm(false);
+                    setForm({ ...INITIAL_FORM });
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                >
+                  {isPl ? 'Anuluj' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Distribution list */}
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 size={20} className="animate-spin text-slate-400" />
+            </div>
+          ) : distributions.length === 0 && !showForm ? (
+            <div className="text-center py-8 text-xs text-slate-400">
+              {isPl ? 'Brak dystrybucji. Utwórz pierwszą!' : 'No distributions yet. Create one!'}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {distributions.map((dist) => {
+                const channelDef = CHANNELS.find((c) => c.id === dist.channel);
+                const ChannelIcon = channelDef?.icon ?? Globe;
+                const isExecuting = executingId === dist.id;
+
+                return (
+                  <div
+                    key={dist.id}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
+                  >
+                    <ChannelIcon size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {dist.name}
+                        </span>
+                        {!dist.is_active && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                            {isPl ? 'Wstrzymane' : 'Paused'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        {dist.format?.toUpperCase()} · {isPl ? channelDef?.labelPl : channelDef?.labelEn}
+                        {dist.send_count > 0 && (
+                          <> · {dist.send_count}x {isPl ? 'wysłano' : 'sent'}</>
+                        )}
+                        {dist.last_sent_at && (
+                          <> · {new Date(dist.last_sent_at).toLocaleDateString()}</>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleExecute(dist.id)}
+                        disabled={isExecuting}
+                        className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                        title={isPl ? 'Wyślij teraz' : 'Send Now'}
+                      >
+                        {isExecuting ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                      </button>
+                      <button
+                        onClick={() => handleToggle(dist.id)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          dist.is_active
+                            ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                            : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                        }`}
+                        title={dist.is_active ? (isPl ? 'Wstrzymaj' : 'Pause') : (isPl ? 'Wznów' : 'Resume')}
+                      >
+                        {dist.is_active ? <Pause size={12} /> : <Power size={12} />}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(dist.id)}
+                        className="p-1.5 rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title={isPl ? 'Usuń' : 'Delete'}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

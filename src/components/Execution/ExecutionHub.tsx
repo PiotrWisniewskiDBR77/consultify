@@ -49,7 +49,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import {
   Callout,
@@ -59,6 +58,7 @@ import {
   ToggleBlock,
 } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -502,7 +502,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(InitiativeStatus.EXECUTING);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(
+    InitiativeStatus.EXECUTING
+  );
   // Active/All toggle (consistent with InitiativesHub)
   const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
@@ -510,14 +512,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
-  const [demoMode, setDemoMode] = useState<boolean>(() => {
-    try {
-      return window.localStorage.getItem('execution_demo_data') === '1';
-    } catch {
-      return false;
-    }
-  });
-  const [autoDemoApplied, setAutoDemoApplied] = useState(false);
 
   // Workload heatmap controls (rendered in top bar)
   const [workloadViewMode, setWorkloadViewMode] = useState<'weekly' | 'monthly'>('monthly');
@@ -537,9 +531,32 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isLoadingDecisions, setIsLoadingDecisions] = useState(false);
   const [healthSnapshot, setHealthSnapshot] = useState<PMOHealthSnapshot | null>(null);
+  /** V4-EXEC-01: Per-initiative health + whyRed chain from execution health API */
+  const [initiativeHealthMap, setInitiativeHealthMap] = useState<
+    Map<string, { health: string; whyRed?: any }>
+  >(new Map());
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
+  /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
+  const [actionQueueItems, setActionQueueItems] = useState<
+    Array<{
+      type:
+        | 'decision_overdue'
+        | 'risk_high'
+        | 'task_overdue'
+        | 'comm_overdue'
+        | 'kpi_deviation_no_plan';
+      id: string;
+      title: string;
+      dueDate?: string;
+      periodStart?: string;
+      initiativeId?: string;
+      initiativeName?: string;
+      [k: string]: any;
+    }>
+  >([]);
+  const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
 
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
@@ -549,216 +566,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
   const [workstreamsViewMode, setWorkstreamsViewMode] = useState<'list' | 'table'>('list');
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem('execution_demo_data', demoMode ? '1' : '0');
-    } catch {
-      // ignore
-    }
-  }, [demoMode]);
-
-  const buildDemoData = useCallback(() => {
-    const now = new Date();
-    const iso = (d: Date) => d.toISOString();
-    const addDays = (n: number) => new Date(now.getTime() + n * 24 * 60 * 60 * 1000);
-
-    const people = [
-      { id: 'demo-u-anna', firstName: 'Anna', lastName: 'Nowak', avatarUrl: undefined },
-      { id: 'demo-u-piotr', firstName: 'Piotr', lastName: 'Kowalski', avatarUrl: undefined },
-      { id: 'demo-u-kasia', firstName: 'Kasia', lastName: 'Zielińska', avatarUrl: undefined },
-      { id: 'demo-u-marek', firstName: 'Marek', lastName: 'Wiśniewski', avatarUrl: undefined },
-      { id: 'demo-u-ola', firstName: 'Ola', lastName: 'Wójcik', avatarUrl: undefined },
-      { id: 'demo-u-tomek', firstName: 'Tomek', lastName: 'Kamiński', avatarUrl: undefined },
-    ];
-
-    const pick = <T,>(arr: T[], i: number) => arr[i % arr.length];
-    const projId = currentProjectId || 'demo-project';
-
-    const initiativesDemo: FullInitiative[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ownerBusiness = pick(people, idx);
-      const ownerExecution = pick(people, idx + 2);
-      const status =
-        idx % 7 === 0
-          ? InitiativeStatus.BLOCKED
-          : idx % 5 === 0
-            ? InitiativeStatus.SCHEDULED
-            : idx % 4 === 0
-              ? InitiativeStatus.DONE
-              : InitiativeStatus.EXECUTING;
-      const start = addDays(-20 + idx * 2);
-      const end = addDays(15 + idx * 6);
-      const plannedStart = addDays(-14 + idx);
-      const plannedEnd = addDays(10 + idx * 5);
-      const progress =
-        status === InitiativeStatus.DONE ? 100 : Math.max(5, Math.min(92, 15 + idx * 7));
-
-      return {
-        id: `demo-ini-${idx + 1}`,
-        projectId: projId,
-        name: idx % 2 === 0 ? `Digital workflow #${idx + 1}` : `Process optimization #${idx + 1}`,
-        description:
-          idx % 2 === 0
-            ? 'Automate approvals and reduce handoffs for a key operational flow.'
-            : 'Remove bottlenecks and standardize work instructions for throughput.',
-        axis:
-          idx % 6 === 0
-            ? 'aiMaturity'
-            : idx % 5 === 0
-              ? 'cybersecurity'
-              : idx % 4 === 0
-                ? 'culture'
-                : idx % 3 === 0
-                  ? 'dataManagement'
-                  : idx % 2 === 0
-                    ? 'digitalProducts'
-                    : 'processes',
-        priority: idx % 5 === 0 ? 'Critical' : idx % 3 === 0 ? 'High' : 'Medium',
-        complexity: idx % 4 === 0 ? 'High' : 'Medium',
-        status,
-        plannedStartDate: iso(plannedStart),
-        plannedEndDate: iso(plannedEnd),
-        startDate: iso(start),
-        endDate: iso(end),
-        slaDeadline: iso(addDays(7 + idx * 4)),
-        blockedReason:
-          status === InitiativeStatus.BLOCKED ? 'Waiting for vendor contract sign-off.' : undefined,
-        progress,
-        capex: 50000 + idx * 7500,
-        annualBenefit: 120000 + idx * 15000,
-        ownerBusiness: ownerBusiness as any,
-        ownerExecution: ownerExecution as any,
-        createdAt: iso(addDays(-60 - idx)),
-        updatedAt: iso(addDays(-idx)),
-      };
-    });
-
-    const tasksDemo: Task[] = Array.from({ length: 12 }).map((_, idx) => {
-      const ini = initiativesDemo[idx % initiativesDemo.length];
-      const due =
-        idx % 4 === 0 ? addDays(-2 - idx) : idx % 4 === 1 ? addDays(2 + idx) : addDays(10 + idx);
-      const status = idx % 5 === 0 ? 'blocked' : idx % 4 === 0 ? 'in_progress' : 'todo';
-      return {
-        id: `demo-task-${idx + 1}`,
-        projectId: projId,
-        title:
-          idx % 2 === 0 ? `Prepare stakeholder review #${idx + 1}` : `Implement change #${idx + 1}`,
-        description:
-          idx % 2 === 0
-            ? 'Align scope, owners, and acceptance criteria for the next gate.'
-            : 'Ship the smallest slice to unblock dependent work.',
-        type: 'task',
-        status: status as any,
-        priority: idx % 6 === 0 ? 'high' : idx % 3 === 0 ? 'medium' : 'low',
-        assigneeName: `${pick(people, idx).firstName} ${pick(people, idx).lastName}`,
-        dueDate: iso(due),
-        initiativeId: ini.id,
-        initiativeName: ini.name,
-        createdAt: iso(addDays(-30 - idx)),
-        updatedAt: iso(addDays(-idx)),
-      } as Task;
-    });
-
-    const decisionsDemo: ExecutionDecision[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ini = initiativesDemo[(idx + 1) % initiativesDemo.length];
-      const due =
-        idx % 3 === 0 ? addDays(-1 - idx) : idx % 3 === 1 ? addDays(4 + idx) : addDays(18 + idx);
-      return {
-        id: `demo-decision-${idx + 1}`,
-        title:
-          idx % 2 === 0 ? `Approve budget tranche #${idx + 1}` : `Confirm scope change #${idx + 1}`,
-        status: idx % 5 === 0 ? 'APPROVED' : 'PENDING',
-        dueDate: iso(due),
-        ownerName: `${pick(people, idx + 1).firstName} ${pick(people, idx + 1).lastName}`,
-        relatedObjectName: ini.name,
-        relatedObjectId: ini.id,
-      } as any;
-    });
-
-    const healthDemo: PMOHealthSnapshot = {
-      projectId: projId,
-      projectName: 'Demo program',
-      phase: { number: 4, name: 'Execution' },
-      stageGate: {
-        gateType: 'EXECUTION_GATE',
-        isReady: true,
-        missingCriteria: [],
-        metCriteria: [
-          { criterion: 'Owners assigned', evidence: 'Workstream owners confirmed' },
-          { criterion: 'Plan baselined', evidence: 'Timeline + budget approved' },
-        ],
-      },
-      blockers: initiativesDemo
-        .filter((i) => i.status === InitiativeStatus.BLOCKED)
-        .slice(0, 3)
-        .map((i) => ({
-          type: 'initiative',
-          message: `${i.name}: ${i.blockedReason || 'Blocked'}`,
-        })),
-      tasks: { overdueCount: 3, dueSoonCount: 4, blockedCount: 1 },
-      decisions: { pendingCount: 5, overdueCount: 2 },
-      initiatives: { atRiskCount: 2, blockedCount: 1 },
-      updatedAt: iso(now),
-    };
-
-    const riskSignalsDemo: RiskSignalItem[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ini = initiativesDemo[idx % initiativesDemo.length];
-      return {
-        id: `demo-risk-${idx + 1}`,
-        initiativeId: ini.id,
-        initiativeName: ini.name,
-        signalType: 'RISK',
-        severity: idx % 4 === 0 ? 'CRITICAL' : idx % 3 === 0 ? 'HIGH' : 'MEDIUM',
-        title: idx % 2 === 0 ? 'Scope creep risk' : 'Dependency risk',
-        description:
-          idx % 2 === 0
-            ? 'Backlog growth detected and acceptance criteria unclear.'
-            : 'External dependency may slip based on latest ETA.',
-        suggestedAction: 'Confirm owner, freeze scope, and align a mitigation plan.',
-      };
-    });
-
-    const delaySignalsDemo: DelaySignalItem[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ini = initiativesDemo[(idx + 2) % initiativesDemo.length];
-      return {
-        id: `demo-delay-${idx + 1}`,
-        entityType: 'INITIATIVE',
-        entityId: ini.id,
-        entityName: ini.name,
-        deviationType: idx % 2 === 0 ? 'LATE_FINISH_RISK' : 'DEADLINE_RISK',
-        severity: idx % 4 === 0 ? 'CRITICAL' : 'WARNING',
-        daysDeviation: 3 + idx,
-        whySlipReasons: [
-          { reason: 'Capacity', detail: 'Key contributor overallocated across workstreams.' },
-          { reason: 'Dependency', detail: 'Waiting for upstream decision to be approved.' },
-        ],
-      };
-    });
-
-    const reportsDemo = Array.from({ length: 10 }).map((_, idx) => ({
-      id: `demo-report-${idx + 1}`,
-      name:
-        idx % 2 === 0
-          ? `Weekly Execution Pack · Week ${idx + 6}`
-          : `Deep-dive: Workstream ${String.fromCharCode(65 + (idx % 5))}`,
-      type: idx % 2 === 0 ? 'weekly_pack' : 'deep_dive',
-      status: idx % 4 === 0 ? 'scheduled' : idx % 3 === 0 ? 'failed' : 'generated',
-      lastGeneratedAt: iso(addDays(-idx * 3)),
-      nextRunAt: iso(addDays(7 - idx)),
-    }));
-
-    return {
-      initiativesDemo,
-      tasksDemo,
-      decisionsDemo,
-      healthDemo,
-      riskSignalsDemo,
-      delaySignalsDemo,
-      reportsDemo,
-    };
-  }, [currentProjectId]);
-
-  const demo = useMemo(() => (demoMode ? buildDemoData() : null), [buildDemoData, demoMode]);
 
   const formatNumber = useCallback(
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
@@ -971,11 +778,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Fetch initiatives in execution phase
   useEffect(() => {
-    if (demoMode) {
-      setInitiatives(demo?.initiativesDemo || []);
-      setIsLoading(false);
-      return;
-    }
     const loadInitiatives = async () => {
       setIsLoading(true);
       try {
@@ -1001,14 +803,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [currentProjectId, demo?.initiativesDemo, demoMode, fullSessionData?.initiatives]);
+  }, [currentProjectId, fullSessionData?.initiatives]);
 
   useEffect(() => {
-    if (demoMode) {
-      setRiskSignals(demo?.riskSignalsDemo || []);
-      setDelaySignals(demo?.delaySignalsDemo || []);
-      return;
-    }
     const loadRiskSignals = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -1045,20 +842,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
     loadRiskSignals();
     loadDelaySignals();
-  }, [
-    currentProjectId,
-    demo?.delaySignalsDemo,
-    demo?.riskSignalsDemo,
-    demoMode,
-    initiatives.length,
-  ]);
+  }, [currentProjectId, initiatives.length]);
 
   useEffect(() => {
-    if (demoMode) {
-      setTasks(demo?.tasksDemo || []);
-      setIsLoadingTasks(false);
-      return;
-    }
     if (!currentProjectId) return;
     const loadTasks = async () => {
       setIsLoadingTasks(true);
@@ -1073,14 +859,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadTasks();
-  }, [currentProjectId, demo?.tasksDemo, demoMode]);
+  }, [currentProjectId]);
 
   useEffect(() => {
-    if (demoMode) {
-      setDecisions(demo?.decisionsDemo || []);
-      setIsLoadingDecisions(false);
-      return;
-    }
     if (!currentProjectId) return;
     const loadDecisions = async () => {
       setIsLoadingDecisions(true);
@@ -1096,14 +877,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadDecisions();
-  }, [currentProjectId, demo?.decisionsDemo, demoMode]);
+  }, [currentProjectId]);
 
   useEffect(() => {
-    if (demoMode) {
-      setHealthSnapshot(demo?.healthDemo || null);
-      setIsLoadingHealth(false);
-      return;
-    }
     if (!currentProjectId) return;
     const loadHealthSnapshot = async () => {
       setIsLoadingHealth(true);
@@ -1118,21 +894,48 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadHealthSnapshot();
-  }, [currentProjectId, demo?.healthDemo, demoMode]);
+  }, [currentProjectId]);
+
+  // V4-EXEC-01: Fetch execution health for per-initiative whyRed chain
+  useEffect(() => {
+    if (!currentProjectId) return;
+    const loadExecutionHealth = async () => {
+      try {
+        const data = await Api.get(`/execution/${currentProjectId}/health`);
+        const items = (data as any)?.initiativeHealth as Array<{
+          id: string;
+          health: string;
+          whyRed?: any;
+        }>;
+        if (Array.isArray(items)) {
+          const map = new Map<string, { health: string; whyRed?: any }>();
+          items.forEach((item) => map.set(item.id, { health: item.health, whyRed: item.whyRed }));
+          setInitiativeHealthMap(map);
+        } else {
+          setInitiativeHealthMap(new Map());
+        }
+      } catch {
+        setInitiativeHealthMap(new Map());
+      }
+    };
+    loadExecutionHealth();
+  }, [currentProjectId]);
+
+  // V4-EXEC-02: Fetch Action Queue — overdue decisions, high risks, overdue tasks
+  useEffect(() => {
+    if (!currentProjectId) return;
+    setIsLoadingActionQueue(true);
+    Api.get(`/execution/${currentProjectId}/action-queue`)
+      .then((data: any) => {
+        const items = (data?.items as any[]) || [];
+        setActionQueueItems(items);
+      })
+      .catch(() => setActionQueueItems([]))
+      .finally(() => setIsLoadingActionQueue(false));
+  }, [currentProjectId]);
 
   const loadExecutiveSnapshot = useCallback(
     async (opts?: { refresh?: boolean }) => {
-      if (demoMode) {
-        setIsLoadingExecSnapshot(true);
-        setExecSnapshotError(null);
-        try {
-          setExecSnapshot(buildLocalExecutiveSnapshot());
-          setExecSnapshotSource('local');
-        } finally {
-          setIsLoadingExecSnapshot(false);
-        }
-        return;
-      }
       if (!currentProjectId) return;
       setIsLoadingExecSnapshot(true);
       setExecSnapshotError(null);
@@ -1185,7 +988,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setIsLoadingExecSnapshot(false);
       }
     },
-    [API_URL, buildLocalExecutiveSnapshot, currentProjectId, demoMode, execIncludeAI, execPeriod, t]
+    [API_URL, buildLocalExecutiveSnapshot, currentProjectId, execIncludeAI, execPeriod, t]
   );
 
   const execTopline = useMemo(() => {
@@ -1301,26 +1104,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
     );
   }, [activeTab, execIncludeAI, execPeriod, isLoadingExecSnapshot, loadExecutiveSnapshot, t]);
-
-  useEffect(() => {
-    if (demoMode) return;
-    if (autoDemoApplied) return;
-    if (!currentProjectId) return;
-    if (isLoading || isLoadingTasks || isLoadingDecisions) return;
-    if (initiatives.length > 0 || tasks.length > 0 || decisions.length > 0) return;
-    setDemoMode(true);
-    setAutoDemoApplied(true);
-  }, [
-    autoDemoApplied,
-    currentProjectId,
-    decisions.length,
-    demoMode,
-    initiatives.length,
-    isLoading,
-    isLoadingDecisions,
-    isLoadingTasks,
-    tasks.length,
-  ]);
 
   // Calculate stats
   const statusCounts = useMemo(() => {
@@ -1461,8 +1244,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (q) {
       result = result.filter(
         (i) =>
-          String(i.name || '').toLowerCase().includes(q) ||
-          String(i.summary || i.description || '').toLowerCase().includes(q)
+          String(i.name || '')
+            .toLowerCase()
+            .includes(q) ||
+          String(i.summary || i.description || '')
+            .toLowerCase()
+            .includes(q)
       );
     }
 
@@ -1510,15 +1297,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [addChatMessage, isChatCollapsed, openChatWithContext, t, toggleChatCollapse]
   );
 
-  const copyExecutionLink = useCallback(async (id: string) => {
-    try {
-      const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
-      await navigator.clipboard.writeText(url);
-      toast.success(t('common.copied', 'Copied'));
-    } catch {
-      toast.error(t('common.copyFailed', 'Copy failed'));
-    }
-  }, [t]);
+  const copyExecutionLink = useCallback(
+    async (id: string) => {
+      try {
+        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+        await navigator.clipboard.writeText(url);
+        toast.success(t('common.copied', 'Copied'));
+      } catch {
+        toast.error(t('common.copyFailed', 'Copy failed'));
+      }
+    },
+    [t]
+  );
 
   // Tab configuration
   const tabs = useMemo(
@@ -1944,11 +1734,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ) : null;
 
     if (!showScope && !showHeatmapShortcut && !showHeatmapControls) {
-      return (
-        <div className="flex items-center gap-2">
-          {execChip}
-        </div>
-      );
+      return <div className="flex items-center gap-2">{execChip}</div>;
     }
 
     const navigateWorkload = (direction: 'prev' | 'next') => {
@@ -3647,128 +3433,208 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t]);
 
   const renderActionCenter = () => (
-    <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('blocked')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-rose-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+    <div className="space-y-4">
+      {/* V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */}
+      <div
+        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4"
+        data-testid="execution-action-queue"
       >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.blocked', 'Blocked')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.blocked.length}
-            </p>
-          </div>
-          <AlertTriangle className="text-rose-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.blocked.slice(0, 3).map((i) => (
-            <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              {i.name}
-            </div>
-          ))}
-          {actionCenter.blocked.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {t('execution.actionQueue.title', 'Action Queue')}
+          </h3>
+          {isLoadingActionQueue ? (
+            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+          ) : (
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {actionQueueItems.length} {t('execution.actionQueue.items', 'items')}
+            </span>
           )}
         </div>
-      </button>
+        {actionQueueItems.length === 0 && !isLoadingActionQueue ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('execution.attention.none', 'Nothing urgent')}
+          </p>
+        ) : (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {actionQueueItems.slice(0, 15).map((item) => (
+              <div
+                key={`${item.type}-${item.id}`}
+                className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {item.initiativeName || '—'}
+                    {item.type === 'decision_overdue' && item.dueDate
+                      ? ` • ${t('execution.actionQueue.due', 'Due')} ${new Date(item.dueDate).toLocaleDateString()}`
+                      : ''}
+                    {item.type === 'comm_overdue' && item.dueDate
+                      ? ` • ${t('execution.actionQueue.commDue', 'Comm due')} ${new Date(item.dueDate).toLocaleDateString()}`
+                      : ''}
+                    {item.type === 'risk_high' && item.impact ? ` • ${item.impact}` : ''}
+                    {item.type === 'kpi_deviation_no_plan' && item.severity
+                      ? ` • ${t('execution.actionQueue.severity', 'Severity')} ${item.severity}`
+                      : ''}
+                    {item.type === 'kpi_deviation_no_plan' && item.periodStart
+                      ? ` • ${t('execution.actionQueue.period', 'Period')} ${new Date(item.periodStart).toLocaleDateString()}`
+                      : ''}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium ${
+                    item.type === 'decision_overdue'
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                      : item.type === 'risk_high'
+                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                        : item.type === 'comm_overdue'
+                          ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                          : item.type === 'kpi_deviation_no_plan'
+                            ? 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300'
+                            : 'bg-slate-200 dark:bg-navy-600 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {item.type === 'decision_overdue'
+                    ? t('execution.actionQueue.decision', 'Decision')
+                    : item.type === 'risk_high'
+                      ? t('execution.actionQueue.risk', 'Risk')
+                      : item.type === 'comm_overdue'
+                        ? t('execution.actionQueue.communication', 'Communication')
+                        : item.type === 'kpi_deviation_no_plan'
+                          ? t('execution.actionQueue.kpi', 'KPI')
+                          : t('execution.actionQueue.task', 'Task')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('overdue_decisions')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.overdueDecisions', 'Overdue decisions')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.overdueDecisions.length}
-            </p>
+      <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('blocked')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-rose-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.blocked', 'Blocked')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.blocked.length}
+              </p>
+            </div>
+            <AlertTriangle className="text-rose-400" size={18} />
           </div>
-          <Scale className="text-amber-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.overdueDecisions.slice(0, 3).map((d) => (
-            <div key={d.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              <span className="font-medium text-slate-900 dark:text-white">{d.title}</span>
-              <span className="text-slate-500"> · {d.relatedObjectName || '—'}</span>
-            </div>
-          ))}
-          {actionCenter.overdueDecisions.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
+          <div className="space-y-1">
+            {actionCenter.blocked.slice(0, 3).map((i) => (
+              <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                {i.name}
+              </div>
+            ))}
+            {actionCenter.blocked.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('missing_dates')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-cyan-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.missingDates', 'Missing dates')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.missingDates.length}
-            </p>
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('overdue_decisions')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.overdueDecisions', 'Overdue decisions')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.overdueDecisions.length}
+              </p>
+            </div>
+            <Scale className="text-amber-400" size={18} />
           </div>
-          <Calendar className="text-cyan-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.missingDates.slice(0, 3).map((i) => (
-            <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              {i.name}
-            </div>
-          ))}
-          {actionCenter.missingDates.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
+          <div className="space-y-1">
+            {actionCenter.overdueDecisions.slice(0, 3).map((d) => (
+              <div key={d.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                <span className="font-medium text-slate-900 dark:text-white">{d.title}</span>
+                <span className="text-slate-500"> · {d.relatedObjectName || '—'}</span>
+              </div>
+            ))}
+            {actionCenter.overdueDecisions.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('due_soon_tasks')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-violet-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.dueSoonTasks', 'Due soon')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.dueSoonTasks.length}
-            </p>
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('missing_dates')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-cyan-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.missingDates', 'Missing dates')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.missingDates.length}
+              </p>
+            </div>
+            <Calendar className="text-cyan-400" size={18} />
           </div>
-          <ClipboardList className="text-violet-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.dueSoonTasks.slice(0, 3).map((task) => (
-            <div key={task.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              <span className="font-medium text-slate-900 dark:text-white">{task.title}</span>
-              <span className="text-slate-500"> · {task.initiativeName || '—'}</span>
+          <div className="space-y-1">
+            {actionCenter.missingDates.slice(0, 3).map((i) => (
+              <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                {i.name}
+              </div>
+            ))}
+            {actionCenter.missingDates.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('due_soon_tasks')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-violet-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.dueSoonTasks', 'Due soon')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.dueSoonTasks.length}
+              </p>
             </div>
-          ))}
-          {actionCenter.dueSoonTasks.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
+            <ClipboardList className="text-violet-400" size={18} />
+          </div>
+          <div className="space-y-1">
+            {actionCenter.dueSoonTasks.slice(0, 3).map((task) => (
+              <div key={task.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                <span className="font-medium text-slate-900 dark:text-white">{task.title}</span>
+                <span className="text-slate-500"> · {task.initiativeName || '—'}</span>
+              </div>
+            ))}
+            {actionCenter.dueSoonTasks.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
+      </div>
     </div>
   );
 
@@ -3983,6 +3849,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             selectedItem={selectedItem}
             onSelect={setSummaryPreviewInitiativeId}
             itemIds={itemIds}
+            getItemById={(id) => { const x = summaryInitiatives.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
             onOpenFull={(id) => {
               const init = summaryInitiatives.find((x) => x.id === id);
               if (init) handleOpenDocument(init);
@@ -4085,17 +3952,60 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
+      const kpiAlerts = actionQueueItems.filter(
+        (item) => item.type === 'kpi_deviation_no_plan'
+      ).length;
+      const overdueItems = actionQueueItems.filter(
+        (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
+      ).length;
       return (
         <div className="p-4 space-y-4">
-          <Callout
-            variant="info"
-            title={t('execution.management.backlogTitle', 'Change management')}
-          >
-            {t(
-              'execution.management.backlogBody',
-              'Timeline change proposals and workout plans (propose→accept) are tracked as an R1 backlog (V3-G02).'
-            )}
-          </Callout>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('execution.management.workloadTitle', 'Workload changes')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionQueueItems.length}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.management.workloadBody',
+                  'Items that need review, acceptance, or follow-up this cycle.'
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('execution.management.overdueTitle', 'Overdue approvals')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {overdueItems}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.management.overdueBody',
+                  'Decisions and communications that are past due and should move first.'
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('execution.management.kpiAlertsTitle', 'KPI alerts without plan')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {kpiAlerts}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.management.kpiAlertsBody',
+                  'Deviation cases surface here so teams can turn them into actions and staffing changes.'
+                )}
+              </div>
+            </div>
+          </div>
+
+          {renderActionCenter()}
 
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
             <ExecutionWorkloadView
@@ -4119,7 +4029,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <PeopleChangeWorkspace
               initiativeId={undefined}
               projectId={currentProjectId || undefined}
-              organizationId={currentProjectId || ''}
             />
           </div>
         </div>
@@ -4127,7 +4036,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === 'reports') {
-      const reportRows = demoMode ? demo?.reportsDemo || [] : [];
       return (
         <div className="p-4 space-y-4">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
@@ -4175,58 +4083,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               </button>
             </div>
           </div>
-
-          {demoMode ? (
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-              <InlineTable
-                caption={t('execution.demo.reportsCaption', 'Demo report history')}
-                compact
-                columns={[
-                  {
-                    key: 'name',
-                    header: t('execution.reports.title', 'Execution reports'),
-                    render: (row: any) => (
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                          {row.name}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {row.type} · {row.status}
-                        </div>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'last',
-                    header: t('execution.demo.lastGenerated', 'Last'),
-                    width: 'w-36',
-                    align: 'right',
-                    render: (row: any) => (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {row.lastGeneratedAt
-                          ? new Date(row.lastGeneratedAt).toLocaleDateString()
-                          : '—'}
-                      </span>
-                    ),
-                  },
-                  {
-                    key: 'next',
-                    header: t('execution.demo.nextRun', 'Next'),
-                    width: 'w-36',
-                    align: 'right',
-                    render: (row: any) => (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {row.nextRunAt ? new Date(row.nextRunAt).toLocaleDateString() : '—'}
-                      </span>
-                    ),
-                  },
-                ]}
-                data={reportRows.slice(0, 10) as any[]}
-                rowKey={(row: any) => row.id}
-                emptyMessage={t('execution.demo.empty', 'No demo items')}
-              />
-            </div>
-          ) : null}
         </div>
       );
     }
@@ -4898,6 +4754,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             handleOpenDocument(full);
           }
         }}
+        whyRed={
+          sidePanelInitiative
+            ? (initiativeHealthMap.get(sidePanelInitiative.id)?.whyRed ?? null)
+            : null
+        }
       />
     </>
   );

@@ -11,7 +11,7 @@
  *
  * Usage (repo root):
  *   SQLITE_PATH=./data/dev/consultinity.db tsx server/scripts/db-inventory.ts --mode sqlite
- *   DB_TYPE=postgres DATABASE_URL="postgresql://..." tsx server/scripts/db-inventory.ts --mode postgres
+ *   DB_TYPE=postgres DATABASE_PUBLIC_URL="postgresql://..." tsx server/scripts/db-inventory.ts --mode postgres
  *   SQLITE_PATH=./data/dev/consultinity.db DATABASE_URL="postgresql://..." tsx server/scripts/db-inventory.ts --mode both
  *
  * Options:
@@ -24,7 +24,12 @@
 
 import fs from 'fs';
 import path from 'path';
-import dotenv from 'dotenv';
+
+import {
+  logSelectedDatabaseTarget,
+  resolveScriptDatabaseTarget,
+  type ScriptDatabaseTarget,
+} from './lib/scriptDatabaseTarget.js';
 
 type CountsMode = 'exact' | 'estimate' | 'none';
 type Mode = 'sqlite' | 'postgres' | 'both';
@@ -56,6 +61,11 @@ type Inventory = {
   engine: 'sqlite' | 'postgres';
   generatedAt: string;
   countsMode: CountsMode;
+  target?: {
+    source: string;
+    host: string;
+    database: string;
+  };
   tables: TableInventory[];
 };
 
@@ -188,14 +198,14 @@ async function sqliteInventory(opts: {
 }
 
 async function postgresInventory(opts: {
-  databaseUrl: string;
+  target: ScriptDatabaseTarget;
   countsMode: CountsMode;
   onlyTables?: Set<string>;
 }): Promise<Inventory> {
-  const { databaseUrl, countsMode, onlyTables } = opts;
+  const { target, countsMode, onlyTables } = opts;
   const pg: any = await import('pg');
   const { Pool } = pg.default || pg;
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({ connectionString: target.connectionString });
   try {
     const tablesRes = await pool.query(
       `SELECT tablename
@@ -252,6 +262,11 @@ async function postgresInventory(opts: {
       engine: 'postgres',
       generatedAt: new Date().toISOString(),
       countsMode,
+      target: {
+        source: target.source,
+        host: target.host,
+        database: target.database,
+      },
       tables: out,
     };
   } finally {
@@ -273,15 +288,11 @@ function writeJson(filename: string, data: unknown) {
 }
 
 async function main() {
-  // Load local env (gitignored) if present so DATABASE_URL/SQLITE_PATH can be picked up.
-  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-
   const args = parseArgs(process.argv.slice(2));
   const mode = (args.mode as Mode | undefined) || 'both';
   const countsMode = ((args.counts as CountsMode | undefined) || 'exact') as CountsMode;
   const sqlitePath = args.sqlite || process.env.SQLITE_PATH;
-  const databaseUrl = args['database-url'] || process.env.DATABASE_URL;
+  const databaseUrl = args['database-url'];
   const onlyTablesList = splitCsv(args.tables);
   const onlyTables = onlyTablesList.length ? new Set(onlyTablesList) : undefined;
 
@@ -291,17 +302,20 @@ async function main() {
   if ((mode === 'sqlite' || mode === 'both') && !sqlitePath) {
     throw new Error('SQLITE_PATH is required for --mode sqlite/both (or pass --sqlite).');
   }
-  if ((mode === 'postgres' || mode === 'both') && !databaseUrl) {
-    throw new Error('DATABASE_URL is required for --mode postgres/both (or pass --database-url).');
-  }
-
   if (mode === 'sqlite' || mode === 'both') {
     const inv = await sqliteInventory({ sqlitePath: sqlitePath!, countsMode, onlyTables });
     const p = writeJson(`inventory-sqlite-${stamp}.json`, inv);
     written.push(p);
   }
   if (mode === 'postgres' || mode === 'both') {
-    const inv = await postgresInventory({ databaseUrl: databaseUrl!, countsMode, onlyTables });
+    const target = resolveScriptDatabaseTarget({
+      label: 'db-inventory',
+      databaseUrl: databaseUrl || process.env.DATABASE_URL,
+      publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+      requireExplicitTarget: true,
+    });
+    logSelectedDatabaseTarget('db-inventory', target);
+    const inv = await postgresInventory({ target, countsMode, onlyTables });
     const p = writeJson(`inventory-postgres-${stamp}.json`, inv);
     written.push(p);
   }

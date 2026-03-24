@@ -14,6 +14,8 @@
  * SSOT: docs/ui-standards/03-modules/table-preview-pane-standard.md
  */
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Pin, PinOff } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -47,6 +49,14 @@ interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   previewOpen?: boolean;
   /** Whether preview should auto-open on first selection (default: true) */
   autoOpenPreview?: boolean;
+  /** Single-key action shortcuts dispatched when preview is open (key → handler). Keys should match ActionButton.shortcut values. */
+  actionShortcuts?: Record<string, () => void>;
+  /** Multi-select IDs — when size > 1, renders batch panel instead of single-item preview */
+  selectedIds?: Set<string>;
+  /** Render batch operations panel when multiple items are selected */
+  renderBatchPreview?: (ids: Set<string>) => React.ReactNode;
+  /** Lookup function to resolve item by ID — required for pinning to render the pinned item */
+  getItemById?: (id: string) => T | null;
 }
 
 export function TableWithPreviewLayout<T extends PreviewableItem>({
@@ -61,12 +71,61 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   itemIds = [],
   previewOpen: controlledPreviewOpen,
   autoOpenPreview = true,
+  actionShortcuts,
+  selectedIds,
+  renderBatchPreview,
+  getItemById,
 }: TableWithPreviewLayoutProps<T>) {
   const { t } = useTranslation();
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isPreviewOpen = controlledPreviewOpen ?? internalPreviewOpen;
+  const isBatchMode = (selectedIds?.size ?? 0) > 1 && !!renderBatchPreview;
+
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const pinnedItem = pinnedId && getItemById ? getItemById(pinnedId) : null;
+
+  const handlePin = useCallback(() => {
+    if (pinnedId === selectedId) {
+      setPinnedId(null);
+    } else {
+      setPinnedId(selectedId);
+    }
+  }, [pinnedId, selectedId]);
+
+  const handleUnpin = useCallback(() => setPinnedId(null), []);
+
+  const MAX_HISTORY = 10;
+  const [historyBack, setHistoryBack] = useState<string[]>([]);
+  const [historyForward, setHistoryForward] = useState<string[]>([]);
+  const isHistoryNav = useRef(false);
+
+  const pushHistory = useCallback((prevId: string) => {
+    if (isHistoryNav.current) return;
+    setHistoryBack((prev) => [...prev.slice(-(MAX_HISTORY - 1)), prevId]);
+    setHistoryForward([]);
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (!historyBack.length) return;
+    const prevId = historyBack[historyBack.length - 1];
+    setHistoryBack((prev) => prev.slice(0, -1));
+    if (selectedId) setHistoryForward((prev) => [...prev, selectedId]);
+    isHistoryNav.current = true;
+    onSelect(prevId);
+    requestAnimationFrame(() => { isHistoryNav.current = false; });
+  }, [historyBack, selectedId, onSelect]);
+
+  const goForward = useCallback(() => {
+    if (!historyForward.length) return;
+    const nextId = historyForward[historyForward.length - 1];
+    setHistoryForward((prev) => prev.slice(0, -1));
+    if (selectedId) setHistoryBack((prev) => [...prev, selectedId]);
+    isHistoryNav.current = true;
+    onSelect(nextId);
+    requestAnimationFrame(() => { isHistoryNav.current = false; });
+  }, [historyForward, selectedId, onSelect]);
 
   // If selection is controlled externally (row click sets selectedId),
   // keep internal preview open state in sync (KANON: single click opens preview).
@@ -84,12 +143,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
 
   const handleSelect = useCallback(
     (id: string) => {
+      if (selectedId && selectedId !== id) pushHistory(selectedId);
       onSelect(id);
       if (autoOpenPreview) {
         setInternalPreviewOpen(true);
       }
     },
-    [onSelect, autoOpenPreview]
+    [onSelect, autoOpenPreview, selectedId, pushHistory]
   );
 
   const handleClose = useCallback(() => {
@@ -103,23 +163,28 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     if (!container) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!itemIds.length) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+
+      if (!itemIds.length && !actionShortcuts) return;
 
       const currentIdx = selectedId ? itemIds.indexOf(selectedId) : -1;
 
       switch (e.key) {
         case 'j':
         case 'ArrowDown': {
+          if (isInput) return;
           e.preventDefault();
           const nextIdx = Math.min(currentIdx + 1, itemIds.length - 1);
-          handleSelect(itemIds[nextIdx]);
+          if (itemIds[nextIdx]) handleSelect(itemIds[nextIdx]);
           break;
         }
         case 'k':
         case 'ArrowUp': {
+          if (isInput) return;
           e.preventDefault();
           const prevIdx = Math.max(currentIdx - 1, 0);
-          handleSelect(itemIds[prevIdx]);
+          if (itemIds[prevIdx]) handleSelect(itemIds[prevIdx]);
           break;
         }
         case 'Enter': {
@@ -134,47 +199,155 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           handleClose();
           break;
         }
+        case 'ArrowLeft': {
+          if (e.altKey && !isInput) {
+            e.preventDefault();
+            goBack();
+          }
+          break;
+        }
+        case 'ArrowRight': {
+          if (e.altKey && !isInput) {
+            e.preventDefault();
+            goForward();
+          }
+          break;
+        }
+        default: {
+          if (isInput || !isPreviewOpen || !actionShortcuts) break;
+          const handler = actionShortcuts[e.key] ?? actionShortcuts[e.key.toUpperCase()];
+          if (handler) {
+            e.preventDefault();
+            handler();
+          }
+        }
       }
     };
 
     container.addEventListener('keydown', handleKeyDown);
     return () => container.removeEventListener('keydown', handleKeyDown);
-  }, [itemIds, selectedId, handleSelect, handleClose, onOpenFull]);
+  }, [itemIds, selectedId, handleSelect, handleClose, onOpenFull, isPreviewOpen, actionShortcuts, goBack, goForward]);
 
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden gap-1.5" tabIndex={0}>
       {/* Table area */}
       <div className="flex-1 min-w-0 overflow-auto">{children}</div>
 
-      {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
-      {isPreviewOpen && selectedItem && (
-        <div
+      {/* Pinned preview pane (comparison mode) */}
+      {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode ? (
+        <motion.div
+          key={`pinned-${pinnedId}`}
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -8 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
           className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
-          style={{ width: 'clamp(340px, 28%, 480px)' }}
+          style={{ width: 'clamp(280px, 22%, 400px)' }}
         >
           <PreviewPaneShell
-            title={selectedItem.title}
-            onClose={handleClose}
+            title={pinnedItem.title}
+            onClose={handleUnpin}
             actions={
-              <>
-                {renderPreviewActions?.(selectedItem)}
-                {onOpenFull && (
-                  <button
-                    onClick={() => onOpenFull(selectedItem.id)}
-                    className="inline-flex items-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
-                    title={t('common.open', 'Open')}
-                  >
-                    <span>{t('common.open', 'Open')}</span>
-                  </button>
-                )}
-              </>
+              <button
+                onClick={handleUnpin}
+                className="inline-flex items-center justify-center h-7 w-7 rounded-full text-primary-500 bg-primary-50 dark:bg-primary-500/10"
+                title="Unpin"
+              >
+                <PinOff size={13} />
+              </button>
             }
-            footer={renderPreviewFooter?.(selectedItem)}
           >
-            {renderPreview(selectedItem)}
+            {renderPreview(pinnedItem)}
           </PreviewPaneShell>
-        </div>
-      )}
+        </motion.div>
+      ) : null}
+
+      {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
+      <AnimatePresence mode="wait">
+        {isBatchMode && renderBatchPreview ? (
+          <motion.div
+            key="batch"
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+            style={{ width: 'clamp(340px, 28%, 480px)' }}
+          >
+            <PreviewPaneShell
+              title={t('common.batchOperations', 'Batch Operations')}
+              onClose={handleClose}
+            >
+              {renderBatchPreview(selectedIds!)}
+            </PreviewPaneShell>
+          </motion.div>
+        ) : isPreviewOpen && selectedItem ? (
+          <motion.div
+            key={selectedItem.id}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+            style={{ width: 'clamp(340px, 28%, 480px)' }}
+          >
+            <PreviewPaneShell
+              title={selectedItem.title}
+              onClose={handleClose}
+              actions={
+                <>
+                  {historyBack.length > 0 || historyForward.length > 0 ? (
+                    <div className="flex items-center gap-0.5 mr-1">
+                      <button
+                        onClick={goBack}
+                        disabled={!historyBack.length}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
+                        title="Alt+←"
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+                      <button
+                        onClick={goForward}
+                        disabled={!historyForward.length}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
+                        title="Alt+→"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  ) : null}
+                  {getItemById ? (
+                    <button
+                      onClick={handlePin}
+                      className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+                        pinnedId === selectedItem.id
+                          ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                      }`}
+                      title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
+                    >
+                      {pinnedId === selectedItem.id ? <PinOff size={13} /> : <Pin size={13} />}
+                    </button>
+                  ) : null}
+                  {renderPreviewActions?.(selectedItem)}
+                  {onOpenFull && (
+                    <button
+                      onClick={() => onOpenFull(selectedItem.id)}
+                      className="inline-flex items-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
+                      title={t('common.open', 'Open')}
+                    >
+                      <span>{t('common.open', 'Open')}</span>
+                    </button>
+                  )}
+                </>
+              }
+              footer={renderPreviewFooter?.(selectedItem)}
+            >
+              {renderPreview(selectedItem)}
+            </PreviewPaneShell>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

@@ -57,7 +57,7 @@ export const useBreadcrumbs = (): string[] | null => {
   // =====================================================
   // AI CHAT
   // =====================================================
-  if (currentView === AppView.AI_CHAT) {
+  if (currentView === AppView.AI_CHAT || currentView === AppView.APP_INTRO) {
     // Let AppRoutes provide canonical crumbs for Chat routes.
     return null;
   }

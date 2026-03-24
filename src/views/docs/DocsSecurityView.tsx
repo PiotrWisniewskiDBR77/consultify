@@ -249,8 +249,8 @@ export function DocsSecurityView() {
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Security & Compliance</h1>
             <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-              Enterprise-grade security built into every layer of the Consultify platform. Your
-              data protection is our top priority.
+              Enterprise-grade security built into every layer of the Consultify platform. Your data
+              protection is our top priority.
             </p>
 
             <div className="flex items-center justify-center gap-4">

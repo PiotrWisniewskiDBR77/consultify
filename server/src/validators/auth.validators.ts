@@ -14,6 +14,13 @@ export const LoginRequestSchema = z.object({
   trustDevice: z.boolean().optional(),
 });
 
+// Register Demo Request (minimal: email + password for demo-only signup)
+export const RegisterDemoRequestSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().optional(),
+});
+
 // Register Request
 export const RegisterRequestSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -57,6 +64,11 @@ export const ResetPasswordRequestSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
+// Forgot Password Request
+export const ForgotPasswordRequestSchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
+
 // Verify Email Request
 export const VerifyEmailRequestSchema = z.object({
   token: z.string().min(1, 'Token is required'),
@@ -89,10 +101,12 @@ export const SessionIdParamSchema = z.object({
 
 // Type exports
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
+export type RegisterDemoRequest = z.infer<typeof RegisterDemoRequestSchema>;
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 export type RefreshTokenRequest = z.infer<typeof RefreshTokenRequestSchema>;
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
 export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>;
 export type MFASetupRequest = z.infer<typeof MFASetupRequestSchema>;
 export type MFAEnableRequest = z.infer<typeof MFAEnableRequestSchema>;

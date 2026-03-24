@@ -114,9 +114,25 @@ const BusinessMetricsView: React.FC = () => {
   };
 
   const computeStatsFromMetrics = (metricsList: any[]) => {
-    const onTarget = metricsList.filter((m) => m.target_value != null && m.current_value != null && Number(m.current_value) >= Number(m.target_value)).length;
-    const needsAttention = metricsList.filter((m) => m.target_value != null && m.current_value != null && Number(m.current_value) < Number(m.target_value) && Number(m.current_value) >= Number(m.target_value) * 0.8).length;
-    const critical = metricsList.filter((m) => m.target_value != null && m.current_value != null && Number(m.current_value) < Number(m.target_value) * 0.8).length;
+    const onTarget = metricsList.filter(
+      (m) =>
+        m.target_value != null &&
+        m.current_value != null &&
+        Number(m.current_value) >= Number(m.target_value)
+    ).length;
+    const needsAttention = metricsList.filter(
+      (m) =>
+        m.target_value != null &&
+        m.current_value != null &&
+        Number(m.current_value) < Number(m.target_value) &&
+        Number(m.current_value) >= Number(m.target_value) * 0.8
+    ).length;
+    const critical = metricsList.filter(
+      (m) =>
+        m.target_value != null &&
+        m.current_value != null &&
+        Number(m.current_value) < Number(m.target_value) * 0.8
+    ).length;
     return {
       totalMetrics: metricsList.length,
       onTarget,
@@ -130,7 +146,10 @@ const BusinessMetricsView: React.FC = () => {
   const fetchStats = async (metricsList?: any[]) => {
     try {
       const data = await Api.getMetricsStats();
-      if (data && (data.totalMetrics > 0 || data.onTarget > 0 || data.needsAttention > 0 || data.critical > 0)) {
+      if (
+        data &&
+        (data.totalMetrics > 0 || data.onTarget > 0 || data.needsAttention > 0 || data.critical > 0)
+      ) {
         setStats(data);
       } else {
         const list = metricsList ?? metrics;
@@ -295,7 +314,11 @@ const BusinessMetricsView: React.FC = () => {
             <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
           </div>
           <button
-            onClick={async () => { setError(null); const m = await fetchMetrics(); await fetchStats(m); }}
+            onClick={async () => {
+              setError(null);
+              const m = await fetchMetrics();
+              await fetchStats(m);
+            }}
             className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
@@ -343,7 +366,9 @@ const BusinessMetricsView: React.FC = () => {
                   <p className="text-2xl font-bold text-slate-900 dark:text-white">
                     {stats.needsAttention || 0}
                   </p>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">Needs Attention</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    Needs Attention
+                  </span>
                 </div>
               </div>
             </Card>
@@ -364,7 +389,8 @@ const BusinessMetricsView: React.FC = () => {
           {stats.totalMetrics === 0 && metrics.length > 0 && (
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pl-1">
               <AlertTriangle className="w-3.5 h-3.5" />
-              Stats update after metrics are calculated. Click &quot;Calculate Now&quot; on each metric to update.
+              Stats update after metrics are calculated. Click &quot;Calculate Now&quot; on each
+              metric to update.
             </p>
           )}
         </div>

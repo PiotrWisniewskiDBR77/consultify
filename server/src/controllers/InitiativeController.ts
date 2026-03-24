@@ -17,8 +17,12 @@ import {
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
 import activityService from '../services/ActivityService.js';
+import auditEventsService from '../services/AuditEventsService.js';
+import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import notificationService from '../services/notificationService.js';
+import { calculateRiskScore, categorizeScore, DEFAULT_THRESHOLDS } from '../services/raidScoringService.js';
+import { syncInitiativeCapacity } from '../services/staffingPlanService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -525,6 +529,7 @@ export class InitiativeController {
         keyRisks,
         sourceType,
         sourceId,
+        programId,
       } = req.body;
 
       if (!title) {
@@ -547,7 +552,7 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, title, axis, area, summary, hypothesis, status,
+                id, organization_id, project_id, program_id, title, axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
                 planned_start_date, planned_end_date,
@@ -555,7 +560,7 @@ export class InitiativeController {
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                 source_type, source_id,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -563,6 +568,7 @@ export class InitiativeController {
           id,
           orgId,
           projectId ?? null,
+          programId ?? null,
           title,
           axis ?? null,
           area ?? null,
@@ -634,6 +640,21 @@ export class InitiativeController {
         ]);
       }
 
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.created',
+          resourceType: 'initiative',
+          resourceId: id,
+          after: { id, title, projectId: projectId ?? null, status: status ?? null },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
       res.json({ id, name: title, message: 'Initiative created' });
     }
   );
@@ -758,6 +779,9 @@ export class InitiativeController {
         marketContext: 'market_context',
         problemStatement: 'problem_statement',
         estimatedBudget: 'estimated_budget',
+        // V4-INIT-02: Program hierarchy
+        programId: 'program_id',
+        parentProgramId: 'program_id',
       };
 
       // JSON array fields (stored as JSON strings)
@@ -943,6 +967,23 @@ export class InitiativeController {
         `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
         [id, orgId]
       );
+      try {
+        await auditEventsService.log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'initiative.updated',
+          resourceType: 'initiative',
+          resourceId: id,
+          before: { status: currentStatus, ...Object.fromEntries(changes.map((c) => [c.field, c.oldValue])) },
+          after: updated as Record<string, unknown>,
+          metadata: { changesCount: changes.length },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
       res.json({
         id,
         message: 'Initiative updated',
@@ -1056,6 +1097,45 @@ export class InitiativeController {
           });
           return;
         }
+      }
+
+      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist
+      const blockingItems = await getBlockingReadinessItems(orgId, id);
+      if (blockingItems.length > 0) {
+        try {
+          const recipients = await getInitiativeNotificationRecipients(orgId, id);
+          await Promise.allSettled(
+            recipients
+              .filter((uid) => uid && uid !== actorId)
+              .map((userId) =>
+                notificationService.send({
+                  userId,
+                  organizationId: orgId,
+                  type: 'initiative.gate_blocked',
+                  title: 'Initiative gate blocked',
+                  body: `${initiativeName}: ${blockingItems[0]?.label || 'Readiness check failed'}.`,
+                  entityType: 'initiative',
+                  entityId: id,
+                  actionUrl: '/initiatives',
+                  actorId,
+                  actorName,
+                  priority: 'high',
+                  metadata: { currentStatus, nextStatus, missing: blockingItems },
+                })
+              )
+          );
+        } catch {
+          /* best-effort */
+        }
+        res.status(400).json({
+          error: 'Gate readiness check failed. Complete missing requirements before transitioning.',
+          rule: 'GATE_BLOCKED',
+          gate_blocked: true,
+          missing: blockingItems,
+          from: currentStatus,
+          to: nextStatus,
+        });
+        return;
       }
 
       // Gate decision validation
@@ -1731,6 +1811,23 @@ export class InitiativeController {
         // best-effort
       }
 
+      try {
+        await auditEventsService.log({
+          actorId,
+          actorType: 'USER',
+          action: 'initiative.status_changed',
+          resourceType: 'initiative',
+          resourceId: id,
+          before: { status: currentStatus },
+          after: { status: nextStatus },
+          metadata: { gate: gate || null, reason: reason || null },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
       res.json({
         id,
         status: nextStatus,
@@ -2094,8 +2191,9 @@ export class InitiativeController {
         return;
       }
 
-      const { projectId, statuses, status, search } = req.query as {
+      const { projectId, programId: programIdQ, statuses, status, search } = req.query as {
         projectId?: string;
+        programId?: string;
         statuses?: string;
         status?: string;
         search?: string;
@@ -2133,6 +2231,10 @@ export class InitiativeController {
       if (projectId) {
         sql += ` AND i.project_id = ?`;
         params.push(String(projectId));
+      }
+      if (programIdQ) {
+        sql += ` AND i.program_id = ?`;
+        params.push(String(programIdQ));
       }
       if (priorities.length > 0) {
         const normalized = priorities.map((p) => String(p || '').toUpperCase()).filter(Boolean);
@@ -2208,6 +2310,7 @@ export class InitiativeController {
           id: i.id,
           organizationId: i.organization_id,
           projectId: i.project_id,
+          programId: i.program_id ?? undefined,
           name: parseName(i.title || i.name),
           title: parseName(i.title || i.name),
           axis: i.axis || 'operational',
@@ -2307,6 +2410,94 @@ export class InitiativeController {
           avgProgress,
         },
       });
+    }
+  );
+
+  /**
+   * V4-INIT-02: Get portfolio rollups by program (hierarchy)
+   * Returns programs with initiative counts and health distribution
+   */
+  static getPortfolioRollups = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { projectId, parentProgramId } = req.query as {
+        projectId?: string;
+        parentProgramId?: string;
+      };
+
+      const rollupParams: unknown[] = [orgId];
+      let rollupSql = `
+        SELECT
+          COALESCE(i.program_id, '__ungrouped__') AS program_id,
+          p.name AS program_name,
+          p.parent_program_id,
+          COUNT(*) AS initiative_count,
+          SUM(COALESCE(i.cost_capex, 0) + COALESCE(i.cost_opex, 0)) AS total_budget,
+          SUM(COALESCE(i.business_value, 0)) AS total_value,
+          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('EXECUTING','DONE','TRACKING') THEN 1 ELSE 0 END) AS health_green,
+          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') THEN 1 ELSE 0 END) AS health_amber,
+          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) NOT IN ('EXECUTING','DONE','TRACKING','APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') OR i.status IS NULL THEN 1 ELSE 0 END) AS health_red
+        FROM initiatives i
+        LEFT JOIN programs p ON p.id = i.program_id AND p.organization_id = i.organization_id
+        WHERE i.organization_id = ?
+      `;
+      if (projectId) {
+        rollupSql += ` AND i.project_id = ?`;
+        rollupParams.push(String(projectId));
+      }
+      if (parentProgramId) {
+        rollupSql += ` AND p.parent_program_id = ?`;
+        rollupParams.push(String(parentProgramId));
+      }
+      rollupSql += ` GROUP BY COALESCE(i.program_id, '__ungrouped__'), p.name, p.parent_program_id ORDER BY initiative_count DESC`;
+
+      const rows = await queryHelpers.queryAll(rollupSql, rollupParams);
+
+      let childProgramsMap: Record<string, Array<{ id: string; name: string; status: string }>> = {};
+      try {
+        const allPrograms = await queryHelpers.queryAll(
+          `SELECT id, name, status, parent_program_id FROM programs WHERE organization_id = ?`,
+          [orgId]
+        );
+        for (const cp of allPrograms as Array<Record<string, unknown>>) {
+          const parentId = cp.parent_program_id as string | null;
+          if (parentId) {
+            if (!childProgramsMap[parentId]) childProgramsMap[parentId] = [];
+            childProgramsMap[parentId].push({
+              id: cp.id as string,
+              name: cp.name as string,
+              status: cp.status as string,
+            });
+          }
+        }
+      } catch {
+        childProgramsMap = {};
+      }
+
+      const programs = rows.map((r: Record<string, unknown>) => {
+        const pid = (r.program_id as string) === '__ungrouped__' ? null : (r.program_id as string);
+        return {
+          programId: pid,
+          programName: (r.program_name as string) || null,
+          parentProgramId: (r.parent_program_id as string) || null,
+          initiativeCount: Number(r.initiative_count),
+          totalBudget: Number(r.total_budget) || 0,
+          totalValue: Number(r.total_value) || 0,
+          health: {
+            green: Number(r.health_green) || 0,
+            amber: Number(r.health_amber) || 0,
+            red: Number(r.health_red) || 0,
+          },
+          childPrograms: pid ? (childProgramsMap[pid] || []) : [],
+        };
+      });
+
+      res.json({ programs });
     }
   );
 
@@ -3915,6 +4106,8 @@ export class InitiativeController {
         ]
       );
 
+      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+
       res.status(201).json({
         success: true,
         resource: {
@@ -3949,6 +4142,9 @@ export class InitiativeController {
         `DELETE FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [resourceId, initiativeId, orgId]
       );
+
+      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+
       res.json({ success: true });
     }
   );
@@ -3991,6 +4187,8 @@ export class InitiativeController {
           orgId,
         ]
       );
+
+      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
 
       res.json({ success: true });
     }
@@ -4872,6 +5070,9 @@ export class InitiativeController {
           r.description,
           r.status,
           r.impact as severity,
+          r.probability,
+          r.risk_score as riskScore,
+          r.score_category as scoreCategory,
           r.owner_id as ownerId,
           r.due_date as dueDate,
           r.mitigation_plan,
@@ -4896,7 +5097,7 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
-      const { type, title, description, severity, dueDate, ownerId } = req.body || {};
+      const { type, title, description, severity, probability, dueDate, ownerId } = req.body || {};
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -4907,10 +5108,14 @@ export class InitiativeController {
       }
 
       const id = uuidv4();
+      const impactVal = severity ? String(severity).toUpperCase() : null;
+      const probVal = probability ? String(probability).toUpperCase() : null;
+      const riskScore = calculateRiskScore(probVal || 'LOW', impactVal || 'LOW');
+      const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
       await queryHelpers.queryRun(
         `INSERT INTO raid_items (
-          id, organization_id, initiative_id, type, title, description, impact, due_date, owner_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          id, organization_id, initiative_id, type, title, description, impact, probability, risk_score, score_category, due_date, owner_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           orgId,
@@ -4918,7 +5123,10 @@ export class InitiativeController {
           String(type).toUpperCase(),
           title,
           description || null,
-          severity ? String(severity).toUpperCase() : null,
+          impactVal,
+          probVal,
+          riskScore,
+          scoreCategory,
           dueDate || null,
           ownerId || null,
         ]
@@ -4947,14 +5155,14 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId, raidId } = req.params as any;
-      const { title, description, status, severity, dueDate, ownerId } = req.body || {};
+      const { title, description, status, severity, probability, dueDate, ownerId } = req.body || {};
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      const existing = await queryHelpers.queryOne(
-        `SELECT id, title, description, status, impact, due_date, owner_id
+      const existing = await queryHelpers.queryOne<any>(
+        `SELECT id, title, description, status, impact, probability, due_date, owner_id
          FROM raid_items
          WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
         [raidId, orgId, initiativeId]
@@ -4964,12 +5172,20 @@ export class InitiativeController {
         return;
       }
 
+      const finalImpact = severity ? String(severity).toUpperCase() : (existing.impact || 'LOW');
+      const finalProb = probability ? String(probability).toUpperCase() : (existing.probability || 'LOW');
+      const riskScore = calculateRiskScore(finalProb, finalImpact);
+      const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
+
       await queryHelpers.queryRun(
         `UPDATE raid_items
          SET title = COALESCE(?, title),
              description = COALESCE(?, description),
              status = COALESCE(?, status),
              impact = COALESCE(?, impact),
+             probability = COALESCE(?, probability),
+             risk_score = ?,
+             score_category = ?,
              due_date = COALESCE(?, due_date),
              owner_id = COALESCE(?, owner_id),
              updated_at = datetime('now')
@@ -4979,6 +5195,9 @@ export class InitiativeController {
           description ?? null,
           status ?? null,
           severity ? String(severity).toUpperCase() : null,
+          probability ? String(probability).toUpperCase() : null,
+          riskScore,
+          scoreCategory,
           dueDate ?? null,
           ownerId ?? null,
           raidId,
@@ -5640,10 +5859,21 @@ export class InitiativeController {
         allowedSectionKeys: cards.canEditCards && !isTerminal ? ['*'] : [],
       };
 
+      const blockingItems = await getBlockingReadinessItems(orgId, initiativeId);
+
       res.json({
         currentStatus,
         userRoles,
         availableTransitions,
+        passed: blockingItems.length === 0,
+        missing: blockingItems.map((item) => ({
+          section: item.section,
+          field: item.field,
+          requirement: item.requirement,
+          key: item.key,
+          label: item.label,
+          suggestedAction: item.suggestedAction,
+        })),
         capabilities: {
           version: 1,
           source: 'backend',
@@ -5670,8 +5900,7 @@ export class InitiativeController {
           },
         },
         readiness,
-        allBlocking:
-          readiness.filter((r: any) => r.severity === 'blocking' && !r.pass).length === 0,
+        allBlocking: blockingItems.length === 0,
         allWarnings: readiness.filter((r: any) => r.severity === 'warning' && !r.pass).length === 0,
       });
     }

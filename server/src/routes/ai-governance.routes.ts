@@ -29,7 +29,18 @@ router.get(
       AIPolicyEngine.getPolicySummary(orgId),
     ]);
 
-    res.json({ success: true, data: { effective, summary } });
+    const tavilyConfigured = Boolean(String(process.env.TAVILY_API_KEY || '').trim());
+    res.json({
+      success: true,
+      data: {
+        effective,
+        summary,
+        runtime: {
+          tavilyConfigured,
+          webSearchAvailable: Boolean((effective as any)?.internetEnabled) && tavilyConfigured,
+        },
+      },
+    });
   })
 );
 

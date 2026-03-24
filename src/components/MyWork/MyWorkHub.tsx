@@ -17,17 +17,18 @@ import {
   CalendarClock,
   CalendarDays,
   Check,
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
   Clock,
   Eye,
   EyeOff,
   FileText,
-  Flame,
   Flag,
-  Flower2,
+  Flame,
   GanttChart,
   GitBranch,
+  Home,
   Hourglass,
   Inbox,
   Kanban,
@@ -38,75 +39,102 @@ import {
   List,
   Loader2,
   Plus,
+  Rocket,
   Scale,
   Search,
   Sparkles,
+  Sprout,
+  Tag,
   Target,
   Trash2,
+  TreePine,
   TrendingUp,
   User,
+  Users,
   X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
 } from '@/components/shared/WorkspacePanelStrip';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
+import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
-import { DecisionsPanelContent, type DecisionsBulkBarPayload } from './DecisionsPanelContent';
+import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
-import { InboxContent, type InboxBulkBarPayload, type InboxCounts } from './InboxContent';
-import type { MyIdea } from './MyIdeasListContent';
+import {
+  composeIdeaBodyFromSeedIntent,
+  deriveIdeaTitleFromSeedIntent,
+  type IdeaWorkspaceSeedIntent,
+  normalizePreferredSystem,
+} from './ideaEntryTypes';
+import type { CanvasToolType } from './ideaSelectionTypes';
+import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
+import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
+import type { HomeScreenAction } from './Home/homeV2Types';
+import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
-const TaskDetailView = React.lazy(() =>
+const TaskDetailView = lazyWithRetry(() =>
   import('./TaskDetailView').then((m) => ({ default: m.TaskDetailView }))
 );
-const IdeaMapWorkspace = React.lazy(() =>
+const IdeaMapWorkspace = lazyWithRetry(() =>
   import('./IdeaMapWorkspace').then((m) => ({ default: m.IdeaMapWorkspace }))
 );
-const DecisionDetailView = React.lazy(() =>
+const DecisionDetailView = lazyWithRetry(() =>
   import('./DecisionDetailView').then((m) => ({ default: m.DecisionDetailView }))
 );
-const NotificationDetailView = React.lazy(() =>
+const NotificationDetailView = lazyWithRetry(() =>
   import('./NotificationDetailView').then((m) => ({ default: m.NotificationDetailView }))
 );
-const ExecutiveDashboard = React.lazy(() =>
+const ExecutiveDashboard = lazyWithRetry(() =>
   import('./Executive/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard }))
 );
-const FocusView = React.lazy(() =>
+const HomeView = lazyWithRetry(() =>
+  import('./Home/HomeView').then((m) => ({ default: m.HomeView }))
+);
+const CalendarView = lazyWithRetry(() =>
+  import('./Calendar/CalendarView').then((m) => ({ default: m.CalendarView }))
+);
+const FocusView = lazyWithRetry(() =>
   import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
 );
-const NotebookContent = React.lazy(() =>
+const NotebookContent = lazyWithRetry(() =>
   import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
 );
-const TasksKanbanBoard = React.lazy(() =>
+const TasksKanbanBoard = lazyWithRetry(() =>
   import('./TasksKanbanBoard').then((m) => ({ default: m.TasksKanbanBoard }))
 );
-const TasksCalendarView = React.lazy(() =>
+const TasksCalendarView = lazyWithRetry(() =>
   import('./TasksCalendarView').then((m) => ({ default: m.TasksCalendarView }))
 );
-const DecisionsKanbanBoard = React.lazy(() =>
+const DecisionsKanbanBoard = lazyWithRetry(() =>
   import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
 );
-const DecisionsTimelineContainer = React.lazy(() =>
+const DecisionsTimelineContainer = lazyWithRetry(() =>
   import('./DecisionsTimelineView').then((m) => ({ default: m.DecisionsTimelineContainer }))
 );
 
 // Types
-type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'notebook' | 'ideas' | 'decisions';
+type ModuleTab = 'home' | 'ideas' | 'notebook' | 'inbox' | 'calendar' | 'tasks' | 'decisions' | 'manager';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
-type IdeasViewMode = 'select' | 'overview' | 'blank' | 'mindmap' | 'garden';
+type IdeasViewMode = 'table' | 'grid';
 type DecisionsViewMode = 'table' | 'kanban' | 'timeline';
 type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
@@ -114,40 +142,70 @@ type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 // Q1: Per-tab system prompts for contextual chat
 const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
-  executive:
-    'You are a C-level strategic advisor. The user is an executive reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
+  home:
+    'You are an AI transformation companion operating from the user\'s live Home screen. Synthesize signals across ideas, decisions, execution, team alignment, and industry context. Help the user understand what matters now, frame transformation moves, and convert signals into action. Stay strategic, concise, and highly relevant.',
+  ideas: [
+    'You have two roles inside the Idea Workspace:',
+    '',
+    "BUILDER — create structure on the user's behalf:",
+    '  • generate mind maps, process flows, tables, whiteboard clusters',
+    '  • expand branches, add nodes, propose layouts',
+    '  • convert selections into tasks, initiatives, decisions, reports',
+    '  • always propose changes for preview before applying',
+    '',
+    "EXPERT — challenge, question, and improve the user's thinking:",
+    '  • challenge assumptions and identify blind spots',
+    '  • suggest missing dimensions, risks, and frameworks',
+    '  • recommend measurements, KPIs, and next steps',
+    '  • explain trade-offs and simplify complexity',
+    '',
+    'Rules:',
+    '  • Never silently overwrite workspace content — always propose, preview, then apply.',
+    '  • Be concise. Prefer structured output (bullets, numbered lists, tables) over paragraphs.',
+    '  • When the user describes a problem, default to Builder mode and propose an initial structure.',
+    '  • When the user asks "why", "what if", or "am I missing", switch to Expert mode.',
+    '  • Reference the active system (mind map, whiteboard, process flow, table) when relevant.',
+  ].join('\n'),
+  notebook:
+    'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
   inbox:
     'You are a triage assistant. Help the user quickly process incoming items — prioritize, categorize, and suggest actions (accept, defer, delegate, dismiss). Be efficient and action-oriented.',
-  focus:
-    'You are a productivity coach. Help the user plan their day, prioritize tasks, manage energy, and stay focused. Suggest time-blocking, task ordering, and delegation when appropriate.',
+  calendar:
+    'You are a scheduling assistant. Help the user plan their time, find conflicts, suggest optimal time slots for deep work, and coordinate across calendars. Be practical and time-aware.',
   tasks:
     'You are an execution manager. Help the user manage tasks — break down work, estimate effort, identify blockers, suggest delegation, and track progress. Be practical and specific.',
   decisions:
     'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
-  notebook:
-    'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
-  ideas:
-    'You are an innovation scout. Help evaluate ideas — assess feasibility, market fit, quick wins, and next steps. Be encouraging but realistic.',
+  manager:
+    'You are a C-level strategic advisor. The user is a manager reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
 };
 
 // Q3: Per-tab quick prompts shown as chips in the chat panel
 const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
-  executive: [
-    'Give me a 30-second briefing',
-    'What needs my attention most?',
-    'Portfolio risk summary',
-    'Team capacity overview',
+  home: [
+    'What deserves the highest attention right now?',
+    'Translate these signals into a plan',
+    'What is the strongest transformation move this week?',
+    'Where are we losing momentum?',
   ],
+  ideas: [
+    'Build an initial structure for my idea',
+    'Challenge my assumptions',
+    'What am I missing?',
+    'Suggest next steps',
+    'Turn this into a decision matrix',
+    'Find root causes',
+  ],
+  notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
   inbox: [
     'Triage all new items for me',
     'Summarize notifications since yesterday',
     'What needs urgent attention?',
   ],
-  focus: [
-    'Optimize my Today column',
-    'What should I tackle first?',
-    'Estimate my capacity for today',
-    'Help me plan my day',
+  calendar: [
+    'Find a free slot for deep work this week',
+    'What conflicts do I have tomorrow?',
+    'Suggest an optimal schedule for today',
   ],
   tasks: [
     'Reprioritize my tasks',
@@ -160,11 +218,11 @@ const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
     'Analyze the most urgent decision',
     'What decisions are blocking progress?',
   ],
-  notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
-  ideas: [
-    'Evaluate my top idea',
-    'Which ideas are ready to promote?',
-    'Find connections between my ideas',
+  manager: [
+    'Give me a 30-second briefing',
+    'What needs my attention most?',
+    'Portfolio risk summary',
+    'Team capacity overview',
   ],
 };
 type ItemStatus =
@@ -180,13 +238,14 @@ type ItemStatus =
   | 'unread';
 
 interface TabCounts {
-  executive: number;
-  inbox: number;
-  focus: number;
-  tasks: number;
-  notebook: number;
+  home: number;
   ideas: number;
+  notebook: number;
+  inbox: number;
+  calendar: number;
+  tasks: number;
   decisions: number;
+  manager: number;
 }
 
 interface TaskFilterCounts {
@@ -209,6 +268,153 @@ interface OpenDocument {
   name: string;
   status: ItemStatus;
   data?: any;
+}
+
+const TRANSIENT_DOCUMENT_PREFIXES = ['new-task-', 'new-idea-', 'new-decision-'] as const;
+
+function isOpenDocument(value: unknown): value is OpenDocument {
+  if (!value || typeof value !== 'object') return false;
+  const doc = value as Partial<OpenDocument>;
+  return (
+    typeof doc.id === 'string' &&
+    typeof doc.name === 'string' &&
+    typeof doc.status === 'string' &&
+    (doc.type === 'task' || doc.type === 'idea' || doc.type === 'decision' || doc.type === 'notification')
+  );
+}
+
+function isTransientDocumentId(id: string): boolean {
+  return TRANSIENT_DOCUMENT_PREFIXES.some((prefix) => id.startsWith(prefix));
+}
+
+function readStoredMyWorkDocuments(): {
+  openDocuments: OpenDocument[];
+  activeDocumentId: string | null;
+} {
+  if (typeof window === 'undefined') {
+    return { openDocuments: [], activeDocumentId: null };
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
+    if (!raw) return { openDocuments: [], activeDocumentId: null };
+
+    const parsed = JSON.parse(raw);
+    const openDocuments: OpenDocument[] = Array.isArray(parsed?.openDocuments)
+      ? parsed.openDocuments
+          .filter(isOpenDocument)
+          // Temporary "new-*" placeholders should not survive a full page reload.
+          .filter((doc: OpenDocument) => !isTransientDocumentId(doc.id))
+      : [];
+    const activeDocumentId =
+      typeof parsed?.activeDocumentId === 'string' &&
+      openDocuments.some((doc: OpenDocument) => doc.id === parsed.activeDocumentId)
+        ? parsed.activeDocumentId
+        : null;
+
+    return { openDocuments, activeDocumentId };
+  } catch {
+    return { openDocuments: [], activeDocumentId: null };
+  }
+}
+
+function getDocumentTab(type: OpenDocument['type']): ModuleTab {
+  switch (type) {
+    case 'task':
+      return 'tasks';
+    case 'idea':
+      return 'ideas';
+    case 'decision':
+      return 'decisions';
+    case 'notification':
+      return 'inbox';
+  }
+}
+
+function getInitialMyWorkTab(searchParams: URLSearchParams, _canViewManager: boolean): ModuleTab {
+  if (searchParams.get('ideaId') || searchParams.get('idea')) return 'ideas';
+  if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
+  if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
+
+  return 'home';
+}
+
+function parseMyWorkPathIntent(
+  pathname: string,
+  isPolish: boolean
+): { tab: ModuleTab; doc?: OpenDocument } | null {
+  const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
+    switch (segment) {
+      case 'mind-map':
+      case 'mindmap':
+        return 'mindmap';
+      case 'whiteboard':
+        return 'whiteboard';
+      case 'process-flow':
+      case 'process_flow':
+      case 'flow':
+        return 'process_flow';
+      case 'table':
+        return 'table';
+      default:
+        return undefined;
+    }
+  };
+  const normalized = pathname.replace(/\/+$/, '');
+  if (!normalized.startsWith('/my-work')) return null;
+  const segments = normalized.split('/').filter(Boolean);
+  if (segments.length < 2) return null;
+
+  if (segments[1] === 'ideas' && segments[2]) {
+    const ideaId = decodeURIComponent(segments[2]);
+    const openMap = segments[3] === 'workspace';
+    const initialTool = openMap ? parseIdeaTool(segments[4]) : undefined;
+    return {
+      tab: 'ideas',
+      doc: {
+        id: ideaId,
+        type: 'idea',
+        name: isPolish ? 'Pomysł' : 'Idea',
+        status: 'idea',
+        data: { openMap, initialTool },
+      },
+    };
+  }
+
+  if (segments[1] === 'tasks' && segments[2]) {
+    return {
+      tab: 'tasks',
+      doc: {
+        id: decodeURIComponent(segments[2]),
+        type: 'task',
+        name: isPolish ? 'Zadanie' : 'Task',
+        status: 'todo',
+      },
+    };
+  }
+
+  if (segments[1] === 'decisions' && segments[2]) {
+    return {
+      tab: 'decisions',
+      doc: {
+        id: decodeURIComponent(segments[2]),
+        type: 'decision',
+        name: isPolish ? 'Decyzja' : 'Decision',
+        status: 'pending',
+      },
+    };
+  }
+
+  if (segments[1] === 'home') return { tab: 'home' };
+  if (segments[1] === 'ideas') return { tab: 'ideas' };
+  if (segments[1] === 'tasks') return { tab: 'tasks' };
+  if (segments[1] === 'decisions') return { tab: 'decisions' };
+  if (segments[1] === 'notebook') return { tab: 'notebook' };
+  if (segments[1] === 'inbox') return { tab: 'inbox' };
+  if (segments[1] === 'calendar') return { tab: 'calendar' };
+  if (segments[1] === 'manager') return { tab: 'manager' };
+
+  return null;
 }
 
 // Shared button styles (KANON v3): pill buttons, h-9, hover = bg-only.
@@ -239,8 +445,7 @@ const BUTTON_ACTIVE = `
 // Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
 const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const TOPBAR_PILL_INACTIVE =
-  `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 // Tab styles for dynamic tabs
 const TAB_BASE = `
@@ -291,9 +496,13 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const openChatWithContext = useOpenChatWithContext();
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentUser,
+    currentProjectId,
     myWorkIntent,
     clearMyWorkIntent,
     myWorkEvent,
@@ -314,21 +523,55 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     </div>
   );
 
-  // A1.2: Role-based access – Executive tab restricted to admin/manager/superadmin
+  // Role-based access – Manager tab restricted to admin/manager/superadmin
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
-  const canViewExecutive = isAdmin || isManager || isSuperAdmin;
+  const canViewManager = isAdmin || isManager || isSuperAdmin;
 
-  // Tab state — managers land on Executive, regular users on Focus
-  const [activeTab, setActiveTab] = useState<ModuleTab>(canViewExecutive ? 'executive' : 'focus');
+  const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
+  // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
+  const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
+    const restoredActiveDoc = restoredDocumentState.activeDocumentId
+      ? restoredDocumentState.openDocuments.find((doc) => doc.id === restoredDocumentState.activeDocumentId) || null
+      : null;
+    return restoredActiveDoc
+      ? getDocumentTab(restoredActiveDoc.type)
+      : getInitialMyWorkTab(searchParams, canViewManager);
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
-  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
-  const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
-  const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
+  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('table');
+  const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
+  const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
+  const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
+  const [ideaLocked, setIdeaLocked] = useState(true);
+  const [showStartupTemplates, setShowStartupTemplates] = useState(false);
+  const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
+  const [ideasStageCounts, setIdeasStageCounts] = useState<{
+    total: number;
+    spark: number;
+    incubating: number;
+    shaping: number;
+    ready: number;
+    promoted: number;
+  }>({ total: 0, spark: 0, incubating: 0, shaping: 0, ready: 0, promoted: 0 });
+  const [ideasBulkUi, setIdeasBulkUi] = useState<{
+    selectedCount: number;
+    allSelected: boolean;
+    someSelected: boolean;
+  } | null>(null);
+  const ideasBulkActionsRef = useRef<Pick<
+    IdeasBulkBarPayload,
+    'selectAllVisible' | 'clearSelection' | 'convert' | 'tag' | 'deleteSelected'
+  > | null>(null);
+
+  const handleIdeaPanelChange = useCallback((panel: WorkspacePanelKey) => {
+    setIdeaActivePanel(panel);
+  }, []);
+
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
@@ -350,9 +593,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     allSelected: boolean;
     someSelected: boolean;
   } | null>(null);
-  const inboxBulkActionsRef = useRef<
-    Pick<InboxBulkBarPayload, 'selectAllVisible' | 'clearSelection' | 'triage'> | null
-  >(null);
+  const inboxBulkActionsRef = useRef<Pick<
+    InboxBulkBarPayload,
+    'selectAllVisible' | 'clearSelection' | 'triage'
+  > | null>(null);
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
@@ -365,6 +609,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         ? 'ai_suggestions'
         : null;
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
+  const [calendarCreateReqId, setCalendarCreateReqId] = useState(0);
 
   // Focus (KANON v3): no extra toolbars inside content — controls live in Command Row / Tool slot
   const [focusFilter, setFocusFilter] = useState<FocusFilter>('all');
@@ -376,13 +621,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     useState<DecisionPriorityFilter>('all');
   // Counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
-    executive: 0,
-    inbox: 0,
-    focus: 0,
-    tasks: 0,
-    notebook: 0,
+    home: 0,
     ideas: 0,
+    notebook: 0,
+    inbox: 0,
+    calendar: 0,
+    tasks: 0,
     decisions: 0,
+    manager: 0,
   });
   const [taskFilterCounts, setTaskFilterCounts] = useState<TaskFilterCounts>({
     overdue: 0,
@@ -409,41 +655,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     allSelected: boolean;
     someSelected: boolean;
   } | null>(null);
-  const decisionsBulkActionsRef = useRef<
-    Pick<
-      NonNullable<DecisionsBulkBarPayload>,
-      | 'selectAllVisible'
-      | 'clearSelection'
-      | 'approve'
-      | 'reject'
-      | 'deleteSelected'
-      | 'changePriority'
-      | 'remind'
-      | 'escalate'
-      | 'snoozeTomorrow'
-    >
-  | null>(null);
+  const decisionsBulkActionsRef = useRef<Pick<
+    NonNullable<DecisionsBulkBarPayload>,
+    | 'selectAllVisible'
+    | 'clearSelection'
+    | 'approve'
+    | 'reject'
+    | 'deleteSelected'
+    | 'changePriority'
+    | 'remind'
+    | 'escalate'
+    | 'snoozeTomorrow'
+  > | null>(null);
   // V3-A02: Dynamic documents state with sessionStorage persistence
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-    } catch {
-      return [];
-    }
-  });
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
-    } catch {
-      return null;
-    }
-  });
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => restoredDocumentState.openDocuments);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(
+    () => restoredDocumentState.activeDocumentId
+  );
+  const [pendingDocument, setPendingDocument] = useState<OpenDocument | null>(null);
+  const [pendingUrlCleanup, setPendingUrlCleanup] = useState<{
+    documentId: string;
+    keys: string[];
+  } | null>(null);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -454,6 +687,72 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       /* ignore */
     }
   }, [openDocuments, activeDocumentId]);
+
+  // Keep chat "screen context" aligned with My Work sub-page (tab + open artifact)
+  useEffect(() => {
+    const activeDoc = activeDocumentId
+      ? openDocuments.find((d) => d.id === activeDocumentId) || null
+      : null;
+
+    const typeFromActiveDoc: WorkspaceType | null =
+      activeDoc?.type === 'task'
+        ? 'task'
+        : activeDoc?.type === 'decision'
+          ? 'decision'
+          : activeDoc?.type === 'notification'
+            ? 'general'
+            : activeDoc?.type === 'idea'
+              ? 'general'
+              : null;
+
+    const typeFromTab: WorkspaceType =
+      activeTab === 'tasks'
+        ? 'task'
+        : activeTab === 'decisions'
+          ? 'decision'
+          : activeTab === 'calendar'
+            ? 'general'
+            : activeTab === 'notebook'
+              ? 'document'
+              : activeTab === 'manager'
+                ? 'dashboard'
+                : 'general';
+
+    const ctx = createWorkspaceContext(AppView.MY_WORK, typeFromActiveDoc || typeFromTab, {
+      projectId: currentProjectId || undefined,
+      entityId: activeDoc?.id || undefined,
+      entityName: activeDoc?.name || undefined,
+      entityData: {
+        module: 'my_work',
+        tab: activeTab,
+        open: activeDoc ? { type: activeDoc.type, id: activeDoc.id } : null,
+        url: `${location.pathname}${location.search || ''}`,
+      },
+    });
+
+    setWorkspaceContext(ctx);
+  }, [
+    activeTab,
+    activeDocumentId,
+    openDocuments,
+    currentProjectId,
+    location.pathname,
+    location.search,
+    setWorkspaceContext,
+  ]);
+
+  // Auto-open Tools panel only for freshly created ideas.
+  const prevDocIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeTab !== 'ideas' || !activeDocumentId) return;
+    if (activeDocumentId === prevDocIdRef.current) return;
+    prevDocIdRef.current = activeDocumentId;
+    const isNewIdeaDoc = Boolean(
+      openDocuments.find((doc) => doc.id === activeDocumentId)?.data?.isNew ||
+        String(activeDocumentId).startsWith('new-idea-')
+    );
+    setIdeaActivePanel(isNewIdeaDoc ? 'tools' : null);
+  }, [activeTab, activeDocumentId, openDocuments]);
 
   // EventBus refresh counter — incremented when cross-tab events fire.
   // Child tab components include this in their fetch dependency arrays.
@@ -504,18 +803,55 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, []);
 
   // Document handlers (Dynamic Tabs) - defined early to avoid hoisting issues
+  const programmaticTabSwitchRef = useRef(false);
   const handleOpenDocument = useCallback((doc: OpenDocument) => {
     setOpenDocuments((prev) => {
       if (prev.find((d) => d.id === doc.id)) return prev;
       return [...prev, doc];
     });
+    programmaticTabSwitchRef.current = true;
+    setActiveTab(getDocumentTab(doc.type));
     setActiveDocumentId(doc.id);
   }, []);
 
-  // Robust: whenever user switches main tab, always show list view (close any open document)
-  // Also update per-tab chat context (Q1/Q3) enriched with M1 workload summary
   useEffect(() => {
-    setActiveDocumentId(null);
+    if (!pendingDocument) return;
+    if (getDocumentTab(pendingDocument.type) !== activeTab) return;
+
+    handleOpenDocument(pendingDocument);
+    setPendingDocument(null);
+  }, [activeTab, handleOpenDocument, pendingDocument]);
+
+  useEffect(() => {
+    if (!pendingUrlCleanup) return;
+    if (activeDocumentId !== pendingUrlCleanup.documentId) return;
+
+    const next = new URLSearchParams(searchParams);
+    pendingUrlCleanup.keys.forEach((key) => next.delete(key));
+    setSearchParams(next, { replace: true });
+    setPendingUrlCleanup(null);
+  }, [activeDocumentId, pendingUrlCleanup, searchParams, setSearchParams]);
+
+  // Close document only when the user manually switches the main tab (not programmatic).
+  const previousActiveTabRef = useRef<ModuleTab>(activeTab);
+  useEffect(() => {
+    if (previousActiveTabRef.current !== activeTab) {
+      if (programmaticTabSwitchRef.current) {
+        programmaticTabSwitchRef.current = false;
+      } else {
+        setActiveDocumentId(null);
+      }
+      previousActiveTabRef.current = activeTab;
+    }
+  }, [activeTab]);
+
+  // Update per-tab chat context (Q1/Q3) enriched with M1 workload summary + V5 workspace context.
+  const activeIdeaDoc = useMemo(() => {
+    if (activeTab !== 'ideas' || !activeDocumentId) return null;
+    return openDocuments.find((d) => d.id === activeDocumentId && d.type === 'idea') || null;
+  }, [activeTab, activeDocumentId, openDocuments]);
+
+  useEffect(() => {
     let prompt = TAB_SYSTEM_PROMPTS[activeTab] || '';
     if (contextSummary) {
       const ctx: string[] = [];
@@ -531,17 +867,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         prompt += `\n\nUser's current workload: ${ctx.join(', ')}.`;
       }
     }
+
+    if (activeIdeaDoc) {
+      const wsCtx: string[] = [];
+      wsCtx.push(`Active idea: "${activeIdeaDoc.name}"`);
+      wsCtx.push(`Active system: ${ideaActiveTool}`);
+      wsCtx.push(ideaLocked ? 'Stage: seed (not yet accepted)' : 'Stage: active (accepted)');
+      if (ideaSelection.type !== 'none') {
+        wsCtx.push(`Selection: ${ideaSelection.count} ${ideaSelection.type}(s) selected`);
+      }
+      prompt += `\n\nWorkspace context:\n${wsCtx.join('\n')}`;
+    }
+
     setChatSystemPrompt(prompt || null);
     setChatQuickPrompts(TAB_QUICK_PROMPTS[activeTab] || null);
-  }, [activeTab, contextSummary, setChatSystemPrompt, setChatQuickPrompts]);
+  }, [
+    activeTab,
+    contextSummary,
+    setChatSystemPrompt,
+    setChatQuickPrompts,
+    activeIdeaDoc,
+    ideaActiveTool,
+    ideaLocked,
+    ideaSelection,
+  ]);
 
   // Deep link support: header dropdown → open inside My Work
   useEffect(() => {
     if (!myWorkIntent) return;
     if (myWorkIntent.tab) {
-      // A1.2: Block navigation to executive tab for unauthorized users
+      // Block navigation to manager tab for unauthorized users
       const targetTab = myWorkIntent.tab as ModuleTab;
-      if (targetTab === 'executive' && !canViewExecutive) {
+      if (targetTab === 'manager' && !canViewManager) {
         clearMyWorkIntent();
         return;
       }
@@ -550,7 +907,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setActiveDocumentId(null);
     if (myWorkIntent.open) {
       const o = myWorkIntent.open;
-      handleOpenDocument({
+      const nextDoc: OpenDocument = {
         id: o.id,
         type: o.type,
         name:
@@ -571,10 +928,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 ? ('idea' as const)
                 : ('todo' as const),
         data: o.data,
-      });
+      };
+
+      if (myWorkIntent.tab && getDocumentTab(nextDoc.type) !== activeTab) {
+        setPendingDocument(nextDoc);
+      } else {
+        handleOpenDocument(nextDoc);
+      }
     }
     clearMyWorkIntent();
-  }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
+  }, [activeTab, myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
   // L7: Save session context for cross-session continuity
   useEffect(() => {
@@ -615,16 +978,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const handler = (e: Event) => {
       const { type, id, name } = (e as CustomEvent).detail || {};
       if (!type || !id) return;
-      if (type === 'initiative') {
-        navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
-        return;
-      }
-      if (type === 'report') {
-        navigate(`/reports/builder/${encodeURIComponent(id)}`);
-        return;
-      }
-      if (type === 'presentation') {
-        navigate(`/presentations/builder/${encodeURIComponent(id)}`);
+      if (
+        [
+          'initiative',
+          'report',
+          'presentation',
+          'meeting',
+          'financial_model',
+          'budget',
+          'valuation',
+          'analysis',
+          'tool',
+        ].includes(type)
+      ) {
+        navigate(getArtifactPath(type as any, String(id)));
         return;
       }
       const tabMap: Record<string, ModuleTab> = {
@@ -662,93 +1029,92 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // URL deep link support:
   // - /my-work?taskId=...
   // - /my-work?decisionId=...
+  // - /my-work?ideaId=...
   // Back-compat:
   // - /my-work?decision=...  (used by backend notification actionUrl)
   // - /my-work?task=...      (legacy/manual links)
   useEffect(() => {
     const taskId = searchParams.get('taskId') || searchParams.get('task');
     const decisionId = searchParams.get('decisionId') || searchParams.get('decision');
-    if (!taskId && !decisionId) return;
+    const ideaId = searchParams.get('ideaId') || searchParams.get('idea');
+    if (!taskId && !decisionId && !ideaId) return;
 
     if (taskId) {
-      setActiveTab('tasks');
-      handleOpenDocument({
+      const nextDoc: OpenDocument = {
         id: taskId,
         type: 'task',
         name: isPolish ? 'Zadanie' : 'Task',
         status: 'todo',
-      });
+      };
+      setActiveTab('tasks');
+      if (activeTab === 'tasks') handleOpenDocument(nextDoc);
+      else setPendingDocument(nextDoc);
+      setPendingUrlCleanup({ documentId: taskId, keys: ['taskId', 'task'] });
     }
 
     if (decisionId) {
-      setActiveTab('decisions');
-      handleOpenDocument({
+      const nextDoc: OpenDocument = {
         id: decisionId,
         type: 'decision',
         name: isPolish ? 'Decyzja' : 'Decision',
         status: 'pending',
-      });
+      };
+      setActiveTab('decisions');
+      if (activeTab === 'decisions') handleOpenDocument(nextDoc);
+      else setPendingDocument(nextDoc);
+      setPendingUrlCleanup({ documentId: decisionId, keys: ['decisionId', 'decision'] });
     }
 
-    const next = new URLSearchParams(searchParams);
-    next.delete('taskId');
-    next.delete('task');
-    next.delete('decisionId');
-    next.delete('decision');
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams, handleOpenDocument, isPolish]);
+    if (ideaId) {
+      const nextDoc: OpenDocument = {
+        id: ideaId,
+        type: 'idea',
+        name: isPolish ? 'Pomysł' : 'Idea',
+        status: 'idea',
+      };
+      setActiveTab('ideas');
+      if (activeTab === 'ideas') handleOpenDocument(nextDoc);
+      else setPendingDocument(nextDoc);
+      setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
+    }
+  }, [activeTab, handleOpenDocument, searchParams, isPolish]);
 
-  // Tab configuration
-  // A1.2: Executive tab only visible to admin/manager/superadmin roles
+  useEffect(() => {
+    const intent = parseMyWorkPathIntent(location.pathname, isPolish);
+    if (!intent) return;
+    setActiveTab(intent.tab);
+    const nextDoc = intent.doc;
+    if (!nextDoc) return;
+    if (nextDoc.type === 'idea' && nextDoc.data?.initialTool) {
+      setIdeaActiveTool(nextDoc.data.initialTool as CanvasToolType);
+    }
+    if (activeTab === intent.tab) {
+      handleOpenDocument(nextDoc);
+      return;
+    }
+    setPendingDocument((prev) => {
+      if (
+        prev?.id === nextDoc.id &&
+        prev?.type === nextDoc.type &&
+        prev?.data?.openMap === nextDoc.data?.openMap &&
+        prev?.data?.initialTool === nextDoc.data?.initialTool
+      ) {
+        return prev;
+      }
+      return nextDoc;
+    });
+  }, [activeTab, handleOpenDocument, location.pathname, isPolish]);
+
+  // Tab configuration — new order: Home > Ideas > Notebook > Inbox > Calendar > Tasks > Decisions > Manager
   const tabs = useMemo(() => {
     const allTabs = [
       {
-        id: 'executive' as ModuleTab,
-        label: isPolish ? 'Executive' : 'Executive',
-        icon: <FileText size={16} />,
-        count: tabCounts.executive,
-        color: 'bg-violet-500',
-        requiresExecutiveAccess: true,
-      },
-      {
-        id: 'inbox' as ModuleTab,
-        label: isPolish ? 'Inbox' : 'Inbox',
-        icon: <Inbox size={16} />,
-        count: tabCounts.inbox,
-        color: 'bg-red-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'focus' as ModuleTab,
-        label: isPolish ? 'Focus' : 'Focus',
-        icon: <Target size={16} />,
-        count: tabCounts.focus,
-        color: 'bg-amber-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'tasks' as ModuleTab,
-        label: isPolish ? 'Zadania' : 'Tasks',
-        icon: <CheckSquare size={16} />,
-        count: tabCounts.tasks,
-        color: 'bg-blue-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'decisions' as ModuleTab,
-        label: isPolish ? 'Decyzje' : 'Decisions',
-        icon: <Scale size={16} />,
-        count: tabCounts.decisions,
-        color: 'bg-purple-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'notebook' as ModuleTab,
-        label: isPolish ? 'Notatnik' : 'Notebook',
-        icon: <FileText size={16} />,
-        count: tabCounts.notebook,
-        color: 'bg-slate-500',
-        requiresExecutiveAccess: false,
+        id: 'home' as ModuleTab,
+        label: 'Radar',
+        icon: <Home size={16} />,
+        count: tabCounts.home,
+        color: 'bg-primary-500',
+        requiresManagerAccess: false,
       },
       {
         id: 'ideas' as ModuleTab,
@@ -756,13 +1122,60 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Lightbulb size={16} />,
         count: tabCounts.ideas,
         color: 'bg-amber-500',
-        requiresExecutiveAccess: false,
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'notebook' as ModuleTab,
+        label: isPolish ? 'Notatnik' : 'Notebook',
+        icon: <FileText size={16} />,
+        count: tabCounts.notebook,
+        color: 'bg-slate-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'inbox' as ModuleTab,
+        label: 'Inbox',
+        icon: <Inbox size={16} />,
+        count: tabCounts.inbox,
+        color: 'bg-red-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'calendar' as ModuleTab,
+        label: isPolish ? 'Kalendarz' : 'Calendar',
+        icon: <Calendar size={16} />,
+        count: tabCounts.calendar,
+        color: 'bg-indigo-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'tasks' as ModuleTab,
+        label: isPolish ? 'Zadania' : 'Tasks',
+        icon: <CheckSquare size={16} />,
+        count: tabCounts.tasks,
+        color: 'bg-blue-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'decisions' as ModuleTab,
+        label: isPolish ? 'Decyzje' : 'Decisions',
+        icon: <Scale size={16} />,
+        count: tabCounts.decisions,
+        color: 'bg-purple-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'manager' as ModuleTab,
+        label: 'Manager',
+        icon: <Users size={16} />,
+        count: tabCounts.manager,
+        color: 'bg-violet-500',
+        requiresManagerAccess: true,
       },
     ];
 
-    // A1.2: Filter out Executive tab for users without admin/manager role
-    return allTabs.filter((tab) => !tab.requiresExecutiveAccess || canViewExecutive);
-  }, [isPolish, tabCounts, canViewExecutive]);
+    return allTabs.filter((tab) => !tab.requiresManagerAccess || canViewManager);
+  }, [isPolish, tabCounts, canViewManager]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -892,24 +1305,60 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Idea handlers
   const handleCreateIdea = useCallback(() => {
-    const newId = `new-idea-${Date.now()}`;
-    handleOpenDocument({
-      id: newId,
-      type: 'idea',
-      name: isPolish ? 'Nowy pomysł' : 'New Idea',
-      status: 'idea',
-      data: { isNew: true },
-    });
-  }, [handleOpenDocument, isPolish]);
+    setShowStartupTemplates(true);
+  }, []);
+
+  const handleStartupTemplateSelect = useCallback(
+    (seedIntent: IdeaWorkspaceSeedIntent) => {
+      const newId = `new-idea-${Date.now()}`;
+      const preferredSystem = normalizePreferredSystem(seedIntent.preferredSystem);
+      if (preferredSystem) {
+        setIdeaActiveTool(preferredSystem);
+      }
+      const body = composeIdeaBodyFromSeedIntent(seedIntent);
+      const title = deriveIdeaTitleFromSeedIntent(
+        seedIntent,
+        isPolish ? 'Nowy pomysł' : 'New Idea'
+      );
+      handleOpenDocument({
+        id: newId,
+        type: 'idea',
+        name: title,
+        status: 'idea',
+        data: {
+          isNew: true,
+          seedIntent,
+          creationPayload: {
+            title,
+            body,
+            tags: [],
+            sourceType: 'manual',
+          },
+        },
+      });
+    },
+    [handleOpenDocument, isPolish]
+  );
 
   const handleIdeaClick = useCallback(
-    (ideaId: string, ideaData?: MyIdea) => {
+    (
+      ideaId: string,
+      ideaData?: MyIdea,
+      options?: { openMap?: boolean; initialTool?: CanvasToolType }
+    ) => {
+      if (options?.initialTool) {
+        setIdeaActiveTool(options.initialTool);
+      }
       handleOpenDocument({
         id: ideaId,
         type: 'idea',
         name: ideaData?.title || (isPolish ? 'Pomysł' : 'Idea'),
         status: 'idea',
-        data: ideaData,
+        data: {
+          ...ideaData,
+          openMap: options?.openMap ?? ideaData?.openMap,
+          initialTool: options?.initialTool,
+        },
       });
     },
     [handleOpenDocument, isPolish]
@@ -988,6 +1437,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           )
         );
       }
+      setRefreshTrigger((prev) => prev + 1);
     }
     // Optionally close after save
     // handleCloseDocument(docId);
@@ -1017,17 +1467,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const handleTasksBulkBarChange = useCallback(
     (
-      payload:
-        | {
-            selectedCount: number;
-            selectAllVisible: () => void;
-            clearSelection: () => void;
-            complete: () => void;
-            changePriority: () => void;
-            changeDueDate: () => void;
-            deleteSelected: () => void;
-          }
-        | null
+      payload: {
+        selectedCount: number;
+        selectAllVisible: () => void;
+        clearSelection: () => void;
+        complete: () => void;
+        changePriority: () => void;
+        changeDueDate: () => void;
+        deleteSelected: () => void;
+      } | null
     ) => {
       if (!payload) {
         setTasksBulkUi(null);
@@ -1096,8 +1544,39 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     []
   );
 
-  const handleIdeaCountsChange = useCallback((counts: { total: number }) => {
-    setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
+  const handleIdeaCountsChange = useCallback(
+    (counts: {
+      total: number;
+      spark: number;
+      incubating: number;
+      shaping: number;
+      ready: number;
+      promoted: number;
+    }) => {
+      setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
+      setIdeasStageCounts(counts);
+    },
+    []
+  );
+
+  const handleIdeasBulkBarChange = useCallback((payload: IdeasBulkBarPayload | null) => {
+    if (!payload) {
+      setIdeasBulkUi(null);
+      ideasBulkActionsRef.current = null;
+      return;
+    }
+    setIdeasBulkUi({
+      selectedCount: payload.selectedCount,
+      allSelected: payload.allSelected,
+      someSelected: payload.someSelected,
+    });
+    ideasBulkActionsRef.current = {
+      selectAllVisible: payload.selectAllVisible,
+      clearSelection: payload.clearSelection,
+      convert: payload.convert,
+      tag: payload.tag,
+      deleteSelected: payload.deleteSelected,
+    };
   }, []);
 
   const handleNotebookCountsChange = useCallback((counts: { total: number }) => {
@@ -1109,16 +1588,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setInboxCounts(counts);
   }, []);
 
-  const applyInboxPreset = useCallback(
-    (next: InboxPreset) => {
-      // Canon v3: "ALL" means no preset filters are active.
-      setInboxPreset(next);
-      setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
-      setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
-      setInboxActionRequiredOnly(next === 'action_required');
-    },
-    []
-  );
+  const applyInboxPreset = useCallback((next: InboxPreset) => {
+    // Canon v3: "ALL" means no preset filters are active.
+    setInboxPreset(next);
+    setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
+    setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
+    setInboxActionRequiredOnly(next === 'action_required');
+  }, []);
 
   const handleInboxBulkBarChange = useCallback((payload: InboxBulkBarPayload | null) => {
     if (!payload) {
@@ -1147,41 +1623,100 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setInboxSection('all');
       setInboxActionRequiredOnly(false);
     }
+    if (activeTab !== 'ideas') {
+      setIdeasBulkUi(null);
+      ideasBulkActionsRef.current = null;
+      setIdeaStageFilter('all');
+    }
   }, [activeTab]);
 
-  // Plan with AI — opens chat with morning brief context (replaces Morning Brief "Plan with AI" button)
-  const handlePlanWithAI = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/my-work/morning-brief', {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      const brief = res.ok ? await res.json() : null;
-      const msg =
-        brief &&
-        (brief.overdueTasks?.length ||
-          brief.dueSoon?.length ||
-          brief.pendingDecisions?.length ||
-          brief.newTasks?.length)
-          ? `Help me plan my day. Here's my morning brief:\n` +
-            (brief.overdueTasks?.length ? `- ${brief.overdueTasks.length} overdue tasks\n` : '') +
-            (brief.dueSoon?.length ? `- ${brief.dueSoon.length} tasks due soon\n` : '') +
-            (brief.pendingDecisions?.length
-              ? `- ${brief.pendingDecisions.length} pending decisions\n`
-              : '') +
-            (brief.newTasks?.length ? `- ${brief.newTasks.length} new tasks\n` : '') +
-            `\nSuggest a prioritized plan for today.`
-          : isPolish
-            ? 'Pomóż mi zaplanować dzień.'
-            : 'Help me plan my day.';
-      setChatKickoffMessage(msg);
-      if (isChatCollapsed) toggleChatCollapse();
-    } catch {
-      const msg = isPolish ? 'Pomóż mi zaplanować dzień.' : 'Help me plan my day.';
-      setChatKickoffMessage(msg);
-      if (isChatCollapsed) toggleChatCollapse();
-    }
-  }, [isPolish, isChatCollapsed, setChatKickoffMessage, toggleChatCollapse]);
+  const handleHomeAction = useCallback(
+    async (action: HomeScreenAction) => {
+      switch (action.type) {
+        case 'create':
+          if (action.target === 'idea') {
+            setActiveTab('ideas');
+            handleCreateIdea();
+            return;
+          }
+          if (action.target === 'note') {
+            setActiveTab('notebook');
+            setNotebookCreateReqId((value) => value + 1);
+            return;
+          }
+          if (action.target === 'task') {
+            setActiveTab('tasks');
+            handleCreateTask();
+            return;
+          }
+          if (action.target === 'decision') {
+            setActiveTab('decisions');
+            handleCreateDecision();
+            return;
+          }
+          return;
+        case 'navigate':
+          setActiveTab(action.target);
+          return;
+        case 'open':
+          if (action.target === 'idea') {
+            handleIdeaClick(action.id);
+            return;
+          }
+          if (action.target === 'note') {
+            setActiveTab('notebook');
+            setNotebookOpenPageId(action.id);
+            return;
+          }
+          if (action.target === 'task') {
+            handleTaskClick(action.id);
+            return;
+          }
+          if (action.target === 'decision') {
+            handleDecisionClick(action.id);
+          }
+          return;
+        case 'chat': {
+          const packet = action.packet;
+          const entityType = packet.entityType || 'home';
+          const entityId = packet.entityId || `home-${packet.sourceBlock}`;
+
+          await openChatWithContext({
+            entityType,
+            entityId,
+            entityName: packet.entityName || packet.title,
+            contextData: {
+              sourceBlock: packet.sourceBlock,
+              intent: packet.intent,
+              title: packet.title,
+              ...(packet.contextData || {}),
+            },
+            pmoContext:
+              entityType === 'task'
+                ? { taskId: entityId }
+                : entityType === 'decision'
+                  ? { decisionId: entityId }
+                  : undefined,
+          });
+
+          setChatKickoffMessage(packet.starterPrompt);
+          return;
+        }
+        default:
+          return;
+      }
+    },
+    [
+      handleCreateDecision,
+      handleCreateIdea,
+      handleCreateTask,
+      handleDecisionClick,
+      handleIdeaClick,
+      handleTaskClick,
+      openChatWithContext,
+      setChatKickoffMessage,
+    ]
+  );
 
   // Get action button config based on active tab
   const actionButton = useMemo(() => {
@@ -1189,10 +1724,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeDocumentId) return null;
 
     switch (activeTab) {
-      case 'executive':
-      case 'focus':
+      case 'home':
+      case 'manager':
       case 'inbox':
         return null;
+      case 'calendar':
+        return {
+          label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
+          icon: <Plus size={16} />,
+          onClick: () => setCalendarCreateReqId((v) => v + 1),
+          color: 'from-violet-500 to-purple-600',
+          variant: 'primary' as const,
+        };
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
@@ -1239,6 +1782,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleCreateIdea,
     handleCreateDecision,
     setNotebookCreateReqId,
+    setCalendarCreateReqId,
     activeDocumentId,
   ]);
 
@@ -1252,8 +1796,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'decisions':
         // KANON v3 (MyWork): decision "All/My/Awaiting" lives in Command Row; topbar keeps only ONE select (priority).
         return [];
-      case 'executive':
-      case 'focus':
+      case 'home':
+      case 'calendar':
+      case 'manager':
       case 'inbox':
       default:
         return [];
@@ -1296,7 +1841,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const isListActive = activeDocumentId === null;
 
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto min-w-0 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
         {/* List button */}
         <button
           onClick={handleShowList}
@@ -1305,13 +1850,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               ? TAB_ACTIVE.replace('border-l-2', '')
               : TAB_INACTIVE.replace('border-l-2', '')
           }
+          style={{ flexShrink: 0 }}
         >
           <List size={14} />
           <span>{isPolish ? 'Lista' : 'List'}</span>
         </button>
 
         {/* Separator */}
-        <div className="w-px h-6 bg-slate-200 dark:bg-navy-600" />
+        <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
 
         {/* Document Tabs */}
         {openDocuments.map((doc) => {
@@ -1322,7 +1868,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           return (
             <div
               key={doc.id}
-              className={`group ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor}`}
+              className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor}`}
               onClick={() => setActiveDocumentId(doc.id)}
             >
               {/* Type Icon */}
@@ -1361,7 +1907,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       !activeDocumentId &&
       ((activeTab === 'tasks' && !!tasksBulkUi?.selectedCount) ||
         (activeTab === 'inbox' && !!inboxBulkUi?.selectedCount) ||
-        (activeTab === 'decisions' && !!decisionsBulkUi?.selectedCount));
+        (activeTab === 'decisions' && !!decisionsBulkUi?.selectedCount) ||
+        (activeTab === 'ideas' && !!ideasBulkUi?.selectedCount));
 
     // 1) Search row (when enabled)
     if (!hasBulkMode && showSearch && !activeDocumentId) {
@@ -1495,11 +2042,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {taskFilters.map((f) => {
                 const isActive = taskFilter === f.id;
                 const count =
-                  f.id === 'all'
-                    ? tabCounts.tasks
-                    : typeof f.count === 'number'
-                      ? f.count
-                      : 0;
+                  f.id === 'all' ? tabCounts.tasks : typeof f.count === 'number' ? f.count : 0;
                 return (
                   <button
                     key={f.id}
@@ -1529,7 +2072,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: string;
         count: number;
       }> = [
-        { id: 'all', label: isPolish ? 'Wszystkie' : 'ALL', count: c?.counts.open ?? tabCounts.inbox },
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'ALL',
+          count: c?.counts.open ?? tabCounts.inbox,
+        },
         { id: 'overdue', label: isPolish ? 'Zaległe' : 'Overdue', count: c?.overdue ?? 0 },
         { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
         { id: 'ai', label: isPolish ? 'AI' : 'AI', count: c?.ai ?? 0 },
@@ -1540,7 +2087,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           count: c?.actionRequired ?? 0,
         },
         { id: 'today', label: isPolish ? 'Dziś' : 'Today', count: c?.newToday ?? 0 },
-        { id: 'this_week', label: isPolish ? 'Ten tydz.' : 'This week', count: c?.newThisWeek ?? 0 },
+        {
+          id: 'this_week',
+          label: isPolish ? 'Ten tydz.' : 'This week',
+          count: c?.newThisWeek ?? 0,
+        },
       ];
 
       const chipBase =
@@ -1659,11 +2210,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {decisionFilters.map((f) => {
                 const isActive = decisionFilter === f.id;
                 const count =
-                  f.id === 'all'
-                    ? tabCounts.decisions
-                    : typeof f.count === 'number'
-                      ? f.count
-                      : 0;
+                  f.id === 'all' ? tabCounts.decisions : typeof f.count === 'number' ? f.count : 0;
                 return (
                   <button
                     key={f.id}
@@ -1781,8 +2328,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Focus: board controls live in Command Row (no extra toolbar strips in content).
-    if (activeTab === 'focus' && !activeDocumentId) {
+    // Home and Calendar tabs have no command row (content is self-contained)
+    if (activeTab === 'home' || activeTab === 'calendar' || activeTab === 'manager') {
+      return null;
+    }
+
+    // Ideas: stage presets in Command Row (same pattern as Inbox/Tasks)
+    if (activeTab === 'ideas' && !activeDocumentId) {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
@@ -1790,69 +2342,117 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const chipActive =
         'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
-      const sortLabel =
-        focusSort === 'manual'
-          ? isPolish
-            ? 'Manual'
-            : 'Manual'
-          : focusSort === 'priority'
-            ? isPolish
-              ? 'Priority'
-              : 'Priority'
-            : isPolish
-              ? 'Due date'
-              : 'Due date';
+      if (ideasBulkUi?.selectedCount) {
+        const bulk = ideasBulkActionsRef.current;
+        const bulkGhostPill =
+          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        const bulkPillBase =
+          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+
+        return (
+          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {ideasBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
+                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                </button>
+                <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => bulk?.convert()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Sparkles size={14} />
+                  {isPolish ? 'Konwertuj' : 'Convert'}
+                </button>
+                <button onClick={() => bulk?.tag()} className={`${bulkPillBase} ${chipInactive}`}>
+                  <Tag size={14} />
+                  {isPolish ? 'Taguj' : 'Tag'}
+                </button>
+                <button
+                  onClick={() => bulk?.deleteSelected()}
+                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
+                >
+                  <Trash2 size={14} />
+                  {isPolish ? 'Usuń' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const stagePresets: Array<{
+        id: IdeaStage | 'all';
+        label: string;
+        icon: React.ReactNode;
+        count: number;
+      }> = [
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'ALL',
+          icon: null,
+          count: ideasStageCounts.total,
+        },
+        {
+          id: 'spark',
+          label: isPolish ? 'Iskra' : 'Spark',
+          icon: <Lightbulb size={14} />,
+          count: ideasStageCounts.spark,
+        },
+        {
+          id: 'incubating',
+          label: isPolish ? 'Rośnie' : 'Growing',
+          icon: <Sprout size={14} />,
+          count: ideasStageCounts.incubating,
+        },
+        {
+          id: 'shaping',
+          label: isPolish ? 'Kształtuje' : 'Shaping',
+          icon: <TreePine size={14} />,
+          count: ideasStageCounts.shaping,
+        },
+        {
+          id: 'ready',
+          label: isPolish ? 'Gotowy' : 'Ready',
+          icon: <CheckCircle2 size={14} />,
+          count: ideasStageCounts.ready,
+        },
+        {
+          id: 'promoted',
+          label: isPolish ? 'Promowany' : 'Promoted',
+          icon: <Rocket size={14} />,
+          count: ideasStageCounts.promoted,
+        },
+      ];
 
       return (
         <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            {/* Type filter */}
             <div className="inline-flex items-center gap-1">
-              {(
-                [
-                  { id: 'all' as const, labelPl: 'All', labelEn: 'All' },
-                  { id: 'tasks' as const, labelPl: 'Tasks', labelEn: 'Tasks' },
-                  { id: 'decisions' as const, labelPl: 'Decisions', labelEn: 'Decisions' },
-                ] as const
-              ).map((f) => {
-                const isActive = focusFilter === f.id;
+              {stagePresets.map((p) => {
+                const isActive = ideaStageFilter === p.id;
                 return (
                   <button
-                    key={f.id}
-                    onClick={() => setFocusFilter(f.id)}
+                    key={p.id}
+                    onClick={() => setIdeaStageFilter(isActive && p.id !== 'all' ? 'all' : p.id)}
                     className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                   >
-                    <span>{isPolish ? f.labelPl : f.labelEn}</span>
+                    {p.icon}
+                    <span>{p.label}</span>
+                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                      {p.count}
+                    </span>
                   </button>
                 );
               })}
             </div>
-
-            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
-
-            {/* Hide completed */}
-            <button
-              onClick={() => setFocusHideCompleted((v) => !v)}
-              className={`${chipBase} ${focusHideCompleted ? chipActive : chipInactive}`}
-              title={isPolish ? 'Ukryj ukończone' : 'Hide completed'}
-            >
-              {focusHideCompleted ? <EyeOff size={14} /> : <Eye size={14} />}
-              <span>{isPolish ? 'Hide done' : 'Hide done'}</span>
-            </button>
-
-            {/* Sort (cycle) */}
-            <button
-              onClick={() =>
-                setFocusSort((prev) =>
-                  prev === 'manual' ? 'priority' : prev === 'priority' ? 'dueDate' : 'manual'
-                )
-              }
-              className={`${chipBase} ${chipInactive}`}
-              title={isPolish ? 'Sortowanie' : 'Sort'}
-            >
-              <List size={14} />
-              <span>{isPolish ? `Sort: ${sortLabel}` : `Sort: ${sortLabel}`}</span>
-            </button>
           </div>
         </div>
       );
@@ -1947,12 +2547,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return (
           <React.Suspense fallback={lazyFallback}>
             <IdeaMapWorkspace
+              key={`idea-workspace-${activeDoc.id}`}
               ideaId={activeDoc.id}
               initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
+              initialTool={(activeDoc as any)?.data?.initialTool}
+              creationPayload={(activeDoc as any)?.data?.creationPayload}
+              seedIntent={(activeDoc as any)?.data?.seedIntent}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-              toolsOpen={ideaToolsOpen}
-              onToolsOpenChange={setIdeaToolsOpen}
+              activeTool={ideaActiveTool}
+              onActiveToolChange={setIdeaActiveTool}
+              activePanel={ideaActivePanel}
+              onActivePanelChange={handleIdeaPanelChange}
+              onSelectionChange={setIdeaSelection}
+              onLockedChange={setIdeaLocked}
             />
           </React.Suspense>
         );
@@ -1990,9 +2598,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Render list content based on active tab
   const renderListContent = () => {
     switch (activeTab) {
-      case 'executive':
-        // A1.2: Double-check role access – if user somehow navigated here without permission
-        if (!canViewExecutive) {
+      case 'home':
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <HomeView userName={currentUser?.firstName} refreshTrigger={refreshTrigger} onAction={handleHomeAction} />
+          </React.Suspense>
+        );
+      case 'manager':
+        if (!canViewManager) {
           return (
             <div className="flex h-64 items-center justify-center">
               <div className="text-center">
@@ -2017,10 +2630,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   setActiveTab('decisions');
                   if (options?.filter === 'pending') setDecisionFilter('my');
                 }
-                if (section === 'focus') setActiveTab('focus');
+                if (section === 'focus') setActiveTab('home');
                 if (section === 'inbox') setActiveTab('inbox');
               }}
               refreshTrigger={refreshTrigger}
+            />
+          </React.Suspense>
+        );
+      case 'calendar':
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <CalendarView
+              refreshTrigger={refreshTrigger}
+              createRequestId={calendarCreateReqId}
+              onTaskClick={handleTaskClick}
+              onDecisionClick={handleDecisionClick}
+              onInitiativeClick={(initiativeId) => {
+                navigate(getArtifactPath('initiative', String(initiativeId)));
+              }}
             />
           </React.Suspense>
         );
@@ -2046,35 +2673,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             overdueOnly={inboxPreset === 'overdue'}
             aiOnly={inboxPreset === 'ai'}
           />
-        );
-      case 'focus':
-        return (
-          <React.Suspense fallback={lazyFallback}>
-            <FocusView
-              onItemClick={(item: FocusItem) => {
-                // FocusView uses ids like task:<id> / decision:<id>
-                if (item.type === 'task') {
-                  const id = String(item.id).replace(/^task[:_-]/, '');
-                  handleTaskClick(id);
-                } else if (item.type === 'decision') {
-                  const id = String(item.id).replace(/^decision[:_-]/, '');
-                  handleDecisionClick(id);
-                }
-              }}
-              onNavigateToInbox={() => setActiveTab('inbox')}
-              refreshTrigger={refreshTrigger}
-              controls={{
-                filter: focusFilter,
-                onFilterChange: setFocusFilter,
-                hideCompleted: focusHideCompleted,
-                onHideCompletedChange: setFocusHideCompleted,
-                sort: focusSort,
-                onSortChange: setFocusSort,
-                showAIPlan: focusShowAIPlan,
-                onShowAIPlanChange: setFocusShowAIPlan,
-              }}
-            />
-          </React.Suspense>
         );
       case 'tasks':
         return tasksViewMode === 'kanban' ? (
@@ -2115,9 +2713,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <MyIdeasListContent
             viewMode={ideasViewMode}
             searchQuery={searchQuery}
+            stageFilter={ideaStageFilter}
             onIdeaClick={handleIdeaClick}
             onCreateIdea={handleCreateIdea}
             onCountsChange={handleIdeaCountsChange}
+            onBulkBarChange={handleIdeasBulkBarChange}
             refreshTrigger={refreshTrigger}
           />
         );
@@ -2230,9 +2830,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab]);
 
-  // Focus tools should not leak across tabs
+  // Focus tools should not leak across tabs (legacy — kept for FocusView if reused)
   useEffect(() => {
-    if (activeTab !== 'focus') {
+    if (activeTab !== 'home') {
       setFocusShowAIPlan(false);
     }
   }, [activeTab]);
@@ -2242,9 +2842,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
       <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
         {/* Main Navigation Row */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between gap-4 px-4 py-3">
           {/* Left: Search + Main Tabs */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Search Toggle */}
             <button
               onClick={() => setShowSearch(!showSearch)}
@@ -2259,7 +2859,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </button>
 
             {/* Main Tabs */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -2282,7 +2882,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </div>
 
           {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+            {/* Scrollable controls (keep primary action always visible) */}
+            <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap">
             {/* Filters (furthest left in right cluster) */}
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
             {currentFilters.length > 0 && (
@@ -2363,8 +2965,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               >
                 {(
                   [
-                    { id: 'table' as TasksViewMode, icon: LayoutList, titlePl: 'Lista', titleEn: 'List' },
-                    { id: 'kanban' as TasksViewMode, icon: Kanban, titlePl: 'Kanban', titleEn: 'Kanban' },
+                    {
+                      id: 'table' as TasksViewMode,
+                      icon: LayoutList,
+                      titlePl: 'Lista',
+                      titleEn: 'List',
+                    },
+                    {
+                      id: 'kanban' as TasksViewMode,
+                      icon: Kanban,
+                      titlePl: 'Kanban',
+                      titleEn: 'Kanban',
+                    },
                     {
                       id: 'calendar' as TasksViewMode,
                       icon: CalendarDays,
@@ -2404,8 +3016,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               >
                 {(
                   [
-                    { id: 'table' as DecisionsViewMode, icon: LayoutList, titlePl: 'Lista', titleEn: 'List' },
-                    { id: 'kanban' as DecisionsViewMode, icon: Kanban, titlePl: 'Kanban', titleEn: 'Kanban' },
+                    {
+                      id: 'table' as DecisionsViewMode,
+                      icon: LayoutList,
+                      titlePl: 'Lista',
+                      titleEn: 'List',
+                    },
+                    {
+                      id: 'kanban' as DecisionsViewMode,
+                      icon: Kanban,
+                      titlePl: 'Kanban',
+                      titleEn: 'Kanban',
+                    },
                     {
                       id: 'timeline' as DecisionsViewMode,
                       icon: GanttChart,
@@ -2473,143 +3095,50 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             )}
 
             {/* Tools */}
-            {/* Focus: AI Plan (Tool slot) — no extra toolbars inside content */}
-            {activeTab === 'focus' && !activeDocumentId && (
-              <button
-                onClick={() => setFocusShowAIPlan((v) => !v)}
-                className={`inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                  focusShowAIPlan
-                    ? 'border-purple-400/40 dark:border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-purple-50/70 dark:hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-200'
-                }`}
-                title={isPolish ? 'Plan dnia (AI)' : 'AI Day Plan'}
-                aria-pressed={focusShowAIPlan}
-                data-testid="mywork-focus-ai-plan"
-              >
-                <Sparkles size={16} />
-                <span>{isPolish ? 'AI Plan' : 'AI Plan'}</span>
-              </button>
-            )}
 
-            {/* Ideas workspace tools toggle — when an idea document is open */}
+            {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
             {activeTab === 'ideas' && activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
-                role="group"
-                aria-label={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
-              >
-                <button
-                  onClick={() => setIdeaToolsOpen((v) => !v)}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    ideaToolsOpen
-                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
-                  aria-pressed={ideaToolsOpen}
-                >
-                  <Sparkles size={16} />
-                </button>
-              </div>
+              <WorkspacePanelStrip value={ideaActivePanel} onChange={handleIdeaPanelChange} />
             )}
 
-            {/* Ideas: collapsible view mode menu — only on Ideas tab */}
+            {/* Ideas: canonical view mode switcher — table / grid */}
             {activeTab === 'ideas' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  onClick={() => setIdeasMenuOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                >
-                  {ideasViewMode === 'mindmap' && (
-                    <>
-                      <GitBranch size={14} />
-                      {isPolish ? 'Mind Map' : 'Mind Map'}
-                    </>
-                  )}
-                  {ideasViewMode === 'select' && (
-                    <>
-                      <LayoutList size={14} />
-                      {isPolish ? 'Lista' : 'List'}
-                    </>
-                  )}
-                  {ideasViewMode === 'overview' && (
-                    <>
-                      <LayoutGrid size={14} />
-                      {isPolish ? 'Karty' : 'Cards'}
-                    </>
-                  )}
-                  {ideasViewMode === 'garden' && (
-                    <>
-                      <Flower2 size={14} />
-                      {isPolish ? 'Ogród' : 'Garden'}
-                    </>
-                  )}
-                  {ideasViewMode === 'blank' && (
-                    <>
-                      <GitBranch size={14} />
-                      {isPolish ? 'Czysta mapa' : 'Blank'}
-                    </>
-                  )}
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform ${ideasMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {ideasMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setIdeasMenuOpen(false)} />
-                    <div className="absolute top-full mt-1 left-0 z-40 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {[
-                        {
-                          id: 'mindmap' as IdeasViewMode,
-                          icon: GitBranch,
-                          label: 'Mind Map',
-                          labelPl: 'Mind Map',
-                        },
-                        {
-                          id: 'select' as IdeasViewMode,
-                          icon: LayoutList,
-                          label: 'List',
-                          labelPl: 'Lista',
-                        },
-                        {
-                          id: 'overview' as IdeasViewMode,
-                          icon: LayoutGrid,
-                          label: 'Cards',
-                          labelPl: 'Karty',
-                        },
-                        {
-                          id: 'garden' as IdeasViewMode,
-                          icon: Flower2,
-                          label: 'Garden',
-                          labelPl: 'Ogród',
-                        },
-                        {
-                          id: 'blank' as IdeasViewMode,
-                          icon: GitBranch,
-                          label: 'Blank Map',
-                          labelPl: 'Czysta mapa',
-                        },
-                      ].map(({ id, icon: Icon, label, labelPl }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setIdeasViewMode(id);
-                            setIdeasMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                            ideasViewMode === id
-                              ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 font-semibold'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
-                          }`}
-                        >
-                          <Icon size={14} />
-                          {isPolish ? labelPl : label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
+              >
+                {(
+                  [
+                    {
+                      id: 'table' as IdeasViewMode,
+                      icon: LayoutList,
+                      label: 'Table',
+                      labelPl: 'Tabela',
+                    },
+                    {
+                      id: 'grid' as IdeasViewMode,
+                      icon: LayoutGrid,
+                      label: 'Grid',
+                      labelPl: 'Siatka',
+                    },
+                  ] as const
+                ).map(({ id, icon: Icon, label, labelPl }) => (
+                  <button
+                    key={id}
+                    onClick={() => setIdeasViewMode(id)}
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                      ideasViewMode === id
+                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                    }`}
+                    title={isPolish ? labelPl : label}
+                    role="radio"
+                    aria-checked={ideasViewMode === id}
+                  >
+                    <Icon size={16} />
+                  </button>
+                ))}
               </div>
             )}
 
@@ -2624,6 +3153,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 }}
               />
             )}
+            </div>
 
             {/* Primary Action Button (New Task/Decision/Notification) */}
             {actionButton && (
@@ -2637,23 +3167,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
-            {/* AI (rightmost) */}
-            <button
-              onClick={handlePlanWithAI}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              title={isPolish ? 'Kontekst AI' : 'AI Context'}
-              data-testid="mywork-ai-button"
-            >
-              <Sparkles size={18} />
-            </button>
           </div>
         </div>
       </div>
       {/* Command Row (search | dynamic tabs | counters) */}
       {renderCommandRow()}
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0">{renderContent()}</div>
+      {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
+      <div className={`flex-1 min-h-0 ${activeTab === 'calendar' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>{renderContent()}</div>
+
+      {/* Startup template picker */}
+      <IdeaStartupTemplates
+        open={showStartupTemplates}
+        onClose={() => setShowStartupTemplates(false)}
+        onSelect={handleStartupTemplateSelect}
+      />
     </div>
   );
 };

@@ -23,9 +23,21 @@ import logger from '../utils/Logger.js';
 type Severity = 'CRITICAL' | 'WARNING' | 'INFO';
 
 interface FeedbackData {
-  type: 'BUG' | 'FEATURE' | 'IMPROVEMENT';
+  type: 'BUG' | 'FEATURE' | 'IMPROVEMENT' | 'IDEA';
   userEmail?: string;
+  userName?: string;
   message: string;
+  severity?: string;
+  priority?: string;
+  routePath?: string;
+  deviceType?: string;
+  screenSize?: string;
+  uiLanguage?: string;
+  uiTheme?: string;
+  organizationId?: string;
+  feedbackId?: string;
+  taskId?: string;
+  appEnv?: string; // production|staging|development
 }
 
 interface FailedTest {
@@ -173,7 +185,7 @@ class SlackServiceClass {
   }
 
   /**
-   * Send feedback alert to Slack
+   * Send feedback alert to Slack with full context
    */
   async sendNewFeedbackAlert(feedback: FeedbackData): Promise<void> {
     if (!this.webhookUrl) {
@@ -183,52 +195,127 @@ class SlackServiceClass {
 
     try {
       const isBug = feedback.type === 'BUG';
-      const emoji = isBug ? ':bug:' : ':bulb:';
+      const emoji = isBug ? ':bug:' : feedback.type === 'IDEA' ? ':bulb:' : ':sparkles:';
+      const severityEmoji =
+        feedback.severity === 'CRITICAL'
+          ? ':rotating_light:'
+          : feedback.severity === 'HIGH'
+            ? ':warning:'
+            : '';
+      const color = isBug
+        ? feedback.severity === 'CRITICAL'
+          ? '#ff0000'
+          : feedback.severity === 'HIGH'
+            ? '#ff6600'
+            : '#ffcc00'
+        : '#6366f1';
+
+      const appUrl =
+        process.env.APP_URL ||
+        process.env.FRONTEND_URL ||
+        (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '') ||
+        'http://localhost:5173';
+
+      const contextParts: string[] = [];
+      if (feedback.routePath) contextParts.push(`*Page:* \`${feedback.routePath}\``);
+      if (feedback.deviceType) contextParts.push(`*Device:* ${feedback.deviceType}`);
+      if (feedback.screenSize) contextParts.push(`*Screen:* ${feedback.screenSize}`);
+      if (feedback.uiLanguage) contextParts.push(`*Language:* ${feedback.uiLanguage}`);
+      if (feedback.uiTheme) contextParts.push(`*Theme:* ${feedback.uiTheme}`);
+
+      const envLabel = String(feedback.appEnv || process.env.APP_ENV || '').toLowerCase();
+      const envBadge =
+        envLabel === 'production'
+          ? '[PROD]'
+          : envLabel === 'staging'
+            ? '[STAGE]'
+            : envLabel
+              ? `[${envLabel.toUpperCase()}]`
+              : '';
+
+      const blocks: Record<string, unknown>[] = [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: `${emoji} ${severityEmoji} ${envBadge ? `${envBadge} ` : ''}New ${feedback.type} Report${feedback.severity ? ` [${feedback.severity}]` : ''}`,
+            emoji: true,
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*User:*\n${feedback.userName || feedback.userEmail || 'Anonymous'}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Type:*\n${feedback.type}${feedback.severity ? ` • ${feedback.severity}` : ''}${feedback.priority ? ` • ${feedback.priority}` : ''}`,
+            },
+          ],
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Message:*\n${feedback.message.substring(0, 500)}${feedback.message.length > 500 ? '...' : ''}`,
+          },
+        },
+      ];
+
+      if (contextParts.length > 0) {
+        blocks.push({
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Context (auto-captured):*\n${contextParts.join(' | ')}`,
+          },
+        });
+      }
+
+      blocks.push({ type: 'divider' });
+
+      const contextElements: Record<string, unknown>[] = [
+        {
+          type: 'mrkdwn',
+          text: `🕐 ${new Date().toLocaleString('pl-PL')}`,
+        },
+      ];
+
+      if (feedback.feedbackId) {
+        contextElements.push({
+          type: 'mrkdwn',
+          text: `🔗 <${appUrl}/superadmin?tab=feedback|View in SuperAdmin>`,
+        });
+      }
+
+      if (feedback.taskId) {
+        contextElements.push({
+          type: 'mrkdwn',
+          text: `🧩 <${appUrl}/my-work/tasks/${feedback.taskId}|Open task>`,
+        });
+      }
+
+      if (feedback.organizationId && feedback.organizationId !== 'system') {
+        contextElements.push({
+          type: 'mrkdwn',
+          text: `🏢 Org: ${feedback.organizationId}`,
+        });
+      }
+
+      blocks.push({ type: 'context', elements: contextElements });
 
       const payload = {
-        blocks: [
-          {
-            type: 'header',
-            text: {
-              type: 'plain_text',
-              text: `${emoji} New ${feedback.type} Report`,
-              emoji: true,
-            },
-          },
-          {
-            type: 'section',
-            fields: [
-              {
-                type: 'mrkdwn',
-                text: `*User:*\n${feedback.userEmail || 'Anonymous'}`,
-              },
-              {
-                type: 'mrkdwn',
-                text: `*Type:*\n${feedback.type}`,
-              },
-            ],
-          },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `*Message:*\n${feedback.message}`,
-            },
-          },
-          {
-            type: 'context',
-            elements: [
-              {
-                type: 'mrkdwn',
-                text: `Submitted at: ${new Date().toLocaleString('pl-PL')}`,
-              },
-            ],
-          },
-        ],
+        attachments: [{ color, blocks }],
       };
 
       await this.axiosInstance.post(this.webhookUrl, payload);
-      logger.info('[SlackService] Feedback alert sent', { type: feedback.type });
+      logger.info('[SlackService] Feedback alert sent', {
+        type: feedback.type,
+        severity: feedback.severity,
+        route: feedback.routePath,
+      });
     } catch (error: unknown) {
       logger.error(
         '[SlackService] Failed to send alert:',

@@ -30,6 +30,7 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { checkChatPermission } from '../services/chatPermissionService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -117,6 +118,11 @@ const CreateConversationSchema = z.object({
 
 const ConversationIdParamSchema = z.object({
   id: z.string().uuid(),
+});
+
+const ConversationMessageParamSchema = z.object({
+  id: z.string().uuid(),
+  messageId: z.string().min(1),
 });
 
 const UpdateConversationSchema = z.object({
@@ -619,6 +625,25 @@ router.post(
         [content.slice(0, 200), now, now, conversationId]
       );
 
+      const shouldCaptureAsOrgContext =
+        role === 'user' &&
+        req.organizationId &&
+        metadata &&
+        typeof metadata === 'object' &&
+        (metadata as Record<string, unknown>).captureOrganizationContext === true;
+
+      if (shouldCaptureAsOrgContext) {
+        await organizationContextService.recordChatMessage({
+          organizationId: req.organizationId,
+          userId: req.userId || null,
+          payload: {
+            conversationId,
+            messageId,
+            content,
+          },
+        });
+      }
+
       const message = await dbGet(
         `SELECT cm.*, COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email
          FROM conversation_messages cm
@@ -630,6 +655,88 @@ router.post(
       return res.status(201).json(message);
     } catch (err: any) {
       logger.error('[Conversations] Add message error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+router.post(
+  '/:id/messages/:messageId/save-to-context',
+  verifyToken,
+  validateParams(ConversationMessageParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId, messageId } = req.params;
+
+    try {
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
+
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      const message = (await dbGet(
+        `SELECT id, conversation_id, role, content, metadata, author_user_id
+         FROM conversation_messages
+         WHERE id = ? AND conversation_id = ?`,
+        [messageId, conversationId]
+      )) as
+        | {
+            id: string;
+            conversation_id: string;
+            role: 'user' | 'ai';
+            content: string;
+            metadata?: string | null;
+            author_user_id?: string | null;
+          }
+        | null;
+
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      const existingItem = await dbGet(
+        `SELECT id FROM organization_context_items
+         WHERE organization_id = ? AND source_type = 'chat_message' AND source_id = ?
+         LIMIT 1`,
+        [req.organizationId, messageId]
+      );
+
+      if (existingItem) {
+        return res.json({ ok: true, itemId: (existingItem as any).id, alreadyCaptured: true });
+      }
+
+      let parsedMetadata: Record<string, unknown> = {};
+      try {
+        parsedMetadata =
+          typeof message.metadata === 'string'
+            ? JSON.parse(message.metadata || '{}')
+            : ((message.metadata as Record<string, unknown>) || {});
+      } catch {
+        parsedMetadata = {};
+      }
+
+      const actorUserId =
+        message.role === 'user' ? String(message.author_user_id || req.userId || '') || null : req.userId;
+
+      const result = await organizationContextService.recordChatMessage({
+        organizationId: req.organizationId!,
+        userId: actorUserId,
+        payload: {
+          conversationId,
+          messageId,
+          role: message.role,
+          content: message.content,
+          metadata: parsedMetadata,
+        },
+      });
+
+      return res.json({ ok: true, itemId: result.itemId, alreadyCaptured: false });
+    } catch (err: any) {
+      logger.error('[Conversations] Save-to-context error:', err);
       return res.status(500).json({ error: err.message });
     }
   })

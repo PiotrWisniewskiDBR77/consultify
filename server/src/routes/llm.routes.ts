@@ -8,14 +8,19 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
+import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from '../services/ai/aiTaskCatalog.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
+import * as evalHarness from '../services/ai/evalHarnessService.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
+import { getFinOpsOverview } from '../services/ai/llmFinOpsService.js';
 import { llmService } from '../services/ai/llmService.js';
 import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
 import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
 import { routingRulesService } from '../services/ai/routingRulesService.js';
+import * as aiGov from '../services/aiGovernanceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -79,6 +84,22 @@ async function ensureEnterpriseSchema(): Promise<void> {
           sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN fallback_model_id TEXT`,
           optional: true,
         },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN release_bundle_id TEXT`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN prompt_key TEXT`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN prompt_version TEXT`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN policy_version TEXT`,
+          optional: true,
+        },
 
         // organization_ai_policy
         {
@@ -88,6 +109,20 @@ async function ensureEnterpriseSchema(): Promise<void> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           )`,
+        },
+        {
+          sql: `CREATE TABLE IF NOT EXISTS organization_ai_policy_versions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            policy TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'draft',
+            change_summary TEXT,
+            changed_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_org_ai_policy_versions_org ON organization_ai_policy_versions(organization_id, created_at DESC)`,
         },
 
         // ai_price_snapshots
@@ -206,6 +241,80 @@ function summarizeProviderHealth(providers: any[]) {
   return { total, configured, healthy, degraded, unhealthy };
 }
 
+function parseJsonRecord(raw: unknown): Record<string, unknown> | null {
+  if (!raw) return null;
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  if (typeof raw !== 'string') return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseStringList(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map((item) => String(item).trim()).filter(Boolean);
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean);
+    } catch {
+      return raw
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function evaluateProviderPolicy(
+  provider: { provider_type?: string | null; execution_regions?: unknown },
+  orgPolicy: Record<string, unknown> | null
+): { policyAllowed: boolean; residencyStatus: 'allowed' | 'review' | 'restricted' } {
+  if (!orgPolicy) return { policyAllowed: true, residencyStatus: 'allowed' };
+
+  const providerType = String(provider.provider_type || '').toLowerCase();
+  const regions = parseStringList(provider.execution_regions).map((item) => item.toUpperCase());
+  const denyProviderTypes = new Set(
+    (Array.isArray(orgPolicy.deny_provider_types)
+      ? orgPolicy.deny_provider_types
+      : (orgPolicy.denyProviderTypes as string[]) || []
+    ).map((item) => String(item).toLowerCase())
+  );
+  if (denyProviderTypes.has(providerType)) {
+    return { policyAllowed: false, residencyStatus: 'restricted' };
+  }
+
+  const requireLocal = new Set(
+    (Array.isArray(orgPolicy.require_local_for_data_classes)
+      ? orgPolicy.require_local_for_data_classes
+      : (orgPolicy.requireLocalForDataClasses as string[]) || []
+    ).map((item) => String(item).toLowerCase())
+  );
+  if (requireLocal.has('no_pii') && providerType && providerType !== 'local' && providerType !== 'customer_managed') {
+    return { policyAllowed: false, residencyStatus: 'restricted' };
+  }
+
+  const allowedRegions = new Set(
+    (Array.isArray(orgPolicy.allowed_execution_regions)
+      ? orgPolicy.allowed_execution_regions
+      : (orgPolicy.allowedExecutionRegions as string[]) || []
+    ).map((item) => String(item).toUpperCase())
+  );
+  if (allowedRegions.size > 0 && regions.length > 0 && !regions.some((region) => allowedRegions.has(region))) {
+    return { policyAllowed: false, residencyStatus: 'restricted' };
+  }
+  if (allowedRegions.size > 0 && regions.length === 0) {
+    return { policyAllowed: true, residencyStatus: 'review' };
+  }
+
+  return { policyAllowed: true, residencyStatus: 'allowed' };
+}
+
 // ---------------------------------------------------------------------------
 // Routing rules schema bootstrap (safe in DB_MANAGED_SCHEMA=off environments)
 // ---------------------------------------------------------------------------
@@ -231,16 +340,11 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
 
   const providers = (await llmConfigService.getAllProviders(true).catch(() => [])) as any[];
 
-  const byProvider = new Map<string, any>();
-  for (const p of providers || []) {
-    const key = String(p.provider || '').toLowerCase();
-    if (key && !byProvider.has(key)) byProvider.set(key, p);
-  }
-
   const providerHealth = await Promise.all(
-    Array.from(byProvider.values()).map(async (p) => {
+    (providers || []).map(async (p) => {
       const startedAt = Date.now();
       const providerId = String(p.provider || '').toLowerCase();
+      const providerModel = String(p.model_id || p.model || p.id || '').trim();
       const isLocal = providerId === 'ollama';
       const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
 
@@ -256,6 +360,7 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
         const ok = !!result?.success;
         return {
           provider: p.provider,
+          model: providerModel || null,
           healthStatus: ok ? 'healthy' : 'unhealthy',
           lastCheck: new Date().toISOString(),
           latency: result?.latency ?? Date.now() - startedAt,
@@ -264,6 +369,7 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
       } catch (e: any) {
         return {
           provider: p.provider,
+          model: providerModel || null,
           healthStatus: 'unhealthy',
           lastCheck: new Date().toISOString(),
           latency: Date.now() - startedAt,
@@ -275,12 +381,16 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
 
   const healthByProvider = new Map<string, any>();
   for (const h of providerHealth) {
-    healthByProvider.set(String(h.provider || '').toLowerCase(), h);
+    const providerKey = String(h.provider || '').toLowerCase();
+    const modelKey = String(h.model || '').toLowerCase();
+    healthByProvider.set(`${providerKey}::${modelKey}`, h);
   }
 
   const enrichedProviders = (providers || []).map((p) => {
-    const key = String(p.provider || '').toLowerCase();
-    const health = healthByProvider.get(key);
+    const providerKey = String(p.provider || '').toLowerCase();
+    const modelKey = String(p.model_id || p.model || p.id || '').toLowerCase();
+    const health =
+      healthByProvider.get(`${providerKey}::${modelKey}`) || healthByProvider.get(`${providerKey}::`);
     return sanitizeProviderForStatus({
       ...p,
       // normalize to shape expected by UI (AdminLLMView / ModelsProvidersTab)
@@ -289,9 +399,9 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
       isDefault: Boolean(p.is_default ?? p.isDefault),
       isConfigured:
         Boolean(p.api_key) ||
-        (key === 'openai' ? !!process.env.OPENAI_API_KEY : false) ||
-        (key === 'openrouter' ? !!process.env.OPENROUTER_API_KEY : false) ||
-        (key === 'anthropic' ? !!process.env.ANTHROPIC_API_KEY : false),
+        (providerKey === 'openai' ? !!process.env.OPENAI_API_KEY : false) ||
+        (providerKey === 'openrouter' ? !!process.env.OPENROUTER_API_KEY : false) ||
+        (providerKey === 'anthropic' ? !!process.env.ANTHROPIC_API_KEY : false),
       tier: String(p.tier || '').toUpperCase() || 'STANDARD',
       priority: p.priority ?? 0,
       healthStatus: health?.healthStatus || p.health_status || p.healthStatus || 'unknown',
@@ -702,8 +812,12 @@ router.get(
       null;
     const organizationId = organizationIdRaw ? String(organizationIdRaw).trim() : null;
     const includeInactive =
-      String(req.query?.includeInactive || '').trim().toLowerCase() === 'true' ||
-      String(req.query?.include_inactive || '').trim().toLowerCase() === 'true';
+      String(req.query?.includeInactive || '')
+        .trim()
+        .toLowerCase() === 'true' ||
+      String(req.query?.include_inactive || '')
+        .trim()
+        .toLowerCase() === 'true';
 
     const rules = await routingRulesService.listRules({ organizationId, includeInactive });
     return res.json({ success: true, rules });
@@ -843,6 +957,362 @@ router.post(
 
 // ==================== ENTERPRISE: PURPOSES / POLICY / PRICING / MARKET ====================
 
+router.get(
+  '/use-cases/overview',
+  verifyToken,
+  asyncHandler(async (req: any, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = req.query.organizationId
+      ? String(req.query.organizationId).trim()
+      : req.organizationId
+        ? String(req.organizationId).trim()
+        : null;
+    const orgPolicy = organizationId
+      ? parseJsonRecord(
+          (
+            await dbGet<{ policy?: string }>(
+              `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
+              [organizationId],
+              { fallback: true } as any
+            ).catch(() => null)
+          )?.policy
+        )
+      : null;
+    const orgProviders = organizationId
+      ? await llmConfigService.getOrganizationProviders(organizationId).catch(() => [])
+      : [];
+    const orgProviderState = new Map(
+      (orgProviders || []).map((provider: any) => [String(provider.id), provider.is_enabled_for_org !== false])
+    );
+    const entrypointByUseCase: Record<string, string> = {
+      chat: '/ai-chat',
+      document_understanding: '/ai-chat + attachments',
+      reports: '/reports + report builder',
+      presentations: '/presentations',
+      visuals: '/presentations visual generation',
+    };
+    const uxStatusByUseCase: Record<string, 'ready' | 'partial' | 'blocked'> = {
+      chat: 'ready',
+      document_understanding: 'ready',
+      reports: 'ready',
+      presentations: 'ready',
+      visuals: 'partial',
+    };
+    const releaseBundles = organizationId
+      ? ((await dbAll(
+          `SELECT id, purpose, status, prompt_key, prompt_version, primary_model_id, fallback_model_id, policy_version
+           FROM ai_eval_release_bundles
+           WHERE organization_id = ?`,
+          [organizationId],
+          { fallback: true } as any
+        ).catch(() => [])) as any[])
+      : [];
+    const bundleById = new Map(releaseBundles.map((bundle) => [String(bundle.id), bundle]));
+    const publishedBundleIds = new Set(
+      releaseBundles
+        .filter((bundle) => String(bundle.status || '').toLowerCase() === 'published')
+        .map((bundle) => String(bundle.id))
+    );
+
+    const useCases = await Promise.all(
+      EXECUTIVE_USE_CASES.map(async (useCase) => {
+        const purposes = await Promise.all(
+          useCase.purposes.map(async (purpose) => {
+            const purposeKeys = getRoutingPurposeKeys(purpose);
+            const placeholders = purposeKeys.map(() => '?').join(',');
+            const params: unknown[] = [...purposeKeys];
+            let assignmentsSql = `
+              SELECT
+                apa.purpose,
+                apa.priority,
+                apa.organization_id,
+                lp.id as provider_id,
+                lp.name as provider_name,
+                lp.provider,
+                lp.model_id,
+                lp.health_status,
+                lp.cost_per_1k,
+                lp.provider_type,
+                lp.execution_regions,
+                apa.release_bundle_id,
+                apa.prompt_key,
+                apa.prompt_version,
+                apa.policy_version,
+                apa.fallback_model_id
+              FROM ai_purpose_assignments apa
+              INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+              WHERE apa.purpose IN (${placeholders})
+                AND apa.is_active = 1
+                AND lp.is_active = 1
+            `;
+
+            if (organizationId) {
+              assignmentsSql += ` AND (apa.organization_id = ? OR apa.organization_id IS NULL)`;
+              params.push(organizationId);
+            } else {
+              assignmentsSql += ` AND apa.organization_id IS NULL`;
+            }
+
+            assignmentsSql += `
+              ORDER BY
+                CASE
+                  WHEN ${organizationId ? 'apa.organization_id = ?' : '1 = 1'} THEN 0
+                  ELSE 1
+                END,
+                apa.priority ASC
+            `;
+            if (organizationId) params.push(organizationId);
+
+            const assignments = (await dbAll(assignmentsSql, params, {
+              fallback: true,
+            } as any)) as any[];
+
+            let usage: any = null;
+            try {
+              usage = await dbGet(
+                `SELECT
+                   COUNT(*) as requests,
+                   COALESCE(SUM(estimated_cost_usd), 0) as costUsd,
+                   COALESCE(AVG(latency_ms), 0) as avgLatencyMs
+                 FROM ai_usage_logs
+                 WHERE purpose IN (${placeholders})
+                   ${organizationId ? 'AND organization_id = ?' : ''}
+                   AND created_at >= datetime('now', '-30 day')`,
+                organizationId ? [...purposeKeys, organizationId] : purposeKeys,
+                { fallback: true } as any
+              );
+            } catch {
+              usage = { requests: 0, costUsd: 0, avgLatencyMs: 0 };
+            }
+
+            const primary = assignments[0] || null;
+            const releaseBundleId = String(primary?.release_bundle_id || '').trim() || null;
+            const bundle =
+              (releaseBundleId ? bundleById.get(releaseBundleId) : null) ||
+              releaseBundles.find((item) => getRoutingPurposeKeys(String(item.purpose || '')).includes(purpose)) ||
+              null;
+            const promptKey = String(primary?.prompt_key || bundle?.prompt_key || '').trim() || null;
+            const promptVersion =
+              String(primary?.prompt_version || bundle?.prompt_version || '').trim() || null;
+            const policyVersion =
+              String(primary?.policy_version || bundle?.policy_version || '').trim() || null;
+            const releasePublished = releaseBundleId ? publishedBundleIds.has(releaseBundleId) : false;
+            const entrypoint = entrypointByUseCase[useCase.key] || useCase.key;
+            const fallbacks = assignments.slice(1, 4).map((row) => ({
+              providerId: row.provider_id,
+              provider: row.provider,
+              name: row.provider_name,
+              modelId: row.model_id,
+              healthStatus: row.health_status || 'unknown',
+            }));
+            const eligibleAssignments = assignments.filter((row) => {
+              const policy = evaluateProviderPolicy(row, orgPolicy);
+              const enabledForOrg = organizationId ? orgProviderState.get(String(row.provider_id)) !== false : true;
+              return policy.policyAllowed && enabledForOrg;
+            });
+            const primaryPolicy = primary ? evaluateProviderPolicy(primary, orgPolicy) : null;
+            const healthyAssignments = assignments.filter((row) =>
+              ['healthy', 'degraded', null, undefined, 'unknown'].includes(row.health_status)
+            );
+            const status =
+              assignments.length === 0
+                ? 'missing'
+                : eligibleAssignments.length === 0 || healthyAssignments.length === 0
+                  ? 'critical'
+                  : primary?.health_status === 'unhealthy'
+                    ? 'degraded'
+                    : 'healthy';
+            const blockers: string[] = [];
+            if (assignments.length === 0) blockers.push('missing_assignment');
+            if (eligibleAssignments.length === 0) blockers.push('no_eligible_assignment');
+            if (!releasePublished) blockers.push('release_not_published');
+            if (!promptKey || !promptVersion) blockers.push('prompt_not_traced');
+            if (organizationId && !policyVersion) blockers.push('policy_not_traced');
+            if (useCase.key === 'visuals') blockers.push('ux_partial');
+            const completenessStatus =
+              blockers.length === 0
+                ? 'ready'
+                : blockers.some((blocker) =>
+                      ['missing_assignment', 'no_eligible_assignment', 'release_not_published'].includes(blocker)
+                    )
+                  ? 'blocked'
+                  : 'partial';
+            const completenessScore = Math.max(
+              0,
+              [
+                assignments.length > 0 ? 20 : 0,
+                eligibleAssignments.length > 0 ? 20 : 0,
+                releasePublished ? 20 : 0,
+                promptKey && promptVersion ? 20 : 0,
+                !organizationId || policyVersion ? 10 : 0,
+                uxStatusByUseCase[useCase.key] === 'ready' ? 10 : 0,
+              ].reduce((sum, item) => sum + item, 0)
+            );
+
+            return {
+              purpose,
+              entrypoint,
+              assignmentCount: assignments.length,
+              eligibleAssignmentCount: eligibleAssignments.length,
+              status,
+              policyAllowed: primaryPolicy?.policyAllowed ?? assignments.length === 0,
+              enabledForOrg: organizationId ? orgProviderState.get(String(primary?.provider_id || '')) !== false : true,
+              residencyStatus: primaryPolicy?.residencyStatus ?? 'allowed',
+              releaseBundleId: releaseBundleId || String(bundle?.id || '').trim() || null,
+              releaseStatus: releasePublished ? 'published' : bundle ? String(bundle.status || 'draft') : 'missing',
+              promptKey,
+              promptVersion,
+              policyVersion,
+              completenessStatus,
+              completenessScore,
+              blockers,
+              primary: primary
+                ? {
+                    providerId: primary.provider_id,
+                    provider: primary.provider,
+                    name: primary.provider_name,
+                    modelId: primary.model_id,
+                    healthStatus: primary.health_status || 'unknown',
+                    costPer1k: Number(primary.cost_per_1k || 0),
+                  }
+                : null,
+              fallbacks,
+              usage: {
+                requests30d: Number((usage as any)?.requests || 0),
+                costUsd30d: Number((usage as any)?.costUsd || 0),
+                avgLatencyMs30d: Number((usage as any)?.avgLatencyMs || 0),
+              },
+            };
+          })
+        );
+
+        const covered = purposes.filter((item) => item.eligibleAssignmentCount > 0).length;
+        const healthy = purposes.filter((item) => item.status === 'healthy').length;
+        const degraded = purposes.filter((item) => item.status === 'degraded').length;
+        const critical = purposes.filter(
+          (item) => item.status === 'critical' || item.status === 'missing'
+        ).length;
+        const overallStatus =
+          critical > 0
+            ? 'critical'
+            : degraded > 0
+              ? 'degraded'
+              : healthy > 0
+                ? 'healthy'
+                : 'unknown';
+        const completenessStates = purposes.map((item) => item.completenessStatus);
+        const completenessStatus = completenessStates.includes('blocked')
+          ? 'blocked'
+          : completenessStates.includes('partial')
+            ? 'partial'
+            : 'ready';
+        const completenessScore =
+          purposes.length > 0
+            ? Math.round(
+                purposes.reduce((sum, item) => sum + Number(item.completenessScore || 0), 0) / purposes.length
+              )
+            : 0;
+        const releaseCoveragePct =
+          purposes.length > 0
+            ? Math.round(
+                (purposes.filter((item) => item.releaseStatus === 'published').length / purposes.length) * 100
+              )
+            : 0;
+
+        return {
+          key: useCase.key,
+          label: useCase.label,
+          description: useCase.description,
+          businessOwner: useCase.businessOwner,
+          entrypoint: entrypointByUseCase[useCase.key] || useCase.key,
+          uxStatus: uxStatusByUseCase[useCase.key] || 'partial',
+          status: overallStatus,
+          completenessStatus,
+          completenessScore,
+          releaseCoveragePct,
+          coveragePct:
+            useCase.purposes.length > 0 ? Math.round((covered / useCase.purposes.length) * 100) : 0,
+          healthyPurposes: healthy,
+          degradedPurposes: degraded,
+          criticalPurposes: critical,
+          costUsd30d: purposes.reduce((sum, item) => sum + Number(item.usage.costUsd30d || 0), 0),
+          requests30d: purposes.reduce((sum, item) => sum + Number(item.usage.requests30d || 0), 0),
+          purposes,
+        };
+      })
+    );
+
+    const finOps = organizationId
+      ? await getFinOpsOverview(organizationId).catch(() => null)
+      : null;
+    const impactedOrganizationsRow = await dbGet(
+      `SELECT COUNT(DISTINCT organization_id) as impacted
+       FROM ai_usage_logs
+       WHERE purpose IN (${EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes)
+         .flatMap((purpose) => getRoutingPurposeKeys(purpose))
+         .map(() => '?')
+         .join(',')})
+         ${organizationId ? 'AND organization_id = ?' : ''}
+         AND created_at >= datetime('now', '-30 day')`,
+      organizationId
+        ? [
+            ...EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((purpose) =>
+              getRoutingPurposeKeys(purpose)
+            ),
+            organizationId,
+          ]
+        : EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((purpose) =>
+            getRoutingPurposeKeys(purpose)
+          ),
+      { fallback: true } as any
+    ).catch(() => ({ impacted: 0 }));
+    const criticalUseCases = useCases.filter((u) => u.status === 'critical');
+    const degradedUseCases = useCases.filter((u) => u.status === 'degraded');
+    const riskFeed = [
+      ...criticalUseCases.map((useCase) => ({
+        severity: 'critical',
+        title: `${useCase.label} delivery threatened`,
+        blastRadius: `${useCase.criticalPurposes} critical purpose(s)`,
+        recommendation: 'Switch vendor or freeze affected purpose',
+      })),
+      ...degradedUseCases.slice(0, 3).map((useCase) => ({
+        severity: 'warning',
+        title: `${useCase.label} degraded`,
+        blastRadius: `${useCase.degradedPurposes} degraded purpose(s)`,
+        recommendation: 'Downgrade tier or increase fallback coverage',
+      })),
+      ...((finOps?.anomalies || []).slice(0, 3).map((anomaly) => ({
+        severity: anomaly.severity,
+        title: `Spend anomaly: ${anomaly.scope} ${anomaly.key}`,
+        blastRadius: `+${anomaly.deltaPct}% vs baseline`,
+        recommendation: 'Review routing mix and budget guardrails',
+      })) as any[]),
+    ];
+
+    return res.json({
+      success: true,
+      useCases,
+      summary: {
+        total: useCases.length,
+        healthy: useCases.filter((u) => u.status === 'healthy').length,
+        degraded: useCases.filter((u) => u.status === 'degraded').length,
+        critical: useCases.filter((u) => u.status === 'critical').length,
+        mtdSpendUsd: finOps?.mtdSpendUsd || 0,
+        projectedMonthEndSpendUsd: finOps?.projectedMonthEndSpendUsd || 0,
+        vendorConcentrationPct: finOps?.vendorConcentrationPct || 0,
+        topVendor: finOps?.topVendor || null,
+        impactedOrganizations: Number((impactedOrganizationsRow as any)?.impacted || 0),
+        readinessReady: useCases.filter((u: any) => u.completenessStatus === 'ready').length,
+        readinessPartial: useCases.filter((u: any) => u.completenessStatus === 'partial').length,
+        readinessBlocked: useCases.filter((u: any) => u.completenessStatus === 'blocked').length,
+      },
+      vendorScorecards: finOps?.vendorScorecards || [],
+      finOps,
+      riskFeed,
+    });
+  })
+);
+
 /**
  * GET /api/llm/purposes
  * List configured AI purposes (registry).
@@ -869,7 +1339,7 @@ router.get(
  */
 router.post(
   '/purposes',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.body?.purpose || '').trim();
@@ -973,7 +1443,7 @@ router.get(
  */
 router.post(
   '/purposes/:purpose/assignments',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.params.purpose || '').trim();
@@ -983,20 +1453,84 @@ router.post(
     const priority = Number.isFinite(Number(req.body?.priority)) ? Number(req.body.priority) : 0;
     const isActive = req.body?.is_active === false ? 0 : 1;
     const fallbackModelId = req.body?.fallback_model_id || req.body?.fallbackModelId || null;
+    const releaseBundleId =
+      req.body?.release_bundle_id || req.body?.releaseBundleId
+        ? String(req.body?.release_bundle_id || req.body?.releaseBundleId).trim()
+        : null;
+    const promptKey = req.body?.prompt_key || req.body?.promptKey || null;
+    const promptVersion = req.body?.prompt_version || req.body?.promptVersion || null;
+    const policyVersion = req.body?.policy_version || req.body?.policyVersion || null;
 
     if (!purpose || !providerId) {
       return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
     }
+    const executivePurposes = new Set(
+      EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((item) =>
+        getRoutingPurposeKeys(item)
+      )
+    );
+    if (executivePurposes.has(purpose)) {
+      if (!releaseBundleId) {
+        return res.status(400).json({
+          success: false,
+          error: 'releaseBundleId is required for executive use-case routing changes',
+        });
+      }
+      const bundle = await dbGet(
+        `SELECT id, gate_passed, status, purpose
+         FROM ai_eval_release_bundles
+         WHERE id = ? AND organization_id = ?`,
+        [releaseBundleId, organizationId || resolveOrgId(req)],
+        { fallback: false } as any
+      );
+      if (!bundle || !(bundle as any).gate_passed) {
+        return res.status(400).json({
+          success: false,
+          error: 'release bundle has not passed eval gates',
+        });
+      }
+      const bundlePurpose = String((bundle as any).purpose || '').trim();
+      if (
+        bundlePurpose &&
+        !getRoutingPurposeKeys(bundlePurpose).includes(purpose) &&
+        bundlePurpose !== purpose
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'release bundle purpose does not match assignment purpose',
+        });
+      }
+    }
     const id = `${organizationId || 'global'}-${purpose}-${providerId}-${modelId || 'default'}`;
     await dbRun(
-      `INSERT INTO ai_purpose_assignments (id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `INSERT INTO ai_purpose_assignments (
+         id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id,
+         release_bundle_id, prompt_key, prompt_version, policy_version, created_at, updated_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
        ON CONFLICT(organization_id, purpose, provider_id, model_id) DO UPDATE SET
          priority = excluded.priority,
          is_active = excluded.is_active,
          fallback_model_id = excluded.fallback_model_id,
+         release_bundle_id = excluded.release_bundle_id,
+         prompt_key = excluded.prompt_key,
+         prompt_version = excluded.prompt_version,
+         policy_version = excluded.policy_version,
          updated_at = CURRENT_TIMESTAMP`,
-      [id, organizationId, purpose, providerId, modelId, priority, isActive, fallbackModelId],
+      [
+        id,
+        organizationId,
+        purpose,
+        providerId,
+        modelId,
+        priority,
+        isActive,
+        fallbackModelId,
+        releaseBundleId,
+        promptKey,
+        promptVersion,
+        policyVersion,
+      ],
       { fallback: false } as any
     );
     await logModelAuditEntry({
@@ -1011,6 +1545,11 @@ router.post(
         modelId: modelId || null,
         priority,
         isActive,
+        fallbackModelId,
+        releaseBundleId,
+        promptKey,
+        promptVersion,
+        policyVersion,
       },
     });
     return res.json({ success: true });
@@ -1023,7 +1562,7 @@ router.post(
  */
 router.delete(
   '/purposes/:purpose/assignments',
-  verifyToken,
+  verifySuperAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.params.purpose || '').trim();
@@ -1094,9 +1633,19 @@ router.get(
       [organizationId],
       { fallback: false } as any
     );
+    const latestDraft = await dbGet(
+      `SELECT id, policy, status, change_summary, changed_by, created_at
+       FROM organization_ai_policy_versions
+       WHERE organization_id = ? AND status IN ('draft', 'review', 'approved')
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [organizationId],
+      { fallback: false } as any
+    ).catch(() => null);
     return res.json({
       success: true,
       policy: row || { organization_id: organizationId, policy: {} },
+      latestDraft,
     });
   })
 );
@@ -1107,22 +1656,47 @@ router.get(
  */
 router.put(
   '/org/:organizationId/policy',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const organizationId = String(req.params.organizationId || '').trim();
     if (!organizationId)
       return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policy = req.body?.policy ?? req.body ?? {};
+    const mode = String(req.body?.mode || 'published')
+      .trim()
+      .toLowerCase();
+    const changeSummary = req.body?.changeSummary ? String(req.body.changeSummary).trim() : null;
+    const versionId = randomUUID();
+    const normalizedStatus = ['draft', 'review', 'approved', 'published'].includes(mode)
+      ? mode
+      : 'published';
+
     await dbRun(
-      `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
-       VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       ON CONFLICT(organization_id) DO UPDATE SET
-         policy = excluded.policy,
-         updated_at = CURRENT_TIMESTAMP`,
-      [organizationId, JSON.stringify(policy)],
+      `INSERT INTO organization_ai_policy_versions (id, organization_id, policy, status, change_summary, changed_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        versionId,
+        organizationId,
+        JSON.stringify(policy),
+        normalizedStatus,
+        changeSummary,
+        getAuditActor(req),
+      ],
       { fallback: false } as any
     );
+
+    if (normalizedStatus === 'published') {
+      await dbRun(
+        `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
+         VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT(organization_id) DO UPDATE SET
+           policy = excluded.policy,
+           updated_at = CURRENT_TIMESTAMP`,
+        [organizationId, JSON.stringify(policy)],
+        { fallback: false } as any
+      );
+    }
     const row = await dbGet(
       `SELECT organization_id, policy, updated_at, created_at FROM organization_ai_policy WHERE organization_id = ?`,
       [organizationId],
@@ -1133,9 +1707,75 @@ router.put(
       entityType: 'policy',
       entityId: `org:${organizationId}`,
       changedBy: getAuditActor(req),
-      changes: { organizationId, policy },
+      changes: { organizationId, policy, mode: normalizedStatus, versionId, changeSummary },
     });
-    return res.json({ success: true, policy: row });
+    return res.json({ success: true, policy: row, versionId, mode: normalizedStatus });
+  })
+);
+
+router.get(
+  '/org/:organizationId/policy/history',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = String(req.params.organizationId || '').trim();
+    if (!organizationId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const versions = await dbAll(
+      `SELECT id, organization_id, policy, status, change_summary, changed_by, created_at
+       FROM organization_ai_policy_versions
+       WHERE organization_id = ?
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [organizationId],
+      { fallback: false } as any
+    );
+    return res.json({ success: true, versions });
+  })
+);
+
+router.post(
+  '/org/:organizationId/policy/rollback',
+  verifySuperAdmin,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = String(req.params.organizationId || '').trim();
+    const versionId = String(req.body?.versionId || '').trim();
+    if (!organizationId || !versionId) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'organizationId and versionId are required' });
+    }
+    const version = await dbGet(
+      `SELECT id, policy FROM organization_ai_policy_versions WHERE id = ? AND organization_id = ?`,
+      [versionId, organizationId],
+      { fallback: false } as any
+    );
+    if (!version)
+      return res.status(404).json({ success: false, error: 'Policy version not found' });
+
+    await dbRun(
+      `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(organization_id) DO UPDATE SET
+         policy = excluded.policy,
+         updated_at = CURRENT_TIMESTAMP`,
+      [organizationId, String((version as any).policy || '{}')],
+      { fallback: false } as any
+    );
+    await dbRun(
+      `INSERT INTO organization_ai_policy_versions (id, organization_id, policy, status, change_summary, changed_by, created_at)
+       VALUES (?, ?, ?, 'published', ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        randomUUID(),
+        organizationId,
+        String((version as any).policy || '{}'),
+        `Rollback to version ${versionId}`,
+        getAuditActor(req),
+      ],
+      { fallback: false } as any
+    );
+    return res.json({ success: true });
   })
 );
 
@@ -1567,6 +2207,481 @@ router.post(
     }
 
     return res.json({ success: true, item: updated, actions });
+  })
+);
+
+// ==================== V4-ENT-07: AI GOVERNANCE ====================
+
+function resolveOrgId(req: any): string {
+  return String(
+    req?.organizationId || req?.user?.organizationId || req?.query?.organizationId || ''
+  ).trim();
+}
+
+function parseDateRange(req: any): { from: string; to: string } {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const from = req.query?.from ? String(req.query.from).trim() : thirtyDaysAgo.toISOString();
+  const to = req.query?.to ? String(req.query.to).trim() : now.toISOString();
+  return { from, to };
+}
+
+router.get(
+  '/governance/dashboard',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const dashboard = await aiGov.getMeteringDashboard(orgId, from, to);
+    return res.json({ success: true, dashboard });
+  })
+);
+
+router.get(
+  '/governance/policies',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policies = await aiGov.getGovernancePolicies(orgId);
+    return res.json({ success: true, policies });
+  })
+);
+
+router.post(
+  '/governance/policies',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyType = String(req.body?.policyType || req.body?.policy_type || '').trim();
+    if (!policyType)
+      return res.status(400).json({ success: false, error: 'policyType is required' });
+    const config = req.body?.config || req.body?.config_json || {};
+    const policy = await aiGov.createGovernancePolicy(orgId, {
+      policyType,
+      config: typeof config === 'string' ? JSON.parse(config) : config,
+      createdBy: getAuditActor(req),
+    });
+    return res.status(201).json({ success: true, policy });
+  })
+);
+
+router.put(
+  '/governance/policies/:policyId',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyId = String(req.params.policyId || '').trim();
+    if (!policyId) return res.status(400).json({ success: false, error: 'policyId is required' });
+    const config = req.body?.config || req.body?.config_json;
+    const policy = await aiGov.updateGovernancePolicy(orgId, policyId, {
+      policyType: req.body?.policyType || req.body?.policy_type,
+      config:
+        config !== undefined
+          ? typeof config === 'string'
+            ? JSON.parse(config)
+            : config
+          : undefined,
+      isActive: req.body?.isActive ?? req.body?.is_active,
+    });
+    if (!policy) return res.status(404).json({ success: false, error: 'Policy not found' });
+    return res.json({ success: true, policy });
+  })
+);
+
+router.delete(
+  '/governance/policies/:policyId',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyId = String(req.params.policyId || '').trim();
+    if (!policyId) return res.status(400).json({ success: false, error: 'policyId is required' });
+    await aiGov.deleteGovernancePolicy(orgId, policyId);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/governance/eval-datasets',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasets = await aiGov.listEvalDatasets(orgId);
+    return res.json({ success: true, datasets });
+  })
+);
+
+router.post(
+  '/governance/eval-datasets',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const name = String(req.body?.name || '').trim();
+    const purpose = String(req.body?.purpose || '').trim();
+    if (!name || !purpose)
+      return res.status(400).json({ success: false, error: 'name and purpose are required' });
+    const samples = Array.isArray(req.body?.samples) ? req.body.samples : [];
+    const dataset = await aiGov.createEvalDataset(orgId, {
+      name,
+      purpose,
+      samples,
+      createdBy: getAuditActor(req),
+    });
+    return res.status(201).json({ success: true, dataset });
+  })
+);
+
+router.get(
+  '/governance/eval-datasets/:datasetId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasetId = String(req.params.datasetId || '').trim();
+    const dataset = await aiGov.getEvalDataset(orgId, datasetId);
+    if (!dataset) return res.status(404).json({ success: false, error: 'Dataset not found' });
+    return res.json({ success: true, dataset });
+  })
+);
+
+router.put(
+  '/governance/eval-datasets/:datasetId',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasetId = String(req.params.datasetId || '').trim();
+    const dataset = await aiGov.updateEvalDataset(orgId, datasetId, {
+      name: req.body?.name,
+      purpose: req.body?.purpose,
+      samples: req.body?.samples,
+    });
+    if (!dataset) return res.status(404).json({ success: false, error: 'Dataset not found' });
+    return res.json({ success: true, dataset });
+  })
+);
+
+router.post(
+  '/governance/evaluations/run',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasetId = String(req.body?.datasetId || req.body?.dataset_id || '').trim();
+    const purpose = String(req.body?.purpose || '').trim();
+    if (!datasetId || !purpose) {
+      return res.status(400).json({ success: false, error: 'datasetId and purpose are required' });
+    }
+    const modelId = req.body?.modelId || req.body?.model_id || undefined;
+    const evaluation = await aiGov.runEvaluation(
+      orgId,
+      datasetId,
+      purpose,
+      modelId,
+      getAuditActor(req)
+    );
+    return res.status(201).json({ success: true, evaluation });
+  })
+);
+
+router.get(
+  '/governance/evaluations',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const purpose = req.query?.purpose ? String(req.query.purpose).trim() : undefined;
+    const limitRaw = Number(req.query?.limit ?? 50);
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(500, limitRaw)) : 50;
+    const evaluations = await aiGov.listEvaluations(orgId, { purpose, limit });
+    return res.json({ success: true, evaluations });
+  })
+);
+
+router.get(
+  '/governance/evaluations/:evalId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const evalId = String(req.params.evalId || '').trim();
+    const evaluation = await aiGov.getEvaluation(orgId, evalId);
+    if (!evaluation) return res.status(404).json({ success: false, error: 'Evaluation not found' });
+    return res.json({ success: true, evaluation });
+  })
+);
+
+router.post(
+  '/governance/enforce',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyType = String(req.body?.policyType || req.body?.policy_type || '').trim();
+    if (!policyType)
+      return res.status(400).json({ success: false, error: 'policyType is required' });
+    const context = req.body?.context || {};
+    const result = await aiGov.enforcePolicy(orgId, policyType, context);
+    return res.json({ success: true, ...result });
+  })
+);
+
+router.get(
+  '/governance/metering/by-purpose',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const breakdown = await aiGov.getMeteringByPurpose(orgId, from, to);
+    return res.json({ success: true, breakdown });
+  })
+);
+
+router.get(
+  '/governance/metering/by-user',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const breakdown = await aiGov.getMeteringByUser(orgId, from, to);
+    return res.json({ success: true, breakdown });
+  })
+);
+
+router.get(
+  '/governance/metering/trend',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const trend = await aiGov.getMeteringTrend(orgId, from, to);
+    return res.json({ success: true, trend });
+  })
+);
+
+// ==================== V4-AI-07: EVAL HARNESS ====================
+
+router.post(
+  '/governance/eval-harness/run',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+
+    const parsed = evalHarness.EvalRunConfigSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid config', details: parsed.error.issues });
+    }
+
+    const result = await evalHarness.runEvalHarness(orgId, parsed.data, getAuditActor(req));
+    return res.status(201).json({ success: true, result });
+  })
+);
+
+router.get(
+  '/governance/eval-harness/citation-coverage',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const report = await evalHarness.getCitationCoverageReport(orgId, from, to);
+    return res.json({ success: true, report });
+  })
+);
+
+router.get(
+  '/governance/eval-harness/compare/:runId1/:runId2',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const runId1 = String(req.params.runId1 || '').trim();
+    const runId2 = String(req.params.runId2 || '').trim();
+    if (!runId1 || !runId2)
+      return res.status(400).json({ success: false, error: 'Both runId1 and runId2 are required' });
+    const comparison = await evalHarness.compareEvalRuns(orgId, runId1, runId2);
+    return res.json({ success: true, comparison });
+  })
+);
+
+router.get(
+  '/governance/regression-gates',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const gates = await evalHarness.listRegressionGates(orgId);
+    return res.json({ success: true, gates });
+  })
+);
+
+router.post(
+  '/governance/regression-gates',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const metricName = String(req.body?.metricName || req.body?.metric_name || '').trim();
+    if (!metricName)
+      return res.status(400).json({ success: false, error: 'metricName is required' });
+    const gate = await evalHarness.createRegressionGate(orgId, {
+      purpose: req.body?.purpose || undefined,
+      metricName,
+      minThreshold: req.body?.minThreshold ?? req.body?.min_threshold ?? undefined,
+      maxDegradation: req.body?.maxDegradation ?? req.body?.max_degradation ?? undefined,
+      isBlocking: req.body?.isBlocking ?? req.body?.is_blocking ?? true,
+    });
+    return res.status(201).json({ success: true, gate });
+  })
+);
+
+router.put(
+  '/governance/regression-gates/:gateId',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const gateId = String(req.params.gateId || '').trim();
+    if (!gateId) return res.status(400).json({ success: false, error: 'gateId is required' });
+    const gate = await evalHarness.updateRegressionGate(orgId, gateId, {
+      purpose: req.body?.purpose,
+      metricName: req.body?.metricName || req.body?.metric_name,
+      minThreshold: req.body?.minThreshold ?? req.body?.min_threshold,
+      maxDegradation: req.body?.maxDegradation ?? req.body?.max_degradation,
+      isBlocking: req.body?.isBlocking ?? req.body?.is_blocking,
+    });
+    if (!gate) return res.status(404).json({ success: false, error: 'Gate not found' });
+    return res.json({ success: true, gate });
+  })
+);
+
+router.delete(
+  '/governance/regression-gates/:gateId',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const gateId = String(req.params.gateId || '').trim();
+    if (!gateId) return res.status(400).json({ success: false, error: 'gateId is required' });
+    await evalHarness.deleteRegressionGate(orgId, gateId);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/governance/release-bundles',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const bundles = await evalHarness.listReleaseBundles(orgId);
+    return res.json({ success: true, bundles });
+  })
+);
+
+router.post(
+  '/governance/release-bundles',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const purpose = String(req.body?.purpose || '').trim();
+    if (!purpose) return res.status(400).json({ success: false, error: 'purpose is required' });
+    const bundle = await evalHarness.createReleaseBundle(orgId, {
+      purpose,
+      promptKey: req.body?.promptKey,
+      promptVersion: req.body?.promptVersion,
+      primaryModelId: req.body?.primaryModelId,
+      fallbackModelId: req.body?.fallbackModelId,
+      policyVersion: req.body?.policyVersion,
+      baselineEvalId: req.body?.baselineEvalId,
+      candidateEvalId: req.body?.candidateEvalId,
+      changedBy: getAuditActor(req),
+    });
+    return res.status(201).json({ success: true, bundle });
+  })
+);
+
+router.post(
+  '/governance/release-bundles/:bundleId/check',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const bundleId = String(req.params.bundleId || '').trim();
+    if (!bundleId) return res.status(400).json({ success: false, error: 'bundleId is required' });
+    const bundle = await evalHarness.evaluateReleaseBundle(orgId, bundleId, getAuditActor(req));
+    if (!bundle) return res.status(404).json({ success: false, error: 'Bundle not found' });
+    return res.json({ success: true, bundle });
+  })
+);
+
+router.post(
+  '/governance/release-bundles/:bundleId/publish',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const bundleId = String(req.params.bundleId || '').trim();
+    if (!bundleId) return res.status(400).json({ success: false, error: 'bundleId is required' });
+    const bundle = await evalHarness.publishReleaseBundle(orgId, bundleId, getAuditActor(req));
+    if (!bundle) return res.status(404).json({ success: false, error: 'Bundle not found' });
+    await logModelAuditEntry({
+      action: 'published',
+      entityType: 'release_bundle',
+      entityId: bundleId,
+      changedBy: getAuditActor(req),
+      changes: {
+        organizationId: orgId,
+        purpose: (bundle as any).purpose || null,
+        promptKey: (bundle as any).prompt_key || null,
+        promptVersion: (bundle as any).prompt_version || null,
+        primaryModelId: (bundle as any).primary_model_id || null,
+        fallbackModelId: (bundle as any).fallback_model_id || null,
+        policyVersion: (bundle as any).policy_version || null,
+        activation: (bundle as any).activation || null,
+      },
+    });
+    return res.json({ success: true, bundle });
   })
 );
 

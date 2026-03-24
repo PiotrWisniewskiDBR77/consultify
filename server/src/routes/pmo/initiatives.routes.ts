@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
+import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
@@ -19,6 +20,8 @@ import { validateBody } from '../../middleware/validation.middleware.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
+import blueprintService from '../../services/blueprintService.js';
+import { getCapacityTimeline, getInitiativeCapacity } from '../../services/workloadCapacityService.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   CreateInitiativeSchema,
@@ -57,6 +60,12 @@ router.use(demoContextMiddleware);
 router.get('/portfolio', InitiativeController.getPortfolioData);
 
 /**
+ * GET /api/initiatives/portfolio/rollups
+ * V4-INIT-02: Get portfolio rollups by program (hierarchy)
+ */
+router.get('/portfolio/rollups', InitiativeController.getPortfolioRollups);
+
+/**
  * GET /api/initiatives/portfolio/dependencies
  * Get initiative dependencies for timeline
  */
@@ -77,6 +86,295 @@ router.delete(
   requireOrgRole('user'),
   InitiativeController.deletePortfolioDependency
 );
+
+// ==========================================
+// V4-INIT-02: PROGRAM HIERARCHY CRUD
+// ==========================================
+
+router.get('/programs', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT p.*,
+              (SELECT COUNT(*) FROM initiatives i WHERE i.program_id = p.id AND i.organization_id = p.organization_id) AS initiative_count,
+              (SELECT COUNT(*) FROM programs cp WHERE cp.parent_program_id = p.id) AS child_program_count
+       FROM programs p
+       WHERE p.organization_id = ?
+       ORDER BY p.name ASC`,
+      [String(orgId)]
+    );
+
+    const programs = rows.map((r: any) => ({
+      id: r.id,
+      organizationId: r.organization_id,
+      name: r.name,
+      description: r.description,
+      parentProgramId: r.parent_program_id || null,
+      status: r.status,
+      ownerUserId: r.owner_user_id || null,
+      startDate: r.start_date || null,
+      endDate: r.end_date || null,
+      initiativeCount: Number(r.initiative_count) || 0,
+      childProgramCount: Number(r.child_program_count) || 0,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+
+    return res.json({ programs });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch programs', message: err.message });
+  }
+});
+
+router.post('/programs', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
+      req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+
+    if (parentProgramId) {
+      const parent = await queryHelpers.queryOne(
+        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+        [String(parentProgramId), String(orgId)]
+      );
+      if (!parent) return res.status(400).json({ error: 'Parent program not found' });
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO programs (id, organization_id, name, description, parent_program_id, status, owner_user_id, start_date, end_date, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        String(orgId),
+        name.trim(),
+        description || null,
+        parentProgramId || null,
+        status || 'active',
+        ownerUserId || null,
+        startDate || null,
+        endDate || null,
+        now,
+        now,
+      ]
+    );
+
+    return res.status(201).json({
+      id,
+      organizationId: String(orgId),
+      name: name.trim(),
+      description: description || null,
+      parentProgramId: parentProgramId || null,
+      status: status || 'active',
+      ownerUserId: ownerUserId || null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to create program', message: err.message });
+  }
+});
+
+router.get('/programs/:programId', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const program = (await queryHelpers.queryOne(
+      `SELECT * FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    )) as any;
+    if (!program) return res.status(404).json({ error: 'Program not found' });
+
+    const childPrograms = await queryHelpers.queryAll(
+      `SELECT p.*,
+              (SELECT COUNT(*) FROM initiatives i WHERE i.program_id = p.id AND i.organization_id = p.organization_id) AS initiative_count
+       FROM programs p
+       WHERE p.parent_program_id = ? AND p.organization_id = ?
+       ORDER BY p.name ASC`,
+      [String(programId), String(orgId)]
+    );
+
+    const initiatives = await queryHelpers.queryAll(
+      `SELECT id, name, title, status, priority, progress,
+              COALESCE(cost_capex, 0) + COALESCE(cost_opex, 0) AS budget,
+              COALESCE(business_value, 0) AS value
+       FROM initiatives
+       WHERE program_id = ? AND organization_id = ?
+       ORDER BY name ASC`,
+      [String(programId), String(orgId)]
+    );
+
+    return res.json({
+      program: {
+        id: program.id,
+        organizationId: program.organization_id,
+        name: program.name,
+        description: program.description,
+        parentProgramId: program.parent_program_id || null,
+        status: program.status,
+        ownerUserId: program.owner_user_id || null,
+        startDate: program.start_date || null,
+        endDate: program.end_date || null,
+        createdAt: program.created_at,
+        updatedAt: program.updated_at,
+      },
+      childPrograms: childPrograms.map((cp: any) => ({
+        id: cp.id,
+        name: cp.name,
+        status: cp.status,
+        parentProgramId: cp.parent_program_id,
+        initiativeCount: Number(cp.initiative_count) || 0,
+      })),
+      initiatives: initiatives.map((i: any) => ({
+        id: i.id,
+        name: i.name || i.title,
+        status: i.status,
+        priority: i.priority,
+        progress: Number(i.progress) || 0,
+        budget: Number(i.budget) || 0,
+        value: Number(i.value) || 0,
+      })),
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch program', message: err.message });
+  }
+});
+
+router.put('/programs/:programId', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const existing = await queryHelpers.queryOne(
+      `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    );
+    if (!existing) return res.status(404).json({ error: 'Program not found' });
+
+    const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
+      req.body;
+
+    if (parentProgramId === programId) {
+      return res.status(400).json({ error: 'Program cannot be its own parent' });
+    }
+
+    if (parentProgramId) {
+      const parent = await queryHelpers.queryOne(
+        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+        [String(parentProgramId), String(orgId)]
+      );
+      if (!parent) return res.status(400).json({ error: 'Parent program not found' });
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE programs
+       SET name = COALESCE(?, name),
+           description = COALESCE(?, description),
+           parent_program_id = ?,
+           status = COALESCE(?, status),
+           owner_user_id = ?,
+           start_date = ?,
+           end_date = ?,
+           updated_at = ?
+       WHERE id = ? AND organization_id = ?`,
+      [
+        name || null,
+        description !== undefined ? description : null,
+        parentProgramId !== undefined ? parentProgramId || null : null,
+        status || null,
+        ownerUserId !== undefined ? ownerUserId || null : null,
+        startDate !== undefined ? startDate || null : null,
+        endDate !== undefined ? endDate || null : null,
+        now,
+        String(programId),
+        String(orgId),
+      ]
+    );
+
+    const updated = (await queryHelpers.queryOne(
+      `SELECT * FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    )) as any;
+
+    return res.json({
+      id: updated.id,
+      organizationId: updated.organization_id,
+      name: updated.name,
+      description: updated.description,
+      parentProgramId: updated.parent_program_id || null,
+      status: updated.status,
+      ownerUserId: updated.owner_user_id || null,
+      startDate: updated.start_date || null,
+      endDate: updated.end_date || null,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update program', message: err.message });
+  }
+});
+
+router.delete('/programs/:programId', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const existing = await queryHelpers.queryOne(
+      `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    );
+    if (!existing) return res.status(404).json({ error: 'Program not found' });
+
+    const initiativeCount = (await queryHelpers.queryOne(
+      `SELECT COUNT(*) AS cnt FROM initiatives WHERE program_id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    )) as any;
+    if (Number(initiativeCount?.cnt) > 0) {
+      return res.status(409).json({
+        error: 'Cannot delete program with linked initiatives. Reassign or remove them first.',
+      });
+    }
+
+    const childCount = (await queryHelpers.queryOne(
+      `SELECT COUNT(*) AS cnt FROM programs WHERE parent_program_id = ?`,
+      [String(programId)]
+    )) as any;
+    if (Number(childCount?.cnt) > 0) {
+      return res.status(409).json({
+        error: 'Cannot delete program with child programs. Reassign or remove them first.',
+      });
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    );
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete program', message: err.message });
+  }
+});
+
+// ==========================================
+// INITIATIVE CRUD
+// ==========================================
 
 /**
  * GET /api/initiatives
@@ -316,6 +614,145 @@ router.post('/templates/:templateId/duplicate', async (req: any, res: any) => {
     return res.status(201).json({ template: duplicate });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to duplicate template', message: err.message });
+  }
+});
+
+// ==========================================
+// V4-INIT-03: BLUEPRINT WBS & VALIDATION
+// ==========================================
+
+/**
+ * GET /api/initiatives/templates/:templateId/wbs
+ * Get WBS tree for a blueprint template
+ */
+router.get('/templates/:templateId/wbs', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const tree = await blueprintService.getWbsTree(String(templateId));
+    return res.json({ wbs: tree });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch WBS', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/templates/:templateId/wbs
+ * Add a WBS item to a blueprint template
+ */
+router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const { parentId, title, itemType, level, sortOrder, estimatedHours, deliverables, acceptanceCriteria, assignedRole } = req.body;
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ error: 'title is required' });
+    }
+
+    const item = await blueprintService.addWbsItem(String(templateId), {
+      parentId, title: title.trim(), itemType, level, sortOrder,
+      estimatedHours, deliverables, acceptanceCriteria, assignedRole,
+    });
+    return res.status(201).json({ item });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to add WBS item', message: err.message });
+  }
+});
+
+/**
+ * PUT /api/initiatives/templates/:templateId/wbs/:itemId
+ * Update a WBS item
+ */
+router.put('/templates/:templateId/wbs/:itemId', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId, itemId } = req.params;
+    const item = await blueprintService.updateWbsItem(String(templateId), String(itemId), req.body);
+    if (!item) return res.status(404).json({ error: 'WBS item not found' });
+    return res.json({ item });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update WBS item', message: err.message });
+  }
+});
+
+/**
+ * DELETE /api/initiatives/templates/:templateId/wbs/:itemId
+ * Delete a WBS item (cascades to children)
+ */
+router.delete('/templates/:templateId/wbs/:itemId', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId, itemId } = req.params;
+    const deleted = await blueprintService.deleteWbsItem(String(templateId), String(itemId));
+    if (!deleted) return res.status(404).json({ error: 'WBS item not found' });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete WBS item', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/templates/:templateId/wbs/reorder
+ * Reorder WBS items
+ */
+router.post('/templates/:templateId/wbs/reorder', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const { items } = req.body;
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: 'items array is required' });
+    }
+
+    await blueprintService.reorderWbsItems(String(templateId), items);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to reorder WBS items', message: err.message });
+  }
+});
+
+/**
+ * GET /api/initiatives/templates/:templateId/validate
+ * Validate blueprint completeness
+ */
+router.get('/templates/:templateId/validate', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const validation = await blueprintService.validateBlueprint(String(templateId));
+    return res.json(validation);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to validate blueprint', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/templates/:templateId/clone
+ * Deep clone a blueprint template (including WBS items)
+ */
+router.post('/templates/:templateId/clone', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const result = await blueprintService.cloneBlueprint(String(templateId), String(orgId), String(userId));
+    return res.status(201).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to clone blueprint', message: err.message });
   }
 });
 
@@ -563,6 +1000,56 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
     });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to apply template', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/:id/apply-blueprint
+ * Enhanced apply that includes WBS tasks, milestone dependencies, role templates, and DoD per level
+ */
+router.post('/:id/apply-blueprint', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const { templateId } = req.body;
+    if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+
+    const initiative = await queryHelpers.queryOne(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(id), String(orgId)]
+    );
+    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+
+    const template = await initiativeTemplateService.getTemplateById(String(templateId));
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+
+    const wbsResult = await blueprintService.applyWbs(String(templateId), String(id), String(orgId), String(userId));
+    const msResult = await blueprintService.applyMilestoneDependencies(String(templateId), String(id), String(orgId));
+    const roleResult = await blueprintService.applyRoleTemplates(String(templateId), String(id), String(orgId), String(userId));
+    const dodResult = await blueprintService.applyDoDPerLevel(String(templateId), String(id));
+
+    await queryHelpers.queryRun(
+      `UPDATE initiatives SET initiative_template_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+      [String(templateId), new Date().toISOString(), String(id), String(orgId)]
+    );
+
+    return res.json({
+      success: true,
+      initiativeId: id,
+      templateId,
+      templateName: template.name,
+      applied: {
+        tasksCreated: wbsResult.tasksCreated,
+        milestonesCreated: msResult.milestonesCreated,
+        rolesCreated: roleResult.rolesCreated,
+        dodLevelsApplied: dodResult.levelsApplied,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to apply blueprint', message: err.message });
   }
 });
 
@@ -1002,6 +1489,32 @@ router.post('/:id/move', InitiativeController.moveInitiative);
 router.post('/:id/archive', InitiativeController.archiveInitiative);
 
 // ==========================================
+// V4-EXEC-04: INITIATIVE CAPACITY
+// ==========================================
+
+router.get('/:id/capacity', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const capacity = await getInitiativeCapacity(String(orgId), String(req.params.id));
+    return res.json(capacity);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch initiative capacity', message: err.message });
+  }
+});
+
+router.get('/:id/capacity/timeline', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const timeline = await getCapacityTimeline(String(orgId), String(req.params.id));
+    return res.json({ weeks: timeline });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch capacity timeline', message: err.message });
+  }
+});
+
+// ==========================================
 // BENEFITS MODULE: KPI ENDPOINTS
 // ==========================================
 
@@ -1107,6 +1620,23 @@ router.post(
   validateBody(ResourcesAiApplyLogSchema),
   InitiativeController.logResourcesAiApply
 );
+
+// ==========================================
+// V4-INIT-05: STAFFING PLANS
+// ==========================================
+
+router.get('/:id/staffing-plans', StaffingPlanController.listPlans);
+router.post('/:id/staffing-plans', requireOrgRole('user'), StaffingPlanController.createPlan);
+router.get('/:id/staffing-plans/:planId', StaffingPlanController.getPlan);
+router.put('/:id/staffing-plans/:planId', requireOrgRole('user'), StaffingPlanController.updatePlan);
+router.delete('/:id/staffing-plans/:planId', requireOrgRole('user'), StaffingPlanController.deletePlan);
+
+router.post('/:id/staffing-plans/:planId/roles', requireOrgRole('user'), StaffingPlanController.addRole);
+router.put('/:id/staffing-plans/:planId/roles/:roleId', requireOrgRole('user'), StaffingPlanController.updateRole);
+router.delete('/:id/staffing-plans/:planId/roles/:roleId', requireOrgRole('user'), StaffingPlanController.deleteRole);
+
+router.get('/:id/staffing-plans/:planId/gaps', StaffingPlanController.getGaps);
+router.post('/:id/staffing-plans/:planId/sync-capacity', requireOrgRole('user'), StaffingPlanController.syncCapacity);
 
 // ==========================================
 // ROADMAP MODULE: BUDGET ITEMS ENDPOINTS

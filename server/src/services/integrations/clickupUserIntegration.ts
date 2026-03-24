@@ -1,9 +1,16 @@
 /**
- * ClickUp User Integration
+ * Clickupuserintegration Service
+ * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Not implemented in this codebase. Export an explicit marker so runtime code can return an
- * honest `503` instead of relying on lazy-loader wrappers.
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
-const clickupUserIntegration = { __unavailable__: true } as const;
 
-export default clickupUserIntegration;
+import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+
+// Lazy load the JS service module
+const loadClickupuserintegration = createCachedLazyService(
+  './integrations/clickupUserIntegration.js'
+);
+
+// Export default instance (for backward compatibility)
+export default loadClickupuserintegration();

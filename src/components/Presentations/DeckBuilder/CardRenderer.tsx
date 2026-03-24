@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { ROUTES } from '@/routes/routeConfig';
 
 import type { CardBlock, CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
-
 import { AnimatedBlock, AnimatedCard } from './AnimatedBlock';
-import { CardSourceFooter } from './SourceTraceability';
 import { ArtifactEmbedBlock } from './blocks/ArtifactEmbedBlock';
 import { BulletListBlock } from './blocks/BulletListBlock';
 import { CalloutBlock } from './blocks/CalloutBlock';
@@ -20,6 +21,7 @@ import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
 import { assignBlocksToRegions, selectLayout } from './layouts/LayoutEngine';
+import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
   card: DeckCard;
@@ -29,6 +31,11 @@ interface CardRendererProps {
   animationsEnabled?: boolean;
   recentLayoutIds?: string[];
   onBlockClick?: (blockId: string) => void;
+  onSourceClick?: (ref: {
+    artifact_id: string;
+    artifact_type: string;
+    artifact_name: string;
+  }) => void;
 }
 
 const BLOCK_COMPONENTS: Record<string, React.FC<{ block: CardBlock; theme: CuratedColorSet }>> = {
@@ -59,9 +66,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   animationsEnabled = true,
   recentLayoutIds = [],
   onBlockClick,
+  onSourceClick,
 }) => {
-  const theme =
-    CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
+  const navigate = useNavigate();
+  const theme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
 
   const bgStyle = getBackgroundStyle(card, theme);
 
@@ -76,6 +84,47 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   }, [layout, card.blocks]);
 
   const useGridLayout = layout && regionMap && layout.regions.length > 1;
+
+  const handleSourceClick = (ref: {
+    artifact_id: string;
+    artifact_type: string;
+    artifact_name: string;
+  }) => {
+    if (onSourceClick) {
+      onSourceClick(ref);
+      return;
+    }
+
+    const artifactType = String(ref.artifact_type || '').toLowerCase();
+    const artifactId = String(ref.artifact_id || '').trim();
+    if (!artifactId) return;
+
+    if (artifactType === 'initiative') {
+      navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(artifactId)}&mode=doc`);
+      return;
+    }
+
+    if (artifactType === 'financial_analysis') {
+      navigate(`${ROUTES.ECONOMICS}?initiativeId=${encodeURIComponent(artifactId)}`);
+      return;
+    }
+
+    if (artifactType === 'report') {
+      navigate(`${ROUTES.REPORTS.BUILDER}/${encodeURIComponent(artifactId)}`);
+      return;
+    }
+
+    if (artifactType === 'tool_session') {
+      navigate(
+        `${ROUTES.DISCOVERY_TOOLS.ROOT}?artifact=${encodeURIComponent(`tool:${artifactId}`)}`
+      );
+      return;
+    }
+
+    if (artifactType === 'note') {
+      navigate(ROUTES.MY_WORK);
+    }
+  };
 
   const renderBlockItem = (block: CardBlock, blockIndex: number) => {
     const Component = BLOCK_COMPONENTS[block.type];
@@ -93,6 +142,12 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
           className="relative group cursor-pointer"
         >
           <Component block={block} theme={theme} />
+          {block.source_ref && (
+            <BlockSourceBadge
+              sourceRef={block.source_ref}
+              isRefreshable={block.is_refreshable ?? false}
+            />
+          )}
           <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-purple-400/50 transition-colors pointer-events-none" />
         </div>
       </AnimatedBlock>
@@ -139,9 +194,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
                   style={{ gridArea: region.gridArea }}
                   className="flex flex-col gap-2 overflow-hidden"
                 >
-                  {blocksInRegion.map((block, idx) =>
-                    renderBlockItem(block as CardBlock, idx)
-                  )}
+                  {blocksInRegion.map((block, idx) => renderBlockItem(block as CardBlock, idx))}
                 </div>
               );
             })}
@@ -156,7 +209,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
 
         {/* Source Traceability Footer */}
         {card.source_refs.length > 0 && scale === 1 && (
-          <CardSourceFooter sourceRefs={card.source_refs} />
+          <CardSourceFooter sourceRefs={card.source_refs} onClickSource={handleSourceClick} />
         )}
       </div>
     </div>
@@ -172,10 +225,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   );
 };
 
-function getBackgroundStyle(
-  card: DeckCard,
-  theme: CuratedColorSet
-): React.CSSProperties {
+function getBackgroundStyle(card: DeckCard, theme: CuratedColorSet): React.CSSProperties {
   switch (card.background.type) {
     case 'color':
       return { backgroundColor: card.background.value || theme.colors.background };

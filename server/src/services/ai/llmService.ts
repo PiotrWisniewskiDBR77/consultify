@@ -111,10 +111,11 @@ async function withGuards<T>(
 
 type ModelConfig = {
   id?: string;
+  modelId?: string;
   provider?: string;
-  apiKey?: string;
-  api_key?: string;
-  endpoint?: string;
+  apiKey?: string | null;
+  api_key?: string | null;
+  endpoint?: string | null;
   tier?: string;
   [key: string]: unknown;
 };

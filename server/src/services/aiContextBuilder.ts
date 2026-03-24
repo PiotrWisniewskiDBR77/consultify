@@ -6,6 +6,8 @@
 import crypto from 'crypto';
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import { hasColumn } from '../utils/dbSchema.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 import logger from '../utils/Logger.js';
 
 // Mutable dependencies for injection
@@ -518,14 +520,30 @@ export const AIContextBuilder = {
       // ignore
     }
 
+    const resolvedContext = await organizationContextService
+      .buildResolvedContext(organizationId)
+      .catch(() => null);
+
     return {
       organizationId,
-      organizationName: org.name || 'Unknown',
-      industry: org.industry || null,
+      organizationName:
+        resolvedContext?.profile.companyName || org.name || 'Unknown',
+      industry: resolvedContext?.profile.industry || org.industry || null,
       locations: [],
       activeProjectIds: projects.map((p: any) => p.id),
       activeProjectCount: projects.length,
       pmoMaturityLevel: memory.pmo_maturity || 'BASIC',
+      profile: resolvedContext?.profile,
+      strategic: resolvedContext?.strategic,
+      operations: resolvedContext?.operations,
+      systems: resolvedContext?.systems,
+      stakeholders: resolvedContext?.stakeholders,
+      notes: resolvedContext?.notes,
+      metadata: resolvedContext?.metadata,
+      evidence: resolvedContext?.evidence,
+      signals: resolvedContext?.signals,
+      contextConflicts: resolvedContext?.conflicts,
+      contextTimeline: resolvedContext?.timeline?.slice(0, 10),
       // Organization Memory: patterns and terminology for AI context
       orgPatterns: orgPatterns.length > 0 ? orgPatterns : undefined,
       terminology: Object.keys(terminology).length > 0 ? terminology : undefined,
@@ -1173,12 +1191,16 @@ export const AIContextBuilder = {
 
       // Initiative success patterns (org-wide)
       if (organizationId) {
+        const hasEstimatedDurationWeeks = await hasColumn('initiatives', 'estimated_duration_weeks');
+        const avgDurationSql = hasEstimatedDurationWeeks
+          ? `AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks`
+          : `NULL::numeric as avg_duration_weeks`;
         const stats: any = await get(
           `SELECT 
              COUNT(*) as total,
              SUM(CASE WHEN i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
              SUM(CASE WHEN i.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
-             AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
+             ${avgDurationSql}
            FROM initiatives i
            JOIN projects p ON i.project_id = p.id
            WHERE p.organization_id = ?`,

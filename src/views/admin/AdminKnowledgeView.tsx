@@ -403,7 +403,9 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* CONTENT AREA */}
       <div className="min-h-[400px]">
         {loading ? (
-          <div className="flex justify-center py-20 text-slate-500 animate-pulse">Accessing Global Brain...</div>
+          <div className="flex justify-center py-20 text-slate-500 animate-pulse">
+            Accessing Global Brain...
+          </div>
         ) : (
           <>
             {/* --- IDEA CANDIDATES --- */}
@@ -532,7 +534,9 @@ export const AdminKnowledgeView: React.FC = () => {
                         {c.related_axis && (
                           <div className="text-xs text-slate-500 flex items-center gap-2 mb-2">
                             <Activity size={12} /> Related to:{' '}
-                            <span className="text-slate-700 dark:text-slate-200">{c.related_axis}</span>
+                            <span className="text-slate-700 dark:text-slate-200">
+                              {c.related_axis}
+                            </span>
                           </div>
                         )}
 
@@ -671,7 +675,9 @@ export const AdminKnowledgeView: React.FC = () => {
                   </div>
 
                   {filteredDocuments.length === 0 ? (
-                    <div className="text-center py-10 text-slate-500">No documents indexed yet.</div>
+                    <div className="text-center py-10 text-slate-500">
+                      No documents indexed yet.
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {filteredDocuments.map((doc) => (
@@ -802,7 +808,9 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="mb-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{s.title}</h3>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                          {s.title}
+                        </h3>
                         {s.priority && (
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
@@ -817,9 +825,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-slate-600 text-sm leading-relaxed mb-2">
-                        {s.description}
-                      </p>
+                      <p className="text-slate-600 text-sm leading-relaxed mb-2">{s.description}</p>
                       {s.target_date && (
                         <p className="text-xs text-slate-500">
                           Target: {new Date(s.target_date).toLocaleDateString()}
@@ -1036,7 +1042,9 @@ export const AdminKnowledgeView: React.FC = () => {
                               <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700">
                                 <Target size={12} className="text-blue-600" />
                                 Recommendation:{' '}
-                                <span className="text-slate-900 dark:text-white">{item.action_item}</span>
+                                <span className="text-slate-900 dark:text-white">
+                                  {item.action_item}
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -1079,7 +1087,9 @@ export const AdminKnowledgeView: React.FC = () => {
                               <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700">
                                 <Lightbulb size={12} className="text-purple-600" />
                                 Missing Topic:{' '}
-                                <span className="text-slate-900 dark:text-white">{item.action_item}</span>
+                                <span className="text-slate-900 dark:text-white">
+                                  {item.action_item}
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -1120,7 +1130,9 @@ export const AdminKnowledgeView: React.FC = () => {
                 <p className="text-slate-900 dark:text-white font-medium mb-2">
                   {approvingIdea.content}
                 </p>
-                <p className="text-slate-700 dark:text-slate-300 text-sm">{approvingIdea.reasoning}</p>
+                <p className="text-slate-700 dark:text-slate-300 text-sm">
+                  {approvingIdea.reasoning}
+                </p>
               </div>
               <div>
                 <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
@@ -1346,7 +1358,9 @@ export const AdminKnowledgeView: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div className="bg-slate-50 dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
-                <p className="text-slate-900 dark:text-white font-medium">{linkingStrategy.title}</p>
+                <p className="text-slate-900 dark:text-white font-medium">
+                  {linkingStrategy.title}
+                </p>
               </div>
               <div>
                 <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">

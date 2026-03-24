@@ -127,7 +127,7 @@ function AppContent() {
       const token = localStorage.getItem('token');
       if (!token) {
         if (currentUser && isMounted) setCurrentUser(null);
-        if (isMounted) setAuthInitializing(false); // Done initializing - no token
+        if (isMounted) setAuthInitializing(false);
         return;
       }
 

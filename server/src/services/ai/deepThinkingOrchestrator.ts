@@ -37,6 +37,9 @@ export type DeepThinkingPreludeInput = {
     maturityLevel?: string;
     organizationName?: string;
     terminology?: Record<string, string>;
+    strategicPriorities?: string[];
+    openGaps?: string[];
+    keyMetrics?: string[];
   } | null;
   /** Clarification answers from user */
   clarificationAnswers?: Record<string, string> | null;
@@ -144,40 +147,19 @@ async function extractOrgContext(
   if (!userId || !organizationId) return null;
 
   try {
-    const dbMod = await import('../../utils/DbPromise.js');
-    const db = dbMod;
-
-    const org = (await db.get('SELECT name, industry, settings FROM organizations WHERE id = ?', [
-      organizationId,
-    ])) as any;
-
-    if (!org) return null;
-
-    let settings: any = {};
-    try {
-      settings = typeof org.settings === 'string' ? JSON.parse(org.settings) : org.settings || {};
-    } catch {
-      settings = {};
-    }
-
-    // Get org memory for terminology and maturity
-    let orgMemory: any = null;
-    try {
-      const aiMemoryMod = await import('./aiMemoryService.js');
-      const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
-      if (aiMemoryService?.getOrgMemory) {
-        orgMemory = await aiMemoryService.getOrgMemory(organizationId);
-      }
-    } catch {
-      // Memory service not available
-    }
+    const orgContextMod = await import('../organizationContext/OrganizationContextService.js');
+    const orgContextService = (orgContextMod.default || orgContextMod) as any;
+    const resolved = await orgContextService.buildResolvedContext(organizationId);
 
     return {
-      organizationName: org.name || undefined,
-      industry: org.industry || settings?.industry || undefined,
-      region: settings?.region || settings?.country || undefined,
-      maturityLevel: orgMemory?.aiMaturityStage || settings?.maturityLevel || undefined,
-      terminology: orgMemory?.terminology || undefined,
+      organizationName: resolved.organization.name || resolved.profile.companyName || undefined,
+      industry: resolved.profile.industry || undefined,
+      region: resolved.profile.location || undefined,
+      maturityLevel: resolved.operatingContext.digitalMaturity || undefined,
+      terminology: resolved.systems?.aiMemory?.terminology || undefined,
+      strategicPriorities: resolved.strategic.priorities || [],
+      openGaps: resolved.operatingContext.openGaps || [],
+      keyMetrics: resolved.operatingContext.keyMetrics || [],
     };
   } catch (err: any) {
     logger.debug(`[DeepThinking] Org context extraction failed: ${err?.message}`);

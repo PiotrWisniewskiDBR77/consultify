@@ -27,7 +27,13 @@ export type WorkspaceAiProposal<TPayload = unknown> = {
   title: string;
   rationale?: string | null;
   confidence?: number | null;
-  source: 'mindmap_expand' | 'mindmap_assist' | 'processflow_generate' | 'whiteboard_cluster' | 'table_enrich' | 'user';
+  source:
+    | 'mindmap_expand'
+    | 'mindmap_assist'
+    | 'processflow_generate'
+    | 'whiteboard_cluster'
+    | 'table_enrich'
+    | 'user';
   status: WorkspaceAiProposalStatus;
   payload: TPayload;
 };

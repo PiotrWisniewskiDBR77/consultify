@@ -1,0 +1,41 @@
+# Keep deploy uploads small (Railway CLI has an effective ~45MB upload ceiling).
+# Only exclude folders that are not required to build/run the app in Railway.
+
+# Local data / personal tooling
+/Piotr_Tools/
+/data/
+/_quarantine/
+/secure_backups/
+
+# Large knowledge/doc corpora (not required at runtime)
+/knowledge/
+/docs/
+/wdrozenia/
+/Plast-met/
+/Consulitinity przegląd/
+
+# Tests & artifacts (not required at runtime)
+/tests/
+/playwright-report/
+/test-results/
+/coverage/
+
+# Local uploads / exports (not required for build)
+/uploads/
+server/exports/
+server/logs/
+server/backups/
+
+# Build outputs
+/dist/
+/dist-ssr/
+server/dist/
+
+# Heavy directories excluded from upload (Railway builds from source)
+node_modules/
+server/node_modules/
+.git/
+
+# IDE / agent artifacts
+.cursor/
+agent-transcripts/

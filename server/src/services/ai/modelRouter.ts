@@ -4,6 +4,8 @@
 
 import * as DbPromise from '../../utils/DbPromise.js';
 import { appCache } from '../redis/CacheService.js';
+import { getRoutingPurposeKeys, normalizePurposeKey } from './aiTaskCatalog.js';
+import circuitBreaker from './circuitBreaker.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
 import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
@@ -19,10 +21,23 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
   magic_wand: 'BUDGET',
   chat_confirm: 'BUDGET',
   chat_complex: 'STANDARD',
+  chat_with_pdf: 'PREMIUM',
+  chat_with_files: 'STANDARD',
+  document_extract: 'STANDARD',
+  document_compare: 'REASONING',
+  document_answer: 'PREMIUM',
   report_section: 'STANDARD',
+  report_section_draft: 'STANDARD',
+  report_executive_synthesis: 'REASONING',
+  report_evidence_validation: 'REASONING',
+  report_quality_gate: 'STANDARD',
   analysis: 'STANDARD',
   full_report: 'PREMIUM',
   assessment: 'PREMIUM',
+  presentation_deck_outline: 'STANDARD',
+  presentation_slide_copy: 'STANDARD',
+  presentation_vision_qc: 'REASONING',
+  presentation_visual_generation: 'STANDARD',
   max_mode: 'REASONING',
   strategic: 'REASONING',
   vision: 'VISION',
@@ -40,6 +55,7 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
   'gpt-4o-mini': 'openrouter',
   'o1-preview': 'openrouter',
   'o1-mini': 'openrouter',
+  'claude-sonnet-4-6': 'openrouter',
   'claude-3-5-sonnet': 'openrouter',
   'claude-3-5-sonnet-20241022': 'openrouter',
   'claude-3-haiku': 'openrouter',
@@ -49,7 +65,7 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
 export const TIER_DEFAULTS: Record<string, string> = {
   BUDGET: 'openai/gpt-4o-mini',
   STANDARD: 'openai/gpt-4o',
-  PREMIUM: 'anthropic/claude-3.5-sonnet',
+  PREMIUM: 'anthropic/claude-sonnet-4-6',
   REASONING: 'openai/o1-mini',
   VISION: 'openai/gpt-4o',
 };
@@ -57,16 +73,16 @@ export const TIER_DEFAULTS: Record<string, string> = {
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
   // OpenRouter-only fallbacks (all are OpenRouter model ids)
   BUDGET: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-haiku'],
-  STANDARD: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
-  PREMIUM: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o'],
-  REASONING: ['openai/o1-mini', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
-  VISION: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
+  STANDARD: ['openai/gpt-4o', 'anthropic/claude-sonnet-4-6'],
+  PREMIUM: ['anthropic/claude-sonnet-4-6', 'openai/gpt-4o'],
+  REASONING: ['openai/o1-mini', 'openai/gpt-4o', 'anthropic/claude-sonnet-4-6'],
+  VISION: ['openai/gpt-4o', 'anthropic/claude-sonnet-4-6'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
   BUDGET: 'openai/gpt-4o-mini',
   STANDARD: 'openai/gpt-4o-mini',
-  PREMIUM: 'anthropic/claude-3.5-sonnet',
+  PREMIUM: 'anthropic/claude-sonnet-4-6',
   REASONING: 'openai/o1-mini',
   VISION: 'openai/gpt-4o',
 };
@@ -107,6 +123,10 @@ type ProviderRow = {
   origin_vendor?: string | null;
   execution_regions?: any;
   allowed_data_classes?: any;
+  release_bundle_id?: string | null;
+  prompt_key?: string | null;
+  prompt_version?: string | null;
+  policy_version?: string | null;
 };
 
 type TierAssignmentRow = {
@@ -137,6 +157,45 @@ type ProviderConfig = {
   originalTier?: string;
   markupMultiplier?: number;
   raw?: ProviderRow | null;
+  routingTrace?: RoutingTrace;
+  releaseBundleId?: string | null;
+  promptKey?: string | null;
+  promptVersion?: string | null;
+  policyVersion?: string | null;
+};
+
+export type RoutingTraceCandidate = {
+  id: string;
+  provider: string;
+  tier: string;
+  source: string;
+  endpoint?: string | null;
+  healthStatus?: string | null;
+  breakerState?: string | null;
+  breakerReason?: string | null;
+  originalTier?: string;
+  releaseBundleId?: string | null;
+  promptKey?: string | null;
+  promptVersion?: string | null;
+  policyVersion?: string | null;
+};
+
+export type RoutingTraceSkip = {
+  id: string;
+  provider: string;
+  source: string;
+  reason: string;
+};
+
+export type RoutingTrace = {
+  requestedPurpose: string | null;
+  normalizedPurpose: string | null;
+  organizationId: string | null;
+  tier: string;
+  downgradeReason?: string | null;
+  selected?: RoutingTraceCandidate | null;
+  candidates: RoutingTraceCandidate[];
+  skipped: RoutingTraceSkip[];
 };
 
 type SelectParams = {
@@ -179,6 +238,127 @@ export class ModelRouter {
 
   private subscriptionActive = false;
 
+  private addTraceCandidate(
+    target: RoutingTraceCandidate[],
+    seen: Set<string>,
+    candidate: RoutingTraceCandidate
+  ) {
+    const key = `${candidate.provider}::${candidate.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    target.push(candidate);
+  }
+
+  private addTraceSkip(
+    target: RoutingTraceSkip[],
+    seen: Set<string>,
+    candidate: { provider?: string | null; id?: string | null; source?: string | null },
+    reason: string
+  ) {
+    const key = `${String(candidate.provider || 'unknown')}::${String(candidate.id || 'unknown')}::${String(candidate.source || 'unknown')}::${reason}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    target.push({
+      provider: String(candidate.provider || 'unknown'),
+      id: String(candidate.id || 'unknown'),
+      source: String(candidate.source || 'unknown'),
+      reason,
+    });
+  }
+
+  private async evaluateRoutingCandidate(
+    config: ProviderConfig | null,
+    trace: RoutingTrace,
+    candidateSeen: Set<string>,
+    skipSeen: Set<string>,
+    params: SelectParams,
+    orgPolicy: any
+  ): Promise<ProviderConfig | null> {
+    if (!config) return null;
+    const normalized: ProviderConfig = {
+      ...config,
+      provider: String(config.provider || '').trim(),
+      id: String(config.id || '').trim(),
+      source: config.source || 'unknown',
+    };
+    if (!normalized.provider || !normalized.id) {
+      this.addTraceSkip(
+        skipSeen ? trace.skipped : trace.skipped,
+        skipSeen,
+        normalized,
+        'invalid_candidate'
+      );
+      return null;
+    }
+
+    const providerLike: ProviderRow = {
+      id: normalized.id,
+      provider: normalized.provider,
+      model_id: normalized.id,
+      api_key: normalized.apiKey,
+      endpoint: normalized.endpoint,
+      health_status: normalized.healthStatus || null,
+      ...(normalized.raw || {}),
+    };
+
+    if (!this.isProviderUsable(providerLike)) {
+      this.addTraceSkip(trace.skipped, skipSeen, normalized, 'provider_unusable');
+      return null;
+    }
+
+    if (
+      params.requirements &&
+      !modelMeetsRequirements(
+        this.normalizeModelIdForCapabilities(normalized.id),
+        params.requirements
+      )
+    ) {
+      this.addTraceSkip(trace.skipped, skipSeen, normalized, 'requirements_mismatch');
+      return null;
+    }
+
+    if (ORG_POLICY_ENABLED && !this.isAllowedByOrgPolicyInternal(providerLike, params, orgPolicy)) {
+      this.addTraceSkip(trace.skipped, skipSeen, normalized, 'blocked_by_org_policy');
+      return null;
+    }
+
+    const breaker = await circuitBreaker.canExecute(normalized.provider);
+    if (!breaker.allowed) {
+      this.addTraceSkip(
+        trace.skipped,
+        skipSeen,
+        normalized,
+        `breaker_${String(breaker.state || 'unknown').toLowerCase()}`
+      );
+      return null;
+    }
+
+    const tracedCandidate: RoutingTraceCandidate = {
+      id: normalized.id,
+      provider: normalized.provider,
+      tier: normalized.tier,
+      source: normalized.source || 'unknown',
+      endpoint: normalized.endpoint,
+      healthStatus: normalized.healthStatus || null,
+      breakerState: breaker.state,
+      breakerReason: breaker.reason,
+      originalTier: normalized.originalTier,
+      releaseBundleId: (normalized.raw as any)?.release_bundle_id || null,
+      promptKey: (normalized.raw as any)?.prompt_key || null,
+      promptVersion: (normalized.raw as any)?.prompt_version || null,
+      policyVersion: (normalized.raw as any)?.policy_version || null,
+    };
+    this.addTraceCandidate(trace.candidates, candidateSeen, tracedCandidate);
+    return {
+      ...normalized,
+      releaseBundleId: (normalized.raw as any)?.release_bundle_id || null,
+      promptKey: (normalized.raw as any)?.prompt_key || null,
+      promptVersion: (normalized.raw as any)?.prompt_version || null,
+      policyVersion: (normalized.raw as any)?.policy_version || null,
+      routingTrace: trace,
+    };
+  }
+
   private async initSubscription() {
     if (this.subscriptionActive) return;
     this.subscriptionActive = true;
@@ -197,11 +377,13 @@ export class ModelRouter {
   }
 
   async select(params: SelectParams): Promise<ProviderConfig> {
-    const capability = params.purpose || params.capability;
+    const requestedPurpose = params.purpose || params.capability;
+    const capability = normalizePurposeKey(requestedPurpose) || requestedPurpose;
     const { organizationId, options = {}, requirements } = params;
     let tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
+      CAPABILITY_TIERS[String(requestedPurpose || '')] ||
       'STANDARD') as Tier;
 
     aiLogger.info(
@@ -211,6 +393,19 @@ export class ModelRouter {
 
     const orgPolicy =
       ORG_POLICY_ENABLED && organizationId ? await this.getOrgPolicy(organizationId) : null;
+    let downgradeReason: string | null = null;
+    const trace: RoutingTrace = {
+      requestedPurpose: requestedPurpose ? String(requestedPurpose) : null,
+      normalizedPurpose: capability ? String(capability) : null,
+      organizationId: organizationId || null,
+      tier,
+      downgradeReason: null,
+      selected: null,
+      candidates: [],
+      skipped: [],
+    };
+    const candidateSeen = new Set<string>();
+    const skipSeen = new Set<string>();
 
     // -------------------------------------------------------------------------
     // v3 soft cap (degraded mode): if org is near/exceeded monthly AI cost budget,
@@ -253,10 +448,15 @@ export class ModelRouter {
           const thresholdPct = Number(process.env.AI_COST_SOFT_CAP_THRESHOLD_PCT || 90) || 90;
           const severePct = Number(process.env.AI_COST_SOFT_CAP_SEVERE_PCT || 110) || 110;
 
-          const purpose = String(capability || '').trim();
+          const purpose = String(capability || requestedPurpose || '').trim();
           const nonCritical =
-            ['chat_simple', 'chat_confirm', 'deck_copy_polish', 'chat_complex'].includes(purpose) ||
-            purpose.startsWith('results_');
+            [
+              'chat_simple',
+              'chat_confirm',
+              'chat_complex',
+              'presentation_slide_copy',
+              'deck_copy_polish',
+            ].includes(purpose) || purpose.startsWith('results_');
 
           // Respect explicit tier override from the caller.
           const hasExplicitTierOverride = !!options.tier || !!params.tier;
@@ -266,6 +466,7 @@ export class ModelRouter {
               'ModelRouter',
               `AI cost soft-cap (${pct.toFixed(1)}%): forcing BUDGET for ${purpose}`
             );
+            downgradeReason = `soft_cap_${pct.toFixed(1)}pct_budget_to_budget`;
             tier = 'BUDGET';
           }
 
@@ -274,6 +475,7 @@ export class ModelRouter {
               'ModelRouter',
               `AI cost soft-cap severe (${pct.toFixed(1)}%): degrading REASONING->STANDARD for ${purpose}`
             );
+            downgradeReason = `soft_cap_${pct.toFixed(1)}pct_reasoning_to_standard`;
             tier = 'STANDARD';
           }
         }
@@ -281,6 +483,8 @@ export class ModelRouter {
         // Fail-open: never block routing due to budget checks.
       }
     }
+    trace.tier = tier;
+    trace.downgradeReason = downgradeReason;
 
     const override = await this.getOrgOverride(organizationId, capability);
     if (override) {
@@ -291,68 +495,123 @@ export class ModelRouter {
         )
       ) {
         aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
-        return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
+        const picked = await this.evaluateRoutingCandidate(
+          {
+            ...(await this.getProviderConfig(override.model_id, (override.tier || tier) as Tier)),
+            source: 'org_override',
+          },
+          trace,
+          candidateSeen,
+          skipSeen,
+          params,
+          orgPolicy
+        );
+        if (picked) {
+          trace.selected = trace.candidates[0] || null;
+          picked.routingTrace = trace;
+          return picked;
+        }
       }
       aiLogger.warn(
         'ModelRouter',
         `Org override model does not meet requirements (${capability}): ${override.model_id}`
       );
+      this.addTraceSkip(
+        trace.skipped,
+        skipSeen,
+        {
+          provider: this.inferProvider(override.model_id),
+          id: override.model_id,
+          source: 'org_override',
+        },
+        'override_not_eligible'
+      );
     }
 
     // v3 enterprise: purpose assignments (higher priority than tier routing)
     if (PURPOSE_ROUTING_ENABLED && capability) {
-      // V3-A06: Try model registry first (health gating, fallback chain)
-      if (MODEL_REGISTRY_ENABLED && organizationId) {
-        try {
-          const config = await this.resolveByPurpose(capability, organizationId, {
-            ...options,
-            requirements,
-            dataClass: params.dataClass,
-          });
-          aiLogger.info(
-            'ModelRouter',
-            `Selected via model registry: ${config.id} (${config.provider})`
-          );
-          return config;
-        } catch (e: any) {
-          aiLogger.warn('ModelRouter', `Model registry routing failed: ${e?.message || String(e)}`);
-        }
-      }
-
       try {
         const assigned = await this.getModelsForPurpose(capability, organizationId);
-        const filtered = assigned
-          .filter((m) => this.isProviderUsable(m))
-          .filter((m) =>
-            requirements
-              ? modelMeetsRequirements(
-                  this.normalizeModelIdForCapabilities(String((m as any).model_id || m.id || '')),
-                  requirements
-                )
-              : true
-          )
-          .filter((m) =>
-            ORG_POLICY_ENABLED ? this.isAllowedByOrgPolicyInternal(m, params, orgPolicy) : true
+        for (const pick of assigned) {
+          const evaluated = await this.evaluateRoutingCandidate(
+            {
+              id: pick.model_id || pick.id,
+              tier,
+              provider: pick.provider,
+              apiKey: pick.api_key || null,
+              endpoint: pick.endpoint || null,
+              source: 'purpose_assignment',
+              raw: pick,
+              healthStatus: pick.health_status || null,
+            },
+            trace,
+            candidateSeen,
+            skipSeen,
+            params,
+            orgPolicy
           );
-
-        if (filtered.length > 0) {
-          const pick = filtered[0];
-          aiLogger.info(
-            'ModelRouter',
-            `Selected via purpose assignment: ${pick.model_id} (${pick.provider})`
-          );
-          return {
-            id: pick.model_id || pick.id,
-            tier,
-            provider: pick.provider,
-            apiKey: pick.api_key || null,
-            endpoint: pick.endpoint || null,
-            source: 'purpose_assignment',
-            raw: pick,
-          };
+          if (evaluated) {
+            trace.selected = trace.candidates[0] || null;
+            evaluated.routingTrace = trace;
+            return evaluated;
+          }
         }
       } catch (e: any) {
         aiLogger.warn('ModelRouter', `Purpose routing failed: ${e?.message || String(e)}`);
+      }
+
+      if (MODEL_REGISTRY_ENABLED && organizationId) {
+        for (const routingKey of getRoutingPurposeKeys(capability)) {
+          try {
+            const assignments = await modelRegistryService.getAssignmentsByPurpose(routingKey);
+            const ordered = assignments
+              .filter((a) => a.isActive)
+              .sort((a, b) => a.priority - b.priority);
+            for (const assignment of ordered) {
+              const model = await modelRegistryService.getModel(assignment.registryModelId);
+              if (!model) {
+                this.addTraceSkip(
+                  trace.skipped,
+                  skipSeen,
+                  {
+                    provider: 'unknown',
+                    id: assignment.registryModelId,
+                    source: 'model_registry',
+                  },
+                  'registry_model_missing'
+                );
+                continue;
+              }
+
+              const config = await this.getProviderConfig(
+                model.modelId,
+                (assignment.tier || tier) as Tier
+              );
+              const evaluated = await this.evaluateRoutingCandidate(
+                {
+                  ...config,
+                  source: assignment.fallbackModelId ? 'model_registry_fallback' : 'model_registry',
+                  healthStatus: model.healthStatus || config.healthStatus || null,
+                },
+                trace,
+                candidateSeen,
+                skipSeen,
+                params,
+                orgPolicy
+              );
+              if (evaluated) {
+                trace.selected = trace.candidates[0] || null;
+                evaluated.routingTrace = trace;
+                return evaluated;
+              }
+            }
+          } catch (e: any) {
+            aiLogger.warn(
+              'ModelRouter',
+              `Model registry routing failed for ${routingKey}: ${e?.message || String(e)}`
+            );
+          }
+        }
       }
     }
 
@@ -385,27 +644,45 @@ export class ModelRouter {
       const candidatesAfterRules = applied.candidates || [];
       const strategy = applied.selectionStrategy?.kind || 'round_robin';
 
-      const selectedModel = (
+      const orderedCandidates =
         strategy === 'weighted_random' && candidatesAfterRules.length > 0
-          ? routingRulesService.pickWeightedRandom(candidatesAfterRules as any, applied.selectionStrategy?.weights)
-          : await this.selectWithRoundRobin(tier, organizationId, candidatesAfterRules as any)
-      ) as ProviderRow | null;
-      if (selectedModel) {
-        aiLogger.info(
-          'ModelRouter',
-          `Selected via ${strategy === 'weighted_random' ? 'weighted routing' : 'round-robin'}: ${
-            selectedModel.model_id
-          } (${selectedModel.provider})`
+          ? ([
+              routingRulesService.pickWeightedRandom(
+                candidatesAfterRules as any,
+                applied.selectionStrategy?.weights
+              ),
+              ...candidatesAfterRules,
+            ].filter(Boolean) as ProviderRow[])
+          : (candidatesAfterRules as ProviderRow[]);
+      for (const selectedModel of orderedCandidates) {
+        const evaluated = await this.evaluateRoutingCandidate(
+          {
+            id: selectedModel.model_id || selectedModel.id,
+            tier,
+            provider: selectedModel.provider,
+            apiKey: selectedModel.api_key || null,
+            endpoint: selectedModel.endpoint || null,
+            source: 'tier_assignment',
+            raw: selectedModel,
+            healthStatus: selectedModel.health_status || null,
+          },
+          trace,
+          candidateSeen,
+          skipSeen,
+          params,
+          orgPolicy
         );
-        return {
-          id: selectedModel.model_id || selectedModel.id,
-          tier,
-          provider: selectedModel.provider,
-          apiKey: selectedModel.api_key || null,
-          endpoint: selectedModel.endpoint || null,
-          source: 'tier_assignment',
-          raw: selectedModel,
-        };
+        if (evaluated) {
+          aiLogger.info(
+            'ModelRouter',
+            `Selected via ${strategy === 'weighted_random' ? 'weighted routing' : 'tier assignment'}: ${
+              selectedModel.model_id
+            } (${selectedModel.provider})`
+          );
+          trace.selected = trace.candidates[0] || null;
+          evaluated.routingTrace = trace;
+          return evaluated;
+        }
       }
     }
 
@@ -415,24 +692,29 @@ export class ModelRouter {
         const fallbackChain = await configService.getFallbackChain(tier);
         for (const providerId of fallbackChain) {
           const providerConfig = await configService.getProviderConfig(providerId);
-          if (
-            providerConfig &&
-            providerConfig.isConfigured &&
-            providerConfig.healthStatus !== 'unhealthy' &&
-            modelMeetsRequirements(
-              String(providerConfig.model_id || providerConfig.id || ''),
-              requirements
-            )
-          ) {
+          if (providerConfig && providerConfig.isConfigured) {
             aiLogger.info('ModelRouter', `Selected ${providerId} from config service for ${tier}`);
-            return {
-              id: providerConfig.model_id || providerConfig.id,
-              tier,
-              provider: providerConfig.provider,
-              apiKey: providerConfig.api_key || null,
-              endpoint: providerConfig.endpoint || null,
-              healthStatus: providerConfig.healthStatus || null,
-            };
+            const evaluated = await this.evaluateRoutingCandidate(
+              {
+                id: providerConfig.model_id || providerConfig.id,
+                tier,
+                provider: providerConfig.provider,
+                apiKey: providerConfig.api_key || null,
+                endpoint: providerConfig.endpoint || null,
+                healthStatus: providerConfig.healthStatus || null,
+                source: 'config_service_fallback',
+              },
+              trace,
+              candidateSeen,
+              skipSeen,
+              params,
+              orgPolicy
+            );
+            if (evaluated) {
+              trace.selected = trace.candidates[0] || null;
+              evaluated.routingTrace = trace;
+              return evaluated;
+            }
           }
         }
       } catch (error: unknown) {
@@ -451,31 +733,195 @@ export class ModelRouter {
         requirements
       )
     ) {
-      aiLogger.info(
-        'ModelRouter',
-        `Using database default: ${defaultProvider.model_id} (${defaultProvider.provider})`
+      const evaluated = await this.evaluateRoutingCandidate(
+        {
+          id: defaultProvider.model_id || defaultProvider.id,
+          tier,
+          provider: defaultProvider.provider,
+          apiKey: defaultProvider.api_key || null,
+          endpoint: defaultProvider.endpoint || null,
+          source: 'database_default',
+          raw: defaultProvider,
+          healthStatus: defaultProvider.health_status || null,
+        },
+        trace,
+        candidateSeen,
+        skipSeen,
+        params,
+        orgPolicy
       );
-      return {
-        id: defaultProvider.model_id || defaultProvider.id,
-        tier,
-        provider: defaultProvider.provider,
-        apiKey: defaultProvider.api_key || null,
-        endpoint: defaultProvider.endpoint || null,
-      };
+      if (evaluated) {
+        aiLogger.info(
+          'ModelRouter',
+          `Using database default: ${defaultProvider.model_id} (${defaultProvider.provider})`
+        );
+        trace.selected = trace.candidates[0] || null;
+        evaluated.routingTrace = trace;
+        return evaluated;
+      }
     }
 
     // Static fallback (OpenRouter-only)
     const staticCandidates = [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
-    const staticPick = staticCandidates.find((m) =>
-      modelMeetsRequirements(String(m || ''), requirements)
-    );
-    if (!staticPick) {
-      throw new Error(
-        `No model satisfies requirements for tier ${tier} (capability=${capability || 'n/a'})`
+    for (const staticPick of staticCandidates) {
+      if (!modelMeetsRequirements(String(staticPick || ''), requirements)) continue;
+      const evaluated = await this.evaluateRoutingCandidate(
+        {
+          ...(await this.getProviderConfig(staticPick, tier)),
+          source: 'static_fallback',
+        },
+        trace,
+        candidateSeen,
+        skipSeen,
+        params,
+        orgPolicy
       );
+      if (evaluated) {
+        aiLogger.warn('ModelRouter', `Using static fallback: ${staticPick} for tier ${tier}`);
+        trace.selected = trace.candidates[0] || null;
+        evaluated.routingTrace = trace;
+        return evaluated;
+      }
     }
-    aiLogger.warn('ModelRouter', `Using static fallback: ${staticPick} for tier ${tier}`);
-    return this.getProviderConfig(staticPick, tier);
+    throw new Error(
+      `No routable model satisfies requirements for tier ${tier} (capability=${capability || 'n/a'})`
+    );
+  }
+
+  async getRuntimeFallbackCandidates(
+    params: SelectParams,
+    excludeModelIds: string[] = []
+  ): Promise<ProviderConfig[]> {
+    const requestedPurpose = params.purpose || params.capability;
+    const capability = normalizePurposeKey(requestedPurpose) || requestedPurpose;
+    const { organizationId, requirements } = params;
+    const tier = (params.options?.tier ||
+      params.tier ||
+      CAPABILITY_TIERS[capability || ''] ||
+      CAPABILITY_TIERS[String(requestedPurpose || '')] ||
+      'STANDARD') as Tier;
+    const orgPolicy =
+      ORG_POLICY_ENABLED && organizationId ? await this.getOrgPolicy(organizationId) : null;
+    const trace: RoutingTrace = {
+      requestedPurpose: requestedPurpose ? String(requestedPurpose) : null,
+      normalizedPurpose: capability ? String(capability) : null,
+      organizationId: organizationId || null,
+      tier,
+      downgradeReason: null,
+      selected: null,
+      candidates: [],
+      skipped: [],
+    };
+    const candidateSeen = new Set<string>();
+    const skipSeen = new Set<string>();
+    const excluded = new Set(excludeModelIds.map((id) => String(id || '').toLowerCase()));
+    const candidates: ProviderConfig[] = [];
+
+    const maybePush = async (config: ProviderConfig | null) => {
+      const evaluated = await this.evaluateRoutingCandidate(
+        config,
+        trace,
+        candidateSeen,
+        skipSeen,
+        params,
+        orgPolicy
+      );
+      if (!evaluated) return;
+      if (excluded.has(String(evaluated.id || '').toLowerCase())) {
+        this.addTraceSkip(trace.skipped, skipSeen, evaluated, 'excluded_from_retry');
+        return;
+      }
+      candidates.push(evaluated);
+    };
+
+    if (PURPOSE_ROUTING_ENABLED && capability) {
+      const assigned = await this.getModelsForPurpose(capability, organizationId);
+      for (const pick of assigned) {
+        await maybePush({
+          id: pick.model_id || pick.id,
+          tier,
+          provider: pick.provider,
+          apiKey: pick.api_key || null,
+          endpoint: pick.endpoint || null,
+          source: 'purpose_assignment',
+          raw: pick,
+          healthStatus: pick.health_status || null,
+        });
+      }
+
+      if (MODEL_REGISTRY_ENABLED && organizationId) {
+        for (const routingKey of getRoutingPurposeKeys(capability)) {
+          const assignments = await modelRegistryService.getAssignmentsByPurpose(routingKey);
+          for (const assignment of assignments
+            .filter((a) => a.isActive)
+            .sort((a, b) => a.priority - b.priority)) {
+            const model = await modelRegistryService.getModel(assignment.registryModelId);
+            if (!model) continue;
+            const baseConfig = await this.getProviderConfig(
+              model.modelId,
+              (assignment.tier || tier) as Tier
+            );
+            await maybePush({
+              ...baseConfig,
+              source: assignment.fallbackModelId ? 'model_registry_fallback' : 'model_registry',
+              healthStatus: model.healthStatus || baseConfig.healthStatus || null,
+            });
+          }
+        }
+      }
+    }
+
+    const tierCandidates = await this.getModelsForTier(tier, organizationId);
+    for (const model of tierCandidates) {
+      await maybePush({
+        id: model.model_id || model.id,
+        tier,
+        provider: model.provider,
+        apiKey: model.api_key || null,
+        endpoint: model.endpoint || null,
+        source: 'tier_assignment',
+        raw: model,
+        healthStatus: model.health_status || null,
+      });
+    }
+
+    const configService = await getLLMConfigService();
+    if (configService) {
+      try {
+        const fallbackChain = await configService.getFallbackChain(tier);
+        for (const providerId of fallbackChain) {
+          const providerConfig = await configService.getProviderConfig(providerId);
+          if (!providerConfig?.isConfigured) continue;
+          await maybePush({
+            id: providerConfig.model_id || providerConfig.id,
+            tier,
+            provider: providerConfig.provider,
+            apiKey: providerConfig.api_key || null,
+            endpoint: providerConfig.endpoint || null,
+            healthStatus: providerConfig.healthStatus || null,
+            source: 'config_service_fallback',
+          });
+        }
+      } catch {
+        // fail open
+      }
+    }
+
+    for (const modelId of [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])]) {
+      if (!modelMeetsRequirements(String(modelId || ''), requirements)) continue;
+      await maybePush({
+        ...(await this.getProviderConfig(modelId, tier)),
+        source: 'static_fallback',
+      });
+    }
+
+    if (candidates[0]) {
+      trace.selected = trace.candidates[0] || null;
+    }
+    for (const candidate of candidates) {
+      candidate.routingTrace = trace;
+    }
+    return candidates;
   }
 
   /**
@@ -529,10 +975,16 @@ export class ModelRouter {
     const p = String(purpose || '').trim();
     if (!p) return [];
 
-    // Prefer org assignments, then global (NULL org) assignments
-    const query = organizationId
-      ? `
-        SELECT lp.*, apa.priority as purpose_priority
+    const fetchRows = async (routingKey: string): Promise<ProviderRow[]> => {
+      const query = organizationId
+        ? `
+        SELECT
+          lp.*,
+          apa.priority as purpose_priority,
+          apa.release_bundle_id,
+          apa.prompt_key,
+          apa.prompt_version,
+          apa.policy_version
         FROM ai_purpose_assignments apa
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
         LEFT JOIN organization_provider_settings ops ON lp.id = ops.provider_id AND ops.organization_id = ?
@@ -548,8 +1000,14 @@ export class ModelRouter {
           lp.cost_per_1k,
           lp.priority
       `
-      : `
-        SELECT lp.*, apa.priority as purpose_priority
+        : `
+        SELECT
+          lp.*,
+          apa.priority as purpose_priority,
+          apa.release_bundle_id,
+          apa.prompt_key,
+          apa.prompt_version,
+          apa.policy_version
         FROM ai_purpose_assignments apa
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
         WHERE apa.purpose = ?
@@ -560,13 +1018,23 @@ export class ModelRouter {
         ORDER BY apa.priority, lp.cost_per_1k, lp.priority
       `;
 
-    const params = organizationId ? [organizationId, p, organizationId, organizationId] : [p];
+      const params = organizationId
+        ? [organizationId, routingKey, organizationId, organizationId]
+        : [routingKey];
 
-    try {
-      return await DbPromise.all<ProviderRow>(query, params, { fallback: true });
-    } catch {
-      return [];
+      try {
+        return await DbPromise.all<ProviderRow>(query, params, { fallback: true });
+      } catch {
+        return [];
+      }
+    };
+
+    for (const routingKey of getRoutingPurposeKeys(p)) {
+      const rows = await fetchRows(routingKey);
+      if (rows.length > 0) return rows;
     }
+
+    return [];
   }
 
   async getModelsForTier(tier: Tier, organizationId?: string): Promise<ProviderRow[]> {

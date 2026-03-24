@@ -4,7 +4,17 @@
  * Opens ConvertToDialog on click. DBR77: rounded-lg, bg-navy-800, border-white/10.
  */
 
-import { ChevronDown, FileOutput, FileText, Presentation, Target } from 'lucide-react';
+import {
+  BarChart3,
+  Calculator,
+  ChevronDown,
+  FileOutput,
+  FileText,
+  Presentation,
+  Target,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +52,27 @@ const TARGET_ITEMS: {
   { type: 'initiative', icon: Target, labelKey: 'traceability.convertTo.initiative' },
   { type: 'report', icon: FileText, labelKey: 'traceability.convertTo.report' },
   { type: 'presentation', icon: Presentation, labelKey: 'traceability.convertTo.presentation' },
+  // V5-IDEA-37: Finance output targets
+  {
+    type: 'financial_model' as ConversionTargetType,
+    icon: Calculator,
+    labelKey: 'traceability.convertTo.financialModel',
+  },
+  {
+    type: 'budget' as ConversionTargetType,
+    icon: Wallet,
+    labelKey: 'traceability.convertTo.budget',
+  },
+  {
+    type: 'valuation' as ConversionTargetType,
+    icon: TrendingUp,
+    labelKey: 'traceability.convertTo.valuation',
+  },
+  {
+    type: 'analysis' as ConversionTargetType,
+    icon: BarChart3,
+    labelKey: 'traceability.convertTo.analysis',
+  },
 ];
 
 function toDerivedSource(
@@ -106,6 +137,14 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
               navigate(`/reports/builder/${encodeURIComponent(result.outputId)}`);
             } else if (targetType === 'presentation') {
               navigate(`/presentations?deck=${encodeURIComponent(result.outputId)}`);
+            } else if (targetType === 'financial_model') {
+              navigate(`/economics?tab=models&open=${encodeURIComponent(result.outputId)}`);
+            } else if (targetType === 'budget') {
+              navigate(`/economics?tab=prediction&open=${encodeURIComponent(result.outputId)}`);
+            } else if (targetType === 'valuation') {
+              navigate(`/economics?tab=valuation&open=${encodeURIComponent(result.outputId)}`);
+            } else if (targetType === 'analysis') {
+              navigate(`/economics?tab=analysis&open=${encodeURIComponent(result.outputId)}`);
             }
             onConvertComplete(targetType, result.outputId);
           },
@@ -145,7 +184,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
           <>
             <button
               onClick={() => setOpen((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-lg text-xs font-medium bg-navy-800 border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white transition-colors ${
+              className={`flex items-center gap-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors ${
                 compact ? 'p-1' : 'px-2.5 py-1.5'
               }`}
               aria-expanded={open}
@@ -170,8 +209,9 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                   onClick={() => setOpen(false)}
                   aria-hidden="true"
                 />
+                {/* V5-IDEA-46: Dark/light parity */}
                 <div
-                  className="absolute top-full left-0 mt-1 z-50 min-w-[220px] rounded-lg bg-navy-800 border border-white/10 shadow-xl py-1"
+                  className="absolute top-full left-0 mt-1 z-50 min-w-[220px] rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 shadow-xl py-1"
                   role="menu"
                 >
                   {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
@@ -179,12 +219,12 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                       key={type}
                       role="menuitem"
                       onClick={() => handleItemClick(type)}
-                      className="w-full flex items-center gap-2 h-9 px-3 hover:bg-white/5 text-left text-sm text-slate-200 transition-colors"
+                      className="w-full flex items-center gap-2 h-9 px-3 hover:bg-slate-100/60 dark:hover:bg-white/5 text-left text-sm text-slate-800 dark:text-slate-200 transition-colors"
                     >
-                      <Icon size={14} className="text-slate-400 shrink-0" />
+                      <Icon size={14} className="text-slate-400 dark:text-slate-400 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div>{t(labelKey)}</div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-500 dark:text-slate-500">
                           {t(
                             'traceability.convertTo.createsSession',
                             'Creates a MyWork session first'
@@ -198,16 +238,16 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
             )}
           </>
         ) : (
-          <div className="flex items-center gap-1 rounded-lg bg-navy-800 border border-white/10 p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 p-1">
             {TARGET_ITEMS.map(({ type, icon: Icon, labelKey }) => (
               <button
                 key={type}
                 onClick={() => handleItemClick(type)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/5 text-xs text-slate-300 hover:text-white transition-colors"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-slate-100/60 dark:hover:bg-white/5 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <Icon size={12} />
                 {t(labelKey)}
-                <span className="text-slate-500 text-[10px]">
+                <span className="text-slate-400 dark:text-slate-500 text-[10px]">
                   ({t('traceability.convertTo.createsSession', 'Creates a MyWork session first')})
                 </span>
               </button>

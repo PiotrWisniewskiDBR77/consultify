@@ -180,8 +180,11 @@ function getPool(): Pool {
       logger.error('[Postgres] Unexpected error on idle client:', err.message);
     });
 
-    pool.on('connect', (_client: PoolClient) => {
+    pool.on('connect', (client: PoolClient) => {
       logger.info('[Postgres] Client connected');
+      client.query('SET search_path TO public, v8').catch((err: Error) => {
+        logger.warn('[Postgres] Failed to set search_path:', err.message);
+      });
     });
 
     // Initialize schema lazily if needed - must complete before first query
@@ -236,6 +239,11 @@ function getReadPool(): Pool {
       readPool.on('error', (err: Error) => {
         logger.error('[Postgres] Unexpected error on READ REPLICA client:', err.message);
       });
+      readPool.on('connect', (client: PoolClient) => {
+        client.query('SET search_path TO public, v8').catch((err: Error) => {
+          logger.warn('[Postgres] Failed to set read replica search_path:', err.message);
+        });
+      });
     }
     return readPool;
   }
@@ -244,17 +252,22 @@ function getReadPool(): Pool {
   return getPool();
 }
 
+function sanitizeParams(params: unknown[]): unknown[] {
+  return params.map((p) => (typeof p === 'string' ? p.replace(/\0/g, '') : p));
+}
+
 async function executeWithLogging<T>(
   poolFn: () => Pool,
   sql: string,
   params: unknown[],
   method: 'RUN' | 'GET' | 'ALL' | 'QUERY'
 ): Promise<{ rows: T[]; rowCount: number | null }> {
+  const safeParams = sanitizeParams(params);
   const start = Date.now();
   try {
     const pool = poolFn(); // Triggers getPool() which may start initDb and set initDbPromise
     if (initDbPromise) await initDbPromise;
-    const res = await pool.query(sql, params);
+    const res = await pool.query(sql, safeParams);
 
     const duration = Date.now() - start;
     if (duration > SLOW_QUERY_THRESHOLD_MS) {
@@ -275,7 +288,7 @@ async function executeWithLogging<T>(
       initDbPromise = null;
       const retryPool = poolFn();
       if (initDbPromise) await initDbPromise;
-      const res = await retryPool.query(sql, params);
+      const res = await retryPool.query(sql, safeParams);
       return { rows: res.rows as T[], rowCount: res.rowCount };
     }
 

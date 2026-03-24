@@ -635,7 +635,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {log.timestamp && !isNaN(new Date(log.timestamp).getTime()) ? new Date(log.timestamp).toLocaleString() : 'Unknown date'}
+                              {log.timestamp && !isNaN(new Date(log.timestamp).getTime())
+                                ? new Date(log.timestamp).toLocaleString()
+                                : 'Unknown date'}
                             </span>
                             {log.ip_address && (
                               <span className="flex items-center gap-1">
@@ -827,15 +829,17 @@ export const EnterpriseAuditLog: React.FC = () => {
                   <div className="text-sm text-slate-500 dark:text-slate-400">No data</div>
                 ) : (
                   analyticsActionCounts.map(({ action, count }) => (
-                  <div key={action} className="flex items-center gap-3">
-                    <div className="w-24 text-sm text-slate-400 dark:text-slate-500">{action}</div>
-                    <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
-                        style={{ width: `${(count / analyticsActionMax) * 100}%` }}
-                      />
+                    <div key={action} className="flex items-center gap-3">
+                      <div className="w-24 text-sm text-slate-400 dark:text-slate-500">
+                        {action}
+                      </div>
+                      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
+                          style={{ width: `${(count / analyticsActionMax) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
                   ))
                 )}
               </div>

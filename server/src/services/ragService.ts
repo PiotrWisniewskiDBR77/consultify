@@ -6,11 +6,30 @@
 import { OpenAI } from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 
+import { getDatabase } from '../database/Database.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { embeddingService } from './ai/embeddingService.js';
 import { aiLogger } from './ai/logger.js';
 
 type _DbRow = Record<string, unknown>;
+
+const isPg = (): boolean => process.env.DB_TYPE === 'postgres';
+
+/**
+ * Unified query helper that routes to PostgreSQL or SQLite.
+ * Accepts `?` placeholders — converts to `$N` for PostgreSQL automatically.
+ */
+async function queryDb<T = _DbRow>(sql: string, params: unknown[] = []): Promise<T[]> {
+  if (isPg()) {
+    const db = getDatabase();
+    let pgSql = sql;
+    let idx = 0;
+    pgSql = pgSql.replace(/\?/g, () => `$${++idx}`);
+    const result = await db.query<T>(pgSql, params);
+    return result.rows;
+  }
+  return DbPromise.all<T>(sql, params, { fallback: true });
+}
 
 let knowledgeDocsColumns: Set<string> | null = null;
 
@@ -18,29 +37,23 @@ async function ensureKnowledgeDocsColumns(): Promise<Set<string>> {
   if (knowledgeDocsColumns) return knowledgeDocsColumns;
   const cols = new Set<string>();
 
-  // Try SQLite pragma first
-  try {
-    const rows = (await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
-      fallback: true,
-    })) as Array<{ name?: string }>;
-    for (const r of rows || []) {
-      const name = String(r?.name || '').trim();
-      if (name) cols.add(name);
-    }
-  } catch {
-    // ignore
-  }
-
-  // Postgres fallback
-  if (cols.size === 0 && process.env.DB_TYPE === 'postgres') {
+  if (isPg()) {
     try {
-      const rows = (await DbPromise.all<{ column_name?: string }>(
-        `SELECT column_name FROM information_schema.columns WHERE table_name = 'knowledge_docs'`,
-        [],
-        { fallback: true }
-      )) as Array<{ column_name?: string }>;
+      const rows = await queryDb<{ column_name?: string }>(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'knowledge_docs'`
+      );
       for (const r of rows || []) {
         const name = String(r?.column_name || '').trim();
+        if (name) cols.add(name);
+      }
+    } catch {
+      // ignore
+    }
+  } else {
+    try {
+      const rows = await queryDb<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`);
+      for (const r of rows || []) {
+        const name = String(r?.name || '').trim();
         if (name) cols.add(name);
       }
     } catch {
@@ -171,7 +184,8 @@ const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
 const parseEmbedding = (value: unknown): number[] | null => {
   if (!value) return null;
   try {
-    return JSON.parse(String(value)) as number[];
+    const str = Buffer.isBuffer(value) ? value.toString('utf-8') : String(value);
+    return JSON.parse(str) as number[];
   } catch {
     return null;
   }
@@ -192,17 +206,35 @@ const RagService = {
 
   generateEmbedding: async (text: string): Promise<number[] | null> => {
     await initDeps();
-    const provider = await DbPromise.get<{ api_key?: string }>(
-      "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
-      [],
-      { fallback: true }
-    );
-    if (!provider || !provider.api_key) {
+
+    let apiKey: string | undefined;
+
+    // Try env var first (works on both SQLite and PostgreSQL)
+    apiKey = process.env.OPENAI_API_KEY;
+
+    // Fallback to llm_providers table
+    if (!apiKey) {
+      if (isPg()) {
+        const rows = await queryDb<{ api_key?: string }>(
+          "SELECT api_key FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1"
+        );
+        apiKey = rows[0]?.api_key;
+      } else {
+        const provider = await DbPromise.get<{ api_key?: string }>(
+          "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
+          [],
+          { fallback: true }
+        );
+        apiKey = provider?.api_key;
+      }
+    }
+
+    if (!apiKey) {
       return null;
     }
 
     try {
-      const openai = new deps.OpenAI({ apiKey: provider.api_key });
+      const openai = new deps.OpenAI({ apiKey });
       const response = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: text,
@@ -249,13 +281,7 @@ const RagService = {
       params.push(organizationId);
     }
 
-    const rows = await DbPromise.all<{ content: string; filename: string; embedding: string }>(
-      sql,
-      params,
-      {
-        fallback: true,
-      }
-    );
+    const rows = await queryDb<{ content: string; filename: string; embedding: string }>(sql, params);
 
     if (!rows || rows.length === 0) {
       return RagService.getContextKeyword(expandedQuery, limit, organizationId || null);
@@ -332,9 +358,7 @@ const RagService = {
 
     sql += ` LIMIT ${limit}`;
 
-    const rows = await DbPromise.all<{ content: string; filename: string }>(sql, params, {
-      fallback: true,
-    });
+    const rows = await queryDb<{ content: string; filename: string }>(sql, params);
     return (rows || []).map((row) => `[Source: ${row.filename}]\n${row.content}`).join('\n\n');
   },
 
@@ -531,13 +555,7 @@ const RagService = {
       params.push(organizationId);
     }
 
-    const rows = await DbPromise.all<{ id: string; content: string; filename: string }>(
-      sql,
-      params,
-      {
-        fallback: true,
-      }
-    );
+    const rows = await queryDb<{ id: string; content: string; filename: string }>(sql, params);
     if (!rows || rows.length === 0) {
       return [];
     }
@@ -712,12 +730,12 @@ const RagService = {
       params.push(organizationId);
     }
 
-    const rows = await DbPromise.all<{
+    const rows = await queryDb<{
       id: string;
       content: string;
       filename: string;
       embedding: string;
-    }>(sql, params, { fallback: true });
+    }>(sql, params);
 
     const scored = rows.map((row) => {
       const vec = parseEmbedding(row.embedding);

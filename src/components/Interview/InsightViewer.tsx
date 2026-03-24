@@ -9,32 +9,30 @@ import {
   AlertCircle,
   AlertTriangle,
   BarChart3,
-  CheckCircle,
-  CheckSquare,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Copy,
   Download,
   ExternalLink,
   FileText,
-  Flag,
-  Frown,
-  Hash,
+  Flame,
   History,
+  Layers,
   Lightbulb,
   Loader2,
-  Meh,
+  Map,
   MessageSquare,
-  Paperclip,
   Plus,
-  Quote,
+  Radio,
   RefreshCw,
   Send,
-  Shuffle,
-  Smile,
+  ShieldAlert,
   Sparkles,
   Star,
   Target,
-  X,
+  TrendingUp,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -43,8 +41,6 @@ import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
-import type { Attachment } from '@/components/MyWork/shared/AttachmentsSection';
-import type { LinkedItem } from '@/components/MyWork/shared/LinkedItemsSection';
 import { NModeCanvas } from '@/components/shared/NModeLayout/NModeCanvas';
 import { NModeHeader } from '@/components/shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '@/components/shared/NModeLayout/NModeLeftNav';
@@ -56,7 +52,6 @@ import {
   type ActivityStats,
   type ActivityTypeMeta,
 } from '@/components/shared/NModeSections';
-import { AttachmentsLinksCanvas } from '@/components/shared/NModeSections';
 import {
   type CommentItem,
   type CommentPriority,
@@ -64,6 +59,8 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
+import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
@@ -71,6 +68,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
+
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,6 +87,41 @@ type InsightPromptType =
 
 type InsightStatus = 'generating' | 'completed' | 'failed';
 
+interface InsightTheme {
+  title: string;
+  description: string;
+  evidence_refs: string[];
+  strength: 'strong' | 'moderate' | 'weak';
+}
+
+interface InsightIssue {
+  title: string;
+  description: string;
+  severity: 'high' | 'medium' | 'low';
+  evidence_refs: string[];
+}
+
+interface InsightOpportunity {
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  evidence_refs: string[];
+}
+
+interface InsightSignal {
+  title: string;
+  description: string;
+  type: 'tension' | 'gap' | 'contradiction' | 'emerging_pattern';
+}
+
+interface InsightEvidenceMapEntry {
+  answer_id: string;
+  question_text: string;
+  answer_snippet: string;
+  linked_themes: string[];
+  linked_issues: string[];
+}
+
 interface Insight {
   id: string;
   organizationId: string;
@@ -96,6 +130,13 @@ interface Insight {
   sourceSessionIds: string[];
   filters?: Record<string, any>;
   content?: string;
+  executiveSummary?: string;
+  themes?: InsightTheme[];
+  issues?: InsightIssue[];
+  opportunities?: InsightOpportunity[];
+  signals?: InsightSignal[];
+  evidenceMap?: InsightEvidenceMapEntry[];
+  missingData?: string[];
   status: InsightStatus;
   errorMessage?: string;
   sourceSessionCount: number;
@@ -115,71 +156,90 @@ interface SourceSession {
   department?: string;
 }
 
-interface LocalActivityLogEntry {
-  id: string;
-  type: 'created' | 'regenerated' | 'exported' | 'comment' | 'edit';
-  description: string;
-  timestamp: string;
-  userName?: string;
+interface SourceSessionSummary {
+  facts: string[];
+  gaps: string[];
+  constraints: string[];
+  painPoints: string[];
 }
 
-interface KeyFinding {
-  id: string;
-  content: string;
-  confidence: 'high' | 'medium' | 'low';
-  category?: string;
-  sourceCount: number;
+interface ParsedInsightSection {
+  heading: string;
+  body: string;
+  bullets: string[];
+  paragraphs: string[];
 }
 
-interface QuoteEvidence {
-  id: string;
-  quote: string;
-  source: string;
-  department?: string;
-  role?: string;
-  tags: string[];
-  sentiment: 'positive' | 'neutral' | 'negative';
+const DEFAULT_SESSION_SUMMARY: SourceSessionSummary = {
+  facts: [],
+  gaps: [],
+  constraints: [],
+  painPoints: [],
+};
+
+function uniqueNonEmpty(items: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  items.forEach((item) => {
+    const normalized = String(item || '')
+      .replace(/^[-*]\s+/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized) return;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(normalized);
+  });
+  return result;
 }
 
-interface PatternTheme {
-  id: string;
-  theme: string;
-  frequency: number;
-  relatedKeywords: string[];
+function extractQuotedLines(content?: string): string[] {
+  if (!content) return [];
+  const blockQuotes = Array.from(content.matchAll(/(^>\s?.+$)/gm)).map((match) =>
+    String(match[1] || '')
+      .replace(/^>\s?/, '')
+      .trim()
+  );
+  const inlineQuotes = Array.from(content.matchAll(/"([^"\n]{16,220})"/g)).map((match) =>
+    String(match[1] || '').trim()
+  );
+  return uniqueNonEmpty([...blockQuotes, ...inlineQuotes]);
 }
 
-interface Contradiction {
-  id: string;
-  topic: string;
-  viewA: string;
-  viewB: string;
-  sourceA: string;
-  sourceB: string;
-  severity: 'high' | 'medium' | 'low';
-}
+function parseInsightContent(content?: string): ParsedInsightSection[] {
+  if (!content) return [];
 
-interface ActionItem {
-  id: string;
-  action: string;
-  priority: 'high' | 'medium' | 'low';
-  type: 'quick_win' | 'short_term' | 'long_term';
-  owner?: string;
-  completed: boolean;
-}
+  const chunks = content
+    .split(/^#{1,6}\s+/gm)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
 
-interface RiskFlag {
-  id: string;
-  risk: string;
-  severity: 'high' | 'medium' | 'low';
-  category: string;
-  mitigation?: string;
+  return chunks.map((chunk) => {
+    const [headingLine, ...rest] = chunk.split('\n');
+    const body = rest.join('\n').trim();
+    const paragraphs = body
+      .split(/\n{2,}/)
+      .map((part) => part.replace(/^[-*]\s+/gm, '').trim())
+      .filter(Boolean);
+    const bullets = Array.from(body.matchAll(/^(?:[-*]|\d+\.)\s+(.+)$/gm)).map((match) =>
+      String(match[1] || '').trim()
+    );
+
+    return {
+      heading: String(headingLine || '').trim(),
+      body,
+      bullets: uniqueNonEmpty(bullets),
+      paragraphs: uniqueNonEmpty(paragraphs),
+    };
+  });
 }
 
 interface InsightViewerProps {
   insightId: string;
   onClose: () => void;
   onRegenerate?: () => void;
-  onSaved?: (data: any) => void;
+  onSaved?: (data: Insight) => void;
 }
 
 // ── Type metadata ────────────────────────────────────────────────────────────
@@ -271,26 +331,18 @@ const STATUS_CONFIG: Record<
 
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
+  { id: 'consulting-readout', icon: Sparkles, label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' } },
+  { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
+  { id: 'issues-risks', icon: ShieldAlert, label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' } },
+  { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
+  { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
+  { id: 'evidence-map', icon: Map, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
+  { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
   { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
-  { id: 'key-findings', icon: Target, label: { en: 'Key Findings', pl: 'Kluczowe Ustalenia' } },
-  { id: 'quotes-evidence', icon: Quote, label: { en: 'Quotes & Evidence', pl: 'Cytaty i Dowody' } },
-  { id: 'patterns', icon: Hash, label: { en: 'Patterns & Themes', pl: 'Wzorce i Tematy' } },
-  { id: 'contradictions', icon: Shuffle, label: { en: 'Contradictions', pl: 'Sprzeczności' } },
-  {
-    id: 'action-items',
-    icon: CheckSquare,
-    label: { en: 'Action Items', pl: 'Zalecane Działania' },
-  },
-  { id: 'risk-flags', icon: Flag, label: { en: 'Risk Flags', pl: 'Flagi Ryzyka' } },
   {
     id: 'source-sessions',
     icon: MessageSquare,
     label: { en: 'Source Sessions', pl: 'Sesje Źródłowe' },
-  },
-  {
-    id: 'attachments-links',
-    icon: Paperclip,
-    label: { en: 'Attachments & Links', pl: 'Załączniki' },
   },
   { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
   { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' } },
@@ -307,8 +359,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, currentUser, currentOrganization } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const interviewDemoData = useMemo(
+    () =>
+      createInterviewDemoDataset({
+        currentUserId: currentUser?.id,
+        currentUserName: currentUser?.displayName || (currentUser as any)?.name,
+        currentUserEmail: currentUser?.email,
+        organizationId: currentOrganization?.id,
+        organizationName: currentOrganization?.name,
+      }),
+    [
+      currentOrganization?.id,
+      currentOrganization?.name,
+      currentUser?.displayName,
+      currentUser?.email,
+      currentUser?.id,
+      (currentUser as any)?.name,
+    ]
+  );
 
   // N-mode navigation
   const [activeNSection, setActiveNSection] = useState(INSIGHT_SECTIONS[0].id);
@@ -324,11 +394,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // Editable fields
   const [title, setTitle] = useState('');
-  const [executiveSummary, setExecutiveSummary] = useState('');
 
   // AI generation states
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [isGeneratingFindings, setIsGeneratingFindings] = useState(false);
 
   // Export states
   const [isExportingTools, setIsExportingTools] = useState(false);
@@ -336,22 +404,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // Related data
   const [sourceSessions, setSourceSessions] = useState<SourceSession[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState('');
-  const [activityLog, setActivityLog] = useState<LocalActivityLogEntry[]>([]);
-
-  // Extended report data
-  const [keyFindings, setKeyFindings] = useState<KeyFinding[]>([]);
-  const [quotes, setQuotes] = useState<QuoteEvidence[]>([]);
-  const [patterns, setPatterns] = useState<PatternTheme[]>([]);
-  const [contradictions, setContradictions] = useState<Contradiction[]>([]);
-  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
-  const [riskFlags, setRiskFlags] = useState<RiskFlag[]>([]);
-
-  // Quote filter
-  const [quoteFilter, setQuoteFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>(
-    'all'
-  );
+  const [sourceSessionSummaries, setSourceSessionSummaries] = useState<
+    Record<string, SourceSessionSummary>
+  >({});
+  const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -360,54 +416,96 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [commentSortOrder, setCommentSortOrder] = useState<SortOrder>('desc');
   const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
 
-  // NMode shared section state — Attachments
-  const [nAttachments, setNAttachments] = useState<Attachment[]>([]);
-  const [nLinkedItems, setNLinkedItems] = useState<LinkedItem[]>([]);
-
   // ── Load data ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const loadInsight = async () => {
+      const useDemoInsight = (id: string) => {
+        const demoInsight = interviewDemoData.insightDetailsById[id];
+        if (!demoInsight) return false;
+
+        setInsight(demoInsight as Insight);
+        setTitle(demoInsight.title || '');
+        const demoSessions = demoInsight.sourceSessionIds
+          .map((sessionId: string) => interviewDemoData.sessionDetailsById[sessionId]?.session)
+          .filter(Boolean);
+        setSourceSessions(demoSessions as SourceSession[]);
+        setSourceSessionSummaries(
+          demoInsight.sourceSessionIds.reduce<Record<string, SourceSessionSummary>>((acc, sessionId) => {
+            acc[sessionId] =
+              (interviewDemoData.sessionDetailsById[sessionId]?.summary as SourceSessionSummary) ||
+              DEFAULT_SESSION_SUMMARY;
+            return acc;
+          }, {})
+        );
+        setActivityEntries(
+          (interviewDemoData.insightActivityById[id] || []) as NModeActivityLogEntry[]
+        );
+        setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
+        return true;
+      };
+
       setIsLoading(true);
       setError(null);
       try {
-        const data = await Api.get(`/interview/insights/${insightId}`);
+        if (isInterviewDemoId(insightId) && useDemoInsight(insightId)) return;
+
+        const data = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
+        if (!data) {
+          if (useDemoInsight(insightId)) return;
+          throw new Error('Failed to load insight');
+        }
         setInsight(data);
         setTitle(data.title || '');
-
-        if (data.content) {
-          const firstParagraph = data.content.split('\n\n')[0] || '';
-          setExecutiveSummary(
-            firstParagraph.length > 200 ? firstParagraph.substring(0, 200) + '...' : firstParagraph
-          );
-        }
-
-        setActivityLog([
-          {
-            id: '1',
-            type: 'created',
-            description: isPolish ? 'Wniosek utworzony' : 'Insight created',
-            timestamp: data.createdAt,
-            userName: 'System',
-          },
-        ]);
 
         if (data.sourceSessionIds?.length > 0) {
           try {
             const sessionsData = await Promise.all(
-              data.sourceSessionIds.slice(0, 10).map((id: string) =>
-                Api.get(`/interview/sessions/${id}`).catch(() => ({
-                  id,
-                  name: `Session ${id.slice(0, 8)}`,
-                }))
-              )
+              data.sourceSessionIds
+                .slice(0, 10)
+                .map((id: string) => Api.get(`/interview/sessions/${id}`).catch(() => null))
             );
-            setSourceSessions(sessionsData);
+            const validSessions = (sessionsData || []).filter(Boolean);
+            setSourceSessions(validSessions);
+
+            const summaryEntries = await Promise.all(
+              validSessions.map(async (session: SourceSession) => {
+                const summary = await Api.get(`/interview/sessions/${session.id}/summary`).catch(
+                  () => null
+                );
+                return [session.id, summary] as const;
+              })
+            );
+
+            setSourceSessionSummaries(
+              summaryEntries.reduce<Record<string, SourceSessionSummary>>((acc, [sessionId, summary]) => {
+                acc[sessionId] = summary
+                  ? {
+                      facts: Array.isArray(summary.facts) ? summary.facts : [],
+                      gaps: Array.isArray(summary.gaps) ? summary.gaps : [],
+                      constraints: Array.isArray(summary.constraints) ? summary.constraints : [],
+                      painPoints: Array.isArray(summary.painPoints) ? summary.painPoints : [],
+                    }
+                  : DEFAULT_SESSION_SUMMARY;
+                return acc;
+              }, {})
+            );
           } catch {
             // sessions are optional
           }
+        } else {
+          setSourceSessions([]);
+          setSourceSessionSummaries({});
         }
+
+        const [activityRes, commentsRes] = await Promise.all([
+          Api.get(`/interview/insights/${insightId}/activity`).catch(() => []),
+          Api.get(`/interview/insights/${insightId}/comments`).catch(() => []),
+        ]);
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        setNComments(Array.isArray(commentsRes) ? commentsRes : []);
       } catch (err: any) {
+        if (useDemoInsight(insightId)) return;
         setError(err?.message || 'Failed to load insight');
         console.error('[InsightViewer] Failed to load insight:', err);
       } finally {
@@ -417,42 +515,36 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
     loadInsight();
 
+    let lastStatus: InsightStatus | null = null;
     const interval = setInterval(async () => {
-      if (insight?.status === 'generating') {
-        try {
-          const data = await Api.get(`/interview/insights/${insightId}`);
-          setInsight(data);
-          if (data.status !== 'generating') {
-            clearInterval(interval);
-            addActivityLogEntry(
-              'regenerated',
-              isPolish ? 'Generowanie zakończone' : 'Generation completed'
-            );
-          }
-        } catch (err) {
-          console.error('[InsightViewer] Poll error:', err);
+      try {
+        if (isInterviewDemoId(insightId)) {
+          clearInterval(interval);
+          return;
         }
+        const data = await Api.get(`/interview/insights/${insightId}`);
+        setInsight(data);
+        const nextStatus = data?.status as InsightStatus | undefined;
+        if (lastStatus === null) lastStatus = nextStatus ?? null;
+
+        if (lastStatus === 'generating' && nextStatus && nextStatus !== 'generating') {
+          clearInterval(interval);
+          const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+            () => []
+          );
+          setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        }
+
+        lastStatus = nextStatus ?? null;
+      } catch (err) {
+        // keep polling best-effort
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [insightId]);
+  }, [insightId, interviewDemoData, isPolish]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-
-  const addActivityLogEntry = useCallback(
-    (type: LocalActivityLogEntry['type'], description: string) => {
-      const entry: LocalActivityLogEntry = {
-        id: Math.random().toString(36).substr(2, 9),
-        type,
-        description,
-        timestamp: new Date().toISOString(),
-        userName: 'Current User',
-      };
-      setActivityLog((prev) => [entry, ...prev]);
-    },
-    []
-  );
 
   const typeMeta = insight
     ? TYPE_METADATA[insight.promptType] || TYPE_METADATA.summary
@@ -461,21 +553,103 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     ? STATUS_CONFIG[insight.status] || STATUS_CONFIG.completed
     : STATUS_CONFIG.completed;
 
-  const isDirty = title !== (insight?.title || '');
-
-  const filteredQuotes = useMemo(() => {
-    if (quoteFilter === 'all') return quotes;
-    return quotes.filter((q) => q.sentiment === quoteFilter);
-  }, [quotes, quoteFilter]);
-
-  const riskCounts = useMemo(
-    () => ({
-      high: riskFlags.filter((r) => r.severity === 'high').length,
-      medium: riskFlags.filter((r) => r.severity === 'medium').length,
-      low: riskFlags.filter((r) => r.severity === 'low').length,
-    }),
-    [riskFlags]
+  const parsedInsightSections = useMemo(
+    () => parseInsightContent(insight?.content),
+    [insight?.content]
   );
+
+  const executiveSummary = useMemo(() => {
+    if (!insight?.content) return '';
+    const firstParagraph = insight.content
+      .split('\n\n')
+      .map((part) => part.replace(/^#+\s+/, '').trim())
+      .find(Boolean);
+    return firstParagraph || '';
+  }, [insight?.content]);
+
+  const officialAnswers = useMemo(
+    () =>
+      uniqueNonEmpty(
+        sourceSessions.flatMap((session) => sourceSessionSummaries[session.id]?.facts || [])
+      ).slice(0, 10),
+    [sourceSessionSummaries, sourceSessions]
+  );
+
+  const issuesReadout = useMemo(() => {
+    const fromSummaries = sourceSessions.flatMap((session) => {
+      const summary = sourceSessionSummaries[session.id] || DEFAULT_SESSION_SUMMARY;
+      return [...summary.constraints, ...summary.painPoints, ...summary.gaps];
+    });
+    const fromNarrative = parsedInsightSections
+      .filter((section) =>
+        /(issue|problem|risk|gap|constraint|challenge|pain|blocker|critical)/i.test(
+          section.heading
+        )
+      )
+      .flatMap((section) => [...section.bullets, ...section.paragraphs]);
+
+    return uniqueNonEmpty([...fromSummaries, ...fromNarrative]).slice(0, 10);
+  }, [parsedInsightSections, sourceSessionSummaries, sourceSessions]);
+
+  const opportunityReadout = useMemo(() => {
+    const fromNarrative = parsedInsightSections
+      .filter((section) =>
+        /(opportunit|strength|theme|trend|alignment|growth|efficiency|innovation|maturity)/i.test(
+          section.heading
+        )
+      )
+      .flatMap((section) => [...section.bullets, ...section.paragraphs]);
+
+    return uniqueNonEmpty(fromNarrative).slice(0, 10);
+  }, [parsedInsightSections]);
+
+  const hiddenSignals = useMemo(() => {
+    const fromNarrative = parsedInsightSections
+      .filter((section) =>
+        /(observation|between|pattern|divergent|root cause|implication|underlying|signal)/i.test(
+          section.heading
+        )
+      )
+      .flatMap((section) => [...section.bullets, ...section.paragraphs]);
+
+    return uniqueNonEmpty(fromNarrative).slice(0, 8);
+  }, [parsedInsightSections]);
+
+  const evidenceQuotes = useMemo(() => extractQuotedLines(insight?.content).slice(0, 6), [insight?.content]);
+
+  const traceabilityRows = useMemo(
+    () =>
+      sourceSessions.map((session) => ({
+        session,
+        summary: sourceSessionSummaries[session.id] || DEFAULT_SESSION_SUMMARY,
+      })),
+    [sourceSessionSummaries, sourceSessions]
+  );
+
+  // V6 three-layer structured data
+  const v6Themes = useMemo<InsightTheme[]>(() => insight?.themes ?? [], [insight?.themes]);
+  const v6Issues = useMemo<InsightIssue[]>(() => insight?.issues ?? [], [insight?.issues]);
+  const v6Opportunities = useMemo<InsightOpportunity[]>(() => insight?.opportunities ?? [], [insight?.opportunities]);
+  const v6Signals = useMemo<InsightSignal[]>(() => insight?.signals ?? [], [insight?.signals]);
+  const v6EvidenceMap = useMemo<InsightEvidenceMapEntry[]>(() => insight?.evidenceMap ?? [], [insight?.evidenceMap]);
+  const v6MissingData = useMemo<string[]>(() => insight?.missingData ?? [], [insight?.missingData]);
+
+  // Evidence drilldown state
+  const [expandedEvidenceRef, setExpandedEvidenceRef] = useState<string | null>(null);
+
+  const toggleEvidenceRef = useCallback((ref: string) => {
+    setExpandedEvidenceRef((prev) => (prev === ref ? null : ref));
+  }, []);
+
+  const findEvidenceForRef = useCallback(
+    (ref: string): InsightEvidenceMapEntry | undefined =>
+      v6EvidenceMap.find(
+        (entry) => entry.answer_id === ref || entry.question_text === ref
+      ),
+    [v6EvidenceMap]
+  );
+
+  const isDirty = title !== (insight?.title || '');
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -485,8 +659,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       await Api.patch(`/interview/insights/${insight.id}`, { title });
       toast.success(isPolish ? 'Zapisano' : 'Saved');
-      addActivityLogEntry('edit', isPolish ? 'Tytuł zaktualizowany' : 'Title updated');
-      onSaved?.({ ...insight, title });
+      const refreshed = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
+      if (refreshed) {
+        setInsight(refreshed);
+        onSaved?.(refreshed);
+      } else {
+        onSaved?.({ ...insight, title });
+      }
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
+      );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
     } catch {
       toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
     } finally {
@@ -506,6 +689,45 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
   };
 
+  const openSourceSessionInInterviewHub = useCallback(
+    (session: SourceSession) => {
+      try {
+        const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
+        const parsed = raw ? JSON.parse(raw) : {};
+        const openDocuments = Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
+        const activeDocumentId =
+          typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
+
+        const exists = openDocuments.some((d: any) => d?.id === session.id);
+        const inferredStatus = session.completedAt ? ('completed' as const) : ('active' as const);
+        const nextDocuments = exists
+          ? openDocuments
+          : [
+              ...openDocuments,
+              {
+                id: session.id,
+                type: 'session',
+                name: session.name || 'Session',
+                status: inferredStatus,
+                data: { id: session.id, name: session.name || 'Session', status: inferredStatus },
+              },
+            ];
+
+        window.sessionStorage.setItem(
+          'moduleHub.openDocuments.interview',
+          JSON.stringify({
+            openDocuments: nextDocuments,
+            activeDocumentId: session.id || activeDocumentId,
+          })
+        );
+      } catch {
+        // ignore
+      }
+      navigate(ROUTES.INTERVIEW);
+    },
+    [navigate]
+  );
+
   const handleRegenerate = async () => {
     if (!insight) return;
     setIsRegenerating(true);
@@ -514,10 +736,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
       const data = await Api.get(`/interview/insights/${insightId}`);
       setInsight(data);
-      addActivityLogEntry(
-        'regenerated',
-        isPolish ? 'Regeneracja rozpoczęta' : 'Regeneration started'
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
       );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       onRegenerate?.();
     } catch {
       toast.error(isPolish ? 'Nie udało się zregenerować' : 'Failed to regenerate');
@@ -546,10 +768,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     a.click();
     URL.revokeObjectURL(url);
     toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
-    addActivityLogEntry(
-      'exported',
-      isPolish ? 'Wyeksportowano do Markdown' : 'Exported to Markdown'
-    );
   };
 
   const handleExportToTools = async () => {
@@ -560,7 +778,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         target: 'tools',
       });
       toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
-      addActivityLogEntry('exported', isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
+      );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const toolId = exportRes?.targetId;
       if (toolId) navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
     } catch {
@@ -578,10 +799,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         target: 'assessment',
       });
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      addActivityLogEntry(
-        'exported',
-        isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment'
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
       );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const assessmentId = exportRes?.targetId;
       const assessmentType = String(exportRes?.assessmentType || 'DRD').toLowerCase();
       if (assessmentId) navigate(`${ROUTES.ASSESSMENT.ROOT}/${assessmentType}/${assessmentId}`);
@@ -592,45 +813,95 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleGenerateFindings = async () => {
-    setIsGeneratingFindings(true);
-    try {
-      toast(
-        isPolish
-          ? 'Generowanie ustaleń będzie dostępne po integracji z API'
-          : 'Findings generation will be available after API integration',
-        { icon: 'ℹ️' }
-      );
-    } finally {
-      setIsGeneratingFindings(false);
-    }
-  };
-
-  const toggleActionItem = (id: string) => {
-    setActionItems(
-      actionItems.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
+  const handleGenerateFindings = useCallback(() => {
+    toast(
+      isPolish
+        ? 'Ta sekcja jest jeszcze niedostępna dla Insight (brak kontraktu backend).'
+        : 'This section is not available for Insight yet (no backend contract).'
     );
-  };
+  }, [isPolish]);
 
   // Comments handlers (NMode)
   const handleSubmitComment = useCallback(() => {
-    if (!commentDraft.trim()) return;
-    const newComment: CommentItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      content: commentDraft.trim(),
-      authorName: 'Current User',
-      createdAt: new Date().toISOString(),
-      priority: draftPriority,
-    };
-    setNComments((prev) => [...prev, newComment]);
-    setCommentDraft('');
-    setDraftPriority('normal');
-    addActivityLogEntry('comment', isPolish ? 'Dodano komentarz' : 'Comment added');
-  }, [commentDraft, draftPriority, isPolish, addActivityLogEntry]);
+    void (async () => {
+      const text = commentDraft.trim();
+      if (!text) return;
 
-  const handleDeleteComment = useCallback((id: string) => {
-    setNComments((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+      try {
+        if (isInterviewDemoId(insightId)) {
+          const created = {
+            id: `demo-comment-${Date.now()}`,
+            authorName: currentUser?.displayName || (currentUser as any)?.name || 'You',
+            content: text,
+            createdAt: new Date().toISOString(),
+            priority: draftPriority,
+          } as CommentItem;
+          setNComments((prev) => [...prev, created]);
+          setActivityEntries((prev) => [
+            {
+              id: `demo-activity-${Date.now()}`,
+              type: 'comment',
+              description: 'Comment added in demo mode.',
+              timestamp: new Date().toISOString(),
+              userName: created.authorName,
+            },
+            ...prev,
+          ]);
+          setCommentDraft('');
+          setDraftPriority('normal');
+          return;
+        }
+
+        const created = await Api.post(`/interview/insights/${insightId}/comments`, {
+          content: text,
+          priority: draftPriority,
+        });
+        setNComments((prev) => [...prev, created]);
+        setCommentDraft('');
+        setDraftPriority('normal');
+
+        const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+          () => []
+        );
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      }
+    })();
+  }, [commentDraft, currentUser?.displayName, currentUser?.id, draftPriority, insightId, isPolish, (currentUser as any)?.name]);
+
+  const handleDeleteComment = useCallback(
+    (commentId: string) => {
+      void (async () => {
+        try {
+          if (isInterviewDemoId(insightId)) {
+            setNComments((prev) => prev.filter((c) => c.id !== commentId));
+            setActivityEntries((prev) => [
+              {
+                id: `demo-activity-delete-${Date.now()}`,
+                type: 'comment',
+                description: 'Comment removed in demo mode.',
+                timestamp: new Date().toISOString(),
+                userName: currentUser?.displayName || (currentUser as any)?.name || 'You',
+              },
+              ...prev,
+            ]);
+            return;
+          }
+
+          await Api.delete(`/interview/insights/${insightId}/comments/${commentId}`);
+          setNComments((prev) => prev.filter((c) => c.id !== commentId));
+          const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+            () => []
+          );
+          setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        } catch {
+          toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+        }
+      })();
+    },
+    [currentUser?.displayName, currentUser?.id, insightId, isPolish, (currentUser as any)?.name]
+  );
 
   const getPriorityDotClass = useCallback((p: CommentPriority) => {
     if (p === 'high') return 'bg-red-500';
@@ -690,44 +961,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [isPolish]
   );
 
-  // Attachments handlers (NMode)
-  const handleUploadAttachments = useCallback(
-    async (files: FileList) => {
-      const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: URL.createObjectURL(file),
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: 'Current User',
-      }));
-      setNAttachments((prev) => [...prev, ...newAttachments]);
-      toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
-      addActivityLogEntry('edit', isPolish ? 'Dodano załączniki' : 'Attachments added');
-    },
-    [isPolish, addActivityLogEntry]
-  );
+  const filteredComments = useMemo(() => {
+    const now = Date.now();
+    const cutoffMs =
+      commentDateFilter === 'today'
+        ? 24 * 60 * 60 * 1000
+        : commentDateFilter === '7d'
+          ? 7 * 24 * 60 * 60 * 1000
+          : commentDateFilter === '30d'
+            ? 30 * 24 * 60 * 60 * 1000
+            : null;
 
-  const handleDeleteAttachment = useCallback(
-    async (id: string) => {
-      setNAttachments((prev) => prev.filter((a) => a.id !== id));
-      toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
-    },
-    [isPolish]
-  );
+    const withinRange = (c: CommentItem) => {
+      if (!cutoffMs) return true;
+      const ts = new Date(c.createdAt).getTime();
+      if (!Number.isFinite(ts)) return true;
+      return now - ts <= cutoffMs;
+    };
 
-  const handleAddLinkedItem = useCallback(async (item: LinkedItem) => {
-    setNLinkedItems((prev) => [...prev, item]);
-  }, []);
-
-  const handleRemoveLinkedItem = useCallback(async (item: Pick<LinkedItem, 'id' | 'type'>) => {
-    setNLinkedItems((prev) => prev.filter((i) => i.id !== item.id));
-  }, []);
-
-  const searchLinkedItems = useCallback(async (_query: string): Promise<LinkedItem[]> => {
-    return [];
-  }, []);
+    const filtered = nComments.filter(withinRange);
+    const sorted = [...filtered].sort((a, b) => {
+      const ta = new Date(a.createdAt).getTime();
+      const tb = new Date(b.createdAt).getTime();
+      if (!Number.isFinite(ta) || !Number.isFinite(tb)) return 0;
+      return commentSortOrder === 'asc' ? ta - tb : tb - ta;
+    });
+    return sorted;
+  }, [nComments, commentDateFilter, commentSortOrder]);
 
   // ── Properties strip fields ────────────────────────────────────────────────
 
@@ -778,72 +1038,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onChange: () => {},
         readOnly: true,
       },
-      {
-        id: 'tags',
-        label: { en: 'Tags', pl: 'Tagi' },
-        type: 'custom' as const,
-        value: '',
-        onChange: () => {},
-        render: () => (
-          <div className="flex flex-wrap items-center gap-1">
-            {tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-500/10 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300 text-[10px] font-medium"
-              >
-                #{tag}
-                <button
-                  onClick={() => setTags(tags.filter((_, i) => i !== idx))}
-                  className="p-0.5 rounded-full hover:bg-pink-500/20"
-                >
-                  <X size={8} />
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newTag.trim()) {
-                  if (!tags.includes(newTag.trim().toLowerCase())) {
-                    setTags([...tags, newTag.trim().toLowerCase()]);
-                  }
-                  setNewTag('');
-                }
-              }}
-              placeholder="+"
-              className="w-12 h-5 px-1 rounded text-[10px] bg-transparent text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none"
-            />
-          </div>
-        ),
-      },
     ],
-    [insight, isPolish, typeMeta, tags, newTag]
+    [insight, isPolish, typeMeta]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
 
   const nModeActivityEntries = useMemo<NModeActivityLogEntry[]>(
-    () =>
-      activityLog.map((e) => ({
-        id: e.id,
-        type: e.type,
-        description: e.description,
-        timestamp: e.timestamp,
-        userName: e.userName,
-      })),
-    [activityLog]
+    () => activityEntries,
+    [activityEntries]
   );
 
   const activityStats = useMemo<ActivityStats>(
     () => ({
-      total: activityLog.length,
-      edited: activityLog.filter((e) => e.type === 'edit').length,
+      total: activityEntries.length,
+      edited: activityEntries.filter((e) => e.type === 'edit').length,
       escalations: 0,
-      collaboration: activityLog.filter((e) => e.type === 'comment').length,
+      collaboration: activityEntries.filter((e) => e.type === 'comment').length,
     }),
-    [activityLog]
+    [activityEntries]
   );
 
   const activityTypeMeta = useCallback(
@@ -896,36 +1109,612 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'executive-summary':
           component = (
             <div className="space-y-4">
-              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                {executiveSummary || (isPolish ? 'Brak podsumowania' : 'No summary available')}
-              </p>
-              <div className="flex items-center gap-4 pt-3 border-t border-slate-200 dark:border-navy-700">
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <MessageSquare size={14} />
-                  <span>
-                    {insight?.sourceSessionCount || 0} {isPolish ? 'wywiadów' : 'interviews'}
-                  </span>
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Czytaj jak brief konsultingowy' : 'Read this as a consulting brief'}
+              >
+                {executiveSummary || (isPolish ? 'Brak podsumowania.' : 'No summary available.')}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Official answers' : 'Official answers'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {officialAnswers.length}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <Lightbulb size={14} />
-                  <span>
-                    {keyFindings.length} {isPolish ? 'ustaleń' : 'findings'}
-                  </span>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Issues / Risks' : 'Issues / risks'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {issuesReadout.length}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <Flag size={14} />
-                  <span>
-                    {riskCounts.high} {isPolish ? 'ryzyk wysokich' : 'high risks'}
-                  </span>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Signals / Opportunities' : 'Signals / opportunities'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {hiddenSignals.length + opportunityReadout.length}
+                  </div>
+                </div>
+              </div>
+
+              {evidenceQuotes.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {evidenceQuotes.slice(0, 2).map((quote) => (
+                    <div
+                      key={quote}
+                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm italic text-slate-600 dark:text-slate-300"
+                    >
+                      "{quote}"
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'consulting-readout':
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="info"
+                title={isPolish ? 'Zakres interpretacji' : 'Interpretation scope'}
+              >
+                {isPolish
+                  ? 'To jest warstwa konsultingowa: issues, opportunities i sygnały ukryte w odpowiedziach. Bez automatycznych action planów.'
+                  : 'This is the consulting layer: issues, opportunities, and hidden signals from the answers. No automatic action plans.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Official Answers' : 'Official Answers'}
+                  </div>
+                  {officialAnswers.length > 0 ? (
+                    officialAnswers.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={FileText}
+                      message={isPolish ? 'Brak zebranych faktów źródłowych' : 'No source facts available'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Issues / Risks' : 'Issues / Risks'}
+                  </div>
+                  {issuesReadout.length > 0 ? (
+                    issuesReadout.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl bg-red-500/[0.04] dark:bg-red-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={AlertTriangle}
+                      message={isPolish ? 'Brak wyraźnych issue do pokazania' : 'No clear issues to surface'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Signals / Opportunities' : 'Signals / Opportunities'}
+                  </div>
+                  {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
+                    uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={Sparkles}
+                      message={
+                        isPolish ? 'Brak sygnałów i opportunities do pokazania' : 'No signals or opportunities yet'
+                      }
+                    />
+                  )}
                 </div>
               </div>
             </div>
           );
           break;
 
+        case 'themes':
+          component = (
+            <div className="space-y-4">
+              {v6MissingData.length > 0 && (
+                <Callout variant="warning" title={isPolish ? 'Brakujące dane' : 'Missing Data'} compact>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {v6MissingData.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+              {v6Themes.length === 0 ? (
+                <EmptyStateInline
+                  icon={Layers}
+                  message={isPolish ? 'Brak zidentyfikowanych tematów' : 'No themes identified yet'}
+                  hint={isPolish ? 'Tematy pojawią się po wygenerowaniu analizy V6.' : 'Themes will appear after V6 analysis generation.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Themes.map((theme, idx) => (
+                    <div key={idx} className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {theme.title}
+                        </div>
+                        <span
+                          className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                            theme.strength === 'strong'
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : theme.strength === 'moderate'
+                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
+                          }`}
+                        >
+                          {theme.strength === 'strong'
+                            ? isPolish ? 'Silny' : 'Strong'
+                            : theme.strength === 'moderate'
+                              ? isPolish ? 'Umiarkowany' : 'Moderate'
+                              : isPolish ? 'Słaby' : 'Weak'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {theme.description}
+                      </p>
+                      {theme.evidence_refs?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {theme.evidence_refs.map((ref) => {
+                            const evidence = findEvidenceForRef(ref);
+                            const isExpanded = expandedEvidenceRef === ref;
+                            return (
+                              <div key={ref} className="inline-flex flex-col">
+                                <button
+                                  onClick={() => toggleEvidenceRef(ref)}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                >
+                                  <Zap size={10} />
+                                  {evidence?.question_text
+                                    ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                    : ref.slice(0, 20)}
+                                  {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                </button>
+                                {isExpanded && evidence && (
+                                  <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                    <div className="font-medium text-slate-700 dark:text-slate-200">
+                                      {evidence.question_text}
+                                    </div>
+                                    <div className="text-slate-500 dark:text-slate-400 italic">
+                                      "{evidence.answer_snippet}"
+                                    </div>
+                                    {evidence.linked_themes?.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 pt-0.5">
+                                        {evidence.linked_themes.map((t) => (
+                                          <span key={t} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400">
+                                            {t}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'issues-risks':
+          component = (
+            <div className="space-y-4">
+              {v6Issues.length === 0 ? (
+                <EmptyStateInline
+                  icon={ShieldAlert}
+                  message={isPolish ? 'Brak zidentyfikowanych problemów' : 'No issues identified yet'}
+                  hint={isPolish ? 'Problemy pojawią się po analizie V6.' : 'Issues will appear after V6 analysis.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Issues.map((issue, idx) => {
+                    const severityStyles =
+                      issue.severity === 'high'
+                        ? 'border-l-red-500 bg-red-500/[0.04] dark:bg-red-500/10'
+                        : issue.severity === 'medium'
+                          ? 'border-l-amber-500 bg-amber-500/[0.04] dark:bg-amber-500/10'
+                          : 'border-l-slate-400 bg-slate-50 dark:bg-navy-900/50';
+                    const severityBadge =
+                      issue.severity === 'high'
+                        ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                        : issue.severity === 'medium'
+                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                    return (
+                      <div key={idx} className={`rounded-xl border-l-4 ${severityStyles} px-4 py-4 space-y-2`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {issue.title}
+                          </div>
+                          <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}>
+                            {issue.severity === 'high'
+                              ? isPolish ? 'Wysoki' : 'High'
+                              : issue.severity === 'medium'
+                                ? isPolish ? 'Średni' : 'Medium'
+                                : isPolish ? 'Niski' : 'Low'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {issue.description}
+                        </p>
+                        {issue.evidence_refs?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {issue.evidence_refs.map((ref) => {
+                              const evidence = findEvidenceForRef(ref);
+                              const isExpanded = expandedEvidenceRef === ref;
+                              return (
+                                <div key={ref} className="inline-flex flex-col">
+                                  <button
+                                    onClick={() => toggleEvidenceRef(ref)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                  >
+                                    <Zap size={10} />
+                                    {evidence?.question_text
+                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                      : ref.slice(0, 20)}
+                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                  </button>
+                                  {isExpanded && evidence && (
+                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                      <div className="font-medium text-slate-700 dark:text-slate-200">
+                                        {evidence.question_text}
+                                      </div>
+                                      <div className="text-slate-500 dark:text-slate-400 italic">
+                                        "{evidence.answer_snippet}"
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'opportunities':
+          component = (
+            <div className="space-y-4">
+              {v6Opportunities.length === 0 ? (
+                <EmptyStateInline
+                  icon={TrendingUp}
+                  message={isPolish ? 'Brak zidentyfikowanych szans' : 'No opportunities identified yet'}
+                  hint={isPolish ? 'Szanse pojawią się po analizie V6.' : 'Opportunities will appear after V6 analysis.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Opportunities.map((opp, idx) => {
+                    const impactBadge =
+                      opp.impact === 'high'
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                        : opp.impact === 'medium'
+                          ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                          : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                    return (
+                      <div key={idx} className="rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] px-4 py-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {opp.title}
+                          </div>
+                          <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}>
+                            {opp.impact === 'high'
+                              ? isPolish ? 'Wysoki wpływ' : 'High impact'
+                              : opp.impact === 'medium'
+                                ? isPolish ? 'Średni wpływ' : 'Medium impact'
+                                : isPolish ? 'Niski wpływ' : 'Low impact'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {opp.description}
+                        </p>
+                        {opp.evidence_refs?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {opp.evidence_refs.map((ref) => {
+                              const evidence = findEvidenceForRef(ref);
+                              const isExpanded = expandedEvidenceRef === ref;
+                              return (
+                                <div key={ref} className="inline-flex flex-col">
+                                  <button
+                                    onClick={() => toggleEvidenceRef(ref)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                  >
+                                    <Zap size={10} />
+                                    {evidence?.question_text
+                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                      : ref.slice(0, 20)}
+                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                  </button>
+                                  {isExpanded && evidence && (
+                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                      <div className="font-medium text-slate-700 dark:text-slate-200">
+                                        {evidence.question_text}
+                                      </div>
+                                      <div className="text-slate-500 dark:text-slate-400 italic">
+                                        "{evidence.answer_snippet}"
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'signals':
+          component = (
+            <div className="space-y-4">
+              {v6Signals.length === 0 ? (
+                <EmptyStateInline
+                  icon={Radio}
+                  message={isPolish ? 'Brak wykrytych sygnałów' : 'No signals detected yet'}
+                  hint={isPolish ? 'Sygnały pojawią się po analizie V6.' : 'Signals will appear after V6 analysis.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Signals.map((signal, idx) => {
+                    const typeConfig: Record<string, { bg: string; label: string; labelPl: string; icon: React.ReactNode }> = {
+                      tension: { bg: 'bg-red-500/10 text-red-600 dark:text-red-400', label: 'Tension', labelPl: 'Napięcie', icon: <Flame size={10} /> },
+                      gap: { bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', label: 'Gap', labelPl: 'Luka', icon: <Target size={10} /> },
+                      contradiction: { bg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400', label: 'Contradiction', labelPl: 'Sprzeczność', icon: <AlertCircle size={10} /> },
+                      emerging_pattern: { bg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', label: 'Emerging Pattern', labelPl: 'Wzorzec', icon: <Sparkles size={10} /> },
+                    };
+                    const cfg = typeConfig[signal.type] || typeConfig.emerging_pattern;
+                    return (
+                      <div key={idx} className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {signal.title}
+                          </div>
+                          <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>
+                            {cfg.icon}
+                            {isPolish ? cfg.labelPl : cfg.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {signal.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'evidence-map':
+          component = (
+            <div className="space-y-4">
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Mapa dowodów' : 'Evidence Map'}
+                compact
+              >
+                {isPolish
+                  ? 'Tabela łączy odpowiedzi źródłowe z tematami i problemami. Kliknij wiersz, aby zobaczyć pełny cytat.'
+                  : 'This table links source answers to themes and issues. Click a row to see the full quote.'}
+              </Callout>
+              {v6EvidenceMap.length === 0 ? (
+                <EmptyStateInline
+                  icon={Map}
+                  message={isPolish ? 'Brak mapy dowodów' : 'No evidence map available'}
+                  hint={isPolish ? 'Mapa pojawi się po analizie V6.' : 'Map will appear after V6 analysis.'}
+                />
+              ) : (
+                <InlineTable<InsightEvidenceMapEntry & Record<string, unknown>>
+                  columns={[
+                    {
+                      key: 'question',
+                      header: isPolish ? 'Pytanie' : 'Question',
+                      width: 'w-1/3',
+                      render: (row) => (
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                          {row.question_text}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'answer',
+                      header: isPolish ? 'Odpowiedź' : 'Answer',
+                      width: 'w-1/3',
+                      render: (row) => (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          {row.answer_snippet?.length > 120
+                            ? row.answer_snippet.slice(0, 120) + '…'
+                            : row.answer_snippet}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'linked',
+                      header: isPolish ? 'Powiązania' : 'Links',
+                      render: (row) => (
+                        <div className="flex flex-wrap gap-1">
+                          {row.linked_themes?.map((t: string) => (
+                            <span key={`t-${t}`} className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                              {t}
+                            </span>
+                          ))}
+                          {row.linked_issues?.map((i: string) => (
+                            <span key={`i-${i}`} className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]">
+                              {i}
+                            </span>
+                          ))}
+                        </div>
+                      ),
+                    },
+                  ] as InlineTableColumn<InsightEvidenceMapEntry & Record<string, unknown>>[]}
+                  data={v6EvidenceMap as (InsightEvidenceMapEntry & Record<string, unknown>)[]}
+                  rowKey={(row, idx) => row.answer_id || String(idx)}
+                  emptyMessage={isPolish ? 'Brak danych.' : 'No data.'}
+                  striped
+                />
+              )}
+            </div>
+          );
+          break;
+
+        case 'traceability':
+          component = (
+            <div className="space-y-4">
+              <Callout
+                variant="success"
+                title={isPolish ? 'Traceability do odpowiedzi źródłowych' : 'Traceability to source answers'}
+              >
+                {isPolish
+                  ? 'Każda karta poniżej pokazuje, z których oficjalnych odpowiedzi i luk informacyjnych zbudowano insight.'
+                  : 'Each card below shows which official answers and information gaps feed this insight.'}
+              </Callout>
+
+              {traceabilityRows.length === 0 ? (
+                <EmptyStateInline
+                  icon={Target}
+                  message={isPolish ? 'Brak sesji źródłowych' : 'No source sessions'}
+                  hint={
+                    isPolish
+                      ? 'Dodaj lub dokończ sesje, aby zbudować evidence trail.'
+                      : 'Add or complete sessions to build the evidence trail.'
+                  }
+                />
+              ) : (
+                <div className="space-y-3">
+                  {traceabilityRows.map(({ session, summary }) => (
+                    <div
+                      key={session.id}
+                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {session.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {session.templateName || (isPolish ? 'Sesja źródłowa' : 'Source session')}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => openSourceSessionInInterviewHub(session)}
+                          className="p-1.5 rounded-lg hover:bg-slate-200/70 dark:hover:bg-white/[0.06] text-slate-500 dark:text-slate-400 transition-colors"
+                        >
+                          <ExternalLink size={14} />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Official answers' : 'Official answers'}
+                          </div>
+                          {summary.facts.length > 0 ? (
+                            summary.facts.slice(0, 4).map((fact) => (
+                              <div key={fact} className="text-sm text-slate-700 dark:text-slate-300">
+                                {fact}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Brak zebranych faktów' : 'No facts captured'}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Gaps / constraints' : 'Gaps / constraints'}
+                          </div>
+                          {uniqueNonEmpty([...summary.gaps, ...summary.constraints, ...summary.painPoints]).length >
+                          0 ? (
+                            uniqueNonEmpty([
+                              ...summary.gaps,
+                              ...summary.constraints,
+                              ...summary.painPoints,
+                            ])
+                              .slice(0, 4)
+                              .map((item) => (
+                                <div key={item} className="text-sm text-slate-700 dark:text-slate-300">
+                                  {item}
+                                </div>
+                              ))
+                          ) : (
+                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Brak luk lub ograniczeń' : 'No gaps or constraints'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
         case 'full-analysis':
           component = (
-            <div>
+            <div className="space-y-4">
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Raw AI narrative' : 'Raw AI narrative'}
+                compact
+              >
+                {isPolish
+                  ? 'Ta sekcja pokazuje pełny output AI w markdownzie. Traktuj ją jako warstwę roboczą pod consulting readout.'
+                  : 'This section shows the full AI markdown output. Treat it as the working layer behind the consulting readout.'}
+              </Callout>
               {insight?.status === 'generating' ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <Sparkles size={48} className="text-amber-400 animate-pulse mb-6" />
@@ -999,390 +1788,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
 
-        case 'key-findings':
-          component = (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {keyFindings.length} {isPolish ? 'ustaleń' : 'findings'}
-                </span>
-                <button
-                  onClick={handleGenerateFindings}
-                  disabled={isGeneratingFindings}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {isGeneratingFindings ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={14} />
-                  )}
-                  <span>{isPolish ? 'Generuj AI' : 'Generate AI'}</span>
-                </button>
-              </div>
-              {keyFindings.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-                  {isPolish
-                    ? 'Brak kluczowych ustaleń. Wygeneruj je za pomocą AI.'
-                    : 'No key findings yet. Generate them using AI.'}
-                </p>
-              )}
-              {keyFindings.map((finding, index) => (
-                <div
-                  key={finding.id}
-                  className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{finding.content}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          finding.confidence === 'high'
-                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                            : finding.confidence === 'medium'
-                              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                              : 'bg-slate-500/20 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {finding.confidence === 'high'
-                          ? isPolish
-                            ? 'Wysoka pewność'
-                            : 'High confidence'
-                          : finding.confidence === 'medium'
-                            ? isPolish
-                              ? 'Średnia pewność'
-                              : 'Medium confidence'
-                            : isPolish
-                              ? 'Niska pewność'
-                              : 'Low confidence'}
-                      </span>
-                      {finding.category && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {finding.category}
-                        </span>
-                      )}
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {finding.sourceCount} {isPolish ? 'źródeł' : 'sources'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-          break;
 
-        case 'quotes-evidence':
-          component = (
-            <div className="space-y-3">
-              <div className="flex items-center gap-1 mb-2">
-                {(['all', 'positive', 'neutral', 'negative'] as const).map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setQuoteFilter(filter)}
-                    className={`px-2 py-1 rounded-lg text-xs transition-all ${
-                      quoteFilter === filter
-                        ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                    }`}
-                  >
-                    {filter === 'all' && (isPolish ? 'Wszystkie' : 'All')}
-                    {filter === 'positive' && <Smile size={14} />}
-                    {filter === 'neutral' && <Meh size={14} />}
-                    {filter === 'negative' && <Frown size={14} />}
-                  </button>
-                ))}
-                <span className="text-xs text-slate-400 ml-auto">{filteredQuotes.length}</span>
-              </div>
-              {filteredQuotes.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-                  {isPolish ? 'Brak cytatów z wywiadów.' : 'No interview quotes available.'}
-                </p>
-              )}
-              {filteredQuotes.map((quote) => (
-                <div
-                  key={quote.id}
-                  className={`p-4 rounded-xl border-l-4 ${
-                    quote.sentiment === 'positive'
-                      ? 'border-l-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10'
-                      : quote.sentiment === 'negative'
-                        ? 'border-l-red-500 bg-red-500/5 dark:bg-red-500/10'
-                        : 'border-l-slate-400 bg-slate-50 dark:bg-navy-800'
-                  }`}
-                >
-                  <p className="text-sm text-slate-700 dark:text-slate-300 italic mb-3">
-                    "{quote.quote}"
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span>{quote.source}</span>
-                      {quote.department && (
-                        <>
-                          <span>•</span>
-                          <span>{quote.department}</span>
-                        </>
-                      )}
-                      {quote.role && (
-                        <>
-                          <span>•</span>
-                          <span>{quote.role}</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      {quote.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-          break;
-
-        case 'patterns':
-          component = (
-            <div>
-              {patterns.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4 p-4 rounded-xl bg-slate-50 dark:bg-navy-800">
-                  {patterns
-                    .flatMap((p) => p.relatedKeywords)
-                    .map((keyword, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 rounded-full bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-sm"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                </div>
-              )}
-              <div className="space-y-2">
-                {patterns.length === 0 && (
-                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-                    {isPolish ? 'Brak zidentyfikowanych wzorców.' : 'No patterns identified yet.'}
-                  </p>
-                )}
-                {patterns.map((pattern) => (
-                  <div
-                    key={pattern.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                  >
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {pattern.theme}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-cyan-500 rounded-full"
-                          style={{ width: `${(pattern.frequency / 15) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-slate-500 w-8">{pattern.frequency}x</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-          break;
-
-        case 'contradictions':
-          component = (
-            <div className="space-y-4">
-              {contradictions.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-                  {isPolish
-                    ? 'Brak zidentyfikowanych sprzeczności.'
-                    : 'No contradictions identified yet.'}
-                </p>
-              )}
-              {contradictions.map((c) => (
-                <div
-                  key={c.id}
-                  className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      {c.topic}
-                    </h4>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        c.severity === 'high'
-                          ? 'bg-red-500/20 text-red-600 dark:text-red-400'
-                          : c.severity === 'medium'
-                            ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                            : 'bg-slate-500/20 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      {c.severity}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg bg-blue-500/10 dark:bg-blue-500/20">
-                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">
-                        {c.sourceA}
-                      </p>
-                      <p className="text-sm text-slate-600 dark:text-slate-300">{c.viewA}</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-purple-500/10 dark:bg-purple-500/20">
-                      <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">
-                        {c.sourceB}
-                      </p>
-                      <p className="text-sm text-slate-600 dark:text-slate-300">{c.viewB}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-          break;
-
-        case 'action-items':
-          component = (
-            <div>
-              {actionItems.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-                  {isPolish ? 'Brak zdefiniowanych działań.' : 'No action items defined yet.'}
-                </p>
-              )}
-              {(['quick_win', 'short_term', 'long_term'] as const).map((actionType) => {
-                const items = actionItems.filter((a) => a.type === actionType);
-                if (items.length === 0) return null;
-                const colorMap = { quick_win: 'emerald', short_term: 'blue', long_term: 'purple' };
-                const labelMap = {
-                  quick_win: isPolish ? 'Quick Wins' : 'Quick Wins',
-                  short_term: isPolish ? 'Krótkoterminowe' : 'Short Term',
-                  long_term: isPolish ? 'Długoterminowe' : 'Long Term',
-                };
-                const color = colorMap[actionType];
-                return (
-                  <div key={actionType} className="mb-4">
-                    <h4
-                      className={`text-xs font-semibold text-${color}-600 dark:text-${color}-400 uppercase tracking-wider mb-2`}
-                    >
-                      {labelMap[actionType]}
-                    </h4>
-                    <div className="space-y-2">
-                      {items.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`flex items-start gap-3 p-3 rounded-xl bg-${color}-500/5 dark:bg-${color}-500/10 border border-${color}-500/20`}
-                        >
-                          <button
-                            onClick={() => toggleActionItem(item.id)}
-                            className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                              item.completed
-                                ? `bg-${color}-500 border-${color}-500 text-white`
-                                : `border-${color}-500/50 hover:border-${color}-500`
-                            }`}
-                          >
-                            {item.completed && <CheckCircle size={12} />}
-                          </button>
-                          <div className="flex-1">
-                            <p
-                              className={`text-sm ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}
-                            >
-                              {item.action}
-                            </p>
-                            {item.owner && (
-                              <p className="text-xs text-slate-500 mt-1">
-                                {isPolish ? 'Właściciel:' : 'Owner:'} {item.owner}
-                              </p>
-                            )}
-                          </div>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${
-                              item.priority === 'high'
-                                ? 'bg-red-500/20 text-red-600 dark:text-red-400'
-                                : item.priority === 'medium'
-                                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                                  : 'bg-slate-500/20 text-slate-600'
-                            }`}
-                          >
-                            {item.priority}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-          break;
-
-        case 'risk-flags':
-          component = (
-            <div className="space-y-3">
-              {riskFlags.length > 0 && (
-                <div className="flex items-center gap-2 mb-2">
-                  {riskCounts.high > 0 && (
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-600 dark:text-red-400">
-                      <AlertCircle size={10} /> {riskCounts.high} high
-                    </span>
-                  )}
-                  {riskCounts.medium > 0 && (
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                      <AlertTriangle size={10} /> {riskCounts.medium} medium
-                    </span>
-                  )}
-                  {riskCounts.low > 0 && (
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-600 dark:text-slate-400">
-                      {riskCounts.low} low
-                    </span>
-                  )}
-                </div>
-              )}
-              {riskFlags.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-                  {isPolish ? 'Brak zidentyfikowanych ryzyk.' : 'No risk flags identified yet.'}
-                </p>
-              )}
-              {riskFlags.map((risk) => (
-                <div
-                  key={risk.id}
-                  className={`p-3 rounded-xl border-l-4 ${
-                    risk.severity === 'high'
-                      ? 'border-l-red-500 bg-red-500/5 dark:bg-red-500/10'
-                      : risk.severity === 'medium'
-                        ? 'border-l-amber-500 bg-amber-500/5 dark:bg-amber-500/10'
-                        : 'border-l-slate-400 bg-slate-50 dark:bg-navy-800'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{risk.risk}</p>
-                    <span
-                      className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full ${
-                        risk.severity === 'high'
-                          ? 'bg-red-500/20 text-red-600 dark:text-red-400'
-                          : risk.severity === 'medium'
-                            ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                            : 'bg-slate-500/20 text-slate-600'
-                      }`}
-                    >
-                      {risk.severity}
-                    </span>
-                  </div>
-                  {risk.mitigation && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      <span className="font-medium">{isPolish ? 'Mitygacja:' : 'Mitigation:'}</span>{' '}
-                      {risk.mitigation}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          );
-          break;
 
         case 'source-sessions':
           component = (
@@ -1413,7 +1819,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
                       </div>
                     </div>
-                    <button className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 transition-colors">
+                    <button
+                      onClick={() => openSourceSessionInInterviewHub(session)}
+                      className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 transition-colors"
+                    >
                       <ExternalLink size={14} />
                     </button>
                   </div>
@@ -1423,24 +1832,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
 
-        case 'attachments-links':
-          component = (
-            <AttachmentsLinksCanvas
-              attachments={nAttachments}
-              onUploadAttachments={handleUploadAttachments}
-              onDeleteAttachment={handleDeleteAttachment}
-              linkedItems={nLinkedItems}
-              onAddLinkedItem={handleAddLinkedItem}
-              onRemoveLinkedItem={handleRemoveLinkedItem}
-              searchLinkedItems={searchLinkedItems}
-            />
-          );
-          break;
+        // (removed) attachments-links — no backend contract for insight attachments/links
 
         case 'comments':
           component = (
             <CommentsCanvas
-              comments={nComments}
+              comments={filteredComments}
               onDeleteComment={handleDeleteComment}
               dateFilter={commentDateFilter}
               onDateFilterChange={setCommentDateFilter}
@@ -1471,39 +1868,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           break;
       }
 
+      const badgeMap: Record<string, number | undefined> = {
+        comments: nComments.length,
+        'source-sessions': sourceSessions.length,
+        'activity-log': activityEntries.length,
+        themes: v6Themes.length || undefined,
+        'issues-risks': v6Issues.length || undefined,
+        opportunities: v6Opportunities.length || undefined,
+        signals: v6Signals.length || undefined,
+        'evidence-map': v6EvidenceMap.length || undefined,
+      };
+
       return {
         ...section,
         component,
-        badge:
-          section.id === 'comments'
-            ? nComments.length
-            : section.id === 'key-findings'
-              ? keyFindings.length
-              : section.id === 'risk-flags'
-                ? riskFlags.length
-                : section.id === 'source-sessions'
-                  ? sourceSessions.length
-                  : section.id === 'activity-log'
-                    ? activityLog.length
-                    : undefined,
+        badge: badgeMap[section.id],
       } as NModeSection;
     });
   }, [
     executiveSummary,
     insight,
     isPolish,
-    keyFindings,
-    riskCounts,
-    filteredQuotes,
-    quoteFilter,
-    quotes,
-    patterns,
-    contradictions,
-    actionItems,
-    riskFlags,
+    officialAnswers,
+    issuesReadout,
+    hiddenSignals,
+    opportunityReadout,
+    evidenceQuotes,
+    traceabilityRows,
     sourceSessions,
-    nAttachments,
-    nLinkedItems,
+    sourceSessionSummaries,
     nComments,
     commentDraft,
     commentDateFilter,
@@ -1512,16 +1905,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     nModeActivityEntries,
     activityStats,
     activityTypeMeta,
-    isGeneratingFindings,
     handleSubmitComment,
     handleDeleteComment,
     getPriorityDotClass,
-    handleUploadAttachments,
-    handleDeleteAttachment,
-    handleAddLinkedItem,
-    handleRemoveLinkedItem,
-    searchLinkedItems,
-    activityLog,
+    openSourceSessionInInterviewHub,
+    activityEntries,
+    v6Themes,
+    v6Issues,
+    v6Opportunities,
+    v6Signals,
+    v6EvidenceMap,
+    v6MissingData,
+    expandedEvidenceRef,
+    toggleEvidenceRef,
+    findEvidenceForRef,
   ]);
 
   // ── Render ─────────────────────────────────────────────────────────────────

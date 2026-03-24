@@ -68,6 +68,7 @@ function isExemptPath(path: string | undefined) {
     '/api/auth/login',
     '/api/auth/refresh',
     '/api/auth/register',
+    '/api/auth/register-demo',
     '/api/auth/demo-login',
     '/api/auth/reset-password',
     '/api/auth/verify-email',

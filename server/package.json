@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "type-check:backend": "tsc --noEmit",
     "test": "vitest run",
+    "test:v8-db": "V8_DB_TEST_MODE=real vitest run --config vitest.config.v8-db.ts",
     "test:backend": "vitest run tests --environment node",
     "test:backend:watch": "vitest watch tests --environment node",
     "test:backend:coverage": "vitest run tests --coverage --environment node",
@@ -26,6 +27,12 @@
     "test:migration:imports": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/imports.test.ts",
     "test:migration:duplicates": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/duplicates.test.ts",
     "test:migration:performance": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/performance.test.ts",
+    "seed:finance": "tsx scripts/seed-finance.ts",
+    "v8:deploy:check": "tsx scripts/v8-deploy.ts --check",
+    "v8:deploy": "tsx scripts/v8-deploy.ts --deploy",
+    "v8:deploy:status": "tsx scripts/v8-deploy.ts --status",
+    "v8:smoke-test": "tsx scripts/v8-smoke-test.ts",
+    "v8:preflight": "tsx scripts/v8-deploy.ts --check && tsx scripts/v8-migrate.ts --dry-run",
     "start": "node dist/src/index.js",
     "clean": "rm -rf dist .tsbuildinfo"
   },
@@ -46,12 +53,14 @@
     "socket.io": "^4.8.3",
     "tesseract.js": "^7.0.0",
     "winston-daily-rotate-file": "^5.0.0",
+    "ws": "^8.19.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
     "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@types/multer": "^2.0.0",
     "@types/pdf-parse": "^1.1.5",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.21.0"
   }
 }

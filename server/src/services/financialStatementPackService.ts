@@ -1,0 +1,572 @@
+import { v4 as uuidv4 } from 'uuid';
+
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getCanonicalStatementTypes, getCanonicalStatementTypeOrder } from './financeCanonicalRegistry.js';
+
+export type StatementPackReadinessStatus = 'pending' | 'recoverable' | 'ready' | 'rejected';
+
+type PackStatementRow = {
+  id: string;
+  organization_id: string;
+  entity_name?: string | null;
+  statement_type: string;
+  period_start: string;
+  period_end: string;
+  period_label?: string | null;
+  currency?: string | null;
+  scaling?: string | null;
+  status?: string | null;
+  readiness_status?: string | null;
+  readiness_score?: number | null;
+  quality_summary?: string | null;
+  source_file_name?: string | null;
+  statement_pack_id?: string | null;
+};
+
+type PackAggregate = {
+  packStatus: string;
+  packReadinessStatus: StatementPackReadinessStatus;
+  packReadinessScore: number;
+  packQualitySummary: string;
+  packQualityReasonCodes: string[];
+  missingStatementTypes: string[];
+  statementTypesPresent: string[];
+  sourceStatementCount: number;
+};
+
+function isSchemaCompatError(error: unknown): boolean {
+  const message = String((error as Error)?.message || error || '').toLowerCase();
+  return (
+    message.includes('does not exist') ||
+    message.includes('no such column') ||
+    message.includes('no such table') ||
+    message.includes('undefined column')
+  );
+}
+
+function normalizeText(value: unknown): string {
+  return String(value || '').trim();
+}
+
+function toJson(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
+function normalizeStatementType(value: unknown): string {
+  const normalized = normalizeText(value).toUpperCase();
+  if (normalized === 'PL') return 'P&L';
+  return normalized;
+}
+
+function packPeriodLabel(statements: PackStatementRow[]): string {
+  return normalizeText(statements[0]?.period_label) || normalizeText(statements[0]?.period_end) || '';
+}
+
+function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
+  const requiredTypes = getCanonicalStatementTypes();
+  const normalized = statements.filter(Boolean);
+  const byType = new Map<string, PackStatementRow[]>();
+
+  for (const statement of normalized) {
+    const type = normalizeStatementType(statement.statement_type);
+    const existing = byType.get(type) || [];
+    existing.push(statement);
+    byType.set(type, existing);
+  }
+
+  const statementTypesPresent = Array.from(byType.keys());
+  const missingStatementTypes = requiredTypes.filter((type) => !byType.has(type));
+  const duplicateTypes = Array.from(byType.entries())
+    .filter(([, rows]) => rows.length > 1)
+    .map(([type]) => type);
+  const currencySet = new Set(
+    normalized.map((statement) => normalizeText(statement.currency).toUpperCase()).filter(Boolean)
+  );
+  const scalingSet = new Set(
+    normalized.map((statement) => normalizeText(statement.scaling).toLowerCase()).filter(Boolean)
+  );
+  const periodSet = new Set(
+    normalized
+      .map(
+        (statement) =>
+          `${normalizeText(statement.period_start)}:${normalizeText(statement.period_end)}:${normalizeText(statement.period_label)}`
+      )
+      .filter(Boolean)
+  );
+  const readinessValues = normalized.map((statement) =>
+    normalizeText(statement.readiness_status).toLowerCase()
+  );
+  const rejectedCount = readinessValues.filter((value) => value === 'rejected').length;
+  const readyCount = readinessValues.filter((value) => value === 'ready').length;
+  const recoverableCount = readinessValues.filter((value) => value === 'recoverable').length;
+  const pendingCount = readinessValues.filter((value) => !value || value === 'pending').length;
+  const scores = normalized
+    .map((statement) => Number(statement.readiness_score ?? 0))
+    .filter((value) => Number.isFinite(value));
+
+  const reasonCodes: string[] = [];
+  if (missingStatementTypes.includes('P&L')) reasonCodes.push('MISSING_PL');
+  if (missingStatementTypes.includes('BS')) reasonCodes.push('MISSING_BS');
+  if (missingStatementTypes.includes('CF')) reasonCodes.push('MISSING_CF');
+  if (duplicateTypes.length > 0) reasonCodes.push('DUPLICATE_STATEMENT_TYPE');
+  if (currencySet.size > 1) reasonCodes.push('INCONSISTENT_CURRENCY');
+  if (scalingSet.size > 1) reasonCodes.push('INCONSISTENT_SCALING');
+  if (periodSet.size > 1) reasonCodes.push('INCONSISTENT_PERIOD');
+  if (rejectedCount > 0) reasonCodes.push('HAS_REJECTED_STATEMENT');
+  if (pendingCount > 0) reasonCodes.push('HAS_PENDING_STATEMENT');
+  if (recoverableCount > 0) reasonCodes.push('HAS_RECOVERABLE_STATEMENT');
+
+  let packReadinessStatus: StatementPackReadinessStatus = 'pending';
+  if (normalized.length === 0) {
+    packReadinessStatus = 'pending';
+  } else if (
+    missingStatementTypes.length === 0 &&
+    duplicateTypes.length === 0 &&
+    currencySet.size <= 1 &&
+    scalingSet.size <= 1 &&
+    periodSet.size <= 1 &&
+    readyCount === requiredTypes.length
+  ) {
+    packReadinessStatus = 'ready';
+  } else if (rejectedCount === normalized.length && normalized.length > 0) {
+    packReadinessStatus = 'rejected';
+  } else if (readyCount > 0 || recoverableCount > 0 || rejectedCount > 0) {
+    packReadinessStatus = 'recoverable';
+  }
+
+  const scoreBase =
+    scores.length > 0 ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length) : 0;
+  const completenessBonus = Math.round((statementTypesPresent.length / requiredTypes.length) * 25);
+  const penalty =
+    missingStatementTypes.length * 15 +
+    duplicateTypes.length * 10 +
+    Math.max(0, currencySet.size - 1) * 15 +
+    Math.max(0, scalingSet.size - 1) * 10 +
+    Math.max(0, periodSet.size - 1) * 20;
+  const packReadinessScore = Math.max(0, Math.min(100, scoreBase + completenessBonus - penalty));
+
+  const allConfirmed =
+    missingStatementTypes.length === 0 &&
+    duplicateTypes.length === 0 &&
+    normalized.every((statement) => normalizeText(statement.status).toLowerCase() === 'confirmed');
+  const packStatus =
+    packReadinessStatus === 'ready'
+      ? allConfirmed
+        ? 'confirmed'
+        : 'ready'
+      : reasonCodes.some((code) => code.startsWith('INCONSISTENT_') || code === 'DUPLICATE_STATEMENT_TYPE')
+        ? 'needs_review'
+        : normalized.length >= requiredTypes.length
+          ? 'needs_review'
+          : 'partial';
+
+  let packQualitySummary = 'Statement pack is still collecting required statements.';
+  if (packReadinessStatus === 'ready') {
+    packQualitySummary = 'Statement pack contains a complete ready set of P&L, Balance Sheet, and Cash Flow.';
+  } else if (packReadinessStatus === 'rejected') {
+    packQualitySummary = 'All statements in this pack are rejected and the pack cannot seed downstream work.';
+  } else if (reasonCodes.length > 0) {
+    packQualitySummary = `Statement pack needs attention: ${reasonCodes.join(', ')}.`;
+  }
+
+  return {
+    packStatus,
+    packReadinessStatus,
+    packReadinessScore,
+    packQualitySummary,
+    packQualityReasonCodes: reasonCodes,
+    missingStatementTypes,
+    statementTypesPresent,
+    sourceStatementCount: normalized.length,
+  };
+}
+
+async function loadStatementForPack(statementId: string): Promise<PackStatementRow | null> {
+  try {
+    return (
+      (await dbGet<PackStatementRow>(
+        `SELECT id, organization_id, entity_name, statement_type, period_start, period_end, period_label,
+                currency, scaling, status, readiness_status, readiness_score, quality_summary, source_file_name,
+                statement_pack_id
+         FROM financial_statements
+         WHERE id = ?`,
+        [statementId]
+      )) || null
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return null;
+  }
+}
+
+async function findExistingPack(statement: PackStatementRow): Promise<string | null> {
+  const entityName = normalizeText(statement.entity_name);
+  const row = await dbGet<{ id?: string }>(
+    `SELECT id
+     FROM financial_statement_packs
+     WHERE organization_id = ?
+       AND COALESCE(entity_name, '') = ?
+       AND period_start = ?
+       AND period_end = ?
+       AND COALESCE(currency, 'PLN') = ?
+       AND COALESCE(scaling, 'units') = ?
+       AND NOT EXISTS (
+         SELECT 1
+         FROM financial_statements fs
+         WHERE fs.statement_pack_id = financial_statement_packs.id
+           AND fs.id <> ?
+           AND COALESCE(fs.status, 'draft') <> 'archived'
+           AND fs.statement_type = ?
+       )
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [
+      statement.organization_id,
+      entityName,
+      statement.period_start,
+      statement.period_end,
+      normalizeText(statement.currency) || 'PLN',
+      normalizeText(statement.scaling) || 'units',
+      statement.id,
+      normalizeStatementType(statement.statement_type),
+    ]
+  );
+  return normalizeText(row?.id) || null;
+}
+
+async function createPack(statement: PackStatementRow): Promise<string> {
+  const packId = uuidv4();
+  await dbRun(
+    `INSERT INTO financial_statement_packs
+      (id, organization_id, entity_name, period_start, period_end, period_label, currency, scaling, pack_status,
+       pack_readiness_status, pack_readiness_score, pack_quality_summary, pack_quality_reason_codes,
+       source_statement_count, missing_statement_types, metadata_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 'pending', 0, ?, ?, 0, ?, ?)`,
+    [
+      packId,
+      statement.organization_id,
+      normalizeText(statement.entity_name) || null,
+      statement.period_start,
+      statement.period_end,
+      normalizeText(statement.period_label) || null,
+      normalizeText(statement.currency) || 'PLN',
+      normalizeText(statement.scaling) || 'units',
+      'Statement pack created from initial statement import.',
+      '[]',
+      toJson(['P&L', 'BS', 'CF']),
+      toJson({
+        createdFromStatementId: statement.id,
+      }),
+    ]
+  );
+  return packId;
+}
+
+async function assignStatementToPack(statementId: string, packId: string | null): Promise<void> {
+  await dbRun(
+    `UPDATE financial_statements
+     SET statement_pack_id = ?,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [packId, statementId]
+  );
+}
+
+async function pruneEmptyPack(packId: string): Promise<void> {
+  const countRow = await dbGet<{ total?: number }>(
+    `SELECT COUNT(*) AS total
+     FROM financial_statements
+     WHERE statement_pack_id = ?`,
+    [packId]
+  );
+  if (Number(countRow?.total || 0) > 0) return;
+  await dbRun(`DELETE FROM financial_statement_packs WHERE id = ?`, [packId]);
+}
+
+async function persistPackValidations(packId: string, aggregate: PackAggregate): Promise<void> {
+  try {
+    await dbRun(
+      `DELETE FROM financial_statement_validations
+       WHERE statement_pack_id = ? AND validation_scope = 'pack'`,
+      [packId],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return;
+  }
+
+  await dbRun(
+    `INSERT INTO financial_statement_validations
+      (id, statement_pack_id, validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json)
+     VALUES (?, ?, 'pack', 'PACK_COMPLETENESS', 'Pack Completeness', ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uuidv4(),
+      packId,
+      aggregate.missingStatementTypes.length === 0 ? 'info' : 'warning',
+      aggregate.missingStatementTypes.length === 0 ? 'pass' : 'warning',
+      getCanonicalStatementTypes().length,
+      aggregate.statementTypesPresent.length,
+      aggregate.missingStatementTypes.length,
+      0,
+      aggregate.missingStatementTypes.length === 0
+        ? 'Statement pack contains all required statement types.'
+        : `Statement pack is missing: ${aggregate.missingStatementTypes.join(', ')}`,
+      JSON.stringify({
+        presentTypes: aggregate.statementTypesPresent,
+        missingTypes: aggregate.missingStatementTypes,
+      }),
+    ],
+    { fallback: false }
+  );
+
+  await dbRun(
+    `INSERT INTO financial_statement_validations
+      (id, statement_pack_id, validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json)
+     VALUES (?, ?, 'pack', 'PACK_READINESS', 'Pack Readiness', ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uuidv4(),
+      packId,
+      aggregate.packReadinessStatus === 'ready' ? 'info' : 'warning',
+      aggregate.packReadinessStatus === 'ready' ? 'pass' : 'warning',
+      100,
+      aggregate.packReadinessScore,
+      100 - aggregate.packReadinessScore,
+      0,
+      aggregate.packQualitySummary,
+      JSON.stringify({
+        readinessStatus: aggregate.packReadinessStatus,
+        reasonCodes: aggregate.packQualityReasonCodes,
+      }),
+    ],
+    { fallback: false }
+  );
+}
+
+export async function recomputeStatementPack(packId: string): Promise<string | null> {
+  const statements = await dbAll<PackStatementRow>(
+    `SELECT id, organization_id, entity_name, statement_type, period_start, period_end, period_label,
+            currency, scaling, status, readiness_status, readiness_score, quality_summary, source_file_name,
+            statement_pack_id
+     FROM financial_statements
+     WHERE statement_pack_id = ?
+     ORDER BY statement_type, updated_at DESC`,
+    [packId]
+  );
+  if (!Array.isArray(statements) || statements.length === 0) {
+    await pruneEmptyPack(packId);
+    return null;
+  }
+
+  const aggregate = computePackAggregate(statements);
+  const canonical = statements[0]!;
+  await dbRun(
+    `UPDATE financial_statement_packs
+     SET organization_id = ?,
+         entity_name = ?,
+         period_start = ?,
+         period_end = ?,
+         period_label = ?,
+         currency = ?,
+         scaling = ?,
+         pack_status = ?,
+         pack_readiness_status = ?,
+         pack_readiness_score = ?,
+         pack_quality_summary = ?,
+         pack_quality_reason_codes = ?,
+         source_statement_count = ?,
+         missing_statement_types = ?,
+         metadata_json = ?,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [
+      canonical.organization_id,
+      normalizeText(canonical.entity_name) || null,
+      canonical.period_start,
+      canonical.period_end,
+      packPeriodLabel(statements) || null,
+      normalizeText(canonical.currency) || 'PLN',
+      normalizeText(canonical.scaling) || 'units',
+      aggregate.packStatus,
+      aggregate.packReadinessStatus,
+      aggregate.packReadinessScore,
+      aggregate.packQualitySummary,
+      toJson(aggregate.packQualityReasonCodes),
+      aggregate.sourceStatementCount,
+      toJson(aggregate.missingStatementTypes),
+      toJson({
+        statementTypesPresent: aggregate.statementTypesPresent,
+      }),
+      packId,
+    ]
+  );
+  return packId;
+}
+
+export async function syncStatementToPack(statementId: string): Promise<string | null> {
+  const statement = await loadStatementForPack(statementId);
+  if (!statement) return null;
+
+  const currentPackId = normalizeText(statement.statement_pack_id) || null;
+  let targetPackId = await findExistingPack(statement);
+  if (!targetPackId) {
+    targetPackId = await createPack(statement);
+  }
+
+  if (currentPackId !== targetPackId) {
+    await assignStatementToPack(statementId, targetPackId);
+  }
+  if (currentPackId && currentPackId !== targetPackId) {
+    await recomputeStatementPack(currentPackId);
+  }
+  await recomputeStatementPack(targetPackId);
+  return targetPackId;
+}
+
+export async function detachStatementFromPack(statementId: string): Promise<void> {
+  const statement = await loadStatementForPack(statementId);
+  const currentPackId = normalizeText(statement?.statement_pack_id) || null;
+  if (!currentPackId) return;
+  await assignStatementToPack(statementId, null);
+  await recomputeStatementPack(currentPackId);
+}
+
+export async function listStatementPacks(
+  organizationId: string,
+  readinessFilter?: string
+): Promise<any[]> {
+  const normalizedFilter = normalizeText(readinessFilter).toLowerCase();
+  const rows = await dbAll<any>(
+    `SELECT p.id, p.organization_id, p.entity_name, p.period_start, p.period_end, p.period_label, p.currency,
+            p.scaling, p.pack_status, p.pack_readiness_status, p.pack_readiness_score, p.pack_quality_summary,
+            p.pack_quality_reason_codes, p.source_statement_count, p.missing_statement_types, p.created_at,
+            p.updated_at,
+            COUNT(fs.id) FILTER (WHERE fs.statement_type = 'P&L') AS pl_count,
+            COUNT(fs.id) FILTER (WHERE fs.statement_type = 'BS') AS bs_count,
+            COUNT(fs.id) FILTER (WHERE fs.statement_type = 'CF') AS cf_count,
+            MAX(fs.updated_at) AS latest_statement_updated_at
+     FROM financial_statement_packs p
+     LEFT JOIN financial_statements fs ON fs.statement_pack_id = p.id
+     WHERE p.organization_id = ?
+       AND (? = '' OR LOWER(COALESCE(p.pack_readiness_status, 'pending')) = ?)
+     GROUP BY p.id
+     ORDER BY p.period_end DESC, p.updated_at DESC
+     LIMIT 100`,
+    [organizationId, normalizedFilter, normalizedFilter]
+  );
+  return rows || [];
+}
+
+export async function getStatementPackDetail(
+  organizationId: string,
+  packId: string
+): Promise<any | null> {
+  const pack = await dbGet<any>(
+    `SELECT *
+     FROM financial_statement_packs
+     WHERE id = ? AND organization_id = ?`,
+    [packId, organizationId]
+  );
+  if (!pack) return null;
+
+  const statements = await dbAll<any>(
+    `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
+            fs.source_file_name, fs.validation_status, fs.status, fs.readiness_status, fs.readiness_score,
+            fs.quality_summary, fs.quality_reason_codes, fs.values_version, fs.updated_at, fs.created_at,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'fail') AS validation_fail_count,
+            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'warning') AS validation_warning_count
+     FROM financial_statements fs
+     LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+     LEFT JOIN financial_statement_validations fsvl ON fsvl.statement_id = fs.id
+     WHERE fs.statement_pack_id = ?
+     GROUP BY fs.id
+     ORDER BY CASE fs.statement_type WHEN 'P&L' THEN 1 WHEN 'BS' THEN 2 WHEN 'CF' THEN 3 ELSE 9 END`,
+    [packId]
+  );
+  const packValidations = await dbAll<any>(
+    `SELECT check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json, computed_at
+     FROM financial_statement_validations
+     WHERE statement_pack_id = ? AND validation_scope = 'pack'
+     ORDER BY computed_at DESC, check_code ASC`,
+    [packId]
+  );
+
+  return {
+    ...pack,
+    statements: (statements || []).sort(
+      (left: any, right: any) =>
+        getCanonicalStatementTypeOrder(left.statement_type) -
+        getCanonicalStatementTypeOrder(right.statement_type)
+    ),
+    validations: packValidations || [],
+  };
+}
+
+export async function recomputeStatementPackForOrganization(
+  organizationId: string,
+  packId: string
+): Promise<any | null> {
+  const pack = await dbGet<any>(
+    `SELECT id
+     FROM financial_statement_packs
+     WHERE id = ? AND organization_id = ?`,
+    [packId, organizationId]
+  );
+  if (!pack) return null;
+  const resolvedId = await recomputeStatementPack(packId);
+  if (!resolvedId) return null;
+  return getStatementPackDetail(organizationId, resolvedId);
+}
+
+export async function assignStatementToExistingPack(params: {
+  organizationId: string;
+  statementId: string;
+  packId: string;
+}): Promise<void> {
+  const pack = await dbGet<any>(
+    `SELECT id
+     FROM financial_statement_packs
+     WHERE id = ? AND organization_id = ?`,
+    [params.packId, params.organizationId]
+  );
+  if (!pack) throw new Error('Statement pack not found');
+  const statement = await loadStatementForPack(params.statementId);
+  if (!statement || statement.organization_id !== params.organizationId) {
+    throw new Error('Statement not found');
+  }
+  const previousPackId = normalizeText(statement.statement_pack_id) || null;
+  await assignStatementToPack(params.statementId, params.packId);
+  if (previousPackId && previousPackId !== params.packId) {
+    await recomputeStatementPack(previousPackId);
+  }
+  await recomputeStatementPack(params.packId);
+}
+
+export async function getVerifiedPackSeed(params: {
+  organizationId: string;
+  packId: string;
+}): Promise<{ statementIds: string[]; currency: string; periodLabel: string }> {
+  const detail = await getStatementPackDetail(params.organizationId, params.packId);
+  if (!detail) throw new Error('Statement pack not found');
+  const readinessStatus = normalizeText(detail.pack_readiness_status).toLowerCase();
+  if (readinessStatus !== 'ready') {
+    throw new Error('Statement pack must be ready before it can seed downstream work');
+  }
+  const statements = Array.isArray(detail.statements) ? detail.statements : [];
+  const byType = new Map<string, any>();
+  for (const statement of statements) {
+    byType.set(normalizeStatementType(statement.statement_type), statement);
+  }
+  const ordered = ['P&L', 'BS', 'CF'].map((type) => byType.get(type)).filter(Boolean);
+  if (ordered.length !== 3) {
+    throw new Error('Statement pack must contain P&L, Balance Sheet, and Cash Flow');
+  }
+  return {
+    statementIds: ordered.map((statement) => String(statement.id)),
+    currency: normalizeText(detail.currency) || 'PLN',
+    periodLabel: normalizeText(detail.period_label),
+  };
+}

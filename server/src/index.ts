@@ -174,6 +174,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
 });
 
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (req.path.startsWith('/api/')) {
+    (req as any).db = getDatabase();
+  }
+  next();
+});
+
 const skipManagedSchema =
   process.env.DB_MANAGED_SCHEMA === 'false' ||
   process.env.DB_MANAGED_SCHEMA === '0' ||
@@ -231,10 +238,38 @@ const databaseInitPromise: Promise<void> =
             dbInitError = null;
           }
 
+          // Table Platform migrations deferred to background (non-blocking)
+          if (process.env.DISABLE_TP_MIGRATIONS !== 'true') {
+            setTimeout(async () => {
+              try {
+                const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
+                const migResult = await runMigrations();
+                if (migResult.failed) {
+                  logger.error(`[Server] Table Platform migration FAILED on: ${migResult.failed}`);
+                } else {
+                  logger.info(`[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`);
+                }
+                try {
+                  const { default: templateService } = await import('./services/tablePlatform/TemplateService.js');
+                  if (templateService?.seedDefaultTemplates) {
+                    await templateService.seedDefaultTemplates();
+                  }
+                } catch (seedErr) {
+                  logger.warn('[Server] Template seeding skipped:', seedErr);
+                }
+              } catch (migErr) {
+                logger.warn('[Server] Table Platform migrations skipped:', migErr);
+              }
+            }, 5000);
+          }
+
           // Initialize connection pool
           if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
             try {
-              await initializeConnectionPool();
+              const poolTimeout = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Connection pool init timeout (15s)')), 15000)
+              );
+              await Promise.race([initializeConnectionPool(), poolTimeout]);
               logger.info('[Server] ✅ Connection pool initialized');
             } catch (poolError) {
               logger.error('[Server] Connection pool initialization failed:', poolError);
@@ -313,6 +348,28 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       registerCQRSHandlers();
     } catch (err: any) {
       logger.error('[Server] CQRS initialization failed:', { error: err });
+    }
+  })();
+
+  // V4-TASK-05: Init Automation Rules Engine - non-blocking
+  (async () => {
+    try {
+      const { initAutomationRulesEngine } = await import('./services/automationRulesEngine.js');
+      initAutomationRulesEngine();
+      logger.info('[Server] ✅ Automation Rules Engine initialized');
+    } catch (err: any) {
+      logger.error('[Server] Automation Rules Engine initialization failed:', err?.message);
+    }
+  })();
+
+  // Scheduled Automations Executor (cron-based) - non-blocking
+  (async () => {
+    try {
+      const { scheduledAutomationExecutor } = await import('./services/tablePlatform/ScheduledAutomationExecutor.js');
+      scheduledAutomationExecutor.start(60_000);
+      logger.info('[Server] ✅ Scheduled Automation Executor started (60s interval)');
+    } catch (err: any) {
+      logger.error('[Server] Scheduled Automation Executor failed:', err?.message);
     }
   })();
 
@@ -999,6 +1056,30 @@ if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
     const server = http.createServer(app);
+
+    // V4-IDEA-02: Idea collab WebSocket /ws/collab/:ideaId (native ws for CollaborationOverlay)
+    try {
+      const { attachIdeaCollabWs } = await import('./gateways/ideaCollabWs.gateway.js');
+      attachIdeaCollabWs(server);
+      logger.info('[Server] Idea collab WebSocket /ws/collab/:ideaId initialized');
+    } catch (err: any) {
+      logger.warn('[Server] Idea collab WebSocket not available:', err?.message);
+    }
+
+    // Table Platform real-time collaboration (Socket.IO /table-platform namespace)
+    try {
+      const { Server: SocketIOServer } = await import('socket.io');
+      const io = new SocketIOServer(server, {
+        cors: { origin: '*', methods: ['GET', 'POST'] },
+        path: '/socket.io',
+      });
+      const { tablePlatformRealtime } = await import('./services/tablePlatform/RealtimeService.js');
+      tablePlatformRealtime.init(io);
+      logger.info('[Server] Table Platform Realtime (Socket.IO /table-platform) initialized');
+    } catch (err: any) {
+      logger.warn('[Server] Table Platform Realtime not available:', err?.message);
+    }
+
     // ShutdownManager will be used in graceful shutdown handler
     // const shutdownManager = getShutdownManager(30000); // 30 second timeout
 

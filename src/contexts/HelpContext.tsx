@@ -13,6 +13,14 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
 import { FAQItem, getFAQsForModule } from '../config/faqContent';
+import {
+  getHelpDocument,
+  getHelpDocumentForMapping,
+  getNextHelpDocument,
+  getPromptAction,
+  type HelpAskAiAction,
+  type HelpDocument,
+} from '../config/helpExperience';
 import { getModuleHelp, ModuleHelp } from '../config/moduleHelpContent';
 import { getVideosForModule, VideoTutorial } from '../config/videoTutorialsContent';
 import { getHelpMapping, HelpModuleId, ViewHelpMapping } from '../config/viewToModuleMapping';
@@ -65,12 +73,23 @@ export interface HelpHint {
   suggestedAction: 'upgrade' | 'learn' | null;
 }
 
-// New types for contextual help system - 3 tabs: Overview, FAQ, Knowledge Base
-export type HelpTab = 'overview' | 'onboarding' | 'updates' | 'faq' | 'knowledge';
+// `onboarding` stays as a legacy alias so older entrypoints can still open the panel safely.
+export type HelpTab =
+  | 'overview'
+  | 'this_step'
+  | 'guides'
+  | 'faq'
+  | 'knowledge'
+  | 'updates'
+  | 'onboarding';
 
 export interface ContextualHelpState {
   moduleId: HelpModuleId;
   cardId?: string;
+  mapping: ViewHelpMapping;
+  document: HelpDocument;
+  nextDocument: HelpDocument | null;
+  promptAction: HelpAskAiAction;
   moduleHelp: ModuleHelp | undefined;
   cardHelp: CardDocumentation | undefined;
   faqs: FAQItem[];
@@ -106,6 +125,8 @@ interface HelpContextValue {
   // Knowledge Base contextual override (e.g. per tool_type)
   knowledgeModuleIdOverride: string | null;
   setKnowledgeModuleIdOverride: (moduleId: string | null) => void;
+  helpDocumentIdOverride: string | null;
+  setHelpDocumentIdOverride: (documentId: string | null) => void;
 }
 
 const HelpContext = createContext<HelpContextValue | undefined>(undefined);
@@ -137,6 +158,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isHelpSidePanelOpen = activeSidePanel === 'HELP';
   const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
   const [knowledgeModuleIdOverride, setKnowledgeModuleIdOverride] = useState<string | null>(null);
+  const [helpDocumentIdOverride, setHelpDocumentIdOverride] = useState<string | null>(null);
 
   // Toggle help side panel
   const toggleHelpSidePanel = useCallback(() => {
@@ -159,20 +181,29 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!isHelpSidePanelOpen) {
       setKnowledgeModuleIdOverride(null);
+      setHelpDocumentIdOverride(null);
     }
   }, [isHelpSidePanelOpen]);
 
   // Get contextual help for a specific view
   const getHelpForView = useCallback((view: AppView | string): ContextualHelpState => {
     const mapping: ViewHelpMapping = getHelpMapping(view);
+    const document = getHelpDocumentForMapping(mapping);
+    const nextDocument = getNextHelpDocument(document);
+    const promptAction = getPromptAction(mapping.aiPromptKey) ?? document.askAiNow;
     const moduleHelp = getModuleHelp(mapping.moduleId);
     const cardHelp = mapping.cardId ? CARD_DOCS[mapping.cardId] : undefined;
-    const faqs = getFAQsForModule(mapping.moduleId);
+    const fallbackFaqs = getFAQsForModule(mapping.moduleId);
+    const faqs = document.faqs.length > 0 ? document.faqs : fallbackFaqs;
     const videos = getVideosForModule(mapping.moduleId);
 
     return {
       moduleId: mapping.moduleId,
       cardId: mapping.cardId,
+      mapping,
+      document,
+      nextDocument,
+      promptAction,
       moduleHelp: moduleHelp ?? undefined,
       cardHelp,
       faqs,
@@ -182,8 +213,19 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Memoized contextual help based on current view
   const contextualHelp = useMemo(() => {
-    return getHelpForView(currentView);
-  }, [currentView, getHelpForView]);
+    const base = getHelpForView(currentView);
+    if (!helpDocumentIdOverride) return base;
+
+    const overrideDocument = getHelpDocument(helpDocumentIdOverride);
+    if (!overrideDocument) return base;
+
+    return {
+      ...base,
+      document: overrideDocument,
+      nextDocument: getNextHelpDocument(overrideDocument),
+      promptAction: overrideDocument.askAiNow,
+    };
+  }, [currentView, getHelpForView, helpDocumentIdOverride]);
 
   // Fetch playbooks
   const fetchPlaybooks = useCallback(async () => {
@@ -331,12 +373,14 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setHelpSidePanelOpen,
         toggleHelpSidePanel,
         activeHelpTab,
-        setActiveHelpTab,
+        setActiveHelpTab: (tab) => setActiveHelpTab(tab === 'onboarding' ? 'guides' : tab),
         contextualHelp,
         getHelpForView,
 
         knowledgeModuleIdOverride,
         setKnowledgeModuleIdOverride,
+        helpDocumentIdOverride,
+        setHelpDocumentIdOverride,
       }}
     >
       {children}
@@ -382,6 +426,8 @@ export const useHelpSidePanel = () => {
     getHelpForView,
     knowledgeModuleIdOverride,
     setKnowledgeModuleIdOverride,
+    helpDocumentIdOverride,
+    setHelpDocumentIdOverride,
   } = useHelp();
 
   return {
@@ -394,6 +440,8 @@ export const useHelpSidePanel = () => {
     getHelpForView,
     knowledgeModuleIdOverride,
     setKnowledgeModuleIdOverride,
+    helpDocumentIdOverride,
+    setHelpDocumentIdOverride,
   };
 };
 

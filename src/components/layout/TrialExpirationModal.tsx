@@ -29,63 +29,83 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onDismiss} />
 
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
+      {/* Modal — DBR77 tech-sexy */}
+      <div className="relative bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-slate-200 dark:border-white/5">
+        {/* Header — single accent */}
+        <div className="bg-danger-500/10 dark:bg-danger-500/5 border-b border-danger-500/20 p-6">
           <div className="flex items-center gap-3">
-            <span className="text-4xl">🔒</span>
+            <div className="w-12 h-12 rounded-full bg-danger-500/20 flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-danger-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </div>
             <div>
-              <h2 className="text-xl font-bold">{t('trialExpired.title', 'Trial Expired')}</h2>
-              <p className="text-orange-100 text-sm mt-1">{organizationName}</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {t('trialExpired.title', 'Trial Expired')}
+              </h2>
+              {organizationName && (
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  {organizationName}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-700 dark:text-gray-300 mb-4">
+          <p className="text-slate-700 dark:text-slate-300 mb-4">
             {t(
               'trialExpired.message',
               'Your trial period has ended. Your data is safe, but your organization is now in read-only mode.'
             )}
           </p>
 
-          <div className="bg-gray-50 dark:bg-navy-800 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-lg p-4 mb-6 border border-slate-200/50 dark:border-white/5">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">
               {t('trialExpired.whatNext', 'What happens now?')}
             </h3>
-            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+            <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
               <li className="flex items-start gap-2">
-                <span className="text-green-500">✓</span>
+                <span className="text-success-500">✓</span>
                 {t('trialExpired.dataSafe', 'Your data is preserved and secure')}
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500">✓</span>
+                <span className="text-success-500">✓</span>
                 {t('trialExpired.canView', 'You can still view all projects and tasks')}
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-500">✗</span>
+                <span className="text-danger-500">✗</span>
                 {t('trialExpired.noCreate', 'You cannot create or modify content')}
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-500">✗</span>
+                <span className="text-danger-500">✗</span>
                 {t('trialExpired.noAI', 'AI features are disabled')}
               </li>
             </ul>
           </div>
 
-          {/* Actions */}
+          {/* Actions — DBR77 single CTA accent */}
           <div className="flex flex-col gap-3">
             <button
               onClick={onUpgradeClick}
-              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md"
+              className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-colors"
             >
               {t('trialExpired.upgrade', 'Upgrade Now')}
             </button>
             <button
               onClick={onContactSalesClick}
-              className="w-full py-3 px-4 bg-white dark:bg-navy-900 border-2 border-gray-200 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 transition-all"
+              className="w-full py-3 px-4 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
               {t('trialExpired.contactSales', 'Contact Sales')}
             </button>
@@ -93,10 +113,10 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 dark:bg-navy-800 px-6 py-4 text-center">
+        <div className="bg-slate-50 dark:bg-navy-800/30 px-6 py-4 text-center border-t border-slate-200 dark:border-white/5">
           <button
             onClick={onDismiss}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300"
+            className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
           >
             {t('trialExpired.dismiss', 'Dismiss for now')}
           </button>

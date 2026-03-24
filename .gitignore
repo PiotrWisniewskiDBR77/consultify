@@ -34,6 +34,7 @@ __tmp_ai_agent__
 .env.local
 .env.production
 .env.staging.local
+.env.staging.secrets
 server/.env
 
 # Auth tokens and session files
@@ -153,6 +154,26 @@ e2e-results.xml
 # Debug screenshots
 debug-*.png
 
+# Local browser/debug artifacts
+/screenshots/
+/exports/report-builder-public/
+/knowledge/**/*.zip
+/knowledge/AirTable/Screen/
+/REC_MAP_CRASH_EVIDENCE.md
+/capture-*.mjs
+/inspect-*.mjs
+/reproduce-*.mjs
+/test-*.mjs
+/test-*.md
+/test-*.ts
+/test-*.txt
+/test-*.png
+/test-*.html
+/validation-output*.txt
+/debug-*.txt
+/final-*.txt
+/rec-map-*.txt
+
 # Test result files
 test-results-*.txt
 
@@ -183,6 +204,12 @@ server/backups/
 
 # iCloud/Finder duplicates (macOS numbered copies)
 * [0-9]*.*
+* copy.*
+* Copy.*
+* conflicted copy *
+*.icloud
+*.orig
+*.rej
 
 # Vendored packages
 *.tgz
@@ -192,6 +219,7 @@ _analysis/
 
 # Cursor IDE workspace
 .cursor/
+.claude/
 
 # Codex worktrees (local only)
 .codex-worktrees/
@@ -206,4 +234,4 @@ knowledge/**/*.pptx
 knowledge/**/*.docx
 
 # Duplicate lib artifacts
-lib/
+/lib/

@@ -1,0 +1,304 @@
+/**
+ * IdeaCanvasContextMenu — AI-powered right-click context menu for canvas tools.
+ *
+ * On node: Expand, Challenge, Find evidence, Suggest connections.
+ * On empty space: Fill gap, Brainstorm here.
+ */
+import {
+  BookOpen,
+  Brain,
+  GitBranch,
+  Lightbulb,
+  Link2,
+  Loader2,
+  Search,
+  Sparkles,
+  Target,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
+import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
+
+import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
+
+interface ContextMenuPosition {
+  x: number;
+  y: number;
+}
+
+interface ContextMenuTarget {
+  nodeId?: string;
+  nodeLabel?: string;
+  nodeType?: string;
+}
+
+export interface IdeaCanvasContextMenuProps {
+  position: ContextMenuPosition | null;
+  target: ContextMenuTarget;
+  onClose: () => void;
+  ideaId: string;
+  activeTool: CanvasToolType;
+  title: string;
+  seedText: string;
+  branch: string;
+  area: string;
+  graphNodes: any[];
+  graphEdges: any[];
+  graphLanes?: any[];
+  isAccepted: boolean;
+  onGenerateProposal: (batch: AIProposalBatch) => void;
+  onSendToChat?: (prompt: string) => void;
+  onAttachKnowledge?: (nodeId: string) => void;
+}
+
+interface MenuItem {
+  id: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  labelPl: string;
+  labelEn: string;
+  generatorType?: GeneratorType;
+  chatPrompt?: (label: string, isPl: boolean) => string;
+  nodeOnly?: boolean;
+  emptyOnly?: boolean;
+}
+
+const NODE_ACTIONS: MenuItem[] = [
+  {
+    id: 'expand',
+    icon: GitBranch,
+    labelPl: 'AI: Rozbuduj',
+    labelEn: 'AI: Expand',
+    generatorType: 'mindmap_expand',
+    nodeOnly: true,
+  },
+  {
+    id: 'challenge',
+    icon: Target,
+    labelPl: 'AI: Kwestionuj',
+    labelEn: 'AI: Challenge',
+    nodeOnly: true,
+    chatPrompt: (label, isPl) =>
+      isPl
+        ? `Zakwestionuj ten pomysł i zaproponuj kontrargumenty: "${label}"`
+        : `Challenge this idea and propose counterarguments: "${label}"`,
+  },
+  {
+    id: 'evidence',
+    icon: Search,
+    labelPl: 'AI: Znajdź dowody',
+    labelEn: 'AI: Find evidence',
+    nodeOnly: true,
+    chatPrompt: (label, isPl) =>
+      isPl
+        ? `Znajdź dowody i dane firmy wspierające lub podważające: "${label}"`
+        : `Find company data and evidence supporting or contradicting: "${label}"`,
+  },
+  {
+    id: 'connections',
+    icon: Link2,
+    labelPl: 'AI: Sugeruj połączenia',
+    labelEn: 'AI: Suggest connections',
+    nodeOnly: true,
+    chatPrompt: (label, isPl) =>
+      isPl
+        ? `Zasugeruj połączenia między "${label}" a innymi elementami na mapie`
+        : `Suggest connections between "${label}" and other map elements`,
+  },
+  {
+    id: 'attach_knowledge',
+    icon: BookOpen,
+    labelPl: 'Dołącz wiedzę',
+    labelEn: 'Attach knowledge',
+    nodeOnly: true,
+  },
+];
+
+const EMPTY_ACTIONS: MenuItem[] = [
+  {
+    id: 'fill_gap',
+    icon: Lightbulb,
+    labelPl: 'AI: Wypełnij luki',
+    labelEn: 'AI: Fill gaps',
+    generatorType: 'suggestions',
+    emptyOnly: true,
+  },
+  {
+    id: 'brainstorm',
+    icon: Brain,
+    labelPl: 'AI: Brainstorm tutaj',
+    labelEn: 'AI: Brainstorm here',
+    generatorType: 'whiteboard_brainstorm',
+    emptyOnly: true,
+  },
+];
+
+export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
+  position,
+  target,
+  onClose,
+  ideaId,
+  activeTool,
+  title,
+  seedText,
+  branch,
+  area,
+  graphNodes,
+  graphEdges,
+  graphLanes = [],
+  isAccepted,
+  onGenerateProposal,
+  onSendToChat,
+  onAttachKnowledge,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!position) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) onClose();
+    };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('keydown', keyHandler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', keyHandler);
+    };
+  }, [onClose, position]);
+
+  const handleAction = useCallback(
+    async (item: MenuItem) => {
+      if (!isAccepted) return;
+
+      if (item.id === 'attach_knowledge' && target.nodeId && onAttachKnowledge) {
+        onAttachKnowledge(target.nodeId);
+        onClose();
+        return;
+      }
+
+      if (item.chatPrompt && onSendToChat) {
+        onSendToChat(item.chatPrompt(target.nodeLabel || '', isPl));
+        onClose();
+        return;
+      }
+
+      if (item.generatorType) {
+        setLoadingId(item.id);
+        try {
+          const batch = await generateAIProposal({
+            ideaId,
+            generatorType: item.generatorType,
+            tool: activeTool,
+            context: {
+              seedText: target.nodeLabel
+                ? `${seedText}\n\nFocus on: ${target.nodeLabel}`
+                : seedText,
+              title,
+              branch,
+              area,
+              existingNodes: graphNodes,
+              existingEdges: graphEdges,
+              existingLanes: graphLanes,
+              language: i18n.language || 'en',
+            },
+          });
+          onGenerateProposal(batch);
+          onClose();
+        } catch {
+          // handled by toast in parent
+        } finally {
+          setLoadingId(null);
+        }
+      }
+    },
+    [
+      activeTool,
+      area,
+      branch,
+      graphEdges,
+      graphLanes,
+      graphNodes,
+      i18n.language,
+      ideaId,
+      isAccepted,
+      isPl,
+      onAttachKnowledge,
+      onClose,
+      onGenerateProposal,
+      onSendToChat,
+      seedText,
+      target.nodeId,
+      target.nodeLabel,
+      title,
+    ]
+  );
+
+  if (!position) return null;
+
+  const isOnNode = !!target.nodeId;
+  const actions = isOnNode ? NODE_ACTIONS : EMPTY_ACTIONS;
+
+  return (
+    <div
+      ref={menuRef}
+      className="fixed z-[100] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
+      style={{ left: position.x, top: position.y }}
+    >
+      {isOnNode && target.nodeLabel && (
+        <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
+          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            {target.nodeType || 'Node'}
+          </div>
+          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
+            {target.nodeLabel}
+          </div>
+        </div>
+      )}
+
+      {!isOnNode && (
+        <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
+          <div className="text-[10px] font-bold text-violet-600 dark:text-violet-400 flex items-center gap-1">
+            <Sparkles size={10} />
+            {isPl ? 'Akcje AI' : 'AI Actions'}
+          </div>
+        </div>
+      )}
+
+      {actions.map((item) => {
+        const Icon = item.icon;
+        const isLoading = loadingId === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => handleAction(item)}
+            disabled={!isAccepted || !!loadingId}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-40"
+          >
+            {isLoading ? (
+              <Loader2 size={14} className="animate-spin text-violet-500 shrink-0" />
+            ) : (
+              <Icon size={14} className="text-violet-500 shrink-0" />
+            )}
+            <span>{isPl ? item.labelPl : item.labelEn}</span>
+          </button>
+        );
+      })}
+
+      {!isAccepted && (
+        <div className="px-3 py-1.5 text-[10px] text-amber-600 dark:text-amber-400 border-t border-slate-200/30 dark:border-white/[0.04]">
+          {isPl ? 'Zaakceptuj wyzwanie, aby odblokować AI' : 'Accept challenge to unlock AI'}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default IdeaCanvasContextMenu;

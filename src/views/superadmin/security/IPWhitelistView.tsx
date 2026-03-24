@@ -149,8 +149,12 @@ export const IPWhitelistView: React.FC = () => {
                 whitelist.map((ip) => (
                   <tr key={ip.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
                     <td className="px-6 py-4 text-slate-900 dark:text-white">{ip.ip_address}</td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{ip.ip_range || '-'}</td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{ip.description || '-'}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                      {ip.ip_range || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                      {ip.description || '-'}
+                    </td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-2 py-1 rounded text-xs ${

@@ -696,7 +696,9 @@ const SecurityIncidentsView: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-400 dark:text-slate-500">Description</p>
-                <p className="mt-1 text-slate-900 dark:text-slate-200">{showDetailModal.description}</p>
+                <p className="mt-1 text-slate-900 dark:text-slate-200">
+                  {showDetailModal.description}
+                </p>
               </div>
               {showDetailModal.affectedResources &&
                 showDetailModal.affectedResources.length > 0 && (

@@ -22,8 +22,18 @@ vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
   all: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock('../../../../server/src/utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn().mockResolvedValue(new Set(['workflow_status'])),
+}));
+
 vi.mock('../../../../server/src/utils/asyncHandler.js', () => ({
   asyncHandler: (fn: Function) => fn,
+}));
+
+vi.mock('../../../../server/src/services/AuditEventsService.js', () => ({
+  default: {
+    log: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 vi.mock('uuid', () => ({
@@ -338,6 +348,72 @@ describe('DecisionController', () => {
           message: 'Decision escalated',
         })
       );
+    });
+  });
+
+  describe('updateDecision', () => {
+    it('persists explicit status updates instead of silently ignoring them', async () => {
+      mockReq.params.id = 'd-status';
+      mockReq.body = { status: 'PENDING' };
+      mockQueryOne.mockResolvedValue({
+        id: 'd-status',
+        status: 'approved',
+        created_by: 'user-123',
+      });
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+
+      const { DecisionController } =
+        await import('../../../../server/src/controllers/DecisionController.js');
+      await DecisionController.updateDecision(mockReq, mockRes, mockNext);
+
+      expect(mockQueryRun).toHaveBeenCalledWith(
+        expect.stringContaining('status = ?'),
+        expect.arrayContaining(['pending', 'd-status'])
+      );
+      expect(mockQueryRun).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO decision_history'),
+        expect.arrayContaining(['approved', 'pending'])
+      );
+      expect(mockRes.json).toHaveBeenCalledWith({ id: 'd-status', message: 'Decision updated' });
+    });
+  });
+
+  describe('transitionWorkflow', () => {
+    it('allows review to proposed rollback', async () => {
+      mockReq.params.id = 'd-workflow';
+      mockReq.body = { toStatus: 'proposed' };
+      mockQueryOne.mockResolvedValue({
+        id: 'd-workflow',
+        workflow_status: 'review',
+        initiative_id: null,
+        project_id: 'proj-123',
+        title: 'Rollback workflow',
+        description: 'Rollback workflow',
+        status: 'pending',
+        playbook_id: null,
+        type: null,
+        priority: 'medium',
+        impact: 'medium',
+        deadline: null,
+        decision_maker_id: 'user-123',
+        decision_rationale: null,
+        options: '[]',
+      });
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+
+      const { DecisionController } =
+        await import('../../../../server/src/controllers/DecisionController.js');
+      await DecisionController.transitionWorkflow(mockReq, mockRes, mockNext);
+
+      expect(mockQueryRun).toHaveBeenCalledWith(
+        expect.stringContaining('workflow_status = ?'),
+        ['proposed', 'd-workflow']
+      );
+      expect(mockRes.json).toHaveBeenCalledWith({
+        id: 'd-workflow',
+        workflowStatus: 'proposed',
+        createdTaskIds: [],
+      });
     });
   });
 });

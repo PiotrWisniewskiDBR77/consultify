@@ -174,6 +174,16 @@ export class KnowledgeIndexer {
     this.isPg = process.env.DB_TYPE === 'postgres';
   }
 
+  private resolveWorkspacePath(relativePath: string): string {
+    const normalized = String(relativePath || '').replace(/^\/+/, '');
+    const candidates = [
+      path.join(this.projectRoot, normalized),
+      path.join(this.projectRoot, '..', normalized),
+    ];
+
+    return candidates.find((candidate) => fs.existsSync(candidate)) || candidates[0];
+  }
+
   /**
    * Initialize the indexer with embedding service
    */
@@ -255,7 +265,7 @@ export class KnowledgeIndexer {
       aiLogger.info('KnowledgeIndexer', `Processing source: ${sourceName}`);
 
       for (const relativeFilePath of sourceConfig.files) {
-        const filePath = path.join(this.projectRoot, relativeFilePath);
+        const filePath = this.resolveWorkspacePath(relativeFilePath);
 
         try {
           if (!fs.existsSync(filePath)) {
@@ -342,16 +352,13 @@ export class KnowledgeIndexer {
     for (let i = 0; i < chunks.length; i++) {
       try {
         const embedding = await this.generateEmbedding(chunks[i]);
-        if (!embedding) {
-          continue;
-        }
 
         await this.insertChunk({
           id: `${docId}-chunk-${i}`,
           docId,
           chunkIndex: i,
           content: chunks[i],
-          embedding,
+          embedding: embedding || null,
           metadata: { ...config.metadata, chunkIndex: i },
         });
 
@@ -377,6 +384,42 @@ export class KnowledgeIndexer {
   // ============================================
   // Tool Knowledge Packs (knowledge/tool-kb)
   // ============================================
+
+  private slugifySegment(value: string): string {
+    return String(value || '')
+      .replace(/[łŁ]/g, 'l')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  private resolveProductSlug(folderName: string): string {
+    const slug = this.slugifySegment(folderName);
+    if (slug.includes('consultinity') || slug.includes('consultify')) return 'consultify';
+    if (slug.includes('vector')) return 'vector';
+    if (slug.includes('marketplace')) return 'marketplace';
+    if (slug.includes('iiot') || slug.includes('iot')) return 'iiot';
+    if (slug === 'dt-info-pils' || slug.startsWith('dt-')) return 'digital-twin';
+    if (slug.includes('digital-twin')) return 'digital-twin';
+    if (slug.includes('iris')) return 'iris';
+    return slug || 'unknown-product';
+  }
+
+  private findProductPillsRoot(): string | null {
+    const knowledgeAbs = this.resolveWorkspacePath('knowledge');
+    if (!fs.existsSync(knowledgeAbs)) return null;
+
+    const entries = fs.readdirSync(knowledgeAbs, { withFileTypes: true });
+    const match = entries.find((entry) => {
+      if (!entry.isDirectory()) return false;
+      const slug = this.slugifySegment(entry.name);
+      return slug.includes('pigulki-wiedzy') || slug.includes('knowledge-pills');
+    });
+
+    return match ? path.join(knowledgeAbs, match.name) : null;
+  }
 
   private walkDirForMdFiles(rootAbs: string): string[] {
     const out: string[] = [];
@@ -429,6 +472,28 @@ export class KnowledgeIndexer {
     return { toolSlug, packType, majorVersion, language };
   }
 
+  private parseProductPillPath(relativeFilePath: string): {
+    productSlug: string | null;
+    pillId: string | null;
+    language: string | null;
+  } {
+    const normalized = relativeFilePath.replace(/\\/g, '/');
+    const parts = normalized.split('/').filter(Boolean);
+    const knowledgeIdx = parts.indexOf('knowledge');
+    if (knowledgeIdx < 0 || parts.length < knowledgeIdx + 3) {
+      return { productSlug: null, pillId: null, language: null };
+    }
+
+    const productFolder = parts[knowledgeIdx + 2] || null;
+    const productSlug = productFolder ? this.resolveProductSlug(productFolder) : null;
+    const base = path.basename(normalized);
+    const withoutExt = base.replace(/\.(md|markdown)$/i, '');
+    const pillId = this.slugifySegment(withoutExt) || null;
+    const language = /\.([a-z]{2})\.(md|markdown)$/i.test(base) ? base.match(/\.([a-z]{2})\./i)?.[1]?.toLowerCase() || null : 'pl';
+
+    return { productSlug, pillId, language };
+  }
+
   private async deleteDocAndChunks(docId: string): Promise<void> {
     if (!docId) return;
     if (this.isPg) {
@@ -462,7 +527,7 @@ export class KnowledgeIndexer {
       failed: [] as Array<{ file: string; error: string }>,
     };
 
-    const toolKbAbs = path.join(this.projectRoot, 'knowledge/tool-kb');
+    const toolKbAbs = this.resolveWorkspacePath('knowledge/tool-kb');
     if (!fs.existsSync(toolKbAbs)) {
       results.failed.push({ file: 'knowledge/tool-kb', error: 'Folder not found' });
       return results;
@@ -502,6 +567,70 @@ export class KnowledgeIndexer {
           overlap: 200,
           metadata,
           sourceName: 'tool_pack',
+          relativeFilePath,
+        });
+
+        results.indexed.push({ file: relativeFilePath, chunks: res.chunkCount, docId: res.docId });
+      } catch (error: unknown) {
+        const err = error as Error;
+        results.failed.push({ file: abs, error: err.message });
+      }
+    }
+
+    return results;
+  }
+
+  async indexProductKnowledgePills(options: { forceReindex?: boolean } = {}): Promise<{
+    indexed: Array<{ file: string; chunks: number; docId: string }>;
+    skipped: Array<{ file: string; reason: string }>;
+    failed: Array<{ file: string; error: string }>;
+  }> {
+    const { forceReindex = false } = options;
+    const results = {
+      indexed: [] as Array<{ file: string; chunks: number; docId: string }>,
+      skipped: [] as Array<{ file: string; reason: string }>,
+      failed: [] as Array<{ file: string; error: string }>,
+    };
+
+    const productPillsAbs = this.findProductPillsRoot();
+    if (!productPillsAbs || !fs.existsSync(productPillsAbs)) {
+      results.failed.push({ file: 'knowledge/product-pills', error: 'Folder not found' });
+      return results;
+    }
+
+    const filesAbs = this.walkDirForMdFiles(productPillsAbs);
+    for (const abs of filesAbs) {
+      const relativeFilePath = path.relative(this.projectRoot, abs).replace(/\\/g, '/').trim();
+
+      try {
+        const existing = await this.getDocByPath(relativeFilePath);
+        if (existing && !forceReindex) {
+          results.skipped.push({ file: relativeFilePath, reason: 'Already indexed' });
+          continue;
+        }
+
+        if (existing && forceReindex) {
+          await this.deleteDocAndChunks(existing.id);
+        }
+
+        const inferred = this.parseProductPillPath(relativeFilePath);
+        const metadata = {
+          type: 'product_pill',
+          source_kind: 'product_pill',
+          product_slug: inferred.productSlug,
+          pill_id: inferred.pillId,
+          language: inferred.language,
+          weight: inferred.productSlug === 'consultify' ? 1.2 : 1.0,
+          filepath: relativeFilePath,
+        };
+
+        const res = await this.indexFile(abs, {
+          name: 'Product Knowledge Pill',
+          files: [relativeFilePath],
+          chunkSize: 1100,
+          overlap: 200,
+          metadata,
+          sourceName: 'product_pill',
           relativeFilePath,
         });
 

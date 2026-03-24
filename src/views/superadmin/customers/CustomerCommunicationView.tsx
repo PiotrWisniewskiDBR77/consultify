@@ -209,9 +209,7 @@ const CustomerCommunicationView: React.FC = () => {
         {communications.length === 0 ? (
           <div className="text-center py-8">
             <Mail className="w-12 h-12 text-gray-600 dark:text-gray-400 mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">
-              No communications sent yet
-            </p>
+            <p className="text-slate-600 dark:text-slate-400">No communications sent yet</p>
             <button
               onClick={() => setShowComposeModal(true)}
               className="mt-4 text-blue-400 hover:text-blue-300"
@@ -246,7 +244,9 @@ const CustomerCommunicationView: React.FC = () => {
                         {comm.type === 'broadcast' && <Users className="w-4 h-4 text-green-400" />}
                       </div>
                       <div>
-                        <h4 className="text-slate-900 dark:text-white font-medium">{comm.subject}</h4>
+                        <h4 className="text-slate-900 dark:text-white font-medium">
+                          {comm.subject}
+                        </h4>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {getRecipientsLabel(comm)}
                         </p>
@@ -271,7 +271,9 @@ const CustomerCommunicationView: React.FC = () => {
                     </div>
                     {openRate !== null && (
                       <div className="text-right">
-                        <p className="text-lg font-bold text-slate-900 dark:text-white">{openRate}%</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white">
+                          {openRate}%
+                        </p>
                         <span className="text-xs text-slate-600 dark:text-slate-400">
                           Open Rate
                         </span>

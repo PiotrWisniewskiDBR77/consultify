@@ -59,7 +59,7 @@ export const AuthService = {
 
   // Request password reset
   requestPasswordReset: async (email: string): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/auth/password-reset/request`, {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -69,9 +69,9 @@ export const AuthService = {
     return json;
   },
 
-  // Reset password
+  // Reset password with token
   resetPassword: async (token: string, newPassword: string): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/auth/password-reset/confirm`, {
+    const res = await fetch(`${API_URL}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),

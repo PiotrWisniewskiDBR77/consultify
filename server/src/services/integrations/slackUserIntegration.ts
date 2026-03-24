@@ -1,9 +1,14 @@
 /**
- * Slack User Integration
+ * Slackuserintegration Service
+ * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Not implemented in this codebase. Export an explicit marker so runtime code can return an
- * honest `503` instead of relying on lazy-loader wrappers.
+ * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
-const slackUserIntegration = { __unavailable__: true } as const;
 
-export default slackUserIntegration;
+import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+
+// Lazy load the JS service module
+const loadSlackuserintegration = createCachedLazyService('./integrations/slackUserIntegration.js');
+
+// Export default instance (for backward compatibility)
+export default loadSlackuserintegration();

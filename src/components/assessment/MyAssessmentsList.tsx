@@ -146,9 +146,11 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           projectId: String(a?.projectId || a?.project_id || ''),
           projectName: String(a?.projectName || a?.project_name || ''),
           name: String(a?.name || a?.title || ''),
-          type: (String(a?.assessmentType || a?.assessment_type || a?.type || 'DRD').toUpperCase() ||
-            'DRD') as any,
-          status: (String(a?.backendStatus || a?.status || 'DRAFT').toUpperCase() || 'DRAFT') as any,
+          type: (String(
+            a?.assessmentType || a?.assessment_type || a?.type || 'DRD'
+          ).toUpperCase() || 'DRD') as any,
+          status: (String(a?.backendStatus || a?.status || 'DRAFT').toUpperCase() ||
+            'DRAFT') as any,
           completedAxes: Number(a?.completedAxes || 0),
           totalAxes: Number(a?.totalAxes || 0),
           overallScore: a?.overallScore ?? a?.overall_score ?? undefined,

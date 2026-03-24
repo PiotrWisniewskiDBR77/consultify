@@ -16,17 +16,15 @@ const CALLOUT_ICONS: Record<string, React.FC<{ size?: number; className?: string
 };
 
 export const CalloutBlock: React.FC<Props> = ({ block, theme }) => {
-  const variant = (block.content.variant as string) || (block.type === 'quote_block' ? 'quote' : 'info');
+  const variant =
+    (block.content.variant as string) || (block.type === 'quote_block' ? 'quote' : 'info');
   const text = (block.content.text as string) || 'Important information';
   const author = block.content.author as string | undefined;
   const Icon = CALLOUT_ICONS[variant] || Info;
 
   if (variant === 'quote' || block.type === 'quote_block') {
     return (
-      <div
-        className="border-l-4 pl-4 py-2"
-        style={{ borderColor: theme.colors.accent }}
-      >
+      <div className="border-l-4 pl-4 py-2" style={{ borderColor: theme.colors.accent }}>
         <p className="text-sm italic" style={{ color: theme.colors.textPrimary }}>
           &ldquo;{text}&rdquo;
         </p>

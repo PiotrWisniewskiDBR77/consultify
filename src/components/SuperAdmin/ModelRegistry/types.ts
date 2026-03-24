@@ -75,6 +75,11 @@ export type Purpose =
   | 'chat_simple'
   | 'chat_complex'
   | 'chat_confirm'
+  | 'chat_with_pdf'
+  | 'chat_with_files'
+  | 'document_extract'
+  | 'document_compare'
+  | 'document_answer'
   | 'tool_recommendation'
   | 'session_missing_items'
   | 'session_summary'
@@ -84,8 +89,16 @@ export type Purpose =
   | 'build_roadmap'
   | 'results_anomaly_insights'
   | 'results_report_draft'
+  | 'report_section_draft'
+  | 'report_executive_synthesis'
+  | 'report_evidence_validation'
+  | 'report_quality_gate'
   | 'report_section'
   | 'full_report'
+  | 'presentation_deck_outline'
+  | 'presentation_slide_copy'
+  | 'presentation_visual_generation'
+  | 'presentation_vision_qc'
   | 'deck_outline'
   | 'deck_copy_polish'
   | 'vision_extract'
@@ -105,7 +118,11 @@ export interface PurposeCategory {
 export const PURPOSE_CATEGORIES: PurposeCategory[] = [
   {
     label: 'Chat',
-    purposes: ['chat_simple', 'chat_complex', 'chat_confirm'],
+    purposes: ['chat_simple', 'chat_complex', 'chat_confirm', 'chat_with_pdf', 'chat_with_files'],
+  },
+  {
+    label: 'Documents',
+    purposes: ['document_extract', 'document_compare', 'document_answer'],
   },
   {
     label: 'Tools & Assessments',
@@ -126,7 +143,20 @@ export const PURPOSE_CATEGORIES: PurposeCategory[] = [
   },
   {
     label: 'Reports & Presentations',
-    purposes: ['report_section', 'full_report', 'deck_outline', 'deck_copy_polish'],
+    purposes: [
+      'report_section_draft',
+      'report_executive_synthesis',
+      'report_evidence_validation',
+      'report_quality_gate',
+      'report_section',
+      'full_report',
+      'presentation_deck_outline',
+      'presentation_slide_copy',
+      'presentation_visual_generation',
+      'presentation_vision_qc',
+      'deck_outline',
+      'deck_copy_polish',
+    ],
   },
   {
     label: 'Vision',
@@ -146,6 +176,11 @@ export const PURPOSE_KIND_MAP: Record<Purpose, ModelKind> = {
   chat_simple: 'TEXT_LLM',
   chat_complex: 'TEXT_LLM',
   chat_confirm: 'TEXT_LLM',
+  chat_with_pdf: 'TEXT_LLM',
+  chat_with_files: 'TEXT_LLM',
+  document_extract: 'TEXT_LLM',
+  document_compare: 'TEXT_LLM',
+  document_answer: 'TEXT_LLM',
   tool_recommendation: 'TEXT_LLM',
   session_missing_items: 'TEXT_LLM',
   session_summary: 'TEXT_LLM',
@@ -155,8 +190,16 @@ export const PURPOSE_KIND_MAP: Record<Purpose, ModelKind> = {
   build_roadmap: 'TEXT_LLM',
   results_anomaly_insights: 'TEXT_LLM',
   results_report_draft: 'TEXT_LLM',
+  report_section_draft: 'TEXT_LLM',
+  report_executive_synthesis: 'TEXT_LLM',
+  report_evidence_validation: 'TEXT_LLM',
+  report_quality_gate: 'TEXT_LLM',
   report_section: 'TEXT_LLM',
   full_report: 'TEXT_LLM',
+  presentation_deck_outline: 'TEXT_LLM',
+  presentation_slide_copy: 'TEXT_LLM',
+  presentation_visual_generation: 'IMAGE_MODEL',
+  presentation_vision_qc: 'TEXT_LLM',
   deck_outline: 'TEXT_LLM',
   deck_copy_polish: 'TEXT_LLM',
   vision_extract: 'TEXT_LLM',

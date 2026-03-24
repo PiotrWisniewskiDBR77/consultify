@@ -100,4 +100,3 @@ export const AssessmentFrameworkPreviewV3Footer: React.FC<{
     </div>
   );
 };
-

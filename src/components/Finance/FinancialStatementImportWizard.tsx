@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Edit3,
   FileText,
   Info,
   Loader2,
@@ -26,6 +25,11 @@ import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import {
+  FinancialStatementMappingEditor,
+  type FinancialStatementCanonicalLineOption,
+  type FinancialStatementMappedValue,
+} from './FinancialStatementMappingEditor';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,6 +44,9 @@ interface Detection {
   currency: string;
   scaling: string;
   language: string;
+  containedStatementTypes?: string[];
+  containsMultipleStatements?: boolean;
+  documentClass?: string;
 }
 
 interface ExtractedLine {
@@ -47,33 +54,53 @@ interface ExtractedLine {
   value: number;
   confidence: number;
   sourceRow?: number;
+  selectedPeriodLabel?: string;
+  comparisonPeriodLabel?: string;
+  rowType?: string;
+  sectionKey?: string;
+  signMode?: string;
   suggestedCanonicalId?: string;
   suggestedCanonicalLabel?: string;
+  isNonFinancial?: boolean;
+  classificationReason?: string;
+  mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
 }
 
-interface CanonicalLine {
-  id: string;
+interface ExtractionDiagnostics {
+  sections?: Array<{
+    sectionKey: string;
+    sectionLabel: string;
+    confidence: number;
+  }>;
+  columnSelection?: {
+    selectedPeriodLabel?: string | null;
+    comparisonPeriodLabel?: string | null;
+    selectionStrategy?: string;
+  };
+  warnings?: string[];
+  rawTableCount?: number;
+  extractionStrategy?: string;
+  documentClass?: string;
+}
+
+type CanonicalLine = FinancialStatementCanonicalLineOption & {
   statement_type: string;
   line_code: string;
-  line_name: string;
-  line_name_pl: string;
-}
+};
 
-interface MappedValue {
-  originalLabel: string;
-  value: number;
-  confidence: number;
-  canonicalLineId: string | null;
-  canonicalLabel: string;
-  mappingStatus: string;
-  sourceRow?: number;
-}
+type MappedValue = FinancialStatementMappedValue;
 
 interface ValidationMessage {
   type: 'error' | 'warning' | 'info';
   code: string;
   message: string;
   details?: string;
+}
+
+interface ReadinessState {
+  readinessStatus: 'pending' | 'recoverable' | 'ready' | 'rejected';
+  summary: string;
+  reasonCodes: string[];
 }
 
 type WizardStep = 'upload' | 'detect' | 'map' | 'confirm';
@@ -103,17 +130,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
   // Extract state
   const [extractedLines, setExtractedLines] = useState<ExtractedLine[]>([]);
+  const [extractionDiagnostics, setExtractionDiagnostics] = useState<ExtractionDiagnostics | null>(null);
 
   // Map state
   const [mappedValues, setMappedValues] = useState<MappedValue[]>([]);
   const [canonicalLines, setCanonicalLines] = useState<CanonicalLine[]>([]);
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   // Validation state
   const [validation, setValidation] = useState<{
     status: string;
     messages: ValidationMessage[];
   } | null>(null);
+  const [readiness, setReadiness] = useState<ReadinessState | null>(null);
 
   // Override detection
   const [overrideType, setOverrideType] = useState<string>('');
@@ -122,6 +150,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
   const STEPS: WizardStep[] = ['upload', 'detect', 'map', 'confirm'];
   const stepIdx = STEPS.indexOf(step);
+
+  const handleDismiss = useCallback(() => {
+    if (statementId) {
+      onComplete?.(statementId);
+      return;
+    }
+    onClose?.();
+  }, [onClose, onComplete, statementId]);
 
   // ── Step 1: Upload ──
 
@@ -143,14 +179,34 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     (e: React.DragEvent) => {
       e.preventDefault();
       const f = e.dataTransfer.files[0];
-      if (f && (ACCEPTED_TYPES.has(f.type) || ACCEPTED_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext)))) {
+      if (
+        f &&
+        (ACCEPTED_TYPES.has(f.type) ||
+          ACCEPTED_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext)))
+      ) {
         setFile(f);
       } else {
-        setError(t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV'));
+        setError(
+          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV')
+        );
       }
     },
     [t]
   );
+
+  // Smart analysis result state
+  const [smartAnalysis, setSmartAnalysis] = useState<{
+    mode: string;
+    entityName?: string;
+    periodLabel?: string;
+    currency?: string;
+    scaling?: string;
+    documentDescription?: string;
+    sectionTypes?: string[];
+    totalLines?: number;
+    statementPackId?: string;
+    statements?: Array<{ statementId: string; statementType: string; lineCount: number }>;
+  } | null>(null);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -159,14 +215,51 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const data = await Api.postMultipart('/api/finance-statements/upload', formData);
-      setStatementId(data.statementId);
-      setDetection(data.detection);
-      setOverrideType(data.detection.statementType);
-      setOverrideCurrency(data.detection.currency);
-      setOverridePeriod(data.detection.periodLabel || '');
-      trackFunnelEvent('financial_statement_import_started', { statementId: data.statementId });
-      setStep('detect');
+
+      // Try smart upload first (LLM analyzes entire document)
+      const data = await Api.postMultipart('/api/finance-statements/upload-and-analyze', formData);
+
+      if (data.mode === 'smart' && data.analysis) {
+        // LLM successfully analyzed the document — skip detect/extract steps
+        setSmartAnalysis({
+          mode: 'smart',
+          entityName: data.analysis.entityName,
+          periodLabel: data.analysis.periodLabel,
+          currency: data.analysis.currency,
+          scaling: data.analysis.scaling,
+          documentDescription: data.analysis.documentDescription,
+          sectionTypes: data.analysis.sectionTypes,
+          totalLines: data.analysis.totalLines,
+          statementPackId: data.statementPackId,
+          statements: data.statements,
+        });
+        setStatementId(data.statementPackId || data.statementIds?.[0]);
+        trackFunnelEvent('financial_statement_import_started', {
+          packId: data.statementPackId,
+          sections: data.analysis.sectionTypes?.length,
+          totalLines: data.analysis.totalLines,
+        });
+        setStep('confirm');
+      } else {
+        // Fallback: old flow with manual section selection
+        setStatementId(data.statementIds?.[0] || data.statementPackId);
+        const fallbackDetection: Detection = {
+          statementType: 'P&L',
+          confidence: 0.5,
+          periodStart: null,
+          periodEnd: null,
+          periodLabel: null,
+          currency: 'PLN',
+          scaling: 'units',
+          language: 'pl',
+        };
+        setDetection(fallbackDetection);
+        setOverrideType(fallbackDetection.statementType);
+        setOverrideCurrency(fallbackDetection.currency);
+        setOverridePeriod(fallbackDetection.periodLabel || '');
+        trackFunnelEvent('financial_statement_import_started', { statementId: data.statementIds?.[0] });
+        setStep('detect');
+      }
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
@@ -181,12 +274,37 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setLoading(true);
     setError(null);
     try {
-      const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {});
+      await Api.post(`/api/finance-statements/${statementId}/detect`, {
+        statementType: overrideType,
+        periodLabel: overridePeriod,
+        currency: overrideCurrency,
+      });
+      const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {
+        statementType: overrideType,
+        periodLabel: overridePeriod,
+        currency: overrideCurrency,
+      });
       const { lines } = extractData as { lines: ExtractedLine[] };
       setExtractedLines(lines);
+      setExtractionDiagnostics({
+        sections: Array.isArray((extractData as any)?.sections)
+          ? (extractData as any).sections.map((section: any) => ({
+              sectionKey: String(section.sectionKey || ''),
+              sectionLabel: String(section.sectionLabel || ''),
+              confidence: Number(section.confidence || 0),
+            }))
+          : [],
+        columnSelection: (extractData as any)?.columnSelection,
+        warnings: Array.isArray((extractData as any)?.warnings)
+          ? (extractData as any).warnings.map((warning: unknown) => String(warning))
+          : [],
+        rawTableCount: Number((extractData as any)?.rawTableCount || 0),
+        extractionStrategy: String((extractData as any)?.extractionStrategy || ''),
+        documentClass: String((extractData as any)?.documentClass || ''),
+      });
 
       // Auto-map
-      const mapData = await Api.post(`/api/finance-statements/${statementId}/map`, { lines });
+      const mapData = await Api.post(`/api/finance-statements/${statementId}/map`, {});
       const { mappedLines } = mapData as { mappedLines: ExtractedLine[] };
 
       // Load canonical lines for dropdown
@@ -200,8 +318,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         confidence: l.confidence,
         canonicalLineId: l.suggestedCanonicalId || null,
         canonicalLabel: l.suggestedCanonicalLabel || '',
-        mappingStatus: l.suggestedCanonicalId ? 'auto' : 'unmapped',
+        mappingStatus: l.isNonFinancial ? 'unmapped' : l.suggestedCanonicalId ? 'auto' : 'unmapped',
         sourceRow: l.sourceRow,
+        isNonFinancial: !!l.isNonFinancial,
+        classificationReason: l.classificationReason,
+        mappingTier: l.mappingTier,
       }));
       setMappedValues(mv);
       setStep('map');
@@ -228,6 +349,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               canonicalLineId: canonId || null,
               canonicalLabel: canon ? (isPl ? canon.line_name_pl : canon.line_name) : '',
               mappingStatus: canonId ? 'manual' : 'unmapped',
+              isNonFinancial: false,
+              classificationReason: canonId ? undefined : v.classificationReason,
             }
           : v
       )
@@ -247,9 +370,26 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           confidence: v.confidence,
           sourceRow: v.sourceRow,
           mappingStatus: v.mappingStatus,
+          isNonFinancial: v.isNonFinancial,
+          classificationReason: v.classificationReason,
         })),
       });
       setValidation((data as any)?.validation || null);
+      setReadiness(
+        (data as any)?.readiness
+          ? {
+              readinessStatus: String((data as any).readiness.readinessStatus || 'pending') as
+                | 'pending'
+                | 'recoverable'
+                | 'ready'
+                | 'rejected',
+              summary: String((data as any).readiness.summary || ''),
+              reasonCodes: Array.isArray((data as any).readiness.reasonCodes)
+                ? (data as any).readiness.reasonCodes.map((code: unknown) => String(code))
+                : [],
+            }
+          : null
+      );
       trackFunnelEvent('financial_statement_import_completed', {
         statementId,
         lineCount: mappedValues.length,
@@ -296,15 +436,38 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     return <CheckCircle2 size={14} className="text-emerald-500" />;
   };
 
-  const stepLabels = [
-    t('finance.importWizard.stepUpload', 'Upload'),
-    t('finance.importWizard.stepDetect', 'Detect'),
-    t('finance.importWizard.stepMap', 'Map & Correct'),
-    t('finance.importWizard.stepConfirm', 'Confirm'),
-  ];
+  const stepLabels = smartAnalysis
+    ? [
+        isPl ? 'Wgraj' : 'Upload',
+        isPl ? 'Analiza AI' : 'AI Analysis',
+        isPl ? 'Gotowe' : 'Done',
+      ]
+    : [
+        t('finance.importWizard.stepUpload', 'Upload'),
+        t('finance.importWizard.stepDetect', 'Detect'),
+        t('finance.importWizard.stepMap', 'Map & Correct'),
+        t('finance.importWizard.stepConfirm', 'Confirm'),
+      ];
+
+  const displaySteps = smartAnalysis
+    ? (['upload', 'detect', 'confirm'] as WizardStep[])
+    : STEPS;
+  const detectedStatementTypes = Array.isArray(detection?.containedStatementTypes)
+    ? detection!.containedStatementTypes.filter(Boolean)
+    : [];
+  const containsMultipleStatements = Boolean(
+    detection?.containsMultipleStatements || detectedStatementTypes.length > 1
+  );
+  const selectedStatementSection = overrideType || detection?.statementType || '';
+  const displayedDetectionConfidence = detection?.confidence || 0;
+  const detectionConfidenceHint = t(
+    'finance.importWizard.confidenceAutoDetection',
+    'Heuristic confidence from automatic document detection.'
+  );
+  const isReadyForConfirm = readiness?.readinessStatus === 'ready';
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 p-6">
+    <div className="min-h-full bg-white dark:bg-navy-950 p-6 pb-10">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -320,7 +483,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         </div>
         {onClose && (
           <button
-            onClick={onClose}
+            onClick={handleDismiss}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={20} className="text-slate-500" />
@@ -328,31 +491,50 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         )}
       </div>
 
-      {/* Steps indicator */}
-      <div className="flex items-center gap-2 mb-8">
-        {STEPS.map((s, i) => (
-          <React.Fragment key={s}>
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                i < stepIdx
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : i === stepIdx
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    : 'bg-slate-100 text-slate-400 dark:bg-navy-800 dark:text-navy-400'
-              }`}
-            >
-              {i < stepIdx ? (
-                <Check size={14} />
-              ) : (
-                <span className="w-5 h-5 flex items-center justify-center rounded-full text-xs border border-current">
-                  {i + 1}
+      {/* Steps indicator with progress line */}
+      <div className="flex items-center mb-8" role="navigation" aria-label={isPl ? 'Kroki importu' : 'Import steps'}>
+        {displaySteps.map((s, i) => {
+          const displayStepIdx = displaySteps.indexOf(step);
+          const isCompleted = i < displayStepIdx;
+          const isCurrent = i === displayStepIdx;
+          return (
+            <React.Fragment key={s}>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+                    isCompleted
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : isCurrent
+                        ? 'bg-cyan-600 text-white shadow-sm ring-4 ring-cyan-100 dark:ring-cyan-500/20'
+                        : 'border-2 border-slate-200 text-slate-400 dark:border-white/[0.1] dark:text-slate-500'
+                  }`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                >
+                  {isCompleted ? <Check size={14} strokeWidth={3} /> : i + 1}
+                </div>
+                <span
+                  className={`text-sm font-medium transition-colors ${
+                    isCompleted
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : isCurrent
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-400 dark:text-slate-500'
+                  } hidden sm:inline`}
+                >
+                  {stepLabels[i]}
                 </span>
+              </div>
+              {i < displaySteps.length - 1 && (
+                <div className="mx-3 h-0.5 flex-1 rounded-full bg-slate-200 dark:bg-white/[0.08]">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: isCompleted ? '100%' : isCurrent ? '50%' : '0%' }}
+                  />
+                </div>
               )}
-              <span className="hidden sm:inline">{stepLabels[i]}</span>
-            </div>
-            {i < STEPS.length - 1 && <ChevronRight size={16} className="text-slate-300" />}
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {error && (
@@ -366,16 +548,32 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       {step === 'upload' && (
         <div className="max-w-xl mx-auto">
           <div
-            className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-2xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
+            className={`group relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 cursor-pointer ${
+              file
+                ? 'border-cyan-400/60 bg-cyan-50/30 dark:border-cyan-500/30 dark:bg-cyan-500/5'
+                : 'border-slate-300 hover:border-cyan-400 hover:bg-cyan-50/20 dark:border-white/[0.1] dark:hover:border-cyan-500/40 dark:hover:bg-cyan-500/5'
+            }`}
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.add('border-cyan-400', 'bg-cyan-50/30');
+            }}
+            onDragLeave={(e) => {
+              e.currentTarget.classList.remove('border-cyan-400', 'bg-cyan-50/30');
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+            aria-label={isPl ? 'Upuść plik lub kliknij aby wybrać' : 'Drop file or click to browse'}
           >
-            <Upload size={48} className="mx-auto text-slate-400 mb-4" />
-            <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-cyan-100/60 dark:bg-white/[0.05] dark:group-hover:bg-cyan-500/10">
+              <Upload size={28} className="text-slate-400 transition-colors group-hover:text-cyan-500" />
+            </div>
+            <p className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
               {t('finance.importWizard.dropOrClick', 'Drop file here or click to browse')}
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-400 dark:text-slate-500">
               {t(
                 'finance.importWizard.supportedFormats',
                 'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
@@ -387,23 +585,37 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               accept=".pdf,.xlsx,.xls,.csv"
               onChange={handleFileSelect}
               className="hidden"
+              aria-hidden="true"
             />
           </div>
 
           {file && (
-            <div className="mt-6 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl flex items-center gap-3">
-              <FileText size={20} className={file.name.endsWith('.pdf') ? 'text-red-500' : 'text-green-500'} />
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                file.name.endsWith('.pdf')
+                  ? 'bg-rose-50 dark:bg-rose-500/10'
+                  : 'bg-emerald-50 dark:bg-emerald-500/10'
+              }`}>
+                <FileText
+                  size={18}
+                  className={file.name.endsWith('.pdf') ? 'text-rose-500' : 'text-emerald-500'}
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  {(file.size / 1024).toFixed(1)} KB
+                  {file.type && <span className="ml-2">{file.type.split('/').pop()?.toUpperCase()}</span>}
+                </p>
               </div>
               <button
-                onClick={() => setFile(null)}
-                className="p-1 hover:bg-slate-200 dark:hover:bg-navy-700 rounded"
+                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                aria-label={isPl ? 'Usuń plik' : 'Remove file'}
               >
-                <X size={16} className="text-slate-400" />
+                <X size={14} className="text-slate-400" />
               </button>
             </div>
           )}
@@ -411,10 +623,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           <button
             onClick={handleUpload}
             disabled={!file || loading}
-            className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50 transition-colors"
+            className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white font-medium rounded-xl shadow-sm hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-            {t('finance.importWizard.uploadAndDetect', 'Upload & Detect')}
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+            {loading
+              ? (isPl ? 'AI analizuje dokument...' : 'AI is analyzing document...')
+              : (isPl ? 'Wgraj i analizuj' : 'Upload & Analyze')}
           </button>
         </div>
       )}
@@ -427,11 +641,54 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               <Search size={18} className="text-blue-500" />
               {t('finance.importWizard.detectionResults', 'Detection Results')}
             </h3>
+            <div className="text-sm text-slate-600 dark:text-slate-300">
+              {containsMultipleStatements
+                ? t(
+                    'finance.importWizard.multiStatementIntro',
+                    'This source file appears to contain more than one financial statement. Choose which section to extract in this import.'
+                  )
+                : t(
+                    'finance.importWizard.singleStatementIntro',
+                    'Review the detected metadata before extracting the statement section.'
+                  )}
+            </div>
+
+            {containsMultipleStatements && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-100">
+                <div className="font-medium">
+                  {t(
+                    'finance.importWizard.multiStatementWarningTitle',
+                    'This file contains multiple statement sections'
+                  )}
+                </div>
+                <div className="mt-1">
+                  {t(
+                    'finance.importWizard.multiStatementWarningBody',
+                    'The selector below does not describe the whole source file. It only chooses which section of the report will be extracted now.'
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {detectedStatementTypes.map((type) => (
+                    <span
+                      key={type}
+                      className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-navy-900 dark:text-amber-200"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
-                  {t('finance.importWizard.statementType', 'Statement Type')}
+                  {containsMultipleStatements
+                    ? t(
+                        'finance.importWizard.statementSectionToExtract',
+                        'Statement section to extract'
+                      )
+                    : t('finance.importWizard.statementType', 'Statement Type')}
                 </label>
                 <select
                   value={overrideType || detection.statementType}
@@ -445,14 +702,40 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
-                  {t('finance.importWizard.confidence', 'Confidence')}
+                  {containsMultipleStatements
+                    ? t('finance.importWizard.selectedSection', 'Selected section')
+                    : t('finance.importWizard.confidence', 'Confidence')}
                 </label>
-                <div className="mt-1 flex items-center gap-2">
-                  {confidenceBadge(detection.confidence)}
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
-                    {detection.language?.toUpperCase()}
-                  </span>
-                </div>
+                {containsMultipleStatements ? (
+                  <>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="inline-flex rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200">
+                        {selectedStatementSection || 'P&L'}
+                      </span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        {detection.language?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {t(
+                        'finance.importWizard.selectedSectionHint',
+                        'This import will extract the section you selected manually.'
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mt-1 flex items-center gap-2">
+                      {confidenceBadge(displayedDetectionConfidence)}
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        {detection.language?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {detectionConfidenceHint}
+                    </div>
+                  </>
+                )}
               </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
@@ -490,6 +773,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 {t('finance.importWizard.scaleDetected', 'Scale detected')}:{' '}
                 <strong>{detection.scaling}</strong>
               </span>
+              {detection.documentClass && (
+                <span>
+                  • {t('finance.importWizard.documentClass', 'Document class')}:{' '}
+                  <strong>{detection.documentClass}</strong>
+                </span>
+              )}
             </div>
           </div>
 
@@ -506,7 +795,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-              {t('finance.importWizard.extractLines', 'Extract Financial Lines')}
+              {containsMultipleStatements
+                ? t(
+                    'finance.importWizard.extractSelectedSection',
+                    'Extract selected statement section'
+                  )
+                : t('finance.importWizard.extractLines', 'Extract Financial Lines')}
             </button>
           </div>
         </div>
@@ -525,107 +819,50 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             </span>
           </div>
 
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-navy-800">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.originalLabel', 'Original Label')}
-                  </th>
-                  <th className="text-right px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.value', 'Value')}
-                  </th>
-                  <th className="text-center px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.conf', 'Conf.')}
-                  </th>
-                  <th className="text-left px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.mappedTo', 'Mapped To')}
-                  </th>
-                  <th className="w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
-                {mappedValues.map((v, idx) => (
-                  <tr
-                    key={idx}
-                    className={`hover:bg-slate-50 dark:hover:bg-navy-800/50 ${!v.canonicalLineId ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}
-                  >
-                    <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
-                      {v.originalLabel}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-900 dark:text-white">
-                      {editingIdx === idx ? (
-                        <input
-                          type="number"
-                          value={v.value}
-                          onChange={(e) =>
-                            handleValueChange(idx, 'value', parseFloat(e.target.value) || 0)
-                          }
-                          onBlur={() => setEditingIdx(null)}
-                          autoFocus
-                          className="w-28 px-2 py-1 border border-blue-300 rounded text-right text-sm"
-                        />
-                      ) : (
-                        <span
-                          onClick={() => setEditingIdx(idx)}
-                          className="cursor-pointer hover:text-blue-600"
-                        >
-                          {v.value.toLocaleString(isPl ? 'pl-PL' : 'en-US', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-center">{confidenceBadge(v.confidence)}</td>
-                    <td className="px-4 py-2.5">
-                      <select
-                        value={v.canonicalLineId || ''}
-                        onChange={(e) => handleCanonicalChange(idx, e.target.value)}
-                        className={`w-full px-2 py-1 border rounded text-sm ${
-                          v.canonicalLineId
-                            ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700'
-                            : 'border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
-                        }`}
-                      >
-                        <option value="">
-                          {t('finance.importWizard.selectLine', '— Select canonical line —')}
-                        </option>
-                        {canonicalLines
-                          .filter(
-                            (c) => c.statement_type === (overrideType || detection?.statementType)
-                          )
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {isPl ? c.line_name_pl : c.line_name} ({c.line_code})
-                            </option>
-                          ))}
-                        <optgroup label={t('finance.importWizard.otherTypes', 'Other types')}>
-                          {canonicalLines
-                            .filter(
-                              (c) => c.statement_type !== (overrideType || detection?.statementType)
-                            )
-                            .map((c) => (
-                              <option key={c.id} value={c.id}>
-                                [{c.statement_type}] {isPl ? c.line_name_pl : c.line_name}
-                              </option>
-                            ))}
-                        </optgroup>
-                      </select>
-                    </td>
-                    <td className="px-2">
-                      <button
-                        onClick={() => setEditingIdx(editingIdx === idx ? null : idx)}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded"
-                      >
-                        <Edit3 size={14} className="text-slate-400" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {extractionDiagnostics && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-navy-700 dark:bg-navy-900">
+              <div className="flex flex-wrap gap-3 text-slate-600 dark:text-slate-300">
+                <span>
+                  {t('finance.importWizard.selectedSection', 'Selected section')}:&nbsp;
+                  <strong>{overrideType || detection?.statementType || '—'}</strong>
+                </span>
+                <span>
+                  {t('finance.importWizard.period', 'Period')}:&nbsp;
+                  <strong>
+                    {extractionDiagnostics.columnSelection?.selectedPeriodLabel ||
+                      overridePeriod ||
+                      detection?.periodLabel ||
+                      '—'}
+                  </strong>
+                </span>
+                {extractionDiagnostics.extractionStrategy && (
+                  <span>
+                    {t('finance.importWizard.extractionStrategy', 'Extraction strategy')}:&nbsp;
+                    <strong>{extractionDiagnostics.extractionStrategy}</strong>
+                  </span>
+                )}
+              </div>
+              {extractionDiagnostics.warnings && extractionDiagnostics.warnings.length > 0 && (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-100">
+                  <div className="font-medium">
+                    {t('finance.importWizard.extractionWarnings', 'Extraction warnings')}
+                  </div>
+                  <div className="mt-1 space-y-1">
+                    {extractionDiagnostics.warnings.map((warning) => (
+                      <div key={warning}>{warning}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <FinancialStatementMappingEditor
+            mappedValues={mappedValues}
+            canonicalLines={canonicalLines}
+            onValueChange={handleValueChange}
+            onCanonicalChange={handleCanonicalChange}
+          />
 
           {mappedValues.length === 0 && (
             <div className="text-center py-12 text-slate-400">
@@ -658,57 +895,205 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         </div>
       )}
 
-      {/* Step 4: Confirm */}
-      {step === 'confirm' && validation && (
+      {/* Step 4: Confirm — Smart Analysis Result */}
+      {step === 'confirm' && smartAnalysis && (
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Validation summary */}
-          <div
-            className={`p-6 rounded-xl border ${
-              validation.status === 'pass'
-                ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
-                : validation.status === 'warnings'
-                  ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
-                  : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              {validation.status === 'pass' ? (
-                <CheckCircle2 size={24} className="text-emerald-500" />
-              ) : validation.status === 'warnings' ? (
-                <AlertTriangle size={24} className="text-amber-500" />
-              ) : (
-                <XCircle size={24} className="text-red-500" />
-              )}
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">
-                  {validation.status === 'pass'
-                    ? t('finance.importWizard.validationPass', 'All validations passed')
-                    : validation.status === 'warnings'
-                      ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
-                      : t('finance.importWizard.validationErrors', 'Review required')}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {mappedValues.filter((v) => v.canonicalLineId).length}{' '}
-                  {t('finance.importWizard.linesMapped', 'lines mapped')}
+          <div className="overflow-hidden rounded-2xl border border-emerald-200 dark:border-emerald-800">
+            <div className="h-1.5 bg-emerald-500" />
+            <div className="p-6 bg-emerald-50/80 dark:bg-emerald-900/10">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-500/15">
+                  <CheckCircle2 size={24} className="text-emerald-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {isPl ? 'Dokument przeanalizowany przez AI' : 'Document analyzed by AI'}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {smartAnalysis.documentDescription || (isPl ? 'Analiza zakończona pomyślnie' : 'Analysis completed successfully')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Sections found */}
+              <div className="mb-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {isPl ? 'Znalezione sekcje' : 'Sections found'}
                 </p>
+                <div className="flex flex-wrap gap-2">
+                  {(smartAnalysis.statements || []).map((stmt) => (
+                    <div
+                      key={stmt.statementId}
+                      className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm dark:bg-white/[0.06]"
+                    >
+                      <span className="inline-flex items-center justify-center h-6 w-10 rounded-md bg-cyan-100 text-[10px] font-bold text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300">
+                        {stmt.statementType}
+                      </span>
+                      <span className="text-slate-700 dark:text-slate-300">
+                        {stmt.lineCount} {isPl ? 'pozycji' : 'lines'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+          </div>
 
-            {validation.messages.length > 0 && (
-              <div className="space-y-2">
-                {validation.messages.map((msg, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm">
-                    {validationIcon(msg.type)}
-                    <div>
-                      <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
-                      {msg.details && (
-                        <p className="text-xs text-slate-400 mt-0.5">{msg.details}</p>
-                      )}
-                    </div>
+          {/* Summary grid */}
+          <div className="bg-slate-50 dark:bg-navy-900 rounded-xl p-5 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-slate-500">{isPl ? 'Podmiot' : 'Entity'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.entityName || '—'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Okres' : 'Period'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.periodLabel || '—'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Waluta' : 'Currency'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.currency || 'PLN'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Skala' : 'Scaling'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.scaling || 'units'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Łącznie pozycji' : 'Total lines'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.totalLines || 0}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Plik źródłowy' : 'Source file'}</span>
+              <p className="font-medium text-slate-900 dark:text-white truncate">{file?.name}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                onComplete?.(smartAnalysis.statementPackId || statementId || '');
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500"
+            >
+              <CheckCircle2 size={16} />
+              {isPl ? 'Gotowe — przejdź do przeglądu' : 'Done — go to review'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Confirm — Manual flow (old) */}
+      {step === 'confirm' && !smartAnalysis && validation && (
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Readiness gauge + validation summary */}
+          <div
+            className={`overflow-hidden rounded-2xl border ${
+              isReadyForConfirm
+                ? 'border-emerald-200 dark:border-emerald-800'
+                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                  ? 'border-amber-200 dark:border-amber-800'
+                  : 'border-red-200 dark:border-red-800'
+            }`}
+          >
+            {/* Gauge bar at top */}
+            <div className={`h-1.5 ${
+              isReadyForConfirm
+                ? 'bg-emerald-500'
+                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                  ? 'bg-amber-500'
+                  : 'bg-rose-500'
+            }`} />
+
+            <div className={`p-6 ${
+              isReadyForConfirm
+                ? 'bg-emerald-50/80 dark:bg-emerald-900/10'
+                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                  ? 'bg-amber-50/80 dark:bg-amber-900/10'
+                  : 'bg-rose-50/80 dark:bg-rose-900/10'
+            }`}>
+              <div className="flex items-start gap-4 mb-4">
+                <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${
+                  isReadyForConfirm
+                    ? 'bg-emerald-100 dark:bg-emerald-500/15'
+                    : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                      ? 'bg-amber-100 dark:bg-amber-500/15'
+                      : 'bg-rose-100 dark:bg-rose-500/15'
+                }`}>
+                  {isReadyForConfirm ? (
+                    <CheckCircle2 size={24} className="text-emerald-500" />
+                  ) : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings' ? (
+                    <AlertTriangle size={24} className="text-amber-500" />
+                  ) : (
+                    <XCircle size={24} className="text-rose-500" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {isReadyForConfirm
+                      ? t('finance.importWizard.validationPass', 'All validations passed')
+                      : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                        ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
+                        : t('finance.importWizard.validationErrors', 'Review required')}
+                  </h3>
+                  <div className="mt-1 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                    <span>
+                      {mappedValues.filter((v) => v.canonicalLineId).length}/{mappedValues.length}{' '}
+                      {t('finance.importWizard.linesMapped', 'lines mapped')}
+                    </span>
+                    <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                    <span>
+                      {validation.messages.filter((m) => m.type === 'error').length} {isPl ? 'błędów' : 'errors'}
+                      {validation.messages.filter((m) => m.type === 'warning').length > 0 &&
+                        `, ${validation.messages.filter((m) => m.type === 'warning').length} ${isPl ? 'ostrzeżeń' : 'warnings'}`}
+                    </span>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
+
+              {readiness?.summary && (
+                <div className="mb-4 rounded-xl bg-white/70 px-4 py-3 text-sm text-slate-700 dark:bg-navy-950/30 dark:text-slate-300">
+                  {readiness.summary}
+                </div>
+              )}
+
+              {validation.messages.length > 0 && (
+                <div className="space-y-2">
+                  {validation.messages.map((msg, i) => (
+                    <div key={i} className="flex items-start gap-2.5 rounded-lg bg-white/50 px-3 py-2 text-sm dark:bg-white/[0.03]">
+                      {validationIcon(msg.type)}
+                      <div className="min-w-0 flex-1">
+                        <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
+                        {msg.details && (
+                          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{msg.details}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!!readiness?.reasonCodes?.length && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {readiness.reasonCodes.map((code) => (
+                    <span
+                      key={code}
+                      className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300"
+                    >
+                      {code}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Statement summary */}
@@ -748,7 +1133,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             </button>
             <button
               onClick={handleConfirm}
-              disabled={loading}
+              disabled={loading || !isReadyForConfirm}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500 disabled:opacity-50"
             >
               {loading ? (
@@ -756,7 +1141,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               ) : (
                 <CheckCircle2 size={16} />
               )}
-              {t('finance.importWizard.confirmAndSave', 'Confirm & Save')}
+              {isReadyForConfirm
+                ? t('finance.importWizard.confirmAndSave', 'Confirm & Save')
+                : t('finance.importWizard.reviewBeforeConfirm', 'Fix mapping to continue')}
             </button>
           </div>
         </div>

@@ -43,7 +43,6 @@ import {
 } from '@/components/shared/WorkspaceTools';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { useAppStore } from '@/store/useAppStore';
 
 const AI_BLOCK_MIME = 'application/x-notebook-ai-block';
 
@@ -122,7 +121,6 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
-  const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -291,25 +289,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   );
 
   /* ---- Convert actions (notebook-specific) ---- */
-  const sendToChatWithPrompt = useCallback(
-    (prompt: string) => {
-      setChatKickoffMessage(prompt);
-      if (isChatCollapsed) toggleChatCollapse();
-    },
-    [setChatKickoffMessage, isChatCollapsed, toggleChatCollapse]
-  );
-
   const handleConvertAction = (target: ConvertTarget) => {
-    const excerpt = (noteContent || '').trim().slice(0, 2000);
-    if (target === 'assessment') {
-      sendToChatWithPrompt(
-        isPl
-          ? `Wygeneruj 8-12 pytań do oceny na podstawie:\n\nTytuł: "${noteTitle}"\nTagi: ${noteTags.join(', ') || 'brak'}\n\nTreść:\n${excerpt}`
-          : `Generate 8-12 assessment questions based on:\n\nTitle: "${noteTitle}"\nTags: ${noteTags.join(', ') || 'none'}\n\nContent:\n${excerpt}`
-      );
-      toast.success(isPl ? 'Generowanie pytań…' : 'Generating questions…');
-      return;
-    }
     // V3-C02: report/presentation conversions should use backend convert endpoint
     // so source traceability is guaranteed via MyWork ToolSession materialization.
     onConvert?.(target);

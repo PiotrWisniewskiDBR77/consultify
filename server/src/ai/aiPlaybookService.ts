@@ -732,15 +732,16 @@ const AIPlaybookService = {
   /**
    * Update step status
    */
-  updateStepStatus: async (stepId, status, { decisionId = null, executionId = null } = {}) => {
+  updateStepStatus: async (stepId, status, extra = {}) => {
+    const { decisionId = null, executionId = null } = extra || {};
     const setClauses = ['status = ?'];
     const values = [status];
 
-    if (decisionId) {
+    if (Object.prototype.hasOwnProperty.call(extra || {}, 'decisionId')) {
       setClauses.push('decision_id = ?');
       values.push(decisionId);
     }
-    if (executionId) {
+    if (Object.prototype.hasOwnProperty.call(extra || {}, 'executionId')) {
       setClauses.push('execution_id = ?');
       values.push(executionId);
     }

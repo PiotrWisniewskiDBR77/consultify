@@ -66,7 +66,8 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       const data = await Api.get(`/content/emails/templates?${params.toString()}`);
       setTemplates((data as any)?.templates || []);
     } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : t('superadmin.emailTemplates.toast.loadFailed');
+      const errorMessage =
+        err instanceof Error ? err.message : t('superadmin.emailTemplates.toast.loadFailed');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -217,7 +218,9 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               <Mail className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('superadmin.emailTemplates.title')}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                {t('superadmin.emailTemplates.title')}
+              </h1>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
                 {t('superadmin.emailTemplates.subtitle')}
               </p>
@@ -316,7 +319,9 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
           {loading ? (
             <div className="p-12 text-center">
               <RefreshCw className="w-8 h-8 text-slate-500 dark:text-slate-400 animate-spin mx-auto mb-4" />
-              <p className="text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.loading')}</p>
+              <p className="text-slate-600 dark:text-slate-400">
+                {t('superadmin.emailTemplates.loading')}
+              </p>
             </div>
           ) : templates.length === 0 ? (
             <div className="p-12 text-center">
@@ -524,26 +529,36 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
         {/* Stats Bar */}
         <div className="mt-6 grid grid-cols-4 gap-4">
           <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">{templates.length}</div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.total')}</div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+              {templates.length}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              {t('superadmin.emailTemplates.stats.total')}
+            </div>
           </div>
           <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
             <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
               {templates.filter((tmpl) => tmpl.status === 'PUBLISHED').length}
             </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.published')}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              {t('superadmin.emailTemplates.stats.published')}
+            </div>
           </div>
           <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
             <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
               {templates.filter((tmpl) => tmpl.status === 'DRAFT').length}
             </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.drafts')}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              {t('superadmin.emailTemplates.stats.drafts')}
+            </div>
           </div>
           <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
             <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">
               {templates.reduce((sum, tmpl) => sum + (tmpl.usageCount || 0), 0)}
             </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.totalSends')}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              {t('superadmin.emailTemplates.stats.totalSends')}
+            </div>
           </div>
         </div>
       </div>

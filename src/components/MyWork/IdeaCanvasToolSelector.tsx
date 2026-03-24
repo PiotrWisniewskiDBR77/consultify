@@ -12,9 +12,9 @@ import { Network, PenTool, Table2, Workflow } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// ── Shared data model (V3-C06) ──────────────────────────────────────────────
-
-export type CanvasToolType = 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+// Re-export from canonical location
+export type { CanvasToolType } from './ideaSelectionTypes';
+import type { CanvasToolType } from './ideaSelectionTypes';
 
 export interface IdeaNode {
   id: string;
@@ -23,6 +23,9 @@ export interface IdeaNode {
   position?: { x: number; y: number };
   parentId?: string;
   metadata?: Record<string, unknown>;
+  clusterIds?: string[];
+  outcomeType?: 'task' | 'decision' | 'initiative' | 'insight';
+  artifactRef?: { type: string; id: string };
 }
 
 export interface IdeaEdge {
@@ -133,18 +136,18 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
             className={`
               relative flex items-center justify-center p-2 rounded-full
               text-slate-500 dark:text-slate-400
-              transition-colors duration-160
+              transition-all duration-200 ease-out
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-1
               ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed'
                   : isActive
-                  ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                  : 'hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700/50'
+                    ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm scale-105'
+                    : 'hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700/50 hover:scale-105 active:scale-95'
               }
             `}
           >
-            <Icon size={18} />
+            <Icon size={18} className={isActive ? 'transition-transform duration-200' : ''} />
           </button>
         );
       })}

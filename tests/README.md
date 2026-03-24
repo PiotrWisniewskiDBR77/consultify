@@ -2,16 +2,16 @@
 
 Kompletny zestaw narzedzi do automatycznego testowania platformy Consultinity.
 
-## Status (stan na 2026-02-27)
+## Status (stan na 2026-03-10)
 
 **Liczba plikow testowych (wg `rg`)**
-- Razem w `tests/`: **1022**
-- Unit (`tests/unit`): **301**
-- Component (`tests/components`): **196**
-- Integration (`tests/integration`): **307**
-- E2E (`tests/e2e`): **158**
-- Security (`tests/security`): **10**
-- Performance (`tests/performance`): **7**
+- Razem w `tests/`: **~1050+** (po usunięciu duplikatów iCloud)
+- Unit (`tests/unit`): **445+**
+- Component (`tests/components`): **251+**
+- Integration (`tests/integration`): **202+**
+- E2E (`tests/e2e`): **150+** (usunięto 56 duplikatów)
+- Security (`tests/security`): **10+**
+- Performance (`tests/performance`): **7+**
 
 **Uwaga o coverage**
 Aktualne ustawienia `vitest.config.ts` licza coverage glownie dla backendu (`server/src/**`). Nie jest to globalne coverage calej aplikacji.

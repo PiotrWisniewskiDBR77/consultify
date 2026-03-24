@@ -150,65 +150,75 @@ const CustomerComplianceView: React.FC = () => {
             {t('superadmin.customers.compliance.table.empty')}
           </div>
         ) : (
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">
-              <th className="pb-3">{t('superadmin.customers.compliance.table.columns.organization')}</th>
-              <th className="pb-3 text-center">{t('superadmin.customers.compliance.table.columns.gdpr')}</th>
-              <th className="pb-3 text-center">{t('superadmin.customers.compliance.table.columns.dpa')}</th>
-              <th className="pb-3 text-center">
-                {t('superadmin.customers.compliance.table.columns.dataRetention')}
-              </th>
-              <th className="pb-3 text-center">
-                {t('superadmin.customers.compliance.table.columns.securityAudit')}
-              </th>
-              <th className="pb-3">{t('superadmin.customers.compliance.table.columns.lastAudit')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr
-                key={item.org_id}
-                className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
-              >
-                <td className="py-3 text-slate-900 dark:text-white font-medium">{item.org_name}</td>
-                <td className="py-3 text-center">
-                  {item.gdpr_compliant ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-400 mx-auto" />
-                  )}
-                </td>
-                <td className="py-3 text-center">
-                  {item.dpa_signed ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-400 mx-auto" />
-                  )}
-                </td>
-                <td className="py-3 text-center">
-                  {item.data_retention_policy ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-400 mx-auto" />
-                  )}
-                </td>
-                <td className="py-3 text-center">
-                  {item.security_audit_passed ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-400 mx-auto" />
-                  )}
-                </td>
-                <td className="py-3 text-slate-600 dark:text-slate-400 text-sm">
-                  {item.last_audit_date
-                    ? new Date(item.last_audit_date).toLocaleDateString()
-                    : t('superadmin.customers.compliance.table.never')}
-                </td>
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">
+                <th className="pb-3">
+                  {t('superadmin.customers.compliance.table.columns.organization')}
+                </th>
+                <th className="pb-3 text-center">
+                  {t('superadmin.customers.compliance.table.columns.gdpr')}
+                </th>
+                <th className="pb-3 text-center">
+                  {t('superadmin.customers.compliance.table.columns.dpa')}
+                </th>
+                <th className="pb-3 text-center">
+                  {t('superadmin.customers.compliance.table.columns.dataRetention')}
+                </th>
+                <th className="pb-3 text-center">
+                  {t('superadmin.customers.compliance.table.columns.securityAudit')}
+                </th>
+                <th className="pb-3">
+                  {t('superadmin.customers.compliance.table.columns.lastAudit')}
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr
+                  key={item.org_id}
+                  className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  <td className="py-3 text-slate-900 dark:text-white font-medium">
+                    {item.org_name}
+                  </td>
+                  <td className="py-3 text-center">
+                    {item.gdpr_compliant ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-400 mx-auto" />
+                    )}
+                  </td>
+                  <td className="py-3 text-center">
+                    {item.dpa_signed ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-400 mx-auto" />
+                    )}
+                  </td>
+                  <td className="py-3 text-center">
+                    {item.data_retention_policy ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-400 mx-auto" />
+                    )}
+                  </td>
+                  <td className="py-3 text-center">
+                    {item.security_audit_passed ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-400 mx-auto" />
+                    )}
+                  </td>
+                  <td className="py-3 text-slate-600 dark:text-slate-400 text-sm">
+                    {item.last_audit_date
+                      ? new Date(item.last_audit_date).toLocaleDateString()
+                      : t('superadmin.customers.compliance.table.never')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Card>
     </div>

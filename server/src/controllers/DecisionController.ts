@@ -8,6 +8,16 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import auditEventsService from '../services/AuditEventsService.js';
+import {
+  validateRequiredFields,
+  type DecisionPlaybook,
+} from '../services/decisionPlaybookService.js';
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
+import {
+  validateDecisionWorkflowTransition,
+  type DecisionWorkflowStatus,
+} from '../services/decisionWorkflowService.js';
 import NotificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -43,6 +53,7 @@ interface DecisionRow {
   impact: string | null;
   escalation_level: string | null;
   pmo_domain?: string | null;
+  workflow_status?: string | null;
   created_by: string;
   created_at: string;
   decided_at?: string | null;
@@ -116,7 +127,7 @@ const refreshTaskDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'task'
         AND di.impacted_id = ?
-        AND di.is_blocker = 1
+        AND di.is_blocker = TRUE
         AND d.status IN ('pending', 'escalated')
       ORDER BY
         CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
@@ -190,7 +201,7 @@ const refreshInitiativeDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'initiative'
         AND di.impacted_id = ?
-        AND di.is_blocker = 1
+        AND di.is_blocker = TRUE
         AND d.status IN ('pending', 'escalated')
     `,
     [organizationId, initiativeId]
@@ -290,7 +301,7 @@ export class DecisionController {
           owner.first_name || ' ' || owner.last_name as owner_name,
           requester.first_name || ' ' || requester.last_name as requested_by_name,
           p.name as project_name,
-          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blocked_items_count
+          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE) as blocked_items_count
         FROM decisions d
         LEFT JOIN users owner ON d.decision_maker_id = owner.id
         LEFT JOIN users requester ON d.created_by = requester.id
@@ -446,7 +457,7 @@ export class DecisionController {
                 COUNT(di.id) as blocked_count
             FROM decisions d
             LEFT JOIN users u ON d.decision_maker_id = u.id
-            LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker = 1
+            LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker = TRUE
             WHERE d.status IN ('pending', 'escalated')
             ${projectId ? 'AND d.project_id = ?' : ''}
             GROUP BY d.id
@@ -548,13 +559,13 @@ export class DecisionController {
             dh.old_status,
             dh.new_status,
             dh.changed_by,
-            dh.created_at,
+            dh.changed_at,
             dh.details,
             TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS changed_by_name
          FROM decision_history dh
          LEFT JOIN users u ON dh.changed_by = u.id
          WHERE dh.decision_id = ?
-         ORDER BY dh.created_at ASC`,
+         ORDER BY dh.changed_at ASC`,
         [id]
       );
 
@@ -599,6 +610,7 @@ export class DecisionController {
         dueDate: decision.deadline || undefined,
         outcome: decision.decision_rationale || undefined,
         decidedAt: decision.decided_at || undefined,
+        workflowStatus: decision.workflow_status || 'proposed',
         relatedObjectType,
         relatedObjectId,
         impacts: impacts.map((impact: any) => ({
@@ -871,6 +883,32 @@ export class DecisionController {
         }
       }
 
+      // V4-TASK-08: Unified audit log
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'DECISION_CREATE',
+          resourceType: 'decision',
+          resourceId: id,
+          after: { title, type: normalizedType, status: 'pending', decisionMakerId: decisionOwnerId || userId },
+          metadata: { initiativeId: initiativeIdValue, taskId: taskIdValue, projectId: projectIdValue },
+          organizationId: orgId,
+        })
+        .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
+
+      await dispatchProjectCommunicationEvent({
+        organizationId: orgId,
+        projectId: projectIdValue,
+        eventType: 'decision_required',
+        title: `Decision required: ${title}`,
+        body: `Decision "${title}" requires review${normalizedDueDate ? ` by ${new Date(normalizedDueDate).toLocaleDateString()}` : ''}.`,
+        deepLink: `/decisions/${id}`,
+        severity: normalizePriority(normalizedPriority) === 'CRITICAL' ? 'critical' : 'normal',
+      }).catch((err: any) =>
+        logger.warn('[DecisionController] Communication sync failed:', err?.message)
+      );
+
       res.status(201).json({ id, projectId: projectIdValue, title, status: 'PENDING' });
     }
   );
@@ -962,15 +1000,32 @@ export class DecisionController {
         ]
       );
 
-      // If decision is resolved, refresh blocks on impacted items
+      // V4-TASK-08: Unified audit log
       const orgId = req.user?.organizationId;
+      if (orgId) {
+        auditEventsService
+          .log({
+            actorId: userId,
+            actorType: 'USER',
+            action: 'DECISION_DECIDE',
+            resourceType: 'decision',
+            resourceId: id,
+            before: { status: normalizeStatus(currentDecision.status || null) },
+            after: { status: normalizedStatus, rationale: rationaleText },
+            metadata: {},
+            organizationId: orgId,
+          })
+          .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
+      }
+
+      // If decision is resolved, refresh blocks on impacted items
       if (orgId && normalizedStatus !== 'pending') {
         const impacts = await queryHelpers.queryAll<{
           impacted_type: string;
           impacted_id: string;
           is_blocker: number;
         }>(
-          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = 1`,
+          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = TRUE`,
           [id]
         );
         for (const impact of impacts || []) {
@@ -1006,8 +1061,13 @@ export class DecisionController {
         return;
       }
 
-      const { decisionOwnerId, dueDate, priority, impact, title, description, delegationNote } =
+      const { decisionOwnerId, dueDate, priority, impact, status, title, description, delegationNote } =
         req.body;
+
+      if (status && !isDecisionStatusInput(status)) {
+        res.status(400).json({ error: 'Invalid decision status' });
+        return;
+      }
 
       const currentDecision = await queryHelpers.queryOne<DecisionRow>(
         `SELECT * FROM decisions WHERE id = ?`,
@@ -1051,6 +1111,10 @@ export class DecisionController {
         updates.push('impact = ?');
         params.push(normalizeImpact(impact));
       }
+      if (status) {
+        updates.push('status = ?');
+        params.push(normalizeStatus(status));
+      }
       if (title) {
         updates.push('title = ?');
         params.push(title);
@@ -1080,11 +1144,40 @@ export class DecisionController {
           uuidv4(),
           id,
           normalizeStatus(currentDecision.status),
-          normalizeStatus(currentDecision.status),
+          status ? normalizeStatus(status) : normalizeStatus(currentDecision.status),
           userId,
           JSON.stringify({ notes: delegationNote || 'Decision updated' }),
         ]
       );
+
+      // V4-TASK-08: Unified audit log
+      const orgId = req.user?.organizationId;
+      if (orgId) {
+        auditEventsService
+          .log({
+            actorId: userId,
+            actorType: 'USER',
+            action: 'DECISION_UPDATE',
+            resourceType: 'decision',
+            resourceId: id,
+            before: {
+              title: currentDecision.title,
+              status: currentDecision.status,
+              priority: currentDecision.priority,
+              decisionMakerId: currentDecision.decision_maker_id,
+            },
+            after: {
+              ...(decisionOwnerId && { decisionMakerId: decisionOwnerId }),
+              ...(dueDate && { dueDate }),
+              ...(priority && { priority: normalizePriority(priority) }),
+              ...(status && { status: normalizeStatus(status) }),
+              ...(title && { title }),
+            },
+            metadata: {},
+            organizationId: orgId,
+          })
+          .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
+      }
 
       res.json({ id, message: 'Decision updated' });
     }
@@ -1270,6 +1363,269 @@ export class DecisionController {
       }
 
       res.json({ success: true, id, remindedTo: ownerId, remindedAt: new Date().toISOString() });
+    }
+  );
+
+  /**
+   * V4-EXEC-06: Get tasks created from a published decision
+   * GET /api/decisions/:id/created-tasks
+   */
+  static getCreatedTasks = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const decision = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
+        [id, orgId]
+      );
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      let tasks: any[] = [];
+      try {
+        tasks = await queryHelpers.queryAll(
+          `SELECT t.id, t.title, t.status, t.assignee_id,
+                  u.first_name || ' ' || u.last_name as assignee_name
+           FROM tasks t
+           LEFT JOIN users u ON t.assignee_id = u.id
+           WHERE t.source_type = 'decision' AND t.source_id = ? AND t.organization_id = ?
+           ORDER BY t.created_at ASC`,
+          [id, orgId]
+        );
+      } catch (_e) {
+        tasks = [];
+      }
+
+      res.json({
+        decisionId: id,
+        tasks: tasks.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          assigneeId: t.assignee_id || null,
+          assigneeName: t.assignee_name || null,
+        })),
+      });
+    }
+  );
+
+  /**
+   * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
+   * PATCH /api/decisions/:id/workflow
+   * Body: { toStatus: 'proposed'|'review'|'approve'|'published' }
+   */
+  static transitionWorkflow = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const toStatus = (req.body as { toStatus?: string })?.toStatus;
+      if (
+        !toStatus ||
+        !['proposed', 'review', 'approve', 'published', 'publish'].includes(
+          String(toStatus).toLowerCase()
+        )
+      ) {
+        res.status(400).json({
+          error: 'toStatus required',
+          allowed: ['proposed', 'review', 'approve', 'published'],
+        });
+        return;
+      }
+
+      const decision = await queryHelpers.queryOne<{
+        id: string;
+        workflow_status?: string | null;
+        initiative_id?: string | null;
+        project_id?: string | null;
+        title?: string | null;
+        description?: string | null;
+        status?: string | null;
+        playbook_id?: string | null;
+        type?: string | null;
+        priority?: string | null;
+        impact?: string | null;
+        deadline?: string | null;
+        decision_maker_id?: string | null;
+        decision_rationale?: string | null;
+        options?: string | null;
+      }>(
+        `SELECT id, workflow_status, initiative_id, project_id, title, description, status, playbook_id, type, priority, impact, deadline, decision_maker_id, decision_rationale, options FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
+        [id, orgId]
+      );
+
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const currentWorkflow = String(decision.workflow_status || 'proposed').toLowerCase();
+      const targetWorkflow: DecisionWorkflowStatus =
+        String(toStatus).toLowerCase() === 'publish' ? 'published' : (String(toStatus).toLowerCase() as DecisionWorkflowStatus);
+
+      const validation = validateDecisionWorkflowTransition(currentWorkflow, targetWorkflow);
+      if (!validation.allowed) {
+        res.status(400).json({ error: validation.message });
+        return;
+      }
+
+      // V4-TASK-07: Check required fields from playbook before allowing transition
+      try {
+        let playbookRow: any = null;
+        if (decision.playbook_id) {
+          playbookRow = await queryHelpers.queryOne(
+            `SELECT * FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
+            [decision.playbook_id, orgId]
+          );
+        }
+        if (!playbookRow && decision.type) {
+          playbookRow = await queryHelpers.queryOne(
+            `SELECT * FROM decision_playbooks WHERE organization_id = ? AND decision_type = ? AND is_default = true AND is_active = true LIMIT 1`,
+            [orgId, decision.type]
+          );
+        }
+        if (playbookRow) {
+          const playbook: DecisionPlaybook = {
+            id: playbookRow.id,
+            organizationId: playbookRow.organization_id,
+            name: playbookRow.name,
+            description: playbookRow.description ?? undefined,
+            decisionType: playbookRow.decision_type,
+            requiredFields: JSON.parse(playbookRow.required_fields_json || '[]'),
+            workflowStages: JSON.parse(playbookRow.workflow_stages_json || '[]'),
+            approvalConfig: playbookRow.approval_config_json ? JSON.parse(playbookRow.approval_config_json) : undefined,
+            isDefault: Boolean(playbookRow.is_default),
+            isActive: Boolean(playbookRow.is_active),
+          };
+          const decisionData: Record<string, unknown> = {
+            title: decision.title,
+            description: decision.description,
+            priority: decision.priority,
+            impact: decision.impact,
+            deadline: decision.deadline,
+            decisionMakerId: decision.decision_maker_id,
+            rationale: decision.decision_rationale,
+          };
+          const fieldsCheck = validateRequiredFields(playbook, decisionData, targetWorkflow);
+          if (!fieldsCheck.complete) {
+            res.status(400).json({
+              error: 'Required fields are incomplete for this workflow stage',
+              missing: fieldsCheck.missing,
+              playbook: { id: playbook.id, name: playbook.name },
+            });
+            return;
+          }
+        }
+      } catch (err: any) {
+        logger.warn('[DecisionController.transitionWorkflow] Playbook check failed (continuing):', err?.message);
+      }
+
+      const hasWorkflowCol = (await getTableColumns('decisions'))?.has?.('workflow_status') ?? true;
+      if (hasWorkflowCol) {
+        await queryHelpers.queryRun(
+          `UPDATE decisions SET workflow_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          [targetWorkflow, id]
+        );
+      }
+
+      const createdTaskIds: string[] = [];
+      if (targetWorkflow === 'published') {
+        const now = new Date().toISOString();
+
+        let parsedOptions: Array<{ id?: string; label?: string; description?: string }> = [];
+        try {
+          parsedOptions = JSON.parse(decision.options || '[]');
+          if (!Array.isArray(parsedOptions)) parsedOptions = [];
+        } catch { parsedOptions = []; }
+
+        const taskSources = parsedOptions.length > 0
+          ? parsedOptions.map(opt => ({
+              title: `Implement: ${String(opt.label || opt.id || 'Option').slice(0, 200)}`,
+              description: opt.description || null,
+            }))
+          : [{
+              title: `Implement: ${String(decision.title || 'Decision').slice(0, 200)}`,
+              description: decision.description || null,
+            }];
+
+        const hasLinkGraph = (await getTableColumns('link_graph_edges'))?.size > 0;
+
+        for (const src of taskSources) {
+          const taskId = uuidv4();
+          try {
+            try {
+              await queryHelpers.queryRun(
+                `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, description, status, created_by, created_at, updated_at, source_type, source_id)
+                 VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?, 'decision', ?)`,
+                [taskId, orgId, decision.initiative_id ?? null, decision.project_id ?? null, src.title, src.description, userId, now, now, id]
+              );
+            } catch (_e) {
+              await queryHelpers.queryRun(
+                `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, description, status, created_by, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?)`,
+                [taskId, orgId, decision.initiative_id ?? null, decision.project_id ?? null, src.title, src.description, userId, now, now]
+              );
+            }
+            createdTaskIds.push(taskId);
+
+            if (hasLinkGraph) {
+              const edgeId = uuidv4();
+              try {
+                await queryHelpers.queryRun(
+                  `INSERT INTO link_graph_edges (id, organization_id, created_by, source_type, source_id, target_type, target_id, relation, created_at)
+                   VALUES (?, ?, ?, 'decision', ?, 'task', ?, 'created_from', ?)`,
+                  [edgeId, orgId, userId, id, taskId, now]
+                );
+              } catch (linkErr: any) {
+                logger.warn('[DecisionController.transitionWorkflow] LinkGraph edge failed:', linkErr?.message);
+              }
+            }
+
+            auditEventsService.log({
+              actorId: userId,
+              actorType: 'USER',
+              action: 'TASK_CREATE',
+              resourceType: 'task',
+              resourceId: taskId,
+              after: { title: src.title, status: 'todo', sourceType: 'decision', sourceId: id },
+              metadata: { decisionId: id },
+              organizationId: orgId,
+            }).catch((e: any) => logger.warn('[DecisionController] Task audit log failed:', e?.message));
+          } catch (err: any) {
+            logger.warn('[DecisionController.transitionWorkflow] Auto-create task failed:', err?.message);
+          }
+        }
+      }
+
+      await auditEventsService.log({
+        actorId: userId,
+        actorType: 'USER',
+        action: 'DECISION_WORKFLOW_TRANSITION',
+        resourceType: 'decision',
+        resourceId: id,
+        before: { workflowStatus: currentWorkflow },
+        after: { workflowStatus: targetWorkflow, createdTaskIds },
+        metadata: {},
+        organizationId: orgId,
+      }).catch((e: any) => logger.warn('[DecisionController] Audit log failed:', e?.message));
+
+      res.json({
+        id,
+        workflowStatus: targetWorkflow,
+        createdTaskIds,
+      });
     }
   );
 }

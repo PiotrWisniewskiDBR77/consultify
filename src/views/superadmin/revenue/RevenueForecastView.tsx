@@ -50,16 +50,23 @@ export const RevenueForecastView: React.FC = () => {
         Api.getRevenueForecasts(),
         Api.getRevenueForecastStats(),
       ]);
-      const forecastsList = Array.isArray(forecastsRes) ? forecastsRes : (forecastsRes as any)?.forecasts || [];
+      const forecastsList = Array.isArray(forecastsRes)
+        ? forecastsRes
+        : (forecastsRes as any)?.forecasts || [];
       setForecasts(forecastsList);
       const raw = statsRes as any;
       const quarterlyForecasts = forecastsList.filter((f: any) => f.forecast_type === 'quarterly');
-      const yearlyForecasts = forecastsList.filter((f: any) => f.forecast_type === 'yearly' || f.forecast_type === 'mrr');
+      const yearlyForecasts = forecastsList.filter(
+        (f: any) => f.forecast_type === 'yearly' || f.forecast_type === 'mrr'
+      );
       setStats({
         totalForecasts: raw?.total || forecastsList.length,
-        averageConfidence: raw?.accuracy || (forecastsList.length > 0
-          ? forecastsList.reduce((sum: number, f: any) => sum + (f.confidence || 0), 0) / forecastsList.length
-          : 0),
+        averageConfidence:
+          raw?.accuracy ||
+          (forecastsList.length > 0
+            ? forecastsList.reduce((sum: number, f: any) => sum + (f.confidence || 0), 0) /
+              forecastsList.length
+            : 0),
         nextQuarterForecast: quarterlyForecasts[0]?.forecast_amount || 0,
         yearlyForecast: yearlyForecasts[0]?.forecast_amount || 0,
         forecastMethods: [],
@@ -190,9 +197,7 @@ export const RevenueForecastView: React.FC = () => {
               <div className="text-2xl font-bold text-slate-900 dark:text-white">
                 {stats.totalForecasts}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Total Forecasts
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Total Forecasts</div>
             </CardContent>
           </Card>
           <Card>
@@ -200,9 +205,7 @@ export const RevenueForecastView: React.FC = () => {
               <div className="text-xl font-bold text-green-400">
                 {formatCurrency(stats.nextQuarterForecast || 0)}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Next Quarter
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Next Quarter</div>
             </CardContent>
           </Card>
           <Card>
@@ -210,9 +213,7 @@ export const RevenueForecastView: React.FC = () => {
               <div className="text-xl font-bold text-blue-400">
                 {formatCurrency(stats.yearlyForecast || 0)}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Yearly Forecast
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Yearly Forecast</div>
             </CardContent>
           </Card>
           <Card>
@@ -222,9 +223,7 @@ export const RevenueForecastView: React.FC = () => {
               >
                 {Math.round((stats.averageConfidence || 0) * 100)}%
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Avg. Confidence
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Avg. Confidence</div>
             </CardContent>
           </Card>
         </div>
@@ -433,8 +432,8 @@ export const RevenueForecastView: React.FC = () => {
                 )}
                 {generateParams.method === 'ml_based' && (
                   <p>
-                    Uses weighted trend analysis on historical data. Not a full ML pipeline
-                    — applies statistical heuristics to estimate future revenue.
+                    Uses weighted trend analysis on historical data. Not a full ML pipeline —
+                    applies statistical heuristics to estimate future revenue.
                   </p>
                 )}
               </div>

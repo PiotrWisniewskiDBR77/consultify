@@ -1,52 +1,26 @@
-import {
-  AlertTriangle,
-  BarChart3,
-  CheckCircle2,
-  ChevronRight,
-  Eye,
-  FileText,
-  Lightbulb,
-  Loader2,
-  Play,
-  Plus,
-  Save,
-  Shield,
-  TrendingUp,
-  X,
-} from 'lucide-react';
-import type { TFunction } from 'i18next';
+import { Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { API_URL, getHeaders } from '../../services/api';
-import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 interface Analysis {
   id: string;
   title: string;
   status: string;
-  analysisType: string;
   currency: string;
-  periods: string[];
-  createdAt: string;
 }
+
 interface Ratio {
   id: string;
-  category: string;
   ratio_code: string;
   ratio_name: string;
-  value: number;
+  value: number | null;
   period: string;
   benchmark_value?: number;
-}
-interface Insight {
-  id: string;
-  insight_type: string;
-  title: string;
-  description: string;
-  priority: number;
+  benchmark?: number;
+  interpretation?: string;
 }
 
 interface FinancialAnalysisWorkspaceProps {
@@ -55,74 +29,241 @@ interface FinancialAnalysisWorkspaceProps {
   onAnalysisChanged?: () => void;
 }
 
+type RatioValueFormat = 'percent' | 'multiple' | 'days' | 'currency';
+
+const RATIO_BLOCKS = [
+  {
+    key: 'profitability',
+    order: '1',
+    title: 'Rentowność',
+    subtitle: 'Bez tego nie ma biznesu.',
+    codes: [
+      'gross_margin_pct',
+      'ebitda_margin_pct',
+      'net_profit_margin_pct',
+      'contribution_margin_pct',
+    ],
+  },
+  {
+    key: 'cost_control',
+    order: '2',
+    title: 'Koszty i Struktura',
+    subtitle: 'Czy produkcja, praca i energia są pod kontrolą.',
+    codes: ['cogs_to_revenue_pct', 'labor_cost_ratio_pct', 'energy_cost_ratio_pct'],
+  },
+  {
+    key: 'cash_liquidity',
+    order: '3',
+    title: 'Płynność i Cash',
+    subtitle: 'Tu firmy się wywracają.',
+    codes: [
+      'current_ratio',
+      'quick_ratio',
+      'cash_conversion_cycle',
+      'operating_cf_to_ebitda',
+      'free_cash_flow',
+    ],
+  },
+  {
+    key: 'working_capital',
+    order: '4',
+    title: 'Kapitał Obrotowy',
+    subtitle: 'Gdzie gotówka blokuje się w operacji.',
+    codes: ['inventory_days', 'dso', 'dpo', 'inventory_turnover'],
+  },
+  {
+    key: 'leverage',
+    order: '5',
+    title: 'Zadłużenie i Stabilność',
+    subtitle: 'Poziom ryzyka finansowego i obsługa odsetek.',
+    codes: ['debt_to_ebitda', 'interest_coverage'],
+  },
+] as const;
+
+const RATIO_META: Record<
+  string,
+  { formula: string; format: RatioValueFormat; benchmarkHint?: string }
+> = {
+  gross_margin_pct: {
+    formula: '(Gross Profit / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '>= 30%',
+  },
+  ebitda_margin_pct: {
+    formula: '(EBITDA / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '>= 15%',
+  },
+  net_profit_margin_pct: {
+    formula: '(Net Income / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '>= 8%',
+  },
+  contribution_margin_pct: {
+    formula: '((Revenue - Variable Costs) / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '>= 20%',
+  },
+  cogs_to_revenue_pct: {
+    formula: '(COGS / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '<= 65%',
+  },
+  labor_cost_ratio_pct: {
+    formula: '(Labor Costs / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '<= 18%',
+  },
+  energy_cost_ratio_pct: {
+    formula: '(Energy Costs / Revenue) * 100',
+    format: 'percent',
+    benchmarkHint: '<= 8%',
+  },
+  current_ratio: {
+    formula: 'Current Assets / Current Liabilities',
+    format: 'multiple',
+    benchmarkHint: '>= 1.5x',
+  },
+  quick_ratio: {
+    formula: '(Current Assets - Inventory) / Current Liabilities',
+    format: 'multiple',
+    benchmarkHint: '>= 1.0x',
+  },
+  cash_conversion_cycle: {
+    formula: 'DSO + Inventory Days - DPO',
+    format: 'days',
+    benchmarkHint: '<= 45 dni',
+  },
+  operating_cf_to_ebitda: {
+    formula: 'Operating Cash Flow / EBITDA',
+    format: 'multiple',
+    benchmarkHint: '>= 0.8x',
+  },
+  free_cash_flow: {
+    formula: 'Operating Cash Flow - CAPEX',
+    format: 'currency',
+    benchmarkHint: '> 0',
+  },
+  inventory_days: {
+    formula: '(Inventory / COGS) * 365',
+    format: 'days',
+    benchmarkHint: '<= 75 dni',
+  },
+  dso: {
+    formula: '(Accounts Receivable / Revenue) * 365',
+    format: 'days',
+    benchmarkHint: '<= 45 dni',
+  },
+  dpo: {
+    formula: '(Accounts Payable / COGS) * 365',
+    format: 'days',
+    benchmarkHint: '~ 60 dni',
+  },
+  inventory_turnover: {
+    formula: 'COGS / Inventory',
+    format: 'multiple',
+    benchmarkHint: '>= 5.0x',
+  },
+  debt_to_ebitda: {
+    formula: 'Total Debt / EBITDA',
+    format: 'multiple',
+    benchmarkHint: '<= 3.0x',
+  },
+  interest_coverage: {
+    formula: 'EBIT / Interest Expense',
+    format: 'multiple',
+    benchmarkHint: '>= 4.0x',
+  },
+};
+
+function formatRatioValue(
+  value: number | null | undefined,
+  format: RatioValueFormat,
+  fmtNumber: Intl.NumberFormat
+): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  if (format === 'percent') return `${fmtNumber.format(value)}%`;
+  if (format === 'multiple') return `${fmtNumber.format(value)}x`;
+  if (format === 'days') return `${fmtNumber.format(value)} d`;
+  return fmtNumber.format(value);
+}
+
+function getLatestRatios(ratios: Ratio[]): Ratio[] {
+  if (ratios.length === 0) return [];
+  const periods = [...new Set(ratios.map((ratio) => ratio.period).filter(Boolean))].sort();
+  const latestPeriod = periods.at(-1);
+  return latestPeriod ? ratios.filter((ratio) => ratio.period === latestPeriod) : ratios;
+}
+
+function groupRatiosForBlocks(ratios: Ratio[]): Record<string, Ratio[]> {
+  const latestRatios = getLatestRatios(ratios);
+  const byCode = new Map(latestRatios.map((ratio) => [ratio.ratio_code, ratio]));
+  return Object.fromEntries(
+    RATIO_BLOCKS.map((block) => [
+      block.key,
+      block.codes.map((code) => byCode.get(code)).filter(Boolean) as Ratio[],
+    ])
+  );
+}
+
 export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProps> = ({
   initialAnalysisId,
   hideSidebar,
   onAnalysisChanged,
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [selected, setSelected] = useState<Analysis | null>(null);
   const [ratios, setRatios] = useState<Ratio[]>([]);
-  const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
-  const [running, setRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'ratios' | 'insights' | 'horizontal'>(
-    'overview'
-  );
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [liveMode, setLiveMode] = useState(false);
-  const [liveRatios, setLiveRatios] = useState<Ratio[]>([]);
-  const [liveLoading, setLiveLoading] = useState(false);
 
   const fetchAnalyses = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/economics/financial-analyses`, { headers: getHeaders() });
-      if (res.ok) {
-        const d = await res.json();
-        setAnalyses(d.analyses || []);
-      }
+      if (!res.ok) return;
+      const data = await res.json();
+      setAnalyses(Array.isArray(data.analyses) ? data.analyses : []);
     } catch {
-      /* ignore */
+      toast.error(t('finance.analysis.loadFailed', 'Failed to load financial analyses'));
     } finally {
       setLoading(false);
     }
+  }, [t]);
+
+  const selectAnalysis = useCallback(async (analysis: Analysis) => {
+    setSelected(analysis);
+    try {
+      const res = await fetch(`${API_URL}/economics/financial-analyses/${analysis.id}/ratios`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        setRatios([]);
+        return;
+      }
+      const data = await res.json();
+      setRatios(Array.isArray(data.ratios) ? data.ratios : []);
+    } catch {
+      setRatios([]);
+    }
   }, []);
 
   useEffect(() => {
-    fetchAnalyses();
+    void fetchAnalyses();
   }, [fetchAnalyses]);
 
-  const selectAnalysis = useCallback(async (a: Analysis) => {
-    setSelected(a);
-    try {
-      const [rr, ir] = await Promise.all([
-        fetch(`${API_URL}/economics/financial-analyses/${a.id}/ratios`, { headers: getHeaders() }),
-        fetch(`${API_URL}/economics/financial-analyses/${a.id}/insights`, {
-          headers: getHeaders(),
-        }),
-      ]);
-      if (rr.ok) {
-        const d = await rr.json();
-        setRatios(d.ratios || []);
-      }
-      if (ir.ok) {
-        const d = await ir.json();
-        setInsights(d.insights || []);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   useEffect(() => {
-    if (initialAnalysisId && analyses.length > 0 && !selected) {
-      const match = analyses.find((a) => a.id === initialAnalysisId);
-      if (match) selectAnalysis(match);
+    if (analyses.length === 0) return;
+    const preferred =
+      analyses.find((analysis) => analysis.id === initialAnalysisId) ||
+      analyses.find((analysis) => analysis.id === selected?.id) ||
+      analyses[0];
+
+    if (preferred && preferred.id !== selected?.id) {
+      void selectAnalysis(preferred);
     }
-  }, [initialAnalysisId, analyses, selected, selectAnalysis]);
+  }, [analyses, initialAnalysisId, selectAnalysis, selected?.id]);
 
   const handleCreate = useCallback(async () => {
     if (!newTitle.trim()) return;
@@ -130,563 +271,168 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
       const res = await fetch(`${API_URL}/economics/financial-analyses`, {
         method: 'POST',
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle }),
+        body: JSON.stringify({ title: newTitle.trim() }),
       });
-      if (res.ok) {
-        const d = await res.json();
-        setShowCreate(false);
-        setNewTitle('');
-        await fetchAnalyses();
-        if (d.analysis) selectAnalysis(d.analysis);
-        onAnalysisChanged?.();
+      if (!res.ok) {
+        toast.error(t('finance.analysis.createFailed', 'Failed to create analysis'));
+        return;
       }
+      const data = await res.json();
+      setShowCreate(false);
+      setNewTitle('');
+      await fetchAnalyses();
+      if (data.analysis) await selectAnalysis(data.analysis);
+      onAnalysisChanged?.();
     } catch {
-      toast.error('Failed to create analysis');
+      toast.error(t('finance.analysis.createFailed', 'Failed to create analysis'));
     }
-  }, [newTitle, fetchAnalyses, selectAnalysis, onAnalysisChanged]);
+  }, [fetchAnalyses, newTitle, onAnalysisChanged, selectAnalysis, t]);
 
-  const handleRun = useCallback(async () => {
-    if (!selected) return;
-    setRunning(true);
-    try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses/${selected.id}/run`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        toast.success(t('finance.analysis.runSuccess', 'Analysis completed'));
-        trackFunnelEvent('finance_analysis_generated', { analysisId: selected.id });
-        await selectAnalysis(selected);
-        await fetchAnalyses();
-        onAnalysisChanged?.();
-      }
-    } catch {
-      toast.error('Run failed');
-    } finally {
-      setRunning(false);
-    }
-  }, [selected, t, selectAnalysis, fetchAnalyses, onAnalysisChanged]);
+  const fmtNumber = useMemo(
+    () => new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    []
+  );
 
-  const handleApprove = useCallback(async () => {
-    if (!selected) return;
-    try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses/${selected.id}/approve`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        toast.success(t('finance.analysis.approved', 'Analysis approved'));
-        trackFunnelEvent('finance_analysis_approved', { analysisId: selected.id });
-        await fetchAnalyses();
-        onAnalysisChanged?.();
-      }
-    } catch {
-      toast.error('Approve failed');
-    }
-  }, [selected, t, fetchAnalyses, onAnalysisChanged]);
+  const groupedRatios = useMemo(() => groupRatiosForBlocks(ratios), [ratios]);
+  const latestPeriod = useMemo(() => getLatestRatios(ratios)[0]?.period || '—', [ratios]);
+  const hasRatios = Object.values(groupedRatios).some((items) => items.length > 0);
 
-  const handleLivePreview = useCallback(async () => {
-    setLiveLoading(true);
-    setLiveMode(true);
-    setSelected(null);
-    try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses/live-preview`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        setLiveRatios(d.ratios || []);
-        setActiveTab('ratios');
-      }
-    } catch { toast.error('Live preview failed'); }
-    finally { setLiveLoading(false); }
-  }, []);
-
-  const handleSaveLiveAsAnalysis = useCallback(async (title: string) => {
-    try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, liveRatios }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        toast.success(t('finance.analysis.savedFromLive', 'Analysis saved from live preview'));
-        setLiveMode(false);
-        setLiveRatios([]);
-        await fetchAnalyses();
-        if (d.analysis) selectAnalysis(d.analysis);
-        onAnalysisChanged?.();
-      }
-    } catch { toast.error('Save failed'); }
-  }, [liveRatios, t, fetchAnalyses, selectAnalysis, onAnalysisChanged]);
-
-  const activeRatios = liveMode ? liveRatios : ratios;
-
-  const groupedRatios = useMemo(() => {
-    const groups: Record<string, Ratio[]> = {};
-    for (const r of activeRatios) {
-      if (!groups[r.category]) groups[r.category] = [];
-      groups[r.category].push(r);
-    }
-    return groups;
-  }, [activeRatios]);
-
-  const insightsByType = useMemo(() => {
-    const map: Record<string, Insight[]> = { driver: [], risk: [], action: [], quality_note: [] };
-    for (const ins of insights) {
-      if (!map[ins.insight_type]) map[ins.insight_type] = [];
-      map[ins.insight_type].push(ins);
-    }
-    return map;
-  }, [insights]);
-
-  const tabItems = [
-    {
-      id: 'overview' as const,
-      label: t('finance.analysis.tabs.overview', 'Overview'),
-      icon: <BarChart3 size={14} />,
-    },
-    {
-      id: 'ratios' as const,
-      label: t('finance.analysis.tabs.ratios', 'Ratios'),
-      icon: <TrendingUp size={14} />,
-    },
-    {
-      id: 'insights' as const,
-      label: t('finance.analysis.tabs.insights', 'Insights'),
-      icon: <Lightbulb size={14} />,
-    },
-    {
-      id: 'horizontal' as const,
-      label: t('finance.analysis.tabs.horizontal', 'Period Comparison'),
-      icon: <FileText size={14} />,
-    },
-  ];
-
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
       </div>
     );
+  }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-slate-950 text-slate-100">
       {!hideSidebar && (
-        <div className="w-64 border-r border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col">
-          <div className="p-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              {t('finance.analysis.title', 'Financial Analysis')}
-            </h3>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleLivePreview}
-                disabled={liveLoading}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-emerald-500"
-                title={t('finance.analysis.livePreview', 'Quick Analysis (Live)') as string}
-              >
-                {liveLoading ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
-              </button>
-              <button
-                onClick={() => setShowCreate(true)}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-purple-500"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {analyses.length === 0 ? (
-              <p className="text-xs text-slate-500 dark:text-slate-400 p-2">
-                {t('finance.analysis.noAnalyses', 'No analyses yet')}
+        <aside className="flex w-72 flex-col border-r border-white/[0.06] bg-slate-950/80">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-100">
+                {t('finance.analysis.title', 'Financial Analysis')}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                {t('finance.analysis.sidebarHint', 'Only ratio analysis is shown here.')}
               </p>
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="rounded-lg bg-white/[0.04] p-2 text-slate-300 transition hover:bg-white/[0.08]"
+              title={t('finance.analysis.createTitle', 'New Financial Analysis') as string}
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+          <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+            {analyses.length === 0 ? (
+              <div className="rounded-xl bg-white/[0.03] px-3 py-4 text-sm text-slate-500">
+                {t('finance.analysis.noAnalyses', 'No analyses yet')}
+              </div>
             ) : (
-              analyses.map((a) => (
+              analyses.map((analysis) => (
                 <button
-                  key={a.id}
-                  onClick={() => selectAnalysis(a)}
-                  className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === a.id ? 'bg-purple-500/20 text-purple-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  key={analysis.id}
+                  onClick={() => void selectAnalysis(analysis)}
+                  className={`w-full rounded-xl px-3 py-3 text-left transition ${
+                    selected?.id === analysis.id
+                      ? 'bg-white/[0.08] text-slate-100'
+                      : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+                  }`}
                 >
-                  <div className="font-medium truncate">{a.title}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{a.status}</div>
+                  <div className="truncate text-sm font-medium">{analysis.title}</div>
+                  <div className="mt-1 text-xs uppercase tracking-wide text-slate-500">
+                    {analysis.status}
+                  </div>
                 </button>
               ))
             )}
           </div>
-        </div>
+        </aside>
       )}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {liveMode ? (
-          <LivePreviewPanel
-            ratios={liveRatios}
-            groupedRatios={groupedRatios}
-            onSave={handleSaveLiveAsAnalysis}
-            onClose={() => { setLiveMode(false); setLiveRatios([]); }}
-            t={t}
-          />
-        ) : !selected ? (
-          <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
-            {t('finance.analysis.selectOrCreate', 'Select an analysis or create a new one')}
+
+      <main className="flex-1 overflow-y-auto">
+        {!selected ? (
+          <div className="flex h-full items-center justify-center text-sm text-slate-500">
+            {t('finance.analysis.selectOrCreate', 'Select an analysis')}
           </div>
         ) : (
-          <>
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between bg-white dark:bg-navy-900">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {selected.title}
-                </h2>
-                <p className="text-xs text-slate-500">
-                  {selected.status} · {selected.currency}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleRun}
-                  disabled={running}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-500 disabled:opacity-50"
-                >
-                  {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-                  {t('finance.analysis.run', 'Run Analysis')}
-                </button>
-                <button
-                  onClick={handleApprove}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-500"
-                >
-                  <CheckCircle2 size={14} />
-                  {t('finance.analysis.approve', 'Approve')}
-                </button>
+          <div className="px-6 py-5">
+            <div className="mb-5 rounded-2xl bg-white/[0.03] px-5 py-4">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                    {t('finance.analysis.headerLabel', 'Ratio Analysis')}
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold text-slate-50">{selected.title}</h2>
+                  <p className="mt-2 text-sm text-slate-400">
+                    {t(
+                      'finance.analysis.headerDescription',
+                      'Only the 18 core KPI blocks are shown: profitability, cost structure, cash, working capital and leverage.'
+                    )}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">{selected.status}</span>
+                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">{selected.currency}</span>
+                  <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
+                    {t('finance.analysis.period', 'Period')}: {latestPeriod}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1">
-              {tabItems.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-purple-500 text-purple-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                >
-                  {tab.icon} {tab.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {(insightsByType['quality_note'] || []).length > 0 && (
-                <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase">
-                      {t('finance.analysis.dataQualityWarning', 'Data Quality Issues')}
-                    </span>
-                  </div>
-                  <ul className="space-y-0.5">
-                    {(insightsByType['quality_note'] || []).slice(0, 3).map((q) => (
-                      <li key={q.id} className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
-                        <span className="mt-1 w-1 h-1 bg-amber-500 rounded-full shrink-0" />
-                        {q.description}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {activeTab === 'overview' && (
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    {
-                      key: 'driver',
-                      title: t('finance.analysis.topDrivers', 'Top Drivers'),
-                      icon: <TrendingUp size={16} className="text-blue-400" />,
-                      subIcon: <ChevronRight size={12} className="text-blue-400 mt-0.5 shrink-0" />,
-                    },
-                    {
-                      key: 'risk',
-                      title: t('finance.analysis.keyRisks', 'Key Risks'),
-                      icon: <AlertTriangle size={16} className="text-amber-400" />,
-                      subIcon: <Shield size={12} className="text-amber-400 mt-0.5 shrink-0" />,
-                    },
-                    {
-                      key: 'action',
-                      title: t('finance.analysis.actions', 'Actions'),
-                      icon: <Lightbulb size={16} className="text-green-400" />,
-                      subIcon: <Lightbulb size={12} className="text-green-400 mt-0.5 shrink-0" />,
-                    },
-                    {
-                      key: 'quality_note',
-                      title: t('finance.analysis.dataQuality', 'Data Quality'),
-                      icon: <FileText size={16} className="text-slate-400" />,
-                      subIcon: <FileText size={12} className="text-slate-400 mt-0.5 shrink-0" />,
-                    },
-                  ].map(({ key, title, icon, subIcon }) => (
-                    <div
-                      key={key}
-                      className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700"
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        {icon}
-                        <h3 className="font-semibold text-slate-900 dark:text-white">{title}</h3>
-                      </div>
-                      {(insightsByType[key] || []).length === 0 ? (
-                        <p className="text-sm text-slate-500">
-                          {t(
-                            'finance.analysis.noInsights',
-                            'Run the analysis to generate insights'
-                          )}
-                        </p>
-                      ) : (
-                        (insightsByType[key] || []).slice(0, 5).map((i) => (
-                          <div
-                            key={i.id}
-                            className="flex items-start gap-2 py-1.5 border-b border-slate-200 dark:border-navy-700 last:border-0"
-                          >
-                            {subIcon}
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
-                              {key === 'quality_note' ? i.description : i.title}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  ))}
-                  {insights.length > 0 && (
-                    <div className="flex justify-end pt-2">
-                      <button
-                        onClick={() => {
-                          const summary = insights.map((i) => `[${i.insight_type}] ${i.title}: ${i.description}`).join('\n');
-                          const prompt = encodeURIComponent(`Refine and deepen the following financial analysis insights for ${selected?.title || 'this analysis'}:\n\n${summary}\n\nProvide additional context, actionable recommendations, and risk mitigations.`);
-                          navigate(`/chat?prompt=${prompt}`);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-colors"
-                      >
-                        <Lightbulb size={12} />
-                        {t('finance.analysis.refineWithAI', 'Refine with AI')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-              {activeTab === 'ratios' && (
-                <div className="space-y-4">
-                  {Object.keys(groupedRatios).length === 0 ? (
-                    <p className="text-sm text-slate-500">
-                      {t(
-                        'finance.analysis.noRatios',
-                        'Run the analysis to compute financial ratios'
-                      )}
-                    </p>
-                  ) : (
-                    Object.entries(groupedRatios).map(([cat, items]) => (
-                      <div
-                        key={cat}
-                        className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
-                      >
-                        <div className="px-4 py-2 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
-                            {cat}
-                          </h3>
-                        </div>
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-xs text-slate-500">
-                              <th className="px-4 py-2">Ratio</th>
-                              <th className="px-4 py-2">
-                                {t('finance.analysis.period', 'Period')}
-                              </th>
-                              <th className="px-4 py-2 text-right">
-                                {t('finance.analysis.value', 'Value')}
-                              </th>
-                              <th className="px-4 py-2 text-right">
-                                {t('finance.analysis.benchmark', 'Benchmark')}
-                              </th>
-                              <th className="px-4 py-2 w-32">
-                                {t('finance.analysis.position', 'Position')}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items.map((r) => {
-                              const bv = r.benchmark_value;
-                              let bandStatus: 'ok' | 'warn' | 'crit' | 'none' = 'none';
-                              if (bv != null && bv > 0) {
-                                const ratio = r.value / bv;
-                                if (ratio >= 0.9) bandStatus = 'ok';
-                                else if (ratio >= 0.6) bandStatus = 'warn';
-                                else bandStatus = 'crit';
-                              }
-                              const bandColor =
-                                bandStatus === 'ok'
-                                  ? 'bg-emerald-500'
-                                  : bandStatus === 'warn'
-                                    ? 'bg-amber-500'
-                                    : bandStatus === 'crit'
-                                      ? 'bg-red-500'
-                                      : 'bg-slate-300 dark:bg-navy-600';
-                              const bandWidth =
-                                bv != null && bv > 0
-                                  ? `${Math.min(100, Math.max(5, (r.value / bv) * 100))}%`
-                                  : '0%';
-                              return (
-                                <tr
-                                  key={r.id}
-                                  className="border-t border-slate-200 dark:border-navy-700"
-                                >
-                                  <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
-                                    {r.ratio_name}
-                                  </td>
-                                  <td className="px-4 py-2 text-slate-500">{r.period}</td>
-                                  <td className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white">
-                                    {r.value?.toFixed(2) ?? '—'}
-                                  </td>
-                                  <td className="px-4 py-2 text-right font-mono text-slate-500">
-                                    {bv != null ? bv.toFixed(2) : '—'}
-                                  </td>
-                                  <td className="px-4 py-2">
-                                    {bv != null ? (
-                                      <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                                          <div
-                                            className={`h-full rounded-full ${bandColor}`}
-                                            style={{ width: bandWidth }}
-                                          />
-                                        </div>
-                                        <span
-                                          className={`text-[10px] font-bold uppercase ${bandStatus === 'ok' ? 'text-emerald-500' : bandStatus === 'warn' ? 'text-amber-500' : bandStatus === 'crit' ? 'text-red-500' : 'text-slate-400'}`}
-                                        >
-                                          {bandStatus === 'none' ? '' : bandStatus.toUpperCase()}
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs text-slate-400">—</span>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-              {activeTab === 'insights' && (
-                <div className="space-y-2">
-                  {insights.length === 0 ? (
-                    <p className="text-sm text-slate-500">
-                      {t('finance.analysis.noInsights', 'Run the analysis to generate insights')}
-                    </p>
-                  ) : (
-                    insights.map((ins) => (
-                      <div
-                        key={ins.id}
-                        className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className={`px-2 py-0.5 text-xs rounded-full font-medium ${ins.insight_type === 'driver' ? 'bg-blue-500/20 text-blue-400' : ins.insight_type === 'risk' ? 'bg-amber-500/20 text-amber-400' : ins.insight_type === 'action' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}
-                          >
-                            {ins.insight_type}
-                          </span>
-                          <span className="font-medium text-sm text-slate-900 dark:text-white">
-                            {ins.title}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {ins.description}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-              {activeTab === 'horizontal' && (() => {
-                const periods = [...new Set(ratios.map((r) => r.period))].sort();
-                const ratiosByCode = new Map<string, { name: string; values: Map<string, number> }>();
-                for (const r of ratios) {
-                  if (!ratiosByCode.has(r.ratio_code)) {
-                    ratiosByCode.set(r.ratio_code, { name: r.ratio_name, values: new Map() });
-                  }
-                  ratiosByCode.get(r.ratio_code)!.values.set(r.period, r.value);
-                }
-                if (periods.length < 2 || ratiosByCode.size === 0) {
-                  return (
-                    <p className="text-sm text-slate-500">
-                      {t('finance.analysis.noHorizontal', 'Run the analysis to see period comparisons')}
-                    </p>
-                  );
-                }
-                return (
-                  <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
-                          <th className="px-4 py-2 sticky left-0 bg-slate-50 dark:bg-navy-800">Ratio</th>
-                          {periods.map((p) => (
-                            <th key={p} className="px-3 py-2 text-right">{p}</th>
-                          ))}
-                          <th className="px-3 py-2 text-right">Δ %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...ratiosByCode.entries()].map(([code, { name, values }]) => {
-                          const first = values.get(periods[0]);
-                          const last = values.get(periods[periods.length - 1]);
-                          const pctChange = first && first !== 0 && last != null ? ((last - first) / Math.abs(first)) * 100 : null;
-                          return (
-                            <tr key={code} className="border-t border-slate-200 dark:border-navy-700">
-                              <td className="px-4 py-2 text-slate-700 dark:text-slate-300 whitespace-nowrap sticky left-0 bg-slate-50 dark:bg-navy-800">{name}</td>
-                              {periods.map((p) => (
-                                <td key={p} className="px-3 py-2 text-right font-mono text-slate-900 dark:text-white">
-                                  {values.get(p)?.toFixed(2) ?? '—'}
-                                </td>
-                              ))}
-                              <td className={`px-3 py-2 text-right font-mono font-semibold ${pctChange != null && pctChange > 0 ? 'text-emerald-500' : pctChange != null && pctChange < 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                {pctChange != null ? `${pctChange > 0 ? '+' : ''}${pctChange.toFixed(1)}%` : '—'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })()}
-            </div>
-          </>
+
+            {!hasRatios ? (
+              <div className="rounded-2xl bg-white/[0.03] px-5 py-10 text-center text-sm text-slate-500">
+                {t(
+                  'finance.analysis.noRatios',
+                  'No KPI values are available yet for this analysis.'
+                )}
+              </div>
+            ) : (
+              <RatioBlocksTable groupedRatios={groupedRatios} fmtNumber={fmtNumber} />
+            )}
+          </div>
         )}
-      </div>
+      </main>
+
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-2xl bg-slate-950 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-100">
                 {t('finance.analysis.createTitle', 'New Financial Analysis')}
               </h2>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="rounded-lg p-1 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300"
               >
                 <X size={18} />
               </button>
             </div>
             <input
               value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder={t('finance.analysis.titlePlaceholder', 'e.g., Q4 2025 Financial Review')}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm mb-4"
+              onChange={(event) => setNewTitle(event.target.value)}
+              placeholder={t(
+                'finance.analysis.titlePlaceholder',
+                'e.g., FY 2025 Financial Analysis'
+              )}
+              className="mb-4 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
+                className="rounded-xl px-4 py-2 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
-                onClick={handleCreate}
-                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
+                onClick={() => void handleCreate()}
+                className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-500"
               >
-                Create
+                {t('common.create', 'Create')}
               </button>
             </div>
           </div>
@@ -696,96 +442,81 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   );
 };
 
-const LivePreviewPanel: React.FC<{
-  ratios: Ratio[];
+const RatioBlocksTable: React.FC<{
   groupedRatios: Record<string, Ratio[]>;
-  onSave: (title: string) => Promise<void>;
-  onClose: () => void;
-  t: TFunction;
-}> = ({ ratios, groupedRatios, onSave, onClose, t }) => {
-  const [saveTitle, setSaveTitle] = useState('');
-  const [saving, setSaving] = useState(false);
+  fmtNumber: Intl.NumberFormat;
+}> = ({ groupedRatios, fmtNumber }) => (
+  <div className="space-y-4">
+    {RATIO_BLOCKS.map((block) => {
+      const items = groupedRatios[block.key] || [];
+      if (items.length === 0) return null;
 
-  const handleSave = async () => {
-    if (!saveTitle.trim()) return;
-    setSaving(true);
-    await onSave(saveTitle.trim());
-    setSaving(false);
-  };
+      return (
+        <section
+          key={block.key}
+          className="overflow-hidden rounded-2xl bg-white/[0.03]"
+        >
+          <div className="px-5 py-4">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+              Blok {block.order}
+            </div>
+            <h3 className="mt-1 text-sm font-semibold text-slate-100">{block.title}</h3>
+            <p className="mt-1 text-xs text-slate-500">{block.subtitle}</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[980px] text-sm">
+              <thead>
+                <tr className="border-y border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 min-w-[240px]">Wskaźnik</th>
+                  <th className="px-5 py-3 min-w-[240px]">Wyliczenie</th>
+                  <th className="px-5 py-3 min-w-[360px]">Interpretacja</th>
+                  <th className="px-5 py-3 min-w-[180px]">Wskaźnik branżowy</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((ratio) => {
+                  const meta = RATIO_META[ratio.ratio_code] || {
+                    formula: 'Derived from financial statements',
+                    format: 'multiple' as const,
+                    benchmarkHint: undefined,
+                  };
+                  const benchmark = ratio.benchmark_value ?? ratio.benchmark;
 
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-emerald-50 dark:bg-emerald-900/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Eye size={16} className="text-emerald-600" />
-          <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-            {t('finance.analysis.livePreviewMode', 'Live Preview Mode')}
-          </span>
-          <span className="text-xs text-emerald-600 dark:text-emerald-400">
-            ({ratios.length} {t('finance.analysis.ratiosComputed', 'ratios computed')})
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={saveTitle}
-            onChange={(e) => setSaveTitle(e.target.value)}
-            placeholder={t('finance.analysis.saveTitlePlaceholder', 'Analysis title...') as string}
-            className="px-2 py-1 text-xs border border-slate-300 dark:border-navy-600 rounded bg-white dark:bg-navy-800 w-48"
-          />
-          <button
-            onClick={handleSave}
-            disabled={saving || !saveTitle.trim()}
-            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-500 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-            {t('finance.analysis.saveAsAnalysis', 'Save as Analysis')}
-          </button>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        {Object.keys(groupedRatios).length === 0 ? (
-          <div className="text-sm text-slate-500 text-center py-8">
-            {t('finance.analysis.noLiveData', 'No data available. Ensure financial models exist to analyze.')}
+                  return (
+                    <tr key={ratio.id} className="border-t border-white/[0.06] align-top">
+                      <td className="px-5 py-4">
+                        <div className="font-medium text-slate-100">{ratio.ratio_name}</div>
+                        <div className="mt-1 text-xs text-slate-500">Okres: {ratio.period}</div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-mono text-sm text-slate-100">
+                          {formatRatioValue(ratio.value, meta.format, fmtNumber)}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">{meta.formula}</div>
+                      </td>
+                      <td className="px-5 py-4 text-slate-300">
+                        {ratio.interpretation || 'Brak automatycznej interpretacji dla tego KPI.'}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-mono text-sm text-slate-100">
+                          {benchmark != null
+                            ? formatRatioValue(benchmark, meta.format, fmtNumber)
+                            : '—'}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {meta.benchmarkHint || 'Reference range'}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {Object.entries(groupedRatios).map(([cat, items]) => (
-              <div key={cat}>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{cat}</h4>
-                <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
-                        <th className="px-4 py-2">{t('finance.analysis.ratioName', 'Ratio')}</th>
-                        <th className="px-4 py-2">{t('finance.analysis.period', 'Period')}</th>
-                        <th className="px-4 py-2 text-right">{t('finance.analysis.value', 'Value')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((r) => (
-                        <tr key={r.id} className="border-t border-slate-200 dark:border-navy-700">
-                          <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{r.ratio_name}</td>
-                          <td className="px-4 py-2 text-slate-500">{r.period}</td>
-                          <td className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white">{r.value?.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        </section>
+      );
+    })}
+  </div>
+);
 
 export default FinancialAnalysisWorkspace;

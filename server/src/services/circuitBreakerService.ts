@@ -340,6 +340,12 @@ export class CircuitBreaker {
     const msg = (error.message || '').toLowerCase();
     if (msg.includes('budget') || (msg.includes('limit exceeded') && !msg.includes('rate limit')))
       return false;
+    // Configuration errors should NOT open the circuit breaker.
+    // Otherwise we spam alerts in dev/stage when keys are intentionally missing.
+    if (msg.includes('missing key')) return false;
+    if (msg.includes('no api key')) return false;
+    if (msg.includes('api key missing')) return false;
+    if (msg.includes('set ') && msg.includes('_api_key')) return false;
     if (msg.includes('unauthorized') || msg.includes('auth') || msg.includes('key invalid'))
       return false;
     if (msg.includes('validation') || msg.includes('invalid argument')) return false;
@@ -349,6 +355,10 @@ export class CircuitBreaker {
 
   _isRetriable(error: Error): boolean {
     const msg = (error.message || '').toLowerCase();
+    // Don't retry configuration errors.
+    if (msg.includes('missing key')) return false;
+    if (msg.includes('no api key')) return false;
+    if (msg.includes('api key missing')) return false;
     if (msg.includes('timeout') || msg.includes('network') || msg.includes('econnreset'))
       return true;
     if (msg.includes('rate limit') || msg.includes('429') || msg.includes('503')) return true;

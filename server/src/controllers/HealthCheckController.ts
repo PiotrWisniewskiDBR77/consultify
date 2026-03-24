@@ -67,6 +67,7 @@ export class HealthCheckController {
       status: string;
       timestamp: string;
       database: string;
+      dbResponseTime?: number;
       redis?: string;
       version: string;
       environment: string;
@@ -92,11 +93,21 @@ export class HealthCheckController {
     try {
       const db = getDatabase();
       const dbCheck = (async () => {
+        const startedAt = Date.now();
         await db.query('SELECT 1');
-        return 'connected';
+        return {
+          database: 'connected',
+          dbResponseTime: Date.now() - startedAt,
+        };
       })();
-      const timeout = new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 150));
-      health.database = await Promise.race([dbCheck, timeout]);
+      const timeout = new Promise<{ database: string; dbResponseTime?: number }>((resolve) =>
+        setTimeout(() => resolve({ database: 'timeout' }), 800)
+      );
+      const dbResult = await Promise.race([dbCheck, timeout]);
+      health.database = dbResult.database;
+      if (typeof dbResult.dbResponseTime === 'number') {
+        health.dbResponseTime = dbResult.dbResponseTime;
+      }
     } catch {
       health.database = 'disconnected';
     }

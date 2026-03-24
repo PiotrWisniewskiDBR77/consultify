@@ -9,7 +9,7 @@ export type WizardStepId = 'define' | 'inputs' | 'work' | 'review' | 'finalize' 
 
 export type WorkSurfaceType = 'table' | 'workspace' | 'hybrid';
 
-export type OutputType = 'initiative' | 'report' | 'presentation';
+export type OutputType = 'initiative' | 'report' | 'presentation' | 'idea';
 
 export interface WizardStepConfig {
   id: WizardStepId;

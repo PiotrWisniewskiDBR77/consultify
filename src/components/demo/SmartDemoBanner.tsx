@@ -90,17 +90,19 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
       : []),
   ];
 
+  const DEMO_ORG_NAME = 'Atelier ToolToys';
+
   if (isMinimized) {
     return (
       <motion.button
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => setIsMinimized(false)}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium rounded-full shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all flex items-center gap-2"
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-navy-800/95 dark:bg-navy-900 text-slate-100 text-sm font-medium rounded-full shadow-lg border border-white/5 hover:border-white/10 transition-all flex items-center gap-2"
       >
-        <Sparkles size={16} />
-        {t('demo.banner.minimizedLabel', 'Demo Mode')}
-        <span className="text-white/70 font-mono text-xs">{timeRemaining}</span>
+        <Sparkles size={16} className="text-primary-400" />
+        {t('demo.banner.minimizedLabel', 'Demo')} • {DEMO_ORG_NAME}
+        <span className="text-slate-400 font-mono text-xs">{timeRemaining}</span>
       </motion.button>
     );
   }
@@ -111,8 +113,8 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className="fixed top-0 left-0 right-0 z-50"
     >
-      {/* Main Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-lg">
+      {/* Main Banner — DBR77: navy base, primary CTA only */}
+      <div className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100">
         <div className="max-w-7xl mx-auto px-4 py-2.5">
           <div className="flex items-center justify-between">
             {/* Left: Demo Info */}
@@ -187,7 +189,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
               {/* Minimize */}
               <button
                 onClick={() => setIsMinimized(true)}
-                className="p-1 text-white/50 hover:text-white transition-colors"
+                className="p-1 text-slate-500 hover:text-slate-200 transition-colors"
                 title={t('demo.banner.minimize', 'Minimize')}
               >
                 <X size={16} />
@@ -205,28 +207,31 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="bg-indigo-900/95 backdrop-blur-sm border-b border-indigo-500/30 overflow-hidden"
+            className="bg-navy-800/80 dark:bg-navy-900/80 border-b border-white/5 overflow-hidden"
           >
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 {/* Limitations */}
                 <div className="flex flex-wrap items-center gap-6">
                   {LIMITATIONS.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-white/80 text-xs">
-                      <item.icon size={14} className="text-indigo-300" />
+                    <div key={idx} className="flex items-center gap-2 text-slate-300 text-xs">
+                      <item.icon size={14} className="text-slate-500" />
                       <span>{item.text}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* CTA */}
-                <div className="text-xs text-white/60">
+                <div className="text-xs text-slate-400">
                   {t('demo.banner.readyForMore', 'Ready for your own data?')}{' '}
                   <button
-                    onClick={handleContactSales}
-                    className="text-white underline hover:no-underline"
+                    onClick={() => {
+                      onUpgradeClick?.();
+                      handleContactSales();
+                    }}
+                    className="text-primary-400 hover:text-primary-300 font-medium"
                   >
-                    {t('demo.banner.scheduleDemo', 'Schedule a demo')}
+                    {t('demo.banner.startTrial', 'Start your 7-day trial')}
                   </button>
                 </div>
               </div>

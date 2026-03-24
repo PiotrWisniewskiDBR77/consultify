@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { ActionRequiredStrip } from './ActionRequiredStrip';
+import { AIOperatorOverviewCard } from './AIOperatorOverviewCard';
 import { DecisionQueuePreview } from './DecisionQueuePreview';
 import { KPIGrid } from './KPIGrid';
 import { PortfolioHealthScore } from './PortfolioHealthScore';
@@ -241,6 +242,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [initiatives, setInitiatives] = useState<InitiativeProgress[]>([]);
   const [signals, setSignals] = useState<AISignal[]>([]);
   const [patterns, setPatterns] = useState<any>(null);
+  const [operatorOverview, setOperatorOverview] = useState<any>(null);
+  const [operatorActionBusyId, setOperatorActionBusyId] = useState<string | null>(null);
 
   const isPolish =
     t('language', 'en') === 'pl' ||
@@ -263,15 +266,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           setLoading(true);
         }
 
-        const [statsRes, decisionsRes, teamRes, tasksRes, initiativesRes, signalsRes] =
+        const [statsRes, decisionsRes, teamRes, tasksRes, analyticsRes, signalsRes, operatorRes] =
           await Promise.allSettled([
             Api.get('/my-work/stats?period=week'),
             Api.get('/my-work/decisions?limit=10&onlyPending=true'),
             Api.get('/my-work/team-workload'),
             Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
-            Api.get('/initiatives'),
+            Api.getExecutiveAnalytics(),
             Api.get('/my-work/signals?limit=5'),
+            Api.getAIOperatorOverview(),
           ]);
+
+        if (operatorRes.status === 'fulfilled' && operatorRes.value) {
+          setOperatorOverview(operatorRes.value);
+        }
 
         // --- Process stats (with real previous period data) ---
         if (statsRes.status === 'fulfilled' && statsRes.value) {
@@ -503,30 +511,46 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           });
         }
 
-        // --- Process initiatives for progress overview ---
-        if (initiativesRes.status === 'fulfilled' && Array.isArray(initiativesRes.value)) {
-          const raw = initiativesRes.value || [];
-          const active = raw.filter(
-            (i: any) =>
-              !['COMPLETED', 'CANCELLED', 'ARCHIVED'].includes((i.status || '').toUpperCase())
-          );
-
-          const progressItems: InitiativeProgress[] = active.slice(0, 6).map((i: any) => {
-            const tasksDone = Number(i.tasksCompleted || 0);
-            const tasksTotal = Number(i.tasksTotal || i.taskCount || 0);
-            return {
-              id: i.id,
-              name: i.name || i.title || 'Untitled',
-              status: i.status || 'DRAFT',
-              priority: i.priority || 'MEDIUM',
-              tasksDone,
-              tasksTotal,
-              completionPct: tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0,
-              overdueCount: Number(i.overdueCount || 0),
-            };
-          });
+        // --- Process initiative + capacity analytics ---
+        if (analyticsRes.status === 'fulfilled' && analyticsRes.value) {
+          const analytics = analyticsRes.value as any;
+          const availableCount =
+            teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
+              ? teamRes.value.filter((m: any) => (m.capacity || 0) < 50).length
+              : 0;
+          const progressItems: InitiativeProgress[] = Array.isArray(analytics?.initiativeBreakdown)
+            ? analytics.initiativeBreakdown.slice(0, 6).map((i: any) => ({
+                id: i.id,
+                name: i.name || i.title || 'Untitled',
+                status: i.status || 'DRAFT',
+                priority: i.priority || 'MEDIUM',
+                tasksDone: Math.max(0, Number(i.tasksTotal || 0) - Number(i.tasksOpen || 0)),
+                tasksTotal: Number(i.tasksTotal || 0),
+                completionPct: Number(i.completionPct || 0),
+                overdueCount: Number(i.overdueCount || 0),
+              }))
+            : [];
 
           setInitiatives(progressItems);
+
+          if (analytics?.capacity?.avgUtilization != null) {
+            setKpiData((prev) => ({
+              ...prev,
+              team: {
+                ...prev.team,
+                avgCapacity: Number(analytics.capacity.avgUtilization || 0),
+                overloaded: Array.isArray(analytics.overloads)
+                  ? analytics.overloads.length
+                  : prev.team.overloaded,
+                available: availableCount,
+                trend:
+                  Number(analytics.capacity.shortfallHours || 0) > 0 ||
+                  (Array.isArray(analytics.overloads) && analytics.overloads.length > 0)
+                    ? 'down'
+                    : 'stable',
+              },
+            }));
+          }
         }
 
         // --- Process AI signals ---
@@ -606,6 +630,70 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     }
   };
 
+  const handleProposeOperatorIntervention = useCallback(
+    async (templateKey: string) => {
+      try {
+        setOperatorActionBusyId(templateKey);
+        await Api.proposeAIOperatorIntervention({ templateKey });
+        toast.success(isPolish ? 'Interwencja operatora została zaproponowana.' : 'Operator intervention proposed.');
+        await fetchDashboardData(true);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zaproponować interwencji.' : 'Failed to propose intervention.');
+      } finally {
+        setOperatorActionBusyId(null);
+      }
+    },
+    [fetchDashboardData, isPolish]
+  );
+
+  const handleAcceptOperatorIntervention = useCallback(
+    async (actionId: string) => {
+      try {
+        setOperatorActionBusyId(actionId);
+        await Api.acceptAIOperatorIntervention(actionId);
+        toast.success(isPolish ? 'Interwencja została zaakceptowana.' : 'Intervention accepted.');
+        await fetchDashboardData(true);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zaakceptować interwencji.' : 'Failed to accept intervention.');
+      } finally {
+        setOperatorActionBusyId(null);
+      }
+    },
+    [fetchDashboardData, isPolish]
+  );
+
+  const handleExecuteOperatorIntervention = useCallback(
+    async (actionId: string) => {
+      try {
+        setOperatorActionBusyId(actionId);
+        await Api.executeAIOperatorIntervention(actionId);
+        toast.success(isPolish ? 'Interwencja została wykonana.' : 'Intervention executed.');
+        await fetchDashboardData(true);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się wykonać interwencji.' : 'Failed to execute intervention.');
+      } finally {
+        setOperatorActionBusyId(null);
+      }
+    },
+    [fetchDashboardData, isPolish]
+  );
+
+  const handleRejectOperatorIntervention = useCallback(
+    async (actionId: string) => {
+      try {
+        setOperatorActionBusyId(actionId);
+        await Api.rejectAIOperatorIntervention(actionId);
+        toast.success(isPolish ? 'Interwencja została odrzucona.' : 'Intervention rejected.');
+        await fetchDashboardData(true);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się odrzucić interwencji.' : 'Failed to reject intervention.');
+      } finally {
+        setOperatorActionBusyId(null);
+      }
+    },
+    [fetchDashboardData, isPolish]
+  );
+
   return (
     <div className="space-y-6">
       {loadError && (
@@ -679,6 +767,18 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             onNavigate?.('tasks');
           }
         }}
+      />
+
+      <AIOperatorOverviewCard
+        overview={operatorOverview}
+        loading={loading}
+        isPolish={isPolish}
+        onOpenSection={(section) => onNavigate?.(section)}
+        onProposeIntervention={handleProposeOperatorIntervention}
+        onAcceptIntervention={handleAcceptOperatorIntervention}
+        onExecuteIntervention={handleExecuteOperatorIntervention}
+        onRejectIntervention={handleRejectOperatorIntervention}
+        busyActionId={operatorActionBusyId}
       />
 
       {/* L3: Work Patterns */}

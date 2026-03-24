@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "lastIteration": 1,
+  "mappingLessons": [],
+  "documentLessons": [
+    {
+      "documentName": "BP Annual Report 2025",
+      "statementType": "*",
+      "lesson": "BP report has 3 columns: 2025, 2024, 2023. ALWAYS extract the 2025 (leftmost/first) column values. The system detects period as 2024 but the correct period is 2025.",
+      "severity": "critical",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    },
+    {
+      "documentName": "Coca-Cola 10-K 2025",
+      "statementType": "CF",
+      "lesson": "Coca-Cola CF has 3 columns: 2024, 2023, 2022. Extract 2024 values (first column). Operating CF=6805, Investing=2524 (positive in 2024), Financing=-6910.",
+      "severity": "critical",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    },
+    {
+      "documentName": "BMW Group Financial Statements 2024",
+      "statementType": "CF",
+      "lesson": "BMW CF: investing activities are NEGATIVE (outflow), e.g. -11369. Financing activities were POSITIVE in 2024 = 5766. Do not flip signs.",
+      "severity": "critical",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    },
+    {
+      "documentName": "*",
+      "statementType": "*",
+      "lesson": "Values must be returned as integers in the document native scaling. If document says \"in millions\" and shows 267,732 — return 267732 NOT 267.732. Do NOT convert between scaling units.",
+      "severity": "critical",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    }
+  ],
+  "valueCorrections": [],
+  "promptImprovements": [
+    {
+      "phase": "phase2",
+      "statementType": "*",
+      "improvement": "Return values as whole numbers in the document native unit. If scaling=millions and document shows 267,732 return 267732. Never divide by 1000 to convert units.",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    },
+    {
+      "phase": "phase2",
+      "statementType": "CF",
+      "improvement": "For CF investing activities: outflows are NEGATIVE. If document shows \"(11,369)\" or \"-11,369\" return -11369. For financing: check the sign in the document.",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    },
+    {
+      "phase": "phase2",
+      "statementType": "*",
+      "improvement": "When document has multiple year columns (e.g. 2025, 2024, 2023), ALWAYS extract the MOST RECENT year (first/leftmost data column).",
+      "learnedAt": "2026-03-16",
+      "iteration": 0
+    }
+  ],
+  "iterationHistory": [
+    {
+      "iteration": 1,
+      "timestamp": "2026-03-16T10:17:38.726Z",
+      "accuracy": 0.9803921568627451,
+      "totalChecks": 51,
+      "passed": 50,
+      "failed": 1,
+      "improvements": [
+        "Target reached"
+      ]
+    }
+  ]
+}

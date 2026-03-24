@@ -57,7 +57,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
-import { Api } from '@/services/api';
+import { Api, shouldAllowDemoData } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 // Helper function to safely display error messages
@@ -79,6 +79,9 @@ const safeToastError = (error: any, defaultMessage: string, isPolish: boolean) =
   toast.error(errorMessage);
 };
 
+import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
+import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -86,17 +89,39 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import { Modal } from '@/components/ui/primitives/Modal';
-import { GridView, type GridItem } from '@/components/shared/ModuleHub/GridView';
-import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
+import {
+  InterviewAssignmentPreviewBody,
+  InterviewAssignmentPreviewFooter,
+} from './InterviewAssignmentPreview';
+import {
+  InterviewInsightPreviewBody,
+  InterviewInsightPreviewFooter,
+} from './InterviewInsightPreview';
+import {
+  InterviewSessionPreviewBody,
+  InterviewSessionPreviewFooter,
+} from './InterviewSessionPreview';
+import {
+  InterviewTemplatePreviewBody,
+  InterviewTemplatePreviewFooter,
+} from './InterviewTemplatePreview';
 import { InterviewWorkspace } from './InterviewWorkspace';
 import { TemplateBuilder } from './TemplateBuilder';
+import {
+  getTemplateAreaTagLabel,
+  getTemplateSourceLabel,
+  INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS,
+  normalizeInterviewTemplateAreaTags,
+  type TemplateScope,
+  type TemplateSourceFilter,
+} from './templateLibraryMeta';
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
@@ -198,11 +223,20 @@ interface InterviewInsight {
 
 interface InterviewTemplate {
   id: string;
+  organizationId?: string;
   name: string;
   description: string;
   questionCount: number;
   category: string;
   isDefault: boolean;
+  scope?: TemplateScope;
+  audience?: string;
+  estimatedTimeMinutes?: number;
+  runtimeModeDefault?: 'task_list' | 'one_question_per_screen';
+  areaTags?: string[];
+  status?: string;
+  sessionsUsed?: number;
+  updatedAt?: string;
   createdAt: string;
 }
 
@@ -303,8 +337,7 @@ const BUTTON_ACTIVE = `
 // Topbar pills (filters / view tool) — match MyWork Inbox/Tasks.
 const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const TOPBAR_PILL_INACTIVE =
-  `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 // Tab styles for dynamic tabs
 const TAB_BASE = `
@@ -353,13 +386,13 @@ export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentProjectId, setCurrentProjectId, currentOrganization } = useAppStore();
+  const { currentProjectId, setCurrentProjectId, currentOrganization, currentUser } = useAppStore();
 
   // Permissions hook
   const {
-    canAssign,
-    canViewManaged,
-    canViewOverdue,
+    canAssign: permissionsCanAssign,
+    canViewManaged: permissionsCanViewManaged,
+    canViewOverdue: permissionsCanViewOverdue,
     isLoading: permissionsLoading,
   } = useInterviewPermissions();
 
@@ -380,7 +413,9 @@ export const InterviewHub: React.FC = () => {
     loadHiddenColumns(INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
   );
   const [isSessionsViewSettingsOpen, setIsSessionsViewSettingsOpen] = useState(false);
-  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('all');
+  const [templateSourceFilter, setTemplateSourceFilter] = useState<TemplateSourceFilter>('all');
+  const [templateAreaTagFilter, setTemplateAreaTagFilter] = useState<string[]>([]);
+  const [isTemplateAreaFilterOpen, setIsTemplateAreaFilterOpen] = useState(false);
   const [templateStatusFilter, setTemplateStatusFilter] = useState<'all' | 'default' | 'active'>(
     'all'
   );
@@ -397,6 +432,7 @@ export const InterviewHub: React.FC = () => {
   const [templatePreviewDetailsMenuOpen, setTemplatePreviewDetailsMenuOpen] = useState(false);
   const [templatePreviewAiMenuOpen, setTemplatePreviewAiMenuOpen] = useState(false);
   const [isTemplatesViewSettingsOpen, setIsTemplatesViewSettingsOpen] = useState(false);
+  const [templatesViewMode, setTemplatesViewMode] = useState<'cards' | 'table'>('cards');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
     useState<InterviewTemplate | null>(null);
@@ -428,39 +464,6 @@ export const InterviewHub: React.FC = () => {
     setInsightPreviewAiActiveId(null);
   }, [selectedInsightId]);
 
-  type TemplateBusinessCategory = 'strategic' | 'operational' | 'digital' | 'cost' | 'people';
-  const TEMPLATE_BUSINESS_CATEGORIES: Array<{
-    id: TemplateBusinessCategory;
-    pl: string;
-    en: string;
-  }> = [
-    { id: 'strategic', pl: 'Strategiczne', en: 'Strategic' },
-    { id: 'operational', pl: 'Operacyjne', en: 'Operational' },
-    { id: 'digital', pl: 'Digital', en: 'Digital' },
-    { id: 'cost', pl: 'Kosztowe', en: 'Cost' },
-    { id: 'people', pl: 'Ludzkie', en: 'People' },
-  ];
-
-  const getTemplateBusinessCategory = useCallback((raw?: string | null): TemplateBusinessCategory => {
-    const s = String(raw || '').trim().toLowerCase();
-    if (!s) return 'operational';
-
-    // Digital bucket
-    if (/(digital|data|automation|ai|it|tech)/.test(s)) return 'digital';
-
-    // Cost bucket
-    if (/(cost|efficien|finance|roi|budget)/.test(s)) return 'cost';
-
-    // People bucket
-    if (/(people|hr|human|culture|team|customer|client|stakeholder)/.test(s)) return 'people';
-
-    // Strategic bucket
-    if (/(strateg|alignment|executive|governance|vision|portfolio)/.test(s)) return 'strategic';
-
-    // Default
-    return 'operational';
-  }, []);
-
   useEffect(() => {
     setInsightPreviewDetailsExpanded(false);
   }, [selectedInsightId]);
@@ -477,23 +480,46 @@ export const InterviewHub: React.FC = () => {
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUsingDemoData, setIsUsingDemoData] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Assignments state
   const [myAssignments, setMyAssignments] = useState<InterviewAssignment[]>([]);
   const [managedAssignments, setManagedAssignments] = useState<InterviewAssignment[]>([]);
   const [overdueAssignments, setOverdueAssignments] = useState<InterviewAssignment[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const allowDemoData = shouldAllowDemoData();
 
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
+
+  const interviewDemoData = useMemo(
+    () =>
+      createInterviewDemoDataset({
+        currentUserId: currentUser?.id,
+        currentUserName: currentUser?.displayName || (currentUser as any)?.name,
+        currentUserEmail: currentUser?.email,
+        organizationId: currentOrganization?.id,
+        organizationName: currentOrganization?.name,
+      }),
+    [
+      currentOrganization?.id,
+      currentOrganization?.name,
+      currentUser?.displayName,
+      currentUser?.email,
+      currentUser?.id,
+      (currentUser as any)?.name,
+    ]
+  );
+  const canAssign = permissionsCanAssign || isUsingDemoData;
+  const canViewManaged = permissionsCanViewManaged || isUsingDemoData;
+  const canViewOverdue = permissionsCanViewOverdue || isUsingDemoData;
 
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
@@ -503,9 +529,10 @@ export const InterviewHub: React.FC = () => {
   const [previewAiMenuOpen, setPreviewAiMenuOpen] = useState(false);
   const [previewAiText, setPreviewAiText] = useState<string | null>(null);
   const [previewAiError, setPreviewAiError] = useState<string | null>(null);
-  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<'summary' | 'risks' | 'next_steps'>(
-    'summary'
-  );
+  type AssignmentAiIntent = 'summary' | 'risks' | 'next_steps';
+  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<
+    AssignmentAiIntent
+  >('summary');
 
   // Sessions preview (Outlook-style)
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
@@ -519,6 +546,15 @@ export const InterviewHub: React.FC = () => {
   const [templateQuestionsById, setTemplateQuestionsById] = useState<Record<string, any[]>>({});
   const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>(
     {}
+  );
+
+  const normalizeTemplateRecord = useCallback(
+    (template: any): InterviewTemplate => ({
+      ...(template as InterviewTemplate),
+      scope: ((template?.scope || 'private') as TemplateScope) || 'private',
+      areaTags: normalizeInterviewTemplateAreaTags(template?.areaTags),
+    }),
+    []
   );
 
   // V3-A02: Dynamic documents state with sessionStorage persistence
@@ -617,26 +653,40 @@ export const InterviewHub: React.FC = () => {
           Api.get('/interview/templates').catch(() => []),
         ]);
 
-        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
-        setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+        const apiSessions = Array.isArray(sessionsRes) ? sessionsRes : [];
+        const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+        const apiTemplates = (Array.isArray(templatesRes) ? templatesRes : []).map(
+          normalizeTemplateRecord
+        );
+        setIsUsingDemoData(false);
+        setLoadError(null);
+        setSessions(apiSessions);
+        setInsights(apiInsights);
+        setTemplates(apiTemplates);
       } catch (error) {
         console.error('[InterviewHub] Failed to load data:', error);
+        setIsUsingDemoData(false);
+        setLoadError('Failed to load real interview data from the active data source.');
+        setSessions([]);
+        setInsights([]);
+        setTemplates([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [normalizeTemplateRecord]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
       const insightsRes = await Api.get('/interview/insights').catch(() => []);
-      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+      const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+      setInsights(apiInsights);
     } catch (error) {
       console.error('[InterviewHub] Failed to load insights:', error);
+      setInsights([]);
     }
   }, []);
 
@@ -649,26 +699,32 @@ export const InterviewHub: React.FC = () => {
       try {
         // Always load my assignments
         const myRes = await Api.get('/interview/assignments/my').catch(() => []);
-        setMyAssignments(Array.isArray(myRes) ? myRes : []);
+        const apiMyAssignments = Array.isArray(myRes) ? myRes : [];
+        setMyAssignments(apiMyAssignments);
 
         // Load managed/overdue only if user has permission
-        if (canViewManaged) {
+        if (permissionsCanViewManaged || isUsingDemoData) {
           const [managedRes, overdueRes] = await Promise.all([
             Api.get('/interview/assignments/managed').catch(() => []),
             Api.get('/interview/assignments/overdue').catch(() => []),
           ]);
-          setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-          setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+          const apiManagedAssignments = Array.isArray(managedRes) ? managedRes : [];
+          const apiOverdueAssignments = Array.isArray(overdueRes) ? overdueRes : [];
+          setManagedAssignments(apiManagedAssignments);
+          setOverdueAssignments(apiOverdueAssignments);
         }
       } catch (error) {
         console.error('[InterviewHub] Failed to load assignments:', error);
+        setMyAssignments([]);
+        setManagedAssignments([]);
+        setOverdueAssignments([]);
       } finally {
         setAssignmentsLoading(false);
       }
     };
 
     loadAssignments();
-  }, [permissionsLoading, canViewManaged]);
+  }, [permissionsLoading, permissionsCanViewManaged, isUsingDemoData]);
 
   // Open session from URL
   useEffect(() => {
@@ -685,6 +741,22 @@ export const InterviewHub: React.FC = () => {
       }
     }
   }, [sessionIdFromUrl, sessions]);
+
+  // Open assignment from URL (deep link from notifications)
+  useEffect(() => {
+    if (!assignmentIdFromUrl) return;
+    const allAssignments = [...myAssignments, ...managedAssignments];
+    if (allAssignments.length === 0) return;
+    const assignment = allAssignments.find((a) => a.id === assignmentIdFromUrl);
+    if (!assignment) return;
+    const isManagerView = managedAssignments.some((a) => a.id === assignmentIdFromUrl);
+    setActiveTab(isManagerView ? 'managed' : 'my-assignments');
+    void openInterviewAssignmentFull(assignment, isManagerView);
+    const next = new URLSearchParams(searchParams);
+    next.delete('assignmentId');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignmentIdFromUrl, myAssignments, managedAssignments, searchParams, setSearchParams]);
 
   // Open insight from URL
   useEffect(() => {
@@ -706,26 +778,50 @@ export const InterviewHub: React.FC = () => {
   // Load template questions when a template doc is opened
   useEffect(() => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
-    if (!doc || doc.type !== 'template') return;
-
-    const templateId = doc.id;
+    const templateId =
+      (doc?.type === 'template' ? doc.id : null) ||
+      (activeTab === 'templates' && selectedTemplateId ? selectedTemplateId : null);
+    if (!templateId) return;
     if (templateQuestionsById[templateId] || templateQuestionsLoading[templateId]) return;
 
     setTemplateQuestionsLoading((prev) => ({ ...prev, [templateId]: true }));
+    if (isInterviewDemoId(templateId)) {
+      setTemplateQuestionsById((prev) => ({
+        ...prev,
+        [templateId]: interviewDemoData.templateQuestionsById[templateId] || [],
+      }));
+      setTemplateQuestionsLoading((prev) => ({ ...prev, [templateId]: false }));
+      return;
+    }
+
     Api.get(`/interview/templates/${templateId}/questions`)
       .then((rows) => {
+        const apiRows = Array.isArray(rows) ? rows : [];
         setTemplateQuestionsById((prev) => ({
           ...prev,
-          [templateId]: Array.isArray(rows) ? rows : [],
+          [templateId]:
+            apiRows.length > 0 ? apiRows : interviewDemoData.templateQuestionsById[templateId] || [],
         }));
       })
       .catch((err) => {
         console.error('[InterviewHub] Failed to load template questions:', err);
+        setTemplateQuestionsById((prev) => ({
+          ...prev,
+          [templateId]: interviewDemoData.templateQuestionsById[templateId] || [],
+        }));
       })
       .finally(() => {
         setTemplateQuestionsLoading((prev) => ({ ...prev, [templateId]: false }));
       });
-  }, [activeDocumentId, openDocuments, templateQuestionsById, templateQuestionsLoading]);
+  }, [
+    activeDocumentId,
+    activeTab,
+    interviewDemoData.templateQuestionsById,
+    openDocuments,
+    selectedTemplateId,
+    templateQuestionsById,
+    templateQuestionsLoading,
+  ]);
 
   // Filter sessions
   const filteredSessions = useMemo(() => {
@@ -861,19 +957,28 @@ export const InterviewHub: React.FC = () => {
   const filteredTemplates = useMemo(() => {
     let result = templates;
 
-    // Filter by category
-    if (templateCategoryFilter !== 'all') {
-      result = result.filter(
-        (t) => getTemplateBusinessCategory(t.category) === (templateCategoryFilter as any)
-      );
-    }
-
     // Filter by status-like chips (All / Default / Active)
     if (templateStatusFilter !== 'all') {
       result =
         templateStatusFilter === 'default'
           ? result.filter((t) => t.isDefault)
           : result.filter((t) => !t.isDefault);
+    }
+
+    if (templateSourceFilter !== 'all') {
+      result = result.filter((t) => {
+        if (templateSourceFilter === 'application') return t.scope === 'system';
+        if (templateSourceFilter === 'organization') return t.scope === 'organization';
+        if (templateSourceFilter === 'user') return t.scope === 'private';
+        return true;
+      });
+    }
+
+    if (templateAreaTagFilter.length > 0) {
+      result = result.filter((t) => {
+        const tags = Array.isArray(t.areaTags) ? t.areaTags : [];
+        return templateAreaTagFilter.every((tag) => tags.includes(tag));
+      });
     }
 
     // Filter by search query
@@ -883,12 +988,20 @@ export const InterviewHub: React.FC = () => {
         (t) =>
           t.name.toLowerCase().includes(query) ||
           t.description.toLowerCase().includes(query) ||
-          t.category.toLowerCase().includes(query)
+          t.category.toLowerCase().includes(query) ||
+          (t.scope || '').toLowerCase().includes(query) ||
+          (t.areaTags || []).join(' ').toLowerCase().includes(query)
       );
     }
 
     return result;
-  }, [templates, searchQuery, templateCategoryFilter, templateStatusFilter, getTemplateBusinessCategory]);
+  }, [
+    templates,
+    searchQuery,
+    templateSourceFilter,
+    templateAreaTagFilter,
+    templateStatusFilter,
+  ]);
 
   // -------------------------
   // Assignments (Assigned tab) status filter
@@ -1148,14 +1261,35 @@ export const InterviewHub: React.FC = () => {
 
   // Template actions
   const handleNewTemplate = useCallback(() => {
-    setEditingTemplateId(null);
-    setShowTemplateBuilder(true);
-  }, []);
+    handleOpenDocument({
+      id: `new-template:${Date.now()}`,
+      type: 'template',
+      name: isPolish ? 'Nowy template' : 'New template',
+      status: 'draft',
+      data: {
+        name: isPolish ? 'Nowy template' : 'New template',
+        status: 'draft',
+      } as unknown as InterviewTemplate,
+    });
+  }, [handleOpenDocument, isPolish]);
 
-  const handleEditTemplate = useCallback((templateId: string) => {
-    setEditingTemplateId(templateId);
-    setShowTemplateBuilder(true);
-  }, []);
+  const handleEditTemplate = useCallback(
+    (templateId: string) => {
+      const template = templates.find((item) => item.id === templateId);
+      handleOpenDocument({
+        id: templateId,
+        type: 'template',
+        name: template?.name || (isPolish ? 'Template' : 'Template'),
+        status: (template?.status as ItemStatus) || 'draft',
+        data: template || ({
+          id: templateId,
+          name: isPolish ? 'Template' : 'Template',
+          status: 'draft',
+        } as unknown as InterviewTemplate),
+      });
+    },
+    [handleOpenDocument, isPolish, templates]
+  );
 
   const handleCloneTemplate = useCallback(
     async (template: InterviewTemplate) => {
@@ -1169,18 +1303,25 @@ export const InterviewHub: React.FC = () => {
 
         // Refresh templates
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
-        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+        setTemplates(
+          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        );
 
-        // Open the cloned template for editing
-        setEditingTemplateId((cloned as any).id);
-        setShowTemplateBuilder(true);
+        // Open the cloned template in the dynamic document area
+        handleOpenDocument({
+          id: (cloned as any).id,
+          type: 'template',
+          name: (cloned as any).name || `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
+          status: ((cloned as any).status as ItemStatus) || 'draft',
+          data: cloned as InterviewTemplate,
+        });
       } catch (error) {
         toast.dismiss();
         toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
         console.error('[InterviewHub] Failed to clone template:', error);
       }
     },
-    [isPolish]
+    [handleOpenDocument, isPolish]
   );
 
   const handleDeleteTemplate = useCallback(
@@ -1201,7 +1342,9 @@ export const InterviewHub: React.FC = () => {
 
         // Refresh templates
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
-        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+        setTemplates(
+          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        );
       } catch (error) {
         toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
         console.error('[InterviewHub] Failed to delete template:', error);
@@ -1318,12 +1461,24 @@ export const InterviewHub: React.FC = () => {
     [isPolish, handleViewSession]
   );
 
+  type InsightPromptType =
+    | 'summary'
+    | 'trends'
+    | 'problems'
+    | 'recommendations'
+    | 'comparison'
+    | 'gaps'
+    | 'risk_assessment'
+    | 'opportunity_scan'
+    | 'maturity'
+    | 'stakeholder_map';
+
   // Generate insight from session
   const handleGenerateInsight = useCallback(
-    async (session: InterviewSession) => {
+    async (session: InterviewSession, promptType: InsightPromptType = 'summary') => {
       try {
         toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
-        await Api.post('/interview/insights', { sessionId: session.id });
+        await Api.post('/interview/insights', { sessionId: session.id, promptType });
         toast.dismiss();
         toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
 
@@ -1550,10 +1705,10 @@ export const InterviewHub: React.FC = () => {
                   onClick={b.onClick}
                   disabled={!!b.disabled}
                   className={`${chipBase} ${
-                    (b.id === 'all' ? activeId === null : activeId === b.id) ? chipActive : chipInactive
-                  } ${
-                    b.disabled ? 'opacity-60 cursor-not-allowed' : ''
-                  }`}
+                    (b.id === 'all' ? activeId === null : activeId === b.id)
+                      ? chipActive
+                      : chipInactive
+                  } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <span>{b.label}</span>
                   <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
@@ -1597,19 +1752,22 @@ export const InterviewHub: React.FC = () => {
           id: 'in_progress',
           label: isPolish ? 'W trakcie' : 'In progress',
           count: inProgressCount,
-          onClick: () => setSessionStatusFilter((prev) => (prev === 'in_progress' ? 'all' : 'in_progress')),
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'in_progress' ? 'all' : 'in_progress')),
         },
         {
           id: 'submitted',
           label: isPolish ? 'Wysłane' : 'Submitted',
           count: submittedCount,
-          onClick: () => setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
         },
         {
           id: 'completed',
           label: isPolish ? 'Zakończone' : 'Completed',
           count: completedCount,
-          onClick: () => setSessionStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed')),
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed')),
         },
       ];
 
@@ -1813,9 +1971,13 @@ export const InterviewHub: React.FC = () => {
               return (
                 <tr
                   key={session.id}
-                  onClick={() => (opts?.onRowClick ? opts.onRowClick(session.id) : handleViewSession(session))}
+                  onClick={() =>
+                    opts?.onRowClick ? opts.onRowClick(session.id) : handleViewSession(session)
+                  }
                   onDoubleClick={() =>
-                    opts?.onRowDoubleClick ? opts.onRowDoubleClick(session.id) : handleViewSession(session)
+                    opts?.onRowDoubleClick
+                      ? opts.onRowDoubleClick(session.id)
+                      : handleViewSession(session)
                   }
                   className={[
                     'group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0',
@@ -1903,7 +2065,7 @@ export const InterviewHub: React.FC = () => {
                                   id: 'generate-insight',
                                   label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
                                   icon: Lightbulb,
-                                  onClick: () => handleGenerateInsight(session),
+                                  onClick: () => handleGenerateInsight(session, 'summary'),
                                 },
                               ]
                             : []),
@@ -2555,7 +2717,10 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render templates table (Resizable + Preview-ready)
-  const renderTemplatesTable = (opts?: { onSelectRow?: (id: string) => void; onOpenFull?: (id: string) => void }) => {
+  const renderTemplatesTable = (opts?: {
+    onSelectRow?: (id: string) => void;
+    onOpenFull?: (id: string) => void;
+  }) => {
     const hiddenSet = new Set(templatesHiddenColumns);
     const colSpan =
       1 +
@@ -2716,15 +2881,26 @@ export const InterviewHub: React.FC = () => {
                           >
                             {template.name}
                           </span>
-                          {/* Description appears only on hover */}
-                          {template.description ? (
-                            <span
-                              className="hidden group-hover:block text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5"
-                              title={template.description}
-                            >
-                              {template.description}
-                            </span>
-                          ) : null}
+                          <div className="hidden group-hover:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            {template.description ? (
+                              <span className="truncate" title={template.description}>
+                                {template.description}
+                              </span>
+                            ) : null}
+                            {template.scope ? (
+                              <span className="px-1.5 py-0.5 rounded-full border border-slate-200/70 dark:border-white/[0.08]">
+                                {getTemplateSourceLabel(template.scope, isPolish)}
+                              </span>
+                            ) : null}
+                            {(template.areaTags || []).slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 rounded-full border border-slate-200/70 dark:border-white/[0.08]"
+                              >
+                                {getTemplateAreaTagLabel(tag, isPolish)}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2892,6 +3068,128 @@ export const InterviewHub: React.FC = () => {
     );
   };
 
+  const renderTemplatesCards = (opts?: {
+    onSelectRow?: (id: string) => void;
+    onOpenFull?: (id: string) => void;
+  }) => {
+    if (filteredTemplates.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <FileText size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Brak szablonów' : 'No templates found'}
+          </p>
+          {canAssign && (
+            <button
+              onClick={handleNewTemplate}
+              className="mt-4 inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 transition-colors active:scale-[0.98]"
+            >
+              <FilePlus size={16} />
+              {isPolish ? 'Nowy szablon' : 'New template'}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+        {filteredTemplates.map((template) => {
+          const isSystem = template.scope === 'system';
+          const isOrg = template.scope === 'organization';
+          const scopeLabel = isSystem
+            ? (isPolish ? 'Systemowy' : 'System')
+            : isOrg
+              ? (isPolish ? 'Organizacja' : 'Organization')
+              : (isPolish ? 'Prywatny' : 'Private');
+          const scopeColor = isSystem
+            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+            : isOrg
+              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+              : 'bg-slate-500/10 text-slate-600 dark:text-slate-400';
+          const statusLabel = template.status === 'approved'
+            ? (isPolish ? 'Opublikowany' : 'Published')
+            : (isPolish ? 'Wersja robocza' : 'Draft');
+          const statusColor = template.status === 'approved'
+            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+          const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
+
+          return (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => {
+                setSelectedTemplateId(template.id);
+                opts?.onSelectRow?.(template.id);
+              }}
+              onDoubleClick={() => {
+                opts?.onOpenFull?.(template.id);
+              }}
+              className={`group relative flex flex-col text-left rounded-2xl border transition-all hover:shadow-lg ${
+                selectedTemplateId === template.id
+                  ? 'border-primary-500/40 bg-primary-500/5 dark:bg-primary-500/10 shadow-md'
+                  : 'border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
+              }`}
+            >
+              <div className="p-4 flex-1 space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${scopeColor}`}>
+                    {scopeLabel}
+                  </span>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}>
+                    {statusLabel}
+                  </span>
+                  {template.isDefault && (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                      Default
+                    </span>
+                  )}
+                </div>
+
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-2 leading-snug">
+                  {template.name}
+                </h3>
+
+                {template.description && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {template.description}
+                  </p>
+                )}
+
+                {areaTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {areaTags.slice(0, 4).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400"
+                      >
+                        {getTemplateAreaTagLabel(tag, isPolish)}
+                      </span>
+                    ))}
+                    {areaTags.length > 4 && (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        +{areaTags.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>{template.questionCount} {isPolish ? 'pytań' : 'questions'}</span>
+                {template.estimatedTimeMinutes && (
+                  <span>{template.estimatedTimeMinutes} min</span>
+                )}
+                <span>{template.category}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   // Render document content (full view)
   const renderDocumentContent = () => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
@@ -2917,7 +3215,12 @@ export const InterviewHub: React.FC = () => {
           onClose={() => handleCloseDocument(insight.id)}
           onRegenerate={async () => {
             const insightsRes = await Api.get('/interview/insights').catch(() => []);
-            setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+            const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+            setInsights(
+              apiInsights.length > 0
+                ? apiInsights
+                : (interviewDemoData.insights as InterviewInsight[])
+            );
           }}
           onSaved={(data) => {
             // Update local insight data
@@ -2929,148 +3232,71 @@ export const InterviewHub: React.FC = () => {
 
     if (doc.type === 'template') {
       const template = doc.data as InterviewTemplate;
-      const templateQuestions = templateQuestionsById[template.id] || [];
-      const isTemplateQuestionsLoading = !!templateQuestionsLoading[template.id];
-      const categoryOrder = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
-      const categoryLabels = isPolish
-        ? {
-            strategy: 'Strategia',
-            operations: 'Operacje',
-            digital: 'Digital',
-            people: 'Ludzie',
-            finance: 'Finanse',
-          }
-        : {
-            strategy: 'Strategy',
-            operations: 'Operations',
-            digital: 'Digital',
-            people: 'People',
-            finance: 'Finance',
-          };
+      const isNewTemplateDocument = template.id.startsWith('new-template:');
 
       return (
-        <div className="p-6 max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <FileText size={24} className="text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  {template.name}
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
-                  {template.description}
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 text-xs rounded-full">
-                    {template.questionCount} {isPolish ? 'pytań' : 'questions'}
-                  </span>
-                  <span className="text-xs text-slate-500">{template.category}</span>
-                  {template.isDefault && (
-                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                      {isPolish ? 'Domyślny' : 'Default'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-slate-200 dark:border-navy-700 pt-6 space-y-4">
-              {/* Questions Preview (read-only) */}
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                  {isPolish ? 'Podgląd pytań' : 'Questions preview'}
-                </h2>
-                {isTemplateQuestionsLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {isPolish ? 'Ładowanie pytań...' : 'Loading questions...'}
-                  </div>
-                ) : templateQuestions.length > 0 ? (
-                  <div className="space-y-4">
-                    {categoryOrder.map((cat) => {
-                      const items = templateQuestions.filter((q: any) => q.category === cat);
-                      if (items.length === 0) return null;
-                      return (
-                        <div
-                          key={cat}
-                          className="bg-slate-100/40 dark:bg-navy-950/40 border border-slate-200 dark:border-navy-700 rounded-lg p-4"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold text-slate-200">
-                              {(categoryLabels as any)[cat]}
-                            </span>
-                            <span className="text-xs text-slate-500">{items.length}</span>
-                          </div>
-                          <ul className="space-y-2">
-                            {items.map((q: any) => (
-                              <li key={q.id} className="text-sm text-slate-300">
-                                {q.questionText}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    {isPolish ? 'Brak pytań w szablonie' : 'No questions in template'}
-                  </p>
-                )}
-              </div>
+        <TemplateBuilder
+          key={doc.id}
+          isOpen
+          presentation="document"
+          templateId={isNewTemplateDocument ? null : template.id}
+          onClose={() => handleCloseDocument(doc.id)}
+          onSuccess={async (savedTemplate) => {
+            const templatesRes = await Api.get('/interview/templates').catch(() => []);
+            const refreshedTemplatesApi = (Array.isArray(templatesRes) ? templatesRes : []).map(
+              normalizeTemplateRecord
+            );
+            const refreshedTemplates = isUsingDemoData
+              ? (interviewDemoData.templates as InterviewTemplate[])
+              : refreshedTemplatesApi.length > 0
+                ? refreshedTemplatesApi
+                : (interviewDemoData.templates as InterviewTemplate[]);
+            setTemplates(refreshedTemplates);
 
-              <button
-                onClick={async () => {
-                  try {
-                    const projectId = await ensureProjectId();
-                    if (!projectId) {
-                      toast.error(
-                        isPolish
-                          ? 'Wybierz projekt przed utworzeniem sesji'
-                          : 'Select a project before creating a session'
-                      );
-                      return;
-                    }
-                    toast.loading(
-                      isPolish
-                        ? 'Tworzenie sesji z szablonu...'
-                        : 'Creating session from template...'
-                    );
-                    const created = await Api.post(`/interview/templates/${template.id}/use`, {
-                      projectId,
-                      name: `${template.name} ${new Date().toLocaleDateString()}`,
-                    });
+            if (!savedTemplate?.id) {
+              return;
+            }
 
-                    const newSession = created as InterviewSession;
-                    setSessions((prev) => [newSession, ...prev]);
+            const savedId: string = savedTemplate.id;
 
-                    handleOpenDocument({
-                      id: newSession.id,
-                      type: 'session',
-                      name: newSession.name || 'Interview Session',
-                      status: (newSession as any)?.status || 'in_progress',
-                      data: newSession,
-                    });
+            const nextTemplate =
+              refreshedTemplates.find((item) => item.id === savedId) ||
+              ({
+                ...template,
+                ...savedTemplate,
+                id: savedId,
+                name: savedTemplate.name || template.name,
+              } as InterviewTemplate);
 
-                    toast.dismiss();
-                    toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
-                  } catch (error) {
-                    console.error('[InterviewHub] Failed to create session from template:', error);
-                    toast.dismiss();
-                    toast.error(
-                      isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
-                    );
-                  }
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <Plus size={16} />
-                {isPolish ? 'Użyj szablonu' : 'Use Template'}
-              </button>
-            </div>
-          </div>
-        </div>
+            setOpenDocuments((prev) => {
+              const withoutOld = prev.filter((item) => item.id !== doc.id);
+              const existingIdx = withoutOld.findIndex((item) => item.id === savedId);
+
+              if (existingIdx >= 0) {
+                const next = [...withoutOld];
+                next[existingIdx] = {
+                  ...next[existingIdx],
+                  name: nextTemplate.name,
+                  status: (nextTemplate.status as ItemStatus) || 'draft',
+                  data: nextTemplate,
+                };
+                return next;
+              }
+
+              return [
+                ...withoutOld,
+                {
+                  id: savedId,
+                  type: 'template' as const,
+                  name: nextTemplate.name,
+                  status: (nextTemplate.status as ItemStatus) || 'draft',
+                  data: nextTemplate,
+                },
+              ];
+            });
+            setActiveDocumentId(savedId);
+          }}
+        />
       );
     }
 
@@ -3088,7 +3314,10 @@ export const InterviewHub: React.FC = () => {
     loadInterviewAssignmentsHiddenColumns(INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY, true)
   );
   const [managedHiddenColumns, setManagedHiddenColumns] = useState<string[]>(() =>
-    loadInterviewAssignmentsHiddenColumns(INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY, true)
+    loadInterviewAssignmentsHiddenColumns(
+      INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY,
+      true
+    )
   );
   const [isAssignmentsViewSettingsOpen, setIsAssignmentsViewSettingsOpen] = useState(false);
   const [assignmentsViewSettingsShowAssignee, setAssignmentsViewSettingsShowAssignee] =
@@ -3193,7 +3422,11 @@ export const InterviewHub: React.FC = () => {
         };
       }
       if (days === 0) {
-        return { days, label: isPolish ? 'Dziś!' : 'Today!', colorClass: 'text-red-400 bg-red-500/10' };
+        return {
+          days,
+          label: isPolish ? 'Dziś!' : 'Today!',
+          colorClass: 'text-red-400 bg-red-500/10',
+        };
       }
       if (days <= 3) {
         return {
@@ -3217,7 +3450,9 @@ export const InterviewHub: React.FC = () => {
         const projectId = await ensureProjectId();
         if (!projectId) {
           toast.error(
-            isPolish ? 'Wybierz projekt przed rozpoczęciem wywiadu' : 'Select a project before starting'
+            isPolish
+              ? 'Wybierz projekt przed rozpoczęciem wywiadu'
+              : 'Select a project before starting'
           );
           return;
         }
@@ -3240,13 +3475,17 @@ export const InterviewHub: React.FC = () => {
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
-          toast.error(isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response');
+          toast.error(
+            isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response'
+          );
         }
 
         // Refresh assignments
         const [myRes, managedRes] = await Promise.all([
           Api.get('/interview/assignments/my').catch(() => []),
-          canViewManaged ? Api.get('/interview/assignments/managed').catch(() => []) : Promise.resolve([]),
+          canViewManaged
+            ? Api.get('/interview/assignments/managed').catch(() => [])
+            : Promise.resolve([]),
         ]);
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
         if (canViewManaged) setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
@@ -3272,7 +3511,13 @@ export const InterviewHub: React.FC = () => {
 
         const sid = assignment.sessionId || assignment.session?.id;
         if (sid) {
-          const session = await Api.get(`/interview/sessions/${sid}`);
+          const demoSession = interviewDemoData.sessionDetailsById[sid]?.session;
+          const session = isInterviewDemoId(sid)
+            ? demoSession
+            : await Api.get(`/interview/sessions/${sid}`).catch(() => demoSession || null);
+          if (!session) {
+            throw new Error('Failed to load session');
+          }
           handleOpenDocument({
             id: (session as InterviewSession).id,
             type: 'session',
@@ -3310,11 +3555,14 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [handleOpenDocument, isPolish, startInterviewAssignment]
+    [handleOpenDocument, interviewDemoData.sessionDetailsById, isPolish, startInterviewAssignment]
   );
 
   const runAssignmentAi = useCallback(
-    async (intent: 'summary' | 'risks' | 'next_steps' | 'expand_details' | 'summarize_details', a: InterviewAssignment) => {
+    async (
+      intent: 'summary' | 'risks' | 'next_steps' | 'expand_details' | 'summarize_details',
+      a: InterviewAssignment
+    ) => {
       try {
         const title = getAssignmentTitle(a);
         const due = a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—';
@@ -3326,17 +3574,25 @@ export const InterviewHub: React.FC = () => {
         const intentLine = (() => {
           switch (intent) {
             case 'summary':
-              return isPolish ? 'Podsumuj czego dotyczy i co jest wymagane.' : 'Summarize what this is and what is required.';
+              return isPolish
+                ? 'Podsumuj czego dotyczy i co jest wymagane.'
+                : 'Summarize what this is and what is required.';
             case 'risks':
               return isPolish
                 ? 'Wypisz ryzyka i typowe blokery (max 5).'
                 : 'List risks and typical blockers (max 5).';
             case 'next_steps':
-              return isPolish ? 'Zaproponuj następne kroki (max 5), konkretnie.' : 'Propose next steps (max 5), concrete.';
+              return isPolish
+                ? 'Zaproponuj następne kroki (max 5), konkretnie.'
+                : 'Propose next steps (max 5), concrete.';
             case 'expand_details':
-              return isPolish ? 'Rozwiń szczegóły do krótkiego planu wykonania.' : 'Expand details into a short execution plan.';
+              return isPolish
+                ? 'Rozwiń szczegóły do krótkiego planu wykonania.'
+                : 'Expand details into a short execution plan.';
             case 'summarize_details':
-              return isPolish ? 'Podsumuj szczegóły w 5 punktach.' : 'Summarize details in 5 bullets.';
+              return isPolish
+                ? 'Podsumuj szczegóły w 5 punktach.'
+                : 'Summarize details in 5 bullets.';
           }
         })();
 
@@ -3788,7 +4044,9 @@ Return ONLY the answer text (no markdown fences).`;
                         </div>
                         <span
                           className="text-sm text-slate-700 dark:text-slate-200 truncate max-w-[220px]"
-                          title={assignment.assignee?.name || assignment.assignee?.email || 'Unknown'}
+                          title={
+                            assignment.assignee?.name || assignment.assignee?.email || 'Unknown'
+                          }
                         >
                           {assignment.assignee?.name || assignment.assignee?.email || 'Unknown'}
                         </span>
@@ -3944,7 +4202,8 @@ Return ONLY the answer text (no markdown fences).`;
                             id: 'open',
                             label: isPolish ? 'Otwórz' : 'Open',
                             icon: ChevronRight,
-                            onClick: () => void openInterviewAssignmentFull(assignment, showAssignee),
+                            onClick: () =>
+                              void openInterviewAssignmentFull(assignment, showAssignee),
                             divider:
                               (showAssignee && canAssign && assignment.status === 'submitted') ||
                               (!showAssignee &&
@@ -3996,6 +4255,26 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
+    if (loadError) {
+      return (
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+            <div className="text-lg font-semibold text-slate-900 dark:text-white">
+              {isPolish
+                ? 'Realne zrodlo Interview wymaga uwagi'
+                : 'Real interview source needs attention'}
+            </div>
+            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
+            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {isPolish
+                ? 'Nie wstrzyknieto danych demo. Sprawdz aktywna baze, scope organizacji i data-context.'
+                : 'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context.'}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'sessions') {
       const rows = filteredSessions || [];
       const selected = previewSessionId ? rows.find((s) => s.id === previewSessionId) : null;
@@ -4017,6 +4296,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (s) handleViewSession(s);
               }}
               itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: x.name || 'Interview Session' } as any : null; }}
               renderPreview={(item) => {
                 const s = item as InterviewSession;
                 const progress =
@@ -4024,228 +4304,71 @@ Return ONLY the answer text (no markdown fences).`;
                     ? Math.round((s.answeredQuestions / s.totalQuestions) * 100)
                     : 0;
                 const statusCfg = getSessionStatusConfig(s.status);
-                const started = s.startedAt ? new Date(s.startedAt).toLocaleDateString() : '—';
-                const last = s.lastActivityAt ? new Date(s.lastActivityAt).toLocaleDateString() : '—';
 
                 return (
-                  <div className="space-y-4 text-sm">
-                    {/* Meta row */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-700 dark:text-purple-200 border border-purple-300/30 dark:border-purple-500/20">
-                        {isPolish ? 'Sesja' : 'Session'}
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${statusCfg.bgColor}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${statusCfg.dotColor}`} />
-                        <span className={`${statusCfg.textColor}`}>
-                          {isPolish ? statusCfg.label.pl : statusCfg.label.en}
-                        </span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Postęp' : 'Progress'}: {progress}%
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-700 dark:text-slate-200">
-                        <Calendar size={12} />
-                        {started}
-                      </span>
-                    </div>
-
-                    {/* Details */}
-                    <div className="pt-2 border-t border-slate-200/70 dark:border-white/[0.06]">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Szczegóły' : 'Details'}
-                        </div>
-                        {/* Details kebab (MUST) */}
-                        <RowActionsMenu
-                          iconVariant="vertical"
-                          actions={[
-                            {
-                              id: 'toggle',
-                              label: sessionPreviewDetailsExpanded
-                                ? isPolish
-                                  ? 'Zwiń'
-                                  : 'Collapse'
-                                : isPolish
-                                  ? 'Rozwiń'
-                                  : 'Expand',
-                              onClick: () => setSessionPreviewDetailsExpanded((v) => !v),
-                            },
-                            {
-                              id: 'copy-stats',
-                              label: isPolish ? 'Kopiuj metryki' : 'Copy stats',
-                              icon: Copy,
-                              onClick: () =>
-                                copyToClipboard(
-                                  [
-                                    `id: ${s.id}`,
-                                    `status: ${s.status}`,
-                                    `answered: ${s.answeredQuestions}/${s.totalQuestions}`,
-                                    `startedAt: ${s.startedAt}`,
-                                  ].join('\n')
-                                ),
-                            },
-                            {
-                              id: 'copy-id',
-                              label: isPolish ? 'Kopiuj ID' : 'Copy ID',
-                              icon: Copy,
-                              onClick: () => copyToClipboard(s.id),
-                            },
-                          ]}
-                        />
-                      </div>
-                      <div
-                        className={[
-                          'mt-2 text-slate-700 dark:text-slate-200',
-                          sessionPreviewDetailsExpanded ? '' : 'line-clamp-6',
-                        ].join(' ')}
-                      >
-                        {[
-                          `${isPolish ? 'Odpowiedzi' : 'Answers'}: ${s.answeredQuestions}/${s.totalQuestions}`,
-                          `${isPolish ? 'Start' : 'Started'}: ${started}`,
-                          `${isPolish ? 'Aktywność' : 'Last activity'}: ${last}`,
-                          s.ownerId ? `${isPolish ? 'Owner' : 'Owner'}: ${s.ownerId}` : null,
-                        ]
-                          .filter(Boolean)
-                          .join('\n')}
-                      </div>
-                    </div>
-                  </div>
+                  <InterviewSessionPreviewBody
+                    session={s}
+                    isPolish={isPolish}
+                    statusConfig={statusCfg}
+                    progress={progress}
+                    detailsExpanded={sessionPreviewDetailsExpanded}
+                    onToggleDetailsExpanded={() =>
+                      setSessionPreviewDetailsExpanded((v) => !v)
+                    }
+                    onCopyStats={() =>
+                      copyToClipboard(
+                        [
+                          `id: ${s.id}`,
+                          `status: ${s.status}`,
+                          `answered: ${s.answeredQuestions}/${s.totalQuestions}`,
+                          `startedAt: ${s.startedAt}`,
+                        ].join('\n')
+                      )
+                    }
+                    onCopyId={() => copyToClipboard(s.id)}
+                  />
                 );
               }}
               renderPreviewFooter={(item) => {
                 const s = item as InterviewSession;
-                const details = `Session: ${s.name}\nStatus: ${s.status}\nAnswered: ${s.answeredQuestions}/${s.totalQuestions}`;
                 const canRunAi = s.status === 'completed';
-
-                const hintChip =
-                  'inline-flex items-center h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors';
-                const pillBase =
-                  'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-                const pillNeutral =
-                  `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-                const pillPrimary =
-                  `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
+                const aiHints = isPolish
+                  ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                  : ['Summarize', 'Risks', 'Next steps'];
+                const hintToType: Record<string, InsightPromptType> = {
+                  Podsumuj: 'summary',
+                  Summarize: 'summary',
+                  Ryzyka: 'risk_assessment',
+                  Risks: 'risk_assessment',
+                  'Następne kroki': 'recommendations',
+                  'Next steps': 'recommendations',
+                };
+                const relations = [
+                  {
+                    label: `${isPolish ? 'Projekt' : 'Project'}: ${s.projectId || '—'}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  },
+                  {
+                    label: `${isPolish ? 'Organizacja' : 'Org'}: ${s.organizationId || '—'}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  },
+                ];
 
                 return (
-                  <div className="space-y-0">
-                    {/* AI hints */}
-                    <div className="py-1 flex items-start justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          AI
-                        </span>
-                        <button
-                          className={hintChip}
-                          onClick={() => {
-                            if (!canRunAi) {
-                              toast(isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion', {
-                                duration: 2500,
-                              });
-                              return;
-                            }
-                            void handleGenerateInsight(s);
-                          }}
-                        >
-                          {isPolish ? 'Podsumuj' : 'Summarize'}
-                        </button>
-                        <button
-                          className={hintChip}
-                          onClick={() => {
-                            if (!canRunAi) {
-                              toast(isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion', {
-                                duration: 2500,
-                              });
-                              return;
-                            }
-                            void handleGenerateInsight(s);
-                          }}
-                        >
-                          {isPolish ? 'Ryzyka' : 'Risks'}
-                        </button>
-                        <button
-                          className={hintChip}
-                          onClick={() => {
-                            if (!canRunAi) {
-                              toast(isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion', {
-                                duration: 2500,
-                              });
-                              return;
-                            }
-                            void handleGenerateInsight(s);
-                          }}
-                        >
-                          {isPolish ? 'Następne kroki' : 'Next steps'}
-                        </button>
-                      </div>
-                      {/* AI kebab (MUST) */}
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        actions={[
-                          ...(canRunAi
-                            ? [
-                                {
-                                  id: 'generate',
-                                  label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
-                                  icon: Sparkles,
-                                  onClick: () => handleGenerateInsight(s),
-                                },
-                              ]
-                            : []),
-                          {
-                            id: 'copy-prompt',
-                            label: isPolish ? 'Kopiuj prompt AI' : 'Copy AI prompt',
-                            icon: Copy,
-                            onClick: () =>
-                              copyToClipboard(
-                                `${isPolish ? 'Podsumuj sesję i wypisz wnioski' : 'Summarize the session and extract insights'}\n\n${details}`
-                              ),
-                          },
-                        ]}
-                      />
-                    </div>
-
-                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                    {/* Relations (2 rows) */}
-                    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-                      <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        <span className="text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Projekt' : 'Project'}
-                        </span>
-                        <span className="truncate max-w-[220px]">{s.projectId || '—'}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        <span className="text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Organizacja' : 'Org'}
-                        </span>
-                        <span className="truncate max-w-[220px]">{s.organizationId || '—'}</span>
-                      </span>
-                    </div>
-
-                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                    {/* Actions */}
-                    <div className="space-y-2.5 py-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button onClick={() => handleViewSession(s)} className={pillPrimary}>
-                          <ChevronRight size={14} />
-                          {isPolish ? 'Otwórz' : 'Open'}
-                        </button>
-                        {canRunAi ? (
-                          <button onClick={() => handleGenerateInsight(s)} className={pillNeutral}>
-                            <Sparkles size={14} />
-                            {isPolish ? 'Generuj wnioski' : 'Generate insights'}
-                          </button>
-                        ) : null}
-                        <button onClick={() => copyToClipboard(s.id)} className={pillNeutral}>
-                          <Copy size={14} />
-                          {isPolish ? 'Kopiuj ID' : 'Copy ID'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <InterviewSessionPreviewFooter
+                    session={s}
+                    isPolish={isPolish}
+                    canRunAi={canRunAi}
+                    aiHints={aiHints}
+                    onRunAiHint={(hint) => {
+                      const type = hintToType[hint] ?? 'summary';
+                      void handleGenerateInsight(s, type);
+                    }}
+                    relations={relations}
+                    onOpenFull={() => handleViewSession(s)}
+                    onGenerateInsight={canRunAi ? (type) => handleGenerateInsight(s, type as InsightPromptType) : undefined}
+                    onCopyId={() => copyToClipboard(s.id)}
+                  />
                 );
               }}
             >
@@ -4355,7 +4478,9 @@ Return ONLY the answer text (no markdown fences).`;
                   day: 'numeric',
                 })
               : '—';
-            const detailsText = String(item.content || item.description || item.sourceQuote || '').trim();
+            const detailsText = String(
+              item.content || item.description || item.sourceQuote || ''
+            ).trim();
             const createdAt = item.createdAt ? new Date(item.createdAt) : null;
             const createdRelative = (() => {
               if (!createdAt || Number.isNaN(createdAt.getTime())) return null;
@@ -4408,299 +4533,55 @@ Return ONLY the answer text (no markdown fences).`;
             const buildAiPrompt = (kind: string) => {
               const base = `Title: ${item.title}\n\nContent:\n${detailsText || '—'}`;
               if (kind === 'summarize') return `Summarize this insight in 5 bullets.\n\n${base}`;
-              if (kind === 'risks') return `Extract risks (with severity) from this insight.\n\n${base}`;
+              if (kind === 'risks')
+                return `Extract risks (with severity) from this insight.\n\n${base}`;
               if (kind === 'next') return `Propose next steps as a prioritized plan.\n\n${base}`;
               return base;
             };
 
-            const activeAi = insightPreviewAiActiveId
-              ? aiSuggestions.find((s) => s.id === insightPreviewAiActiveId) || null
-              : null;
             return (
-              <div className="space-y-4">
-                {/* 2) Entity Meta Bar (Status & Context Strip) */}
-                <div className="rounded-xl bg-slate-50/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] p-4">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/60 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Wniosek' : 'Insight'}
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${typeConfig.bgColor} ${typeConfig.textColor}`}
-                      title={getInsightTypeLabel(type)}
-                    >
-                      {getInsightTypeLabel(type)}
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${sc.bg} ${sc.text}`}
-                      title={isPolish ? 'Status' : 'Status'}
-                    >
-                      {isPolish ? sc.label.pl : sc.label.en}
-                    </span>
-                    {item.confidence ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Pewność' : 'Confidence'}: {item.confidence}
-                      </span>
-                    ) : null}
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300">
-                      {sourceLabel}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300">
-                      {createdRelative
-                        ? isPolish
-                          ? `Utworzono ${createdRelative}`
-                          : `Created ${createdRelative}`
-                        : dateStr}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 3) Content Section — Details */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Szczegóły' : 'Details'}
-                    </div>
-                    <RowActionsMenu
-                      iconVariant="vertical"
-                      actions={[
-                        {
-                          id: 'toggle-expand',
-                          label: insightPreviewDetailsExpanded
-                            ? isPolish
-                              ? 'Zwiń'
-                              : 'Collapse'
-                            : isPolish
-                              ? 'Rozwiń'
-                              : 'Expand',
-                          onClick: () => setInsightPreviewDetailsExpanded((v) => !v),
-                        },
-                        {
-                          id: 'copy',
-                          label: isPolish ? 'Kopiuj' : 'Copy',
-                          icon: Copy,
-                          onClick: () => copyToClipboard(detailsText || item.title || ''),
-                        },
-                        {
-                          id: 'copy-summarize-prompt',
-                          label: isPolish ? 'Kopiuj prompt: podsumuj' : 'Copy prompt: summarize',
-                          icon: Sparkles,
-                          onClick: () => copyToClipboard(buildAiPrompt('summarize')),
-                        },
-                      ]}
-                    />
-                  </div>
-
-                  {detailsText ? (
-                    <div
-                      className={[
-                        'text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap',
-                        insightPreviewDetailsExpanded ? '' : 'line-clamp-8',
-                      ].join(' ')}
-                    >
-                      {detailsText}
-                    </div>
-                  ) : (
-                    <EmptyStateInline
-                      message={isPolish ? 'Brak szczegółów.' : 'No details yet.'}
-                      hint={
-                        isPolish
-                          ? 'Otwórz pełny widok, aby dodać treść lub zregenerować wniosek.'
-                          : 'Open full view to add content or regenerate the insight.'
-                      }
-                      className="p-6"
-                    />
-                  )}
-                </div>
-
-                {/* 4) AI Insights (distinct zone) */}
-                <div className="pt-4 border-t border-slate-200/70 dark:border-white/[0.06]">
-                  <div className="rounded-xl bg-purple-500/[0.04] dark:bg-purple-500/[0.08] border border-slate-200/70 dark:border-white/[0.06] p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                        <Sparkles size={14} className="text-purple-600 dark:text-purple-300" />
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Wskazówki AI' : 'AI Insights'}
-                        </span>
-                      </div>
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        actions={[
-                          {
-                            id: 'copy-ai-prompt',
-                            label: isPolish ? 'Kopiuj prompt AI' : 'Copy AI prompt',
-                            icon: Copy,
-                            onClick: () =>
-                              copyToClipboard(buildAiPrompt(insightPreviewAiActiveId || 'summarize')),
-                          },
-                          {
-                            id: 'copy-details',
-                            label: isPolish ? 'Kopiuj szczegóły' : 'Copy details',
-                            icon: Copy,
-                            onClick: () => copyToClipboard(detailsText || item.title || ''),
-                          },
-                          {
-                            id: 'clear-ai',
-                            label: isPolish ? 'Wyczyść' : 'Clear',
-                            icon: RotateCcw,
-                            onClick: () => setInsightPreviewAiActiveId(null),
-                          },
-                        ]}
-                      />
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      {aiSuggestions.map((s) => {
-                        const active = insightPreviewAiActiveId === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() =>
-                              setInsightPreviewAiActiveId((prev) => (prev === s.id ? null : s.id))
-                            }
-                            className={[
-                              'inline-flex items-center h-8 px-3 rounded-full border text-xs font-medium transition-colors',
-                              active
-                                ? 'bg-white/70 dark:bg-white/[0.08] border-purple-500/30 text-purple-700 dark:text-purple-200'
-                                : 'bg-transparent border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]',
-                            ].join(' ')}
-                          >
-                            {s.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* 4.3 AI Expansion Container (200ms ease) */}
-                    <div
-                      className={[
-                        'mt-3 grid transition-[grid-template-rows,opacity] duration-200 ease-out',
-                        activeAi ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-90',
-                      ].join(' ')}
-                    >
-                      <div className="overflow-hidden">
-                        {activeAi ? (
-                          <div className="rounded-xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] p-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                                {activeAi.label}
-                              </div>
-                              <button
-                                onClick={() => copyToClipboard(buildAiPrompt(activeAi.id))}
-                                className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium"
-                              >
-                                <Copy size={14} />
-                                {isPolish ? 'Kopiuj prompt' : 'Copy prompt'}
-                              </button>
-                            </div>
-                            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">
-                              {buildAiPrompt(activeAi.id)}
-                            </div>
-                            <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                              {isPolish
-                                ? 'AI jest doradcze — zweryfikuj przed zastosowaniem.'
-                                : 'AI is advisory — verify before applying.'}
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5) Linked Entities Section (References) */}
-                <div className="pt-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Powiązania' : 'Linked Items'}
-                  </div>
-                  <div className="mt-2 min-h-[4.5rem] flex flex-wrap items-start gap-2">
-                    {item.sessionId ? (
-                      <button
-                        onClick={() => openSessionById(item.sessionId!)}
-                        className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium"
-                        title={item.sessionId}
-                      >
-                        <MessageSquare size={14} />
-                        {isPolish ? 'Sesja' : 'Session'} {item.sessionId.slice(0, 8)}…
-                      </button>
-                    ) : null}
-                    {item.createdBy ? (
-                      <span className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-600 dark:text-slate-300 text-xs font-medium">
-                        <Users size={14} />
-                        {item.createdBy}
-                      </span>
-                    ) : null}
-                    {!item.sessionId && !item.createdBy ? (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Brak powiązań.' : 'No linked items.'}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+              <InterviewInsightPreviewBody
+                insight={item}
+                isPolish={isPolish}
+                typeLabel={getInsightTypeLabel(type)}
+                typeConfig={typeConfig}
+                statusConfig={sc}
+                sourceLabel={sourceLabel}
+                dateStr={createdRelative
+                  ? isPolish
+                    ? `Utworzono ${createdRelative}`
+                    : `Created ${createdRelative}`
+                  : dateStr}
+                detailsText={detailsText}
+                detailsExpanded={insightPreviewDetailsExpanded}
+                onToggleDetailsExpanded={() => setInsightPreviewDetailsExpanded((v) => !v)}
+                onDetailsAction={(action) => {
+                  if (action === 'copy') {
+                    copyToClipboard(detailsText || item.title || '');
+                  } else if (action === 'copy-summarize-prompt') {
+                    copyToClipboard(buildAiPrompt('summarize'));
+                  }
+                }}
+              />
             );
           }}
           renderPreviewFooter={(item) => {
-            const pillBase =
-              'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-            const pillSecondary =
-              `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-            const pillPrimary =
-              `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
-            const pillTertiary =
-              'inline-flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]';
-
             return (
-              <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => handleViewInsight(item)} className={pillPrimary}>
-                  <ChevronRight size={14} />
-                  {isPolish ? 'Otwórz' : 'Open'}
-                </button>
-                <button
-                  onClick={() => !item.exportedToTools && handleExportInsightToTools(item.id)}
-                  disabled={!!item.exportedToTools}
-                  className={`${pillSecondary} ${item.exportedToTools ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  title={
-                    item.exportedToTools ? (isPolish ? 'Już wyeksportowano' : 'Already exported') : undefined
-                  }
-                >
-                  <Send size={14} />
-                  {item.exportedToTools
-                    ? isPolish
-                      ? 'W Tools'
-                      : 'In Tools'
-                    : isPolish
-                      ? 'Eksport: Tools'
-                      : 'Export: Tools'}
-                </button>
-                <button
-                  onClick={() => !item.exportedToAssessment && handleExportInsightToAssessment(item.id)}
-                  disabled={!!item.exportedToAssessment}
-                  className={`${pillSecondary} ${item.exportedToAssessment ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  title={
-                    item.exportedToAssessment
-                      ? isPolish
-                        ? 'Już wyeksportowano'
-                        : 'Already exported'
-                      : undefined
-                  }
-                >
-                  <Target size={14} />
-                  {item.exportedToAssessment
-                    ? isPolish
-                      ? 'W Ocena'
-                      : 'In Assessment'
-                    : isPolish
-                      ? 'Eksport: Ocena'
-                      : 'Export: Assessment'}
-                </button>
-                <button onClick={() => copyToClipboard(item.title || '')} className={pillTertiary}>
-                  <Copy size={14} />
-                  {isPolish ? 'Kopiuj tytuł' : 'Copy title'}
-                </button>
-              </div>
+              <InterviewInsightPreviewFooter
+                insight={item}
+                isPolish={isPolish}
+                onOpenFull={() => handleViewInsight(item)}
+                onExportToTools={
+                  !item.exportedToTools
+                    ? () => handleExportInsightToTools(item.id)
+                    : undefined
+                }
+                onCopyLink={() => copyToClipboard(item.title || '')}
+              />
             );
           }}
           itemIds={insightsForTable.map((i) => i.id)}
+          getItemById={(id) => insightsForTable.find((x) => x.id === id) ?? null}
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
             <div className="space-y-4">
@@ -4785,6 +4666,8 @@ Return ONLY the answer text (no markdown fences).`;
           '',
           `Name: ${tpl?.name || '—'}`,
           `Category: ${tpl?.category || '—'}`,
+          `Source: ${getTemplateSourceLabel(tpl?.scope, isPolish)}`,
+          `Area tags: ${(tpl?.areaTags || []).join(', ') || '—'}`,
           `Status: ${tpl?.isDefault ? 'Default' : 'Active'}`,
           `Questions count: ${tpl?.questionCount ?? '—'}`,
           `Used in assignments: ${usedInAssignments}`,
@@ -4812,6 +4695,17 @@ Return ONLY the answer text (no markdown fences).`;
         }
       };
 
+      if (templatesViewMode === 'cards') {
+        return (
+          <div className="h-full flex flex-col overflow-auto">
+            {renderTemplatesCards({
+              onSelectRow: (id) => setSelectedTemplateId(id),
+              onOpenFull: (id) => onOpenFull(id),
+            })}
+          </div>
+        );
+      }
+
       return (
         <div className="h-full flex flex-col">
           <TableWithPreviewLayout<InterviewTemplate & { title: string }>
@@ -4820,157 +4714,26 @@ Return ONLY the answer text (no markdown fences).`;
             onSelect={(id) => setSelectedTemplateId(id)}
             onOpenFull={onOpenFull}
             itemIds={rows.map((t) => t.id)}
+            getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
             renderPreview={(item) => {
               const itemQuestions = templateQuestionsById[item.id] || [];
               const isLoadingQuestions = !!templateQuestionsLoading[item.id];
 
               return (
-                <div className="space-y-4">
-                  {/* Brief / Meta card (KANON v3) */}
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-slate-200/70 dark:border-white/[0.08]">
-                        {isPolish ? 'Szablon' : 'Template'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.08]">
-                        {item.category}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        {item.isDefault
-                          ? isPolish
-                            ? 'Domyślny'
-                            : 'Default'
-                          : isPolish
-                            ? 'Aktywny'
-                            : 'Active'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        {item.questionCount} {isPolish ? 'pytań' : 'questions'}
-                      </span>
-                    </div>
-
-                    <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
-                      {(item.description || '').trim()
-                        ? item.description
-                        : isPolish
-                          ? 'Brak opisu.'
-                          : 'No description.'}
-                    </div>
-
-                    <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Utworzono' : 'Created'}:{' '}
-                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
-                    </div>
-                  </div>
-
-                  {/* Details — with kebab (MUST) */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {isPolish ? 'Szczegóły' : 'Details'}
-                      </div>
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTemplatePreviewDetailsMenuOpen((v) => !v);
-                          }}
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                          aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-                          title={isPolish ? 'Opcje' : 'Options'}
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                        {templatePreviewDetailsMenuOpen ? (
-                          <>
-                            <div
-                              className="fixed inset-0 z-40"
-                              onClick={() => setTemplatePreviewDetailsMenuOpen(false)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTemplatePreviewDetailsMenuOpen(false);
-                                  onOpenFull(item.id);
-                                }}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                              >
-                                {canAssign ? (isPolish ? 'Edytuj' : 'Edit') : isPolish ? 'Otwórz' : 'Open'}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTemplatePreviewDetailsMenuOpen(false);
-                                  handleCloneTemplate(item);
-                                }}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                              >
-                                {isPolish ? 'Duplikuj' : 'Duplicate'}
-                              </button>
-                              {canAssign && !item.isDefault ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTemplatePreviewDetailsMenuOpen(false);
-                                    handleDeleteTemplate(item);
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-red-700 dark:text-red-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Usuń' : 'Delete'}
-                                </button>
-                              ) : null}
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                      {(item.description || '').trim()
-                        ? item.description
-                        : isPolish
-                          ? 'Brak opisu.'
-                          : 'No description.'}
-                    </div>
-                  </div>
-
-                  {/* Questions (read-only preview) */}
-                  <div className="space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Pytania' : 'Questions'}
-                    </div>
-                    <div className="space-y-1.5">
-                      {isLoadingQuestions ? (
-                        <div className="text-xs text-slate-400 dark:text-slate-500">
-                          {isPolish ? 'Ładowanie…' : 'Loading…'}
-                        </div>
-                      ) : itemQuestions.length > 0 ? (
-                        itemQuestions.slice(0, 12).map((q: any, idx: number) => {
-                          const text = String(
-                            q?.questionText || q?.text || q?.title || q?.question || ''
-                          ).trim();
-                          if (!text) return null;
-                          return (
-                            <div
-                              key={`${item.id}:q:${idx}`}
-                              className="text-xs text-slate-700 dark:text-slate-200"
-                            >
-                              <span className="text-slate-400 dark:text-slate-500 mr-2">
-                                {idx + 1}.
-                              </span>
-                              <span className="line-clamp-2">{text}</span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-xs text-slate-400 dark:text-slate-500">
-                          {isPolish ? 'Brak pytań do podglądu.' : 'No questions to preview.'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <InterviewTemplatePreviewBody
+                  template={item}
+                  isPolish={isPolish}
+                  questions={itemQuestions}
+                  questionsLoading={isLoadingQuestions}
+                  getTemplateSourceLabel={getTemplateSourceLabel}
+                  getTemplateAreaTagLabel={getTemplateAreaTagLabel}
+                  onDetailsAction={(action) => {
+                    if (action === 'edit') onOpenFull(item.id);
+                    else if (action === 'duplicate') handleCloneTemplate(item);
+                    else if (action === 'delete') handleDeleteTemplate(item);
+                  }}
+                  canDelete={canAssign && !item.isDefault}
+                />
               );
             }}
             renderPreviewFooter={(item) => {
@@ -4978,145 +4741,34 @@ Return ONLY the answer text (no markdown fences).`;
                 (myAssignments || []).filter((a) => a.templateId === item.id).length +
                 (managedAssignments || []).filter((a) => a.templateId === item.id).length;
 
-              const footerPillBase =
-                'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-              const hintChip =
-                'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98] disabled:opacity-40';
-
               return (
-                <div className="space-y-0">
-                  {/* AI hints (functional: copy prompt for AI use) */}
-                  <div className="py-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                        <Sparkles size={12} />
-                        <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-                      </div>
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTemplatePreviewAiMenuOpen((v) => !v);
-                          }}
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                          aria-label={isPolish ? 'Opcje AI' : 'AI options'}
-                          title={isPolish ? 'Opcje' : 'Options'}
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                        {templatePreviewAiMenuOpen ? (
-                          <>
-                            <div
-                              className="fixed inset-0 z-40"
-                              onClick={() => setTemplatePreviewAiMenuOpen(false)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 z-50 w-60 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTemplatePreviewAiMenuOpen(false);
-                                  copyToClipboard(buildPrompt('summary', item.id));
-                                }}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                              >
-                                {isPolish ? 'Kopiuj prompt: Podsumuj' : 'Copy prompt: Summarize'}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTemplatePreviewAiMenuOpen(false);
-                                  copyToClipboard(buildPrompt('improvements', item.id));
-                                }}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                              >
-                                {isPolish ? 'Kopiuj prompt: Usprawnienia' : 'Copy prompt: Improvements'}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTemplatePreviewAiMenuOpen(false);
-                                  copyToClipboard(buildPrompt('gaps', item.id));
-                                }}
-                                className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                              >
-                                {isPolish ? 'Kopiuj prompt: Luki' : 'Copy prompt: Gaps'}
-                              </button>
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <button
-                        className={hintChip}
-                        onClick={() => copyToClipboard(buildPrompt('summary', item.id))}
-                      >
-                        {isPolish ? 'Podsumuj' : 'Summarize'}
-                      </button>
-                      <button
-                        className={hintChip}
-                        onClick={() => copyToClipboard(buildPrompt('improvements', item.id))}
-                      >
-                        {isPolish ? 'Usprawnienia' : 'Improve'}
-                      </button>
-                      <button
-                        className={hintChip}
-                        onClick={() => copyToClipboard(buildPrompt('gaps', item.id))}
-                      >
-                        {isPolish ? 'Luki' : 'Find gaps'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                  {/* Relations (2 rows) */}
-                  <div className="min-h-[4.5rem] py-1">
-                    <div className="grid grid-cols-[90px_1fr] gap-x-3 gap-y-1 text-xs">
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Kategoria' : 'Category'}
-                      </span>
-                      <span className="text-slate-700 dark:text-slate-200 truncate">{item.category || '—'}</span>
-
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Użycia' : 'Used'}
-                      </span>
-                      <span className="text-slate-700 dark:text-slate-200 truncate">{usage}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                  {/* Actions */}
-                  <div className="space-y-2.5 py-1">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onOpenFull(item.id)}
-                        className={`${footerPillBase} flex-1 border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700`}
-                      >
-                        <ExternalLink size={14} />
-                        {canAssign ? (isPolish ? 'Edytuj' : 'Edit') : isPolish ? 'Otwórz' : 'Open'}
-                      </button>
-                      <button
-                        onClick={() => handleCloneTemplate(item)}
-                        className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                      >
-                        <Copy size={14} />
-                        {isPolish ? 'Duplikuj' : 'Duplicate'}
-                      </button>
-                    </div>
-                    {canAssign && !item.isDefault ? (
-                      <button
-                        onClick={() => handleDeleteTemplate(item)}
-                        className={`${footerPillBase} w-full border-red-300/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-200 hover:bg-red-100/70 dark:hover:bg-red-500/15`}
-                      >
-                        <Trash2 size={14} />
-                        {isPolish ? 'Usuń' : 'Delete'}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
+                <InterviewTemplatePreviewFooter
+                  template={item}
+                  isPolish={isPolish}
+                  canAssign={canAssign}
+                  usageCount={usage}
+                  onOpenFull={() => onOpenFull(item.id)}
+                  onClone={() => handleCloneTemplate(item)}
+                  onDelete={canAssign && !item.isDefault ? () => handleDeleteTemplate(item) : undefined}
+                  aiHints={
+                    isPolish
+                      ? ['Podsumuj', 'Usprawnienia', 'Luki']
+                      : ['Summarize', 'Improve', 'Find gaps']
+                  }
+                  onRunAiHint={(hint) => {
+                    type TemplatePromptKind = 'summary' | 'improvements' | 'gaps';
+                    const hintMap: Record<string, TemplatePromptKind> = {
+                      Podsumuj: 'summary',
+                      Summarize: 'summary',
+                      Usprawnienia: 'improvements',
+                      Improve: 'improvements',
+                      Luki: 'gaps',
+                      'Find gaps': 'gaps',
+                    };
+                    const promptKind = (hintMap[hint] ?? 'summary') as TemplatePromptKind;
+                    copyToClipboard(buildPrompt(promptKind, item.id));
+                  }}
+                />
               );
             }}
           >
@@ -5135,7 +4787,9 @@ Return ONLY the answer text (no markdown fences).`;
       const rows = myAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
-        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & { title: string })
+        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & {
+            title: string;
+          })
         : null;
 
       const gridItems: GridItem[] = rows.map((a) => {
@@ -5189,6 +4843,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, false);
               }}
               itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: getAssignmentTitle(x) } as any : null; }}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -5199,108 +4854,36 @@ Return ONLY the answer text (no markdown fences).`;
                 const detailsText = String(previewDetailsOverride ?? baseDetails).trim();
 
                 return (
-                  <div className="space-y-4">
-                    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                            {statusLabel}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
-                            {isPolish ? 'Postęp' : 'Progress'}: {progress}%
-                          </span>
-                          {dtd ? (
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${dtd.colorClass}`}>
-                              {dtd.label}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      {a.assignee?.name || a.assignee?.email ? (
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate" title={a.assignee?.name || a.assignee?.email}>
-                          {isPolish ? 'Przydzielony do' : 'Assignee'}: {a.assignee?.name || a.assignee?.email}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* Details — with kebab (MUST) */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'Szczegóły' : 'Details'}
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewDetailsMenuOpen((v) => !v);
-                            }}
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                            aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-                            title={isPolish ? 'Opcje' : 'Options'}
-                          >
-                            <MoreVertical size={14} />
-                          </button>
-                          {previewDetailsMenuOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewDetailsMenuOpen(false)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewDetailsMenuOpen(false);
-                                    void (async () => {
-                                      const text = await runAssignmentAi('expand_details', a);
-                                      if (text) setPreviewDetailsOverride(text);
-                                    })();
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Rozwiń' : 'Expand'}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewDetailsMenuOpen(false);
-                                    void (async () => {
-                                      const text = await runAssignmentAi('summarize_details', a);
-                                      if (text) setPreviewDetailsOverride(text);
-                                    })();
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Podsumuj' : 'Summarize'}
-                                </button>
-                                <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewDetailsMenuOpen(false);
-                                    copyToClipboard(detailsText || getAssignmentTitle(a));
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Kopiuj' : 'Copy'}
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-                        {detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
-                      </div>
-                    </div>
-                  </div>
+                  <InterviewAssignmentPreviewBody
+                    assignment={a}
+                    isPolish={isPolish}
+                    statusLabel={statusLabel}
+                    statusColor={statusColor}
+                    progress={progress}
+                    daysToDue={dtd}
+                    detailsText={detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
+                    detailsMenuOpen={previewDetailsMenuOpen}
+                    onToggleDetailsMenu={() => setPreviewDetailsMenuOpen((v) => !v)}
+                    onDetailsAction={(action) => {
+                      if (action === 'expand') {
+                        void (async () => {
+                          const text = await runAssignmentAi('expand_details', a);
+                          if (text) setPreviewDetailsOverride(text);
+                        })();
+                      } else if (action === 'summarize') {
+                        void (async () => {
+                          const text = await runAssignmentAi('summarize_details', a);
+                          if (text) setPreviewDetailsOverride(text);
+                        })();
+                      } else if (action === 'copy') {
+                        copyToClipboard(detailsText || getAssignmentTitle(a));
+                      }
+                    }}
+                  />
                 );
               }}
               renderPreviewFooter={(item) => {
                 const a = item as InterviewAssignment;
-                const hintChip =
-                  'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
-                const footerPillBase =
-                  'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
                 const relations: Array<{ label: string; tone: string }> = [];
                 if (a.template?.category)
@@ -5315,180 +4898,67 @@ Return ONLY the answer text (no markdown fences).`;
                   });
 
                 return (
-                  <div className="space-y-0">
-                    {/* AI hints (MUST) */}
-                    <div className="py-1">
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={() => setPreviewAiMenuOpen((v) => !v)}
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                            aria-label={isPolish ? 'Opcje AI' : 'AI options'}
-                            title={isPolish ? 'Opcje' : 'Options'}
-                          >
-                            <MoreVertical size={14} />
-                          </button>
-                          {previewAiMenuOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewAiMenuOpen(false)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                                <button
-                                  onClick={async () => {
-                                    setPreviewAiMenuOpen(false);
-                                    const text = await runAssignmentAi(previewAiLastIntent, a);
-                                    if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                                    else {
-                                      setPreviewAiError(null);
-                                      setPreviewAiText(text);
-                                    }
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                                </button>
-                                <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                                <button
-                                  onClick={async () => {
-                                    setPreviewAiMenuOpen(false);
-                                    if (!previewAiText) return;
-                                    await copyToClipboard(previewAiText);
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Kopiuj' : 'Copy'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setPreviewAiMenuOpen(false);
-                                    setPreviewAiText(null);
-                                    setPreviewAiError(null);
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Wyczyść' : 'Clear'}
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          className={hintChip}
-                          onClick={async () => {
-                            setPreviewAiLastIntent('summary');
-                            const text = await runAssignmentAi('summary', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                            else {
-                              setPreviewAiError(null);
-                              setPreviewAiText(text);
-                            }
-                          }}
-                        >
-                          {isPolish ? 'Podsumuj' : 'Summarize'}
-                        </button>
-                        <button
-                          className={hintChip}
-                          onClick={async () => {
-                            setPreviewAiLastIntent('risks');
-                            const text = await runAssignmentAi('risks', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                            else {
-                              setPreviewAiError(null);
-                              setPreviewAiText(text);
-                            }
-                          }}
-                        >
-                          {isPolish ? 'Ryzyka' : 'Risks'}
-                        </button>
-                        <button
-                          className={hintChip}
-                          onClick={async () => {
-                            setPreviewAiLastIntent('next_steps');
-                            const text = await runAssignmentAi('next_steps', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                            else {
-                              setPreviewAiError(null);
-                              setPreviewAiText(text);
-                            }
-                          }}
-                        >
-                          {isPolish ? 'Następne kroki' : 'Next steps'}
-                        </button>
-                      </div>
-
-                      {previewAiError ? (
-                        <div className="mt-2 text-xs text-red-600 dark:text-red-400">{previewAiError}</div>
-                      ) : previewAiText ? (
-                        <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                          {previewAiText}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                    {/* Relations (2 rows) */}
-                    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-                      {relations.length > 0 ? (
-                        relations.map((r) => (
-                          <span
-                            key={r.label}
-                            className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
-                            title={r.label}
-                          >
-                            {r.label}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
-                          {isPolish ? 'Brak powiązań' : 'No linked documents'}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                    {/* Actions */}
-                    <div className="space-y-2.5 py-1">
-                      {a.status === 'assigned' ? (
-                        <button
-                          onClick={() => startInterviewAssignment(a)}
-                          className={`${footerPillBase} w-full border-blue-300/40 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-200 hover:bg-blue-100/70 dark:hover:bg-blue-500/15`}
-                        >
-                          <Sparkles size={14} />
-                          {isPolish ? 'Rozpocznij' : 'Start'}
-                        </button>
-                      ) : a.status === 'in_progress' && (a.sessionId || a.session?.id) ? (
-                        <button
-                          onClick={() => void openInterviewAssignmentFull(a, false)}
-                          className={`${footerPillBase} w-full border-purple-300/40 dark:border-purple-500/30 bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-200 hover:bg-purple-100/70 dark:hover:bg-purple-500/15`}
-                        >
-                          <ChevronRight size={14} />
-                          {isPolish ? 'Kontynuuj' : 'Continue'}
-                        </button>
-                      ) : a.status === 'sent_back' && (a.sessionId || a.session?.id) ? (
-                        <button
-                          onClick={() => void openInterviewAssignmentFull(a, false)}
-                          className={`${footerPillBase} w-full border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
-                        >
-                          <RotateCcw size={14} />
-                          {isPolish ? 'Popraw' : 'Fix & resubmit'}
-                        </button>
-                      ) : null}
-                      <button
-                        onClick={() => void openInterviewAssignmentFull(a, false)}
-                        className={`${footerPillBase} w-full border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                      >
-                        <ChevronRight size={14} />
-                        {isPolish ? 'Otwórz' : 'Open'}
-                      </button>
-                    </div>
-                  </div>
+                  <InterviewAssignmentPreviewFooter
+                    assignment={a}
+                    isPolish={isPolish}
+                    aiHints={
+                      isPolish
+                        ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                        : ['Summarize', 'Risks', 'Next steps']
+                    }
+                    aiText={previewAiText}
+                    aiError={previewAiError}
+                    aiMenuOpen={previewAiMenuOpen}
+                    onToggleAiMenu={() => setPreviewAiMenuOpen((v) => !v)}
+                    onRunAiHint={async (hint) => {
+                      const hintMap: Record<string, AssignmentAiIntent> = {
+                        Podsumuj: 'summary',
+                        Summarize: 'summary',
+                        Ryzyka: 'risks',
+                        Risks: 'risks',
+                        'Następne kroki': 'next_steps',
+                        'Next steps': 'next_steps',
+                      };
+                      const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
+                      setPreviewAiLastIntent(intent);
+                      const text = await runAssignmentAi(intent, a);
+                      if (!text)
+                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      else {
+                        setPreviewAiError(null);
+                        setPreviewAiText(text);
+                      }
+                    }}
+                    onRegenerateAi={async () => {
+                      const text = await runAssignmentAi(previewAiLastIntent, a);
+                      if (!text)
+                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      else {
+                        setPreviewAiError(null);
+                        setPreviewAiText(text);
+                      }
+                    }}
+                    onCopyAi={previewAiText ? async () => { await copyToClipboard(previewAiText!); } : undefined}
+                    onClearAi={() => {
+                      setPreviewAiText(null);
+                      setPreviewAiError(null);
+                    }}
+                    relations={relations}
+                    onStartAssignment={
+                      a.status === 'assigned' ? () => startInterviewAssignment(a) : undefined
+                    }
+                    onContinueAssignment={
+                      a.status === 'in_progress' && (a.sessionId || a.session?.id)
+                        ? () => void openInterviewAssignmentFull(a, false)
+                        : undefined
+                    }
+                    onFixAssignment={
+                      a.status === 'sent_back' && (a.sessionId || a.session?.id)
+                        ? () => void openInterviewAssignmentFull(a, false)
+                        : undefined
+                    }
+                    onOpenFull={() => void openInterviewAssignmentFull(a, false)}
+                  />
                 );
               }}
             >
@@ -5522,7 +4992,9 @@ Return ONLY the answer text (no markdown fences).`;
       const rows = filteredManagedAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
-        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & { title: string })
+        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & {
+            title: string;
+          })
         : null;
 
       const gridItems: GridItem[] = rows.map((a) => {
@@ -5576,6 +5048,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, true);
               }}
               itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: getAssignmentTitle(x) } as any : null; }}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -5586,108 +5059,36 @@ Return ONLY the answer text (no markdown fences).`;
                 const detailsText = String(previewDetailsOverride ?? baseDetails).trim();
 
                 return (
-                  <div className="space-y-4">
-                    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                            {statusLabel}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
-                            {isPolish ? 'Postęp' : 'Progress'}: {progress}%
-                          </span>
-                          {dtd ? (
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${dtd.colorClass}`}>
-                              {dtd.label}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      {a.assignee?.name || a.assignee?.email ? (
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate" title={a.assignee?.name || a.assignee?.email}>
-                          {isPolish ? 'Przydzielony do' : 'Assignee'}: {a.assignee?.name || a.assignee?.email}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* Details — with kebab (MUST) */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'Szczegóły' : 'Details'}
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewDetailsMenuOpen((v) => !v);
-                            }}
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                            aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-                            title={isPolish ? 'Opcje' : 'Options'}
-                          >
-                            <MoreVertical size={14} />
-                          </button>
-                          {previewDetailsMenuOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewDetailsMenuOpen(false)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewDetailsMenuOpen(false);
-                                    void (async () => {
-                                      const text = await runAssignmentAi('expand_details', a);
-                                      if (text) setPreviewDetailsOverride(text);
-                                    })();
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Rozwiń' : 'Expand'}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewDetailsMenuOpen(false);
-                                    void (async () => {
-                                      const text = await runAssignmentAi('summarize_details', a);
-                                      if (text) setPreviewDetailsOverride(text);
-                                    })();
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Podsumuj' : 'Summarize'}
-                                </button>
-                                <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewDetailsMenuOpen(false);
-                                    copyToClipboard(detailsText || getAssignmentTitle(a));
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Kopiuj' : 'Copy'}
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-                        {detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
-                      </div>
-                    </div>
-                  </div>
+                  <InterviewAssignmentPreviewBody
+                    assignment={a}
+                    isPolish={isPolish}
+                    statusLabel={statusLabel}
+                    statusColor={statusColor}
+                    progress={progress}
+                    daysToDue={dtd}
+                    detailsText={detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
+                    detailsMenuOpen={previewDetailsMenuOpen}
+                    onToggleDetailsMenu={() => setPreviewDetailsMenuOpen((v) => !v)}
+                    onDetailsAction={(action) => {
+                      if (action === 'expand') {
+                        void (async () => {
+                          const text = await runAssignmentAi('expand_details', a);
+                          if (text) setPreviewDetailsOverride(text);
+                        })();
+                      } else if (action === 'summarize') {
+                        void (async () => {
+                          const text = await runAssignmentAi('summarize_details', a);
+                          if (text) setPreviewDetailsOverride(text);
+                        })();
+                      } else if (action === 'copy') {
+                        copyToClipboard(detailsText || getAssignmentTitle(a));
+                      }
+                    }}
+                  />
                 );
               }}
               renderPreviewFooter={(item) => {
                 const a = item as InterviewAssignment;
-                const hintChip =
-                  'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
-                const footerPillBase =
-                  'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
                 const relations: Array<{ label: string; tone: string }> = [];
                 if (a.template?.category)
@@ -5702,193 +5103,54 @@ Return ONLY the answer text (no markdown fences).`;
                   });
 
                 return (
-                  <div className="space-y-0">
-                    {/* AI hints (MUST) */}
-                    <div className="py-1">
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={() => setPreviewAiMenuOpen((v) => !v)}
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                            aria-label={isPolish ? 'Opcje AI' : 'AI options'}
-                            title={isPolish ? 'Opcje' : 'Options'}
-                          >
-                            <MoreVertical size={14} />
-                          </button>
-                          {previewAiMenuOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewAiMenuOpen(false)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                                <button
-                                  onClick={async () => {
-                                    setPreviewAiMenuOpen(false);
-                                    const text = await runAssignmentAi(previewAiLastIntent, a);
-                                    if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                                    else {
-                                      setPreviewAiError(null);
-                                      setPreviewAiText(text);
-                                    }
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                                </button>
-                                <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                                <button
-                                  onClick={async () => {
-                                    setPreviewAiMenuOpen(false);
-                                    if (!previewAiText) return;
-                                    await copyToClipboard(previewAiText);
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Kopiuj' : 'Copy'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setPreviewAiMenuOpen(false);
-                                    setPreviewAiText(null);
-                                    setPreviewAiError(null);
-                                  }}
-                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                                >
-                                  {isPolish ? 'Wyczyść' : 'Clear'}
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          className={hintChip}
-                          onClick={async () => {
-                            setPreviewAiLastIntent('summary');
-                            const text = await runAssignmentAi('summary', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                            else {
-                              setPreviewAiError(null);
-                              setPreviewAiText(text);
-                            }
-                          }}
-                        >
-                          {isPolish ? 'Podsumuj' : 'Summarize'}
-                        </button>
-                        <button
-                          className={hintChip}
-                          onClick={async () => {
-                            setPreviewAiLastIntent('risks');
-                            const text = await runAssignmentAi('risks', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                            else {
-                              setPreviewAiError(null);
-                              setPreviewAiText(text);
-                            }
-                          }}
-                        >
-                          {isPolish ? 'Ryzyka' : 'Risks'}
-                        </button>
-                        <button
-                          className={hintChip}
-                          onClick={async () => {
-                            setPreviewAiLastIntent('next_steps');
-                            const text = await runAssignmentAi('next_steps', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
-                            else {
-                              setPreviewAiError(null);
-                              setPreviewAiText(text);
-                            }
-                          }}
-                        >
-                          {isPolish ? 'Następne kroki' : 'Next steps'}
-                        </button>
-                      </div>
-
-                      {previewAiError ? (
-                        <div className="mt-2 text-xs text-red-600 dark:text-red-400">{previewAiError}</div>
-                      ) : previewAiText ? (
-                        <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                          {previewAiText}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                    {/* Relations (2 rows) */}
-                    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-                      {relations.length > 0 ? (
-                        relations.map((r) => (
-                          <span
-                            key={r.label}
-                            className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
-                            title={r.label}
-                          >
-                            {r.label}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
-                          {isPolish ? 'Brak powiązań' : 'No linked documents'}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                    {/* Actions */}
-                    <div className="space-y-2.5 py-1">
-                      {canAssign ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleOpenReminderModal(a)}
-                            className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                          >
-                            <Bell size={14} />
-                            {isPolish ? 'Przypomnij' : 'Remind'}
-                          </button>
-                          <button
-                            onClick={() => void openInterviewAssignmentFull(a, true)}
-                            className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                          >
-                            <ChevronRight size={14} />
-                            {isPolish ? 'Otwórz' : 'Open'}
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => void openInterviewAssignmentFull(a, true)}
-                          className={`${footerPillBase} w-full border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                        >
-                          <ChevronRight size={14} />
-                          {isPolish ? 'Otwórz' : 'Open'}
-                        </button>
-                      )}
-
-                      {a.status === 'submitted' && canAssign ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleApproveAssignment(a)}
-                            className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
-                          >
-                            <Check size={14} />
-                            {isPolish ? 'Zatwierdź' : 'Approve'}
-                          </button>
-                          <button
-                            onClick={() => handleOpenSendBackModal(a)}
-                            className={`${footerPillBase} flex-1 border-red-300/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-200 hover:bg-red-100/70 dark:hover:bg-red-500/15`}
-                          >
-                            <RotateCcw size={14} />
-                            {isPolish ? 'Do poprawy' : 'Send back'}
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
+                  <InterviewAssignmentPreviewFooter
+                    assignment={a}
+                    isPolish={isPolish}
+                    aiHints={
+                      isPolish
+                        ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                        : ['Summarize', 'Risks', 'Next steps']
+                    }
+                    aiText={previewAiText}
+                    aiError={previewAiError}
+                    aiMenuOpen={previewAiMenuOpen}
+                    onToggleAiMenu={() => setPreviewAiMenuOpen((v) => !v)}
+                    onRunAiHint={async (hint) => {
+                      const hintMap: Record<string, AssignmentAiIntent> = {
+                        Podsumuj: 'summary',
+                        Summarize: 'summary',
+                        Ryzyka: 'risks',
+                        Risks: 'risks',
+                        'Następne kroki': 'next_steps',
+                        'Next steps': 'next_steps',
+                      };
+                      const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
+                      setPreviewAiLastIntent(intent);
+                      const text = await runAssignmentAi(intent, a);
+                      if (!text)
+                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      else {
+                        setPreviewAiError(null);
+                        setPreviewAiText(text);
+                      }
+                    }}
+                    onRegenerateAi={async () => {
+                      const text = await runAssignmentAi(previewAiLastIntent, a);
+                      if (!text)
+                        setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                      else {
+                        setPreviewAiError(null);
+                        setPreviewAiText(text);
+                      }
+                    }}
+                    onCopyAi={previewAiText ? async () => { await copyToClipboard(previewAiText!); } : undefined}
+                    onClearAi={() => {
+                      setPreviewAiText(null);
+                      setPreviewAiError(null);
+                    }}
+                    relations={relations}
+                    onOpenFull={() => void openInterviewAssignmentFull(a, true)}
+                  />
                 );
               }}
             >
@@ -5996,25 +5258,117 @@ Return ONLY the answer text (no markdown fences).`;
             {/* Templates: Filters must be to the LEFT of CTA (scan from right: AI → CTA → Filters) */}
             {activeTab === 'templates' && !activeDocumentId && (
               <div className="relative">
-                <select
-                  value={templateCategoryFilter}
-                  onChange={(e) => setTemplateCategoryFilter(e.target.value)}
-                  className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr kategorii' : 'Category filter'}
+                <button
+                  type="button"
+                  onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
+                  className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                  title={isPolish ? 'Filtr obszarów' : 'Area filter'}
                 >
-                  <option value="all">
-                    {isPolish ? 'Wszystkie kategorie' : 'All categories'}
-                  </option>
-                  {TEMPLATE_BUSINESS_CATEGORIES.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {isPolish ? c.pl : c.en}
-                    </option>
-                  ))}
+                  <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
+                    {templateAreaTagFilter.length > 0
+                      ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
+                      : isPolish
+                        ? 'Wszystkie obszary'
+                        : 'All areas'}
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
+                {isTemplateAreaFilterOpen ? (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsTemplateAreaFilterOpen(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
+                      <button
+                        type="button"
+                        onClick={() => setTemplateAreaTagFilter([])}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
+                      >
+                        {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
+                      </button>
+                      {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
+                        const checked = templateAreaTagFilter.includes(tag);
+                        return (
+                          <label
+                            key={tag}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-slate-700 dark:text-slate-200"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                setTemplateAreaTagFilter((prev) =>
+                                  checked ? prev.filter((item) => item !== tag) : [...prev, tag]
+                                )
+                              }
+                              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            )}
+
+            {activeTab === 'templates' && !activeDocumentId && (
+              <div className="relative">
+                <select
+                  value={templateSourceFilter}
+                  onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
+                  className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                  title={isPolish ? 'Filtr źródła' : 'Source filter'}
+                >
+                  <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
+                  <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
+                  <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
+                  <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
                 </select>
                 <ChevronDown
                   size={14}
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                 />
+              </div>
+            )}
+
+            {activeTab === 'templates' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
+                title={isPolish ? 'Widok' : 'View'}
+              >
+                <button
+                  type="button"
+                  onClick={() => setTemplatesViewMode('cards')}
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    templatesViewMode === 'cards'
+                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                  }`}
+                  title={isPolish ? 'Karty' : 'Cards'}
+                  role="radio"
+                  aria-checked={templatesViewMode === 'cards'}
+                >
+                  <LayoutGrid size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTemplatesViewMode('table')}
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    templatesViewMode === 'table'
+                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                  }`}
+                  title={isPolish ? 'Tabela' : 'Table'}
+                  role="radio"
+                  aria-checked={templatesViewMode === 'table'}
+                >
+                  <List size={15} />
+                </button>
               </div>
             )}
 
@@ -6116,7 +5470,10 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
                 {sessionsViewMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-30" onClick={() => setSessionsViewMenuOpen(false)} />
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setSessionsViewMenuOpen(false)}
+                    />
                     <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
                       {(
                         [
@@ -6201,27 +5558,20 @@ Return ONLY the answer text (no markdown fences).`;
             {(activeTab === 'my-assignments' || activeTab === 'managed') &&
               !activeDocumentId &&
               canAssign && (
-              <button
-                onClick={() => {
-                  setSelectedTemplateForAssign(null);
-                  setShowAssignModal(true);
-                }}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-              </button>
-            )}
+                <button
+                  onClick={() => {
+                    setSelectedTemplateForAssign(null);
+                    setShowAssignModal(true);
+                  }}
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                  title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
+                >
+                  <Plus size={16} />
+                  <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
+                </button>
+              )}
 
             {/* Area/AI — rightmost in the topbar cluster */}
-            <button
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              title={isPolish ? 'Kontekst AI' : 'AI Context'}
-            >
-              <Sparkles size={18} />
-            </button>
-
           </div>
         </div>
       </div>
@@ -6237,7 +5587,9 @@ Return ONLY the answer text (no markdown fences).`;
         onClose={() => setIsSessionsViewSettingsOpen(false)}
         title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
         description={
-          isPolish ? 'Wybierz, które kolumny są widoczne w tabeli.' : 'Choose which columns are visible.'
+          isPolish
+            ? 'Wybierz, które kolumny są widoczne w tabeli.'
+            : 'Choose which columns are visible.'
         }
         size="sm"
         footer={
@@ -6871,21 +6223,6 @@ Return ONLY the answer text (no markdown fences).`;
           </div>
         </div>
       )}
-
-      {/* Template Builder */}
-      <TemplateBuilder
-        isOpen={showTemplateBuilder}
-        onClose={() => {
-          setShowTemplateBuilder(false);
-          setEditingTemplateId(null);
-        }}
-        templateId={editingTemplateId}
-        onSuccess={async () => {
-          // Refresh templates after save
-          const templatesRes = await Api.get('/interview/templates').catch(() => []);
-          setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-        }}
-      />
 
       {/* Generate Insight Modal - Advanced Creator */}
       <InsightCreatorModal

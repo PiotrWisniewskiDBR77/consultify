@@ -34,19 +34,84 @@ interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: 'improve_writing', labelKey: 'presentations.builder.editCard.improveWriting', icon: Pencil, category: 'writing' },
-  { id: 'fix_spelling', labelKey: 'presentations.builder.editCard.fixSpelling', icon: Check, category: 'writing' },
-  { id: 'translate', labelKey: 'presentations.builder.editCard.translate', icon: Languages, category: 'writing' },
-  { id: 'make_longer', labelKey: 'presentations.builder.editCard.makeLonger', icon: Plus, category: 'writing' },
-  { id: 'make_shorter', labelKey: 'presentations.builder.editCard.makeShorter', icon: Minus, category: 'writing' },
-  { id: 'simplify', labelKey: 'presentations.builder.editCard.simplify', icon: Type, category: 'writing' },
-  { id: 'more_visual', labelKey: 'presentations.builder.editCard.moreVisual', icon: Image, category: 'image' },
-  { id: 'add_image', labelKey: 'presentations.builder.editCard.addImage', icon: Image, category: 'image' },
-  { id: 'add_chart', labelKey: 'presentations.builder.editCard.addChart', icon: BarChart3, category: 'image' },
-  { id: 'swap_org_photo', labelKey: 'presentations.builder.editCard.swapOrgPhoto', icon: Image, category: 'image' },
-  { id: 'update_data', labelKey: 'presentations.builder.editCard.updateData', icon: RefreshCw, category: 'data' },
-  { id: 'change_chart_type', labelKey: 'presentations.builder.editCard.changeChartType', icon: BarChart3, category: 'data' },
-  { id: 'try_new_layout', labelKey: 'presentations.builder.editCard.tryNewLayout', icon: Layout, category: 'layout' },
+  {
+    id: 'improve_writing',
+    labelKey: 'presentations.builder.editCard.improveWriting',
+    icon: Pencil,
+    category: 'writing',
+  },
+  {
+    id: 'fix_spelling',
+    labelKey: 'presentations.builder.editCard.fixSpelling',
+    icon: Check,
+    category: 'writing',
+  },
+  {
+    id: 'translate',
+    labelKey: 'presentations.builder.editCard.translate',
+    icon: Languages,
+    category: 'writing',
+  },
+  {
+    id: 'make_longer',
+    labelKey: 'presentations.builder.editCard.makeLonger',
+    icon: Plus,
+    category: 'writing',
+  },
+  {
+    id: 'make_shorter',
+    labelKey: 'presentations.builder.editCard.makeShorter',
+    icon: Minus,
+    category: 'writing',
+  },
+  {
+    id: 'simplify',
+    labelKey: 'presentations.builder.editCard.simplify',
+    icon: Type,
+    category: 'writing',
+  },
+  {
+    id: 'more_visual',
+    labelKey: 'presentations.builder.editCard.moreVisual',
+    icon: Image,
+    category: 'image',
+  },
+  {
+    id: 'add_image',
+    labelKey: 'presentations.builder.editCard.addImage',
+    icon: Image,
+    category: 'image',
+  },
+  {
+    id: 'add_chart',
+    labelKey: 'presentations.builder.editCard.addChart',
+    icon: BarChart3,
+    category: 'image',
+  },
+  {
+    id: 'swap_org_photo',
+    labelKey: 'presentations.builder.editCard.swapOrgPhoto',
+    icon: Image,
+    category: 'image',
+  },
+  {
+    id: 'update_data',
+    labelKey: 'presentations.builder.editCard.updateData',
+    icon: RefreshCw,
+    category: 'data',
+  },
+  {
+    id: 'change_chart_type',
+    labelKey: 'presentations.builder.editCard.changeChartType',
+    icon: BarChart3,
+    category: 'data',
+  },
+  {
+    id: 'try_new_layout',
+    labelKey: 'presentations.builder.editCard.tryNewLayout',
+    icon: Layout,
+    category: 'layout',
+  },
 ];
 
 const CATEGORIES = [
@@ -84,10 +149,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             {t('presentations.builder.editCard.title', 'Edit this card')}
           </span>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 text-xs"
-        >
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xs">
           ESC
         </button>
       </div>
@@ -99,7 +161,10 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={t('presentations.builder.editCard.prompt', 'How would you like to edit this card?')}
+            placeholder={t(
+              'presentations.builder.editCard.prompt',
+              'How would you like to edit this card?'
+            )}
             className="flex-1 text-xs bg-transparent border-none outline-none text-slate-700 dark:text-slate-300"
           />
           <button

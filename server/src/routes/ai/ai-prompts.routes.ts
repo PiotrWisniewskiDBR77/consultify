@@ -1,13 +1,10 @@
 import { Router } from 'express';
 
-import { AIPromptsController } from '../../controllers/ai/AIPromptsController.js';
-import { verifyToken } from '../../middleware/auth.middleware.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
+import canonicalAIPromptsRoutes from '../ai-prompts.routes.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
 
-router.use(verifyToken);
 router.use((req, res, next) => {
   try {
     res.setHeader('X-Deprecated-Endpoint', '/api/ai/ai-prompts');
@@ -19,14 +16,13 @@ router.use((req, res, next) => {
   next();
 });
 
-router.get('/', asyncHandler(AIPromptsController.getPrompts));
-router.post('/', asyncHandler(AIPromptsController.createPrompt));
-router.get('/capabilities', asyncHandler(AIPromptsController.getCapabilities));
-router.get('/:id', asyncHandler(AIPromptsController.getPromptById));
-router.put('/:id', asyncHandler(AIPromptsController.updatePrompt));
-router.delete('/:id', asyncHandler(AIPromptsController.deletePrompt));
-router.get('/:id/versions', asyncHandler(AIPromptsController.getVersions));
-router.post('/:id/test', asyncHandler(AIPromptsController.testPrompt));
-router.post('/:id/clone', asyncHandler(AIPromptsController.clonePrompt));
+router.get('/capabilities', (_req, res) => {
+  return res.json({
+    success: true,
+    capabilities: ['chat', 'strategic', 'pmo', 'advisor', 'report'],
+  });
+});
+
+router.use('/', canonicalAIPromptsRoutes);
 
 export default router;

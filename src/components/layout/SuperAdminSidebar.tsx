@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  Bot,
   Brain,
   ChevronRight,
   Code,
@@ -35,7 +36,8 @@ export type SuperAdminSection =
   | 'revenue'
   | 'security'
   | 'configuration'
-  | 'analytics'; // Custom Dashboards, Reports, Metrics, Predictive
+  | 'analytics' // Custom Dashboards, Reports, Metrics, Predictive
+  | 'virtual-workers'; // Virtual Workers (Anna, Teresa, etc.)
 
 // Mapping between sections and AppView
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
@@ -51,6 +53,7 @@ export const sectionToAppView: Record<SuperAdminSection, AppView> = {
   security: AppView.SUPERADMIN_SECURITY,
   configuration: AppView.SUPERADMIN_CONFIGURATION,
   analytics: AppView.SUPERADMIN_ANALYTICS,
+  'virtual-workers': AppView.SUPERADMIN_VIRTUAL_WORKERS,
 };
 
 export const appViewToSection: Record<string, SuperAdminSection> = {
@@ -66,6 +69,7 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
   [AppView.SUPERADMIN_SECURITY]: 'security',
   [AppView.SUPERADMIN_CONFIGURATION]: 'configuration',
   [AppView.SUPERADMIN_ANALYTICS]: 'analytics',
+  [AppView.SUPERADMIN_VIRTUAL_WORKERS]: 'virtual-workers',
   // Legacy view mappings - redirect to appropriate modules
   [AppView.SUPERADMIN_DASHBOARD]: 'overview',
   [AppView.SUPERADMIN_ORGANIZATIONS]: 'customers',
@@ -119,6 +123,8 @@ const menuItems: MenuItem[] = [
   { id: 'revenue', label: 'Revenue', icon: <CreditCard size={20} />, separator: 'before' },
   { id: 'security', label: 'Security', icon: <Shield size={20} /> },
   { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={20} /> },
+  // --- separator ---
+  { id: 'virtual-workers', label: 'Virtual Workers', icon: <Bot size={20} />, separator: 'before' },
   // --- separator ---
   {
     id: 'configuration',

@@ -140,7 +140,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await Api.getTasks();
+      const data = await Api.getPersonalTasks();
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);

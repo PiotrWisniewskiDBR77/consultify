@@ -182,7 +182,12 @@ export const SystemSettings: React.FC = () => {
   const handleDeleteAdmin = async (id: string) => {
     const admin = admins.find((a) => a.id === id);
     const name = admin ? `${admin.firstName} ${admin.lastName} (${admin.email})` : id;
-    if (!window.confirm(`Are you sure you want to permanently remove Super Admin ${name}? This action cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently remove Super Admin ${name}? This action cannot be undone.`
+      )
+    )
+      return;
     try {
       await Api.deleteSuperAdminUser(id);
       toast.success('Admin removed');
@@ -399,7 +404,7 @@ export const SystemSettings: React.FC = () => {
                 checked={settings['enforce_mfa'] === 'true'}
                 onChange={(e) => handleSaveSetting('enforce_mfa', String(e.target.checked))}
               />
-            <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
 
@@ -884,7 +889,9 @@ export const SystemSettings: React.FC = () => {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{log.entity_type}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                      {log.entity_type}
+                    </td>
                     <td className="px-6 py-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
                       {log.entity_name || log.entity_id?.slice(0, 8) || '-'}
                     </td>

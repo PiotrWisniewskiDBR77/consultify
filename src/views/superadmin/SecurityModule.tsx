@@ -17,6 +17,7 @@
 
 import {
   AlertTriangle,
+  ClipboardList,
   DollarSign,
   FileCheck,
   GitBranch,
@@ -35,10 +36,12 @@ import React, { useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import AIBudgetsView from './AIBudgetsView';
 import { ComplianceCenterView } from './ComplianceCenterView';
 import CustomRolesBuilder from './CustomRolesBuilder';
 import AdminAuditLogsView from './iam/AdminAuditLogsView';
+import AuditEventsViewer from './iam/AuditEventsViewer';
 // Advanced IAM Module
 import AdminSessionsView from './iam/AdminSessionsView';
 import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
@@ -63,6 +66,7 @@ const TAB_HELP_CARDS: Record<string, string> = {
   policies: 'superadmin-security-policies',
   sessions: 'superadmin-security-sessions',
   audit: 'superadmin-security-audit',
+  'audit-events': 'superadmin-security-audit-events',
   workflows: 'superadmin-security-workflows',
   incidents: 'superadmin-security-incidents',
   threats: 'superadmin-security-threats',
@@ -73,6 +77,28 @@ const TAB_HELP_CARDS: Record<string, string> = {
 
 export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'sso');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  React.useEffect(() => {
+    const mapping: Record<string, string> = {
+      sso: 'superadmin_sso',
+      scim: 'superadmin_security_scim',
+      roles: 'superadmin_security_roles',
+      permissions: 'superadmin_security_permissions',
+      policies: 'superadmin_security',
+      sessions: 'superadmin_security_sessions',
+      audit: 'superadmin_security_audit',
+      'audit-events': 'superadmin_security_audit_events',
+      workflows: 'superadmin_security_workflows',
+      incidents: 'superadmin_security_incidents',
+      threats: 'superadmin_security_threats',
+      dlp: 'superadmin_security_dlp',
+      'ai-budgets': 'superadmin_security_ai_budgets',
+      compliance: 'superadmin_compliance',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_security');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
     { id: 'sso', label: 'SSO', icon: <Key size={16} /> },
@@ -82,6 +108,7 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
     { id: 'policies', label: 'Policies', icon: <ShieldCheck size={16} /> },
     { id: 'sessions', label: 'Admin Sessions', icon: <UserCog size={16} /> },
     { id: 'audit', label: 'Audit Logs', icon: <History size={16} /> },
+    { id: 'audit-events', label: 'Audit Events', icon: <ClipboardList size={16} /> },
     { id: 'workflows', label: 'Workflows', icon: <GitBranch size={16} /> },
     { id: 'incidents', label: 'Incidents', icon: <AlertTriangle size={16} /> },
     { id: 'threats', label: 'Threats', icon: <Radar size={16} /> },
@@ -132,6 +159,12 @@ export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) =>
         return (
           <div className="p-6 overflow-y-auto h-full">
             <AdminAuditLogsView />
+          </div>
+        );
+      case 'audit-events':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <AuditEventsViewer />
           </div>
         );
       case 'workflows':

@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 import type {
   Decision,
   DecisionOutcome,
@@ -311,15 +313,7 @@ const NOTIFICATION_PRESETS: NotificationPreset[] = [
   },
 ];
 
-const REPORT_PLACEHOLDER_OPTIONS = [
-  {
-    id: 'rpt-status-monthly',
-    label: 'Status Monthly Report',
-    labelPl: 'Raport statusowy miesięczny',
-  },
-  { id: 'rpt-kpi-steering', label: 'KPI Steering Snapshot', labelPl: 'Migawka KPI dla Steering' },
-  { id: 'rpt-risk-heatmap', label: 'Risk Heatmap', labelPl: 'Mapa cieplna ryzyk' },
-];
+type ReportOption = { id: string; title: string };
 
 const NOTIFICATION_GROUP_OPTIONS = [
   { key: 'project_team', label: 'Project team', labelPl: 'Zespół projektu' },
@@ -613,6 +607,7 @@ interface AddItemPanelProps {
   decisions: Decision[];
   milestones: TimelineMilestone[];
   users: UserInfo[];
+  availableReports: ReportOption[];
   onAdd: (row: TimelineRow) => void;
   onClose: () => void;
 }
@@ -624,6 +619,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
   decisions,
   milestones,
   users,
+  availableReports,
   onAdd,
   onClose,
 }) => {
@@ -1497,9 +1493,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
                     >
                       <option value="internal_report">
-                        {isPolish
-                          ? 'Raport wewnętrzny (placeholder)'
-                          : 'Internal report (placeholder)'}
+                        {isPolish ? 'Raport wewnętrzny' : 'Internal report'}
                       </option>
                       <option value="generated_presentation">
                         {isPolish ? 'Prezentacja wygenerowana' : 'Generated presentation'}
@@ -1509,11 +1503,11 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       </option>
                       <option value="other">{isPolish ? 'Inne' : 'Other'}</option>
                     </select>
-                    {infoAssetType === 'internal_report' && (
+                    {infoAssetType === 'internal_report' && availableReports.length === 0 && (
                       <p className="mt-1 text-[10px] text-amber-500">
                         {isPolish
-                          ? 'Placeholder: finalne podłączenie do modułu raportów będzie dodane później.'
-                          : 'Placeholder: final Reports module binding will be added later.'}
+                          ? 'Brak raportów w bibliotece. Utwórz raport w module Raporty.'
+                          : 'No reports in library. Create a report in the Reports module.'}
                       </p>
                     )}
                     {submitAttempted && !infoEventMaterialValid && (
@@ -1528,24 +1522,24 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   {infoAssetType === 'internal_report' && (
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Wybierz raport (placeholder)' : 'Select report (placeholder)'}
+                        {isPolish ? 'Wybierz raport' : 'Select report'}
                       </label>
                       <select
                         value={linkedReportPlaceholderId}
                         onChange={(e) => {
                           const id = e.target.value;
                           setLinkedReportPlaceholderId(id);
-                          const found = REPORT_PLACEHOLDER_OPTIONS.find((x) => x.id === id);
-                          if (found) setInfoAssetLabel(isPolish ? found.labelPl : found.label);
+                          const found = availableReports.find((x) => x.id === id);
+                          if (found) setInfoAssetLabel(found.title);
                         }}
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
                       >
                         <option value="">
                           — {isPolish ? 'Wybierz raport' : 'Select report'} —
                         </option>
-                        {REPORT_PLACEHOLDER_OPTIONS.map((r) => (
+                        {availableReports.map((r) => (
                           <option key={r.id} value={r.id}>
-                            {isPolish ? r.labelPl : r.label}
+                            {r.title}
                           </option>
                         ))}
                       </select>
@@ -1995,6 +1989,7 @@ interface EditRowPanelProps {
   decisions: Decision[];
   milestones: TimelineMilestone[];
   users: UserInfo[];
+  availableReports: ReportOption[];
   isPolish: boolean;
   onSave: (id: string, patch: Partial<TimelineRow>) => void;
   onClose: () => void;
@@ -2007,6 +2002,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
   decisions,
   milestones,
   users,
+  availableReports,
   isPolish,
   onSave,
   onClose,
@@ -2750,7 +2746,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
               >
                 <option value="internal_report">
-                  {isPolish ? 'Raport wewnętrzny (placeholder)' : 'Internal report (placeholder)'}
+                  {isPolish ? 'Raport wewnętrzny' : 'Internal report'}
                 </option>
                 <option value="generated_presentation">
                   {isPolish ? 'Prezentacja wygenerowana' : 'Generated presentation'}
@@ -2760,11 +2756,11 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 </option>
                 <option value="other">{isPolish ? 'Inne' : 'Other'}</option>
               </select>
-              {infoAssetType === 'internal_report' && (
+              {infoAssetType === 'internal_report' && availableReports.length === 0 && (
                 <p className="mt-1 text-[10px] text-amber-500">
                   {isPolish
-                    ? 'Placeholder: finalne podłączenie do modułu raportów będzie dodane później.'
-                    : 'Placeholder: final Reports module binding will be added later.'}
+                    ? 'Brak raportów w bibliotece. Utwórz raport w module Raporty.'
+                    : 'No reports in library. Create a report in the Reports module.'}
                 </p>
               )}
               {submitAttempted && !infoEventMaterialValid && (
@@ -2778,22 +2774,22 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             {infoAssetType === 'internal_report' && (
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Wybierz raport (placeholder)' : 'Select report (placeholder)'}
+                  {isPolish ? 'Wybierz raport' : 'Select report'}
                 </label>
                 <select
                   value={linkedReportPlaceholderId}
                   onChange={(e) => {
                     const id = e.target.value;
                     setLinkedReportPlaceholderId(id);
-                    const found = REPORT_PLACEHOLDER_OPTIONS.find((x) => x.id === id);
-                    if (found) setInfoAssetLabel(isPolish ? found.labelPl : found.label);
+                    const found = availableReports.find((x) => x.id === id);
+                    if (found) setInfoAssetLabel(found.title);
                   }}
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
                 >
                   <option value="">— {isPolish ? 'Wybierz raport' : 'Select report'} —</option>
-                  {REPORT_PLACEHOLDER_OPTIONS.map((r) => (
+                  {availableReports.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {isPolish ? r.labelPl : r.label}
+                      {r.title}
                     </option>
                   ))}
                 </select>
@@ -3186,6 +3182,7 @@ interface TimelineTableProps {
   decisions: Decision[];
   milestones: TimelineMilestone[];
   users: UserInfo[];
+  availableReports: ReportOption[];
   onUpdateStart: (date: string | null) => void;
   onUpdateEnd: (date: string | null) => void;
   onUpdateRow: (id: string, patch: Partial<TimelineRow>) => void;
@@ -3202,6 +3199,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   decisions,
   milestones,
   users,
+  availableReports,
   onUpdateStart,
   onUpdateEnd,
   onUpdateRow,
@@ -3419,8 +3417,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 <span className="text-[8px] px-1 py-0.5 rounded bg-cyan-500/10 text-cyan-600 truncate max-w-[90px]">
                   {row.infoAssetType === 'internal_report'
                     ? isPolish
-                      ? 'Raport (placeholder)'
-                      : 'Report (placeholder)'
+                      ? 'Raport'
+                      : 'Report'
                     : row.infoAssetType === 'external_link'
                       ? isPolish
                         ? 'Link zewn.'
@@ -3914,6 +3912,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 decisions={decisions}
                 milestones={milestones}
                 users={users}
+                availableReports={availableReports}
                 isPolish={isPolish}
                 onSave={onUpdateRow}
                 onClose={() => setEditingRowId(null)}
@@ -4194,6 +4193,17 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
 }) => {
   const [view, setView] = useState<PlannerView>('table');
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [availableReports, setAvailableReports] = useState<ReportOption[]>([]);
+
+  useEffect(() => {
+    Api.get('/report-builder')
+      .then((r: any) =>
+        setAvailableReports(
+          (r?.reports || []).map((x: any) => ({ id: x.id, title: x.title || x.id }))
+        )
+      )
+      .catch(() => setAvailableReports([]));
+  }, []);
 
   const {
     rows,
@@ -4294,6 +4304,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
             decisions={decisions}
             milestones={milestones}
             users={users}
+            availableReports={availableReports}
             onAdd={(newRow) => addRow(newRow)}
             onClose={() => setShowAddPanel(false)}
           />
@@ -4318,6 +4329,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
               decisions={decisions}
               milestones={milestones}
               users={users}
+              availableReports={availableReports}
               onUpdateStart={onUpdateStart}
               onUpdateEnd={onUpdateEnd}
               onUpdateRow={updateRow}

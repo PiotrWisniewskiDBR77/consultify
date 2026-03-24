@@ -1,0 +1,44 @@
+/* Whiteboard Neon Glow Effects — dark mode only */
+
+.dark .wb-neon-node {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.dark .react-flow__node:hover .wb-neon-node {
+  filter: brightness(1.08);
+}
+
+.dark .react-flow__node.selected .wb-neon-node {
+  filter: brightness(1.12);
+}
+
+/* Subtle ambient glow on the canvas background */
+.dark .react-flow__background {
+  opacity: 0.5;
+}
+
+/* Edge glow in dark mode */
+.dark .react-flow__edge path {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.dark .react-flow__edge:hover path {
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+/* Selection box neon style */
+.dark .react-flow__selection {
+  border-color: rgba(168, 85, 247, 0.5) !important;
+  background: rgba(168, 85, 247, 0.06) !important;
+}
+
+/* Handle glow on hover */
+.dark .react-flow__handle:hover {
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+/* Connection line glow */
+.dark .react-flow__connection-path {
+  stroke: rgba(168, 85, 247, 0.6) !important;
+  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.4));
+}

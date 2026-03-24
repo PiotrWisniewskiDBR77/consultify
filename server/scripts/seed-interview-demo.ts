@@ -224,14 +224,19 @@ async function main() {
     return row?.organization_id ? String(row.organization_id) : null;
   })();
 
-  const orgId =
-    seedOrgId ||
-    resolvedFromEmailOrgId ||
-    (await (async () => {
-      const row = await db.get(`SELECT id FROM organizations ORDER BY created_at DESC LIMIT 1`, []);
-      return row?.id ? String(row.id) : null;
-    })());
-  requireNotEmpty(orgId, 'No organizations found. Set SEED_ORG_ID or create an organization first.');
+  const requestedOrgId = seedOrgId || resolvedFromEmailOrgId;
+  requireNotEmpty(
+    requestedOrgId,
+    '[seed-interview-demo] Set SEED_ORG_ID explicitly or provide SEED_USER_EMAIL from the target organization.'
+  );
+  const orgId = await (async () => {
+    const row = await db.get(`SELECT id FROM organizations WHERE id = ? LIMIT 1`, [requestedOrgId]);
+    return row?.id ? String(row.id) : null;
+  })();
+  requireNotEmpty(
+    orgId,
+    `[seed-interview-demo] Target organization "${requestedOrgId}" not found.`
+  );
 
   const managerUser =
     (await (async () => {

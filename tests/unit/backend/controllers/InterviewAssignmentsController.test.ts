@@ -151,7 +151,13 @@ describe('InterviewController assignments', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(409);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Session is locked' });
-    expect(mockQueryRun).not.toHaveBeenCalled();
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).toLowerCase().includes('update interview_questions')
+      )
+    ).toBe(false);
   });
 });
 

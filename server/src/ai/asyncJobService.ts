@@ -19,7 +19,12 @@ type QueueType = {
 
 // Import with type assertion (aiQueue.ts has @ts-nocheck)
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const aiQueueModule: any = require('../queues/aiQueue.js');
+let aiQueueModule: any;
+try {
+  aiQueueModule = require('../queues/aiQueue.js');
+} catch {
+  aiQueueModule = require('../queues/aiQueue.ts');
+}
 const aiQueue: QueueType = aiQueueModule.default || aiQueueModule;
 
 import * as auditLogger from '../utils/auditLogger.js';

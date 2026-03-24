@@ -1,0 +1,9 @@
+{
+  "name": "english-ifrs-profit-loss",
+  "fileName": "english-ifrs-pl.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 14,
+  "expectedMinMapped": 12,
+  "text": "Consolidated Statement of Profit or Loss and Other Comprehensive Income\nFor the year ended 31 December 2024\nIn EUR thousands\n\nRevenue 2024 1,800,000 2023 1,650,000\nCost of sales 2024 -1,200,000 2023 -1,100,000\nGross profit 2024 600,000 2023 550,000\n\nSelling expenses 2024 -80,000 2023 -75,000\nGeneral and administrative expenses 2024 -120,000 2023 -110,000\nOther operating income 2024 15,000 2023 12,000\nOther operating expenses 2024 -20,000 2023 -18,000\n\nOperating profit 2024 395,000 2023 359,000\n\nFinance income 2024 10,000 2023 8,000\nFinance costs 2024 -30,000 2023 -28,000\nShare of profit of associates 2024 5,000 2023 4,000\n\nProfit before tax 2024 380,000 2023 343,000\nCurrent tax expense 2024 -72,000 2023 -65,000\nDeferred tax expense 2024 2,000 2023 1,500\nNet income 2024 310,000 2023 279,500\n\nNet income attributable to parent 2024 295,000 2023 267,000\nNet income attributable to non-controlling interests 2024 15,000 2023 12,500\n\nOther comprehensive income 2024 -5,000 2023 3,000\nFX translation differences 2024 -3,000 2023 2,000\nHedging result OCI 2024 -1,000 2023 500\nActuarial gains and losses 2024 -1,000 2023 500\nTotal comprehensive income 2024 305,000 2023 282,500\n\nBasic earnings per share (EUR) 2024 5.90 2023 5.34\nDiluted earnings per share (EUR) 2024 5.88 2023 5.32"
+}

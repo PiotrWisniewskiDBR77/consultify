@@ -506,6 +506,73 @@ export function createEmptySIRIAssessment(): SIRIAssessmentData {
   };
 }
 
+// ============================================
+// SIRI 16D CANON (Assessment Matrix)
+// ============================================
+
+export const SIRI_16D_MAPPING_VERSION = 'v1.0';
+
+export interface SIRI16DScore {
+  areaId: string;
+  areaName: string;
+  areaPL: string;
+  buildingBlock: SIRIBuildingBlock;
+  parentDimension: string;
+  current: number;
+  target: number;
+  gap: number;
+}
+
+/**
+ * Compute 16D scores from dimension scores + prioritisation matrix.
+ * Each prioritisation area inherits its parent dimension's current/target
+ * unless area-level scores exist in the prioritisation matrix.
+ */
+export function compute16DScores(data: SIRIAssessmentData): SIRI16DScore[] {
+  return SIRI_PRIORITISATION_AREAS.map((area) => {
+    const dimScore = data.dimensions[area.dimension];
+    const areaScore = data.prioritisationMatrix?.[area.id];
+    const current =
+      typeof areaScore === 'number' && areaScore > 0 ? areaScore : dimScore?.current || 0;
+    const target = dimScore?.target || 0;
+    return {
+      areaId: area.id,
+      areaName: area.name,
+      areaPL: area.namePL,
+      buildingBlock: area.buildingBlock,
+      parentDimension: area.dimension,
+      current,
+      target,
+      gap: Math.max(0, target - current),
+    };
+  });
+}
+
+/**
+ * Aggregate 16D scores back to 8D (for validation / round-trip).
+ * Uses simple average of areas per dimension.
+ */
+export function aggregate16Dto8D(
+  scores16d: SIRI16DScore[]
+): Record<string, { current: number; target: number; gap: number }> {
+  const grouped: Record<string, SIRI16DScore[]> = {};
+  scores16d.forEach((s) => {
+    if (!grouped[s.parentDimension]) grouped[s.parentDimension] = [];
+    grouped[s.parentDimension].push(s);
+  });
+  const result: Record<string, { current: number; target: number; gap: number }> = {};
+  for (const [dimId, areas] of Object.entries(grouped)) {
+    const avgCurrent = areas.reduce((sum, a) => sum + a.current, 0) / areas.length;
+    const avgTarget = areas.reduce((sum, a) => sum + a.target, 0) / areas.length;
+    result[dimId] = {
+      current: Math.round(avgCurrent * 10) / 10,
+      target: Math.round(avgTarget * 10) / 10,
+      gap: Math.round(Math.max(0, avgTarget - avgCurrent) * 10) / 10,
+    };
+  }
+  return result;
+}
+
 export default {
   SIRI_BUILDING_BLOCKS,
   SIRI_DIMENSIONS,

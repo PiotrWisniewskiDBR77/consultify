@@ -115,8 +115,16 @@ export const EntryFooter: React.FC = () => {
           <div className="col-span-2 space-y-6">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <img src="/assets/logos/logo-light.svg" alt="Consultify" className="h-8 w-auto dark:hidden" />
-              <img src="/assets/logos/logo-dark.svg" alt="Consultify" className="hidden h-8 w-auto dark:block" />
+              <img
+                src="/assets/logos/logo-light.svg?v=20260319"
+                alt="Consultify"
+                className="h-8 w-auto dark:hidden"
+              />
+              <img
+                src="/assets/logos/logo-dark.svg?v=20260319"
+                alt="Consultify"
+                className="hidden h-8 w-auto dark:block"
+              />
               <span className="text-lg font-black tracking-tight text-navy-950 dark:text-white uppercase">
                 Consultify
               </span>

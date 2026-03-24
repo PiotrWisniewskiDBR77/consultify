@@ -1755,7 +1755,8 @@ router.get(
       `SELECT id, title, status, approved_at, updated_at
      FROM budgets
      WHERE organization_id = ?
-     ORDER BY CASE WHEN status = 'APPROVED' THEN 0 ELSE 1 END, updated_at DESC
+       AND UPPER(status) = 'APPROVED'
+     ORDER BY updated_at DESC
      LIMIT 50`,
       [orgId]
     );
@@ -1766,13 +1767,24 @@ router.get(
         `SELECT id, name, status, approved_at, updated_at
        FROM financial_models
        WHERE organization_id = ?
-       ORDER BY CASE WHEN status = 'approved' THEN 0 ELSE 1 END, updated_at DESC
+         AND LOWER(status) = 'approved'
+       ORDER BY updated_at DESC
        LIMIT 50`,
         [orgId]
       );
     } catch {
       financialModels = [];
     }
+
+    const financialAnalyses = await dbAll<any>(
+      `SELECT id, title, status, updated_at
+       FROM financial_analyses
+       WHERE organization_id = ?
+         AND UPPER(status) IN ('APPROVED', 'COMPLETED')
+       ORDER BY updated_at DESC
+       LIMIT 50`,
+      [orgId]
+    );
 
     return res.json({
       success: true,
@@ -1790,6 +1802,12 @@ router.get(
           status: m.status,
           approvedAt: m.approved_at,
           updatedAt: m.updated_at,
+        })),
+        financialAnalyses: (financialAnalyses || []).map((analysis: any) => ({
+          id: analysis.id,
+          title: analysis.title,
+          status: analysis.status,
+          updatedAt: analysis.updated_at,
         })),
       },
     });
@@ -2213,17 +2231,85 @@ router.post(
     ]);
     if (!budget) return res.status(404).json({ error: 'Budget not found' });
 
+    const documentText = String(req.body?.documentText || '').trim();
+    if (!documentText) {
+      return res.status(400).json({
+        error: 'documentText is required. Send extracted text from CSV/TXT or OCR output.',
+      });
+    }
+
+    const parseNumber = (raw: string): number | null => {
+      const normalized = raw.replace(/\s/g, '').replace(/,/g, '.');
+      const value = Number(normalized);
+      return Number.isFinite(value) ? value : null;
+    };
+
+    const extractLineValue = (lines: string[], keywords: string[]): number | null => {
+      for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (!keywords.some((keyword) => lower.includes(keyword))) continue;
+        const matches = line.match(/-?\d[\d\s.,]*/g);
+        const last = matches?.[matches.length - 1];
+        if (!last) continue;
+        const parsed = parseNumber(last);
+        if (parsed != null) return parsed;
+      }
+      return null;
+    };
+
+    const sourceLines = documentText
+      .split(/\r?\n/)
+      .map((line: string) => line.trim())
+      .filter(Boolean);
+
     const { v4: uuidv4 } = await import('uuid');
-    const lines = [
-      { code: 'revenue', name: 'Revenue', type: 'P&L', value: 0 },
-      { code: 'cogs', name: 'Cost of Goods Sold', type: 'P&L', value: 0 },
-      { code: 'opex', name: 'Operating Expenses', type: 'P&L', value: 0 },
-      { code: 'capex', name: 'Capital Expenditure', type: 'CF', value: 0 },
-      { code: 'depreciation', name: 'Depreciation & Amortization', type: 'P&L', value: 0 },
-    ];
+    const lineDefinitions = [
+      {
+        code: 'revenue',
+        name: 'Revenue',
+        type: 'P&L',
+        keywords: ['revenue', 'sales', 'turnover'],
+      },
+      {
+        code: 'cogs',
+        name: 'Cost of Goods Sold',
+        type: 'P&L',
+        keywords: ['cost of goods sold', 'cogs'],
+      },
+      {
+        code: 'opex',
+        name: 'Operating Expenses',
+        type: 'P&L',
+        keywords: ['operating expenses', 'opex'],
+      },
+      {
+        code: 'capex',
+        name: 'Capital Expenditure',
+        type: 'CF',
+        keywords: ['capital expenditure', 'capex'],
+      },
+      {
+        code: 'depreciation',
+        name: 'Depreciation & Amortization',
+        type: 'P&L',
+        keywords: ['depreciation', 'amortization'],
+      },
+    ]
+      .map((line) => ({
+        ...line,
+        value: extractLineValue(sourceLines, line.keywords),
+      }))
+      .filter((line) => line.value != null);
+
+    if (lineDefinitions.length === 0) {
+      return res.status(400).json({
+        error:
+          'Could not extract supported budget lines from the document. Expected lines like Revenue, COGS, OPEX, CAPEX, or Depreciation with numeric values.',
+      });
+    }
 
     let imported = 0;
-    for (const line of lines) {
+    for (const line of lineDefinitions) {
       const existing = await dbGet<any>(
         `SELECT id FROM budget_lines WHERE budget_id = ? AND line_code = ?`,
         [budgetId, line.code]
@@ -2238,7 +2324,7 @@ router.post(
             line.code,
             line.name,
             line.type,
-            line.value,
+            Number(line.value || 0),
             imported,
           ]
         );

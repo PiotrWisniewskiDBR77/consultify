@@ -303,7 +303,18 @@ describe('InitiativeController', () => {
       mockReq.body = { status: 'TRACKING' };
       // Existing initiative status lookup
       mockQueryOne
-        .mockResolvedValueOnce({ status: 'DONE', name: 'Test Initiative', created_by: 'user-123' }) // existing
+        .mockResolvedValueOnce({
+          status: 'DONE',
+          name: 'Test Initiative',
+          owner_business_id: 'bo-1',
+          created_by: 'user-123',
+        }) // existing
+        .mockResolvedValueOnce({
+          name: 'Test Initiative',
+          owner_business_id: 'bo-1',
+          owner_execution_id: null,
+          sponsor_id: null,
+        }) // gate readiness initiative snapshot
         .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' }) // owner_business_id lookup
         .mockResolvedValueOnce({ c: 0 }); // KPI count
 

@@ -1,0 +1,203 @@
+/* FullCalendar DBR77 Dark Theme Override */
+
+.fc-consultify .fc {
+  --fc-border-color: rgba(255, 255, 255, 0.06);
+  --fc-today-bg-color: rgba(124, 58, 237, 0.06);
+  --fc-now-indicator-color: #7c3aed;
+  --fc-event-border-color: transparent;
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: rgba(255, 255, 255, 0.02);
+  --fc-list-event-hover-bg-color: rgba(255, 255, 255, 0.04);
+}
+
+.fc-consultify .fc-theme-standard td,
+.fc-consultify .fc-theme-standard th {
+  border-color: var(--fc-border-color);
+}
+
+.fc-consultify .fc-theme-standard .fc-scrollgrid {
+  border-color: var(--fc-border-color);
+}
+
+.fc-consultify .fc-col-header-cell {
+  padding: 8px 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.fc-consultify .fc-daygrid-day-number {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  padding: 6px 8px;
+}
+
+.fc-consultify .fc-day-today .fc-daygrid-day-number {
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.fc-consultify .fc-event {
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  border: none;
+}
+
+.fc-consultify .fc-event:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fc-consultify .fc-event-title {
+  font-weight: 500;
+}
+
+.fc-consultify .fc-timegrid-slot {
+  height: 48px;
+}
+
+.fc-consultify .fc-timegrid-slot-label {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.fc-consultify .fc-timegrid-now-indicator-line {
+  border-color: #7c3aed;
+  border-width: 2px;
+}
+
+.fc-consultify .fc-timegrid-now-indicator-arrow {
+  border-color: #7c3aed;
+}
+
+.fc-consultify .fc-more-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.fc-consultify .fc-list-event:hover td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.fc-consultify .fc-list-day-cushion {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.fc-consultify .fc-list-day-text,
+.fc-consultify .fc-list-day-side-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+/* Light mode overrides */
+:root:not(.dark) .fc-consultify .fc {
+  --fc-border-color: #e2e8f0;
+  --fc-today-bg-color: rgba(124, 58, 237, 0.04);
+  --fc-neutral-bg-color: #f8fafc;
+  --fc-list-event-hover-bg-color: #f1f5f9;
+}
+
+:root:not(.dark) .fc-consultify .fc-col-header-cell {
+  color: #94a3b8;
+}
+
+:root:not(.dark) .fc-consultify .fc-daygrid-day-number {
+  color: #475569;
+}
+
+:root:not(.dark) .fc-consultify .fc-day-today .fc-daygrid-day-number {
+  color: #7c3aed;
+}
+
+:root:not(.dark) .fc-consultify .fc-list-day-text,
+:root:not(.dark) .fc-consultify .fc-list-day-side-text {
+  color: #1e293b;
+}
+
+/* Light mode: stronger event text for readability */
+:root:not(.dark) .fc-consultify .fc-event {
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:root:not(.dark) .fc-consultify .fc-event-title,
+:root:not(.dark) .fc-consultify .fc-event-time {
+  font-weight: 600;
+}
+
+:root:not(.dark) .fc-consultify .fc-timegrid-slot-label {
+  color: #475569;
+}
+
+:root:not(.dark) .fc-consultify .fc-timegrid-axis-cushion {
+  color: #475569;
+}
+
+/* ── Liquid layout: FC with height=100% keeps header + allDay fixed, only time grid scrolls ── */
+.fc-consultify,
+.fc-consultify .fc {
+  height: 100% !important;
+}
+
+/* Ensure sticky section backgrounds are opaque */
+.fc-consultify .fc-scrollgrid-section-sticky > * {
+  z-index: 4;
+}
+
+:root:not(.dark) .fc-consultify .fc-scrollgrid-section-sticky > * {
+  background: #fff !important;
+}
+
+.dark .fc-consultify .fc-scrollgrid-section-sticky > * {
+  background: #0f172a !important;
+}
+
+/* ── Source badge (Google / Outlook / Consultify icon) ── */
+.fc-consultify .fc-source-badge {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.fc-consultify .fc-source-badge img {
+  background: white;
+  padding: 1px;
+}
+
+/* ── AI focus time ghost blocks ── */
+.fc-consultify .fc-event[data-status="ai_suggestion"],
+.fc-consultify .fc-event.fc-ai-focus {
+  opacity: 0.5;
+  border: 1.5px dashed #7c3aed !important;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(124, 58, 237, 0.06),
+    rgba(124, 58, 237, 0.06) 4px,
+    rgba(124, 58, 237, 0.12) 4px,
+    rgba(124, 58, 237, 0.12) 8px
+  ) !important;
+  color: #7c3aed !important;
+  font-style: italic;
+}
+
+.fc-consultify .fc-event[data-status="ai_suggestion"]:hover {
+  opacity: 0.75;
+}
+
+.fc-consultify .fc-event[data-status="ai_suggestion"] .fc-event-title {
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.fc-consultify .fc-event[data-status="ai_suggestion"] .fc-event-time {
+  color: #7c3aed;
+  opacity: 0.7;
+}

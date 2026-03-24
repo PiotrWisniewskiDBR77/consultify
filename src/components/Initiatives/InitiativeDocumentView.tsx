@@ -30,6 +30,7 @@ import {
   FolderOpen,
   GitBranch,
   History,
+  Link2,
   ListChecks,
   Loader2,
   MessageSquare,
@@ -55,7 +56,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
@@ -110,7 +111,13 @@ import {
 } from '../shared/NModeSections';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativeScrollView } from './InitiativeScrollView';
+import {
+  createInitiativesDemoDataset,
+  isShowcaseArtifactId,
+  isShowcaseInitiativeId,
+} from './initiativesDemoData';
 import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_VISIBLE_SECTIONS,
@@ -247,8 +254,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent, currentUser } =
+    useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+
+  const initiativesDemoData = useMemo(() => {
+    const currentUserAny = currentUser as any;
+    const currentUserName =
+      currentUserAny?.name ||
+      [currentUserAny?.firstName, currentUserAny?.lastName].filter(Boolean).join(' ') ||
+      'Piotr Wisniewski';
+
+    return createInitiativesDemoDataset({
+      currentUserId: currentUserAny?.id,
+      currentUserName,
+      currentUserEmail: currentUserAny?.email,
+    });
+  }, [currentUser]);
 
   const normalizeStringList = (value: any): string[] => {
     if (Array.isArray(value)) {
@@ -522,6 +544,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     Record<string, boolean>
   >({});
 
+  // V4-IDEA-09: LinkGraph "Used in" backlinks
+  const [initiativeBacklinks, setInitiativeBacklinks] = useState<
+    Array<{ id: string; sourceType: string; sourceId: string }>
+  >([]);
+  const [initiativeBacklinksLoading, setInitiativeBacklinksLoading] = useState(false);
+
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -532,7 +560,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [userGateRoles, setUserGateRoles] = useState<string[]>([]);
   const [statusHistory, setStatusHistory] = useState<StatusHistoryEntry[]>([]);
   const [gateReadiness, setGateReadiness] = useState<GateReadinessCheck | null>(null);
-  const [demoDataInjected, setDemoDataInjected] = useState(false);
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskIsMilestone, setNewTaskIsMilestone] = useState(false);
@@ -548,7 +575,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
   const [newRaidDescription, setNewRaidDescription] = useState('');
 
-  const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id || 'current-user';
   const nModeOrderStorageKey = `initiative:nmode:section-order:v2:${initiativeId}`;
   const initiativeDefinitionDraftStorageKey = `consultify-initiative-definition-draft:v1:${initiativeId}`;
@@ -1401,7 +1427,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const data = await Api.getInitiativeById(initiativeId);
+      const showcaseDetail = isShowcaseInitiativeId(initiativeId)
+        ? initiativesDemoData.initiativeDetailsById[initiativeId]
+        : null;
+      const data = showcaseDetail?.initiative || (await Api.getInitiativeById(initiativeId));
       setInitiative(data);
       setInitiativeTemplate(null);
       setTitleDraft(String(data.title || data.name || '').trim());
@@ -1646,6 +1675,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
       if (data.estimatedDurationMonths != null) {
         setEstimatedDurationMonths(data.estimatedDurationMonths);
+      }
+
+      if (showcaseDetail) {
+        setDecisions(showcaseDetail.decisions || []);
+        setRaidItems(showcaseDetail.raidItems || []);
+        setWatchers(showcaseDetail.watchers || []);
+        setHistory(showcaseDetail.history || []);
+        setTasks(showcaseDetail.tasks || []);
+        setDependencies(showcaseDetail.dependencies || []);
+        setStakeholders(showcaseDetail.stakeholders || []);
+        setUsers(initiativesDemoData.users || []);
+        setPendingApprovals(showcaseDetail.pendingApprovals || []);
+        setComments(showcaseDetail.comments || []);
+        setGateRoles(showcaseDetail.gateRoles || []);
+        setGateReadiness(showcaseDetail.gateReadiness || null);
+        setUserGateRoles(showcaseDetail.gateReadiness?.userRoles || []);
+        setStatusHistory(showcaseDetail.statusHistory || []);
+        setApiResourceItems(showcaseDetail.resources || []);
+        setApiBudgetItems(showcaseDetail.budgetItems || []);
+        setApiToolItems(showcaseDetail.tools || []);
+        setApiIntangibleAssets(showcaseDetail.intangibleAssets || []);
+        setAttachments(showcaseDetail.attachments || []);
+        setLinkedItems(showcaseDetail.linkedItems || []);
+        return;
       }
 
       // Fetch related data (best-effort, parallel)
@@ -1917,7 +1970,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [initiativeId, decodeHtmlEntities, initiativeDefinitionDraftStorageKey, isPolish]);
+  }, [
+    initiativeId,
+    decodeHtmlEntities,
+    initiativeDefinitionDraftStorageKey,
+    initiativesDemoData,
+    isPolish,
+  ]);
 
   // Persist local draft continuously so refresh won't lose edits (even before autosave).
   useEffect(() => {
@@ -1999,396 +2058,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     fetchAll();
   }, [fetchAll]);
 
+  // V4-IDEA-09: Fetch LinkGraph backlinks for "Used in" section
   useEffect(() => {
-    setDemoDataInjected(false);
+    if (!initiativeId) return;
+    setInitiativeBacklinksLoading(true);
+    Api.getLinkGraphBacklinks({ type: 'initiative', id: initiativeId, limit: 50 })
+      .then((rows: any) => {
+        setInitiativeBacklinks(
+          (Array.isArray(rows) ? rows : [])
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+            }))
+            .filter((x) => x.sourceType && x.sourceId)
+        );
+      })
+      .catch(() => setInitiativeBacklinks([]))
+      .finally(() => setInitiativeBacklinksLoading(false));
   }, [initiativeId]);
-
-  // Seed comprehensive demo data for empty initiatives (UI preview/testing).
-  useEffect(() => {
-    if (isLoading || !initiative || demoDataInjected) return;
-
-    const looksEmpty =
-      tasks.length === 0 &&
-      stakeholders.length === 0 &&
-      dependencies.length === 0 &&
-      reminders.length === 0 &&
-      escalationRules.length === 0 &&
-      raidItems.length === 0 &&
-      decisions.length === 0 &&
-      comments.length === 0 &&
-      linkedItems.length === 0 &&
-      inScopeItems.length === 0 &&
-      outScopeItems.length === 0 &&
-      killCriteriaItems.length === 0;
-
-    if (!looksEmpty) return;
-
-    const now = new Date();
-    const dateInDays = (days: number) =>
-      new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-    const dateOnlyInDays = (days: number) => dateInDays(days).slice(0, 10);
-    const idSuffix = `${initiativeId}-${Date.now()}`;
-
-    const demoTasks: TaskItem[] = [
-      {
-        id: `demo-task-1-${idSuffix}`,
-        title: 'Kick-off workshop with key stakeholders',
-        status: 'DONE',
-        priority: 'high',
-        dueDate: dateOnlyInDays(-3),
-        assigneeName: users[0] ? `${users[0].firstName} ${users[0].lastName}` : 'Project Owner',
-        assigneeId: users[0]?.id,
-        description: 'Align initiative goals, scope and success metrics.',
-        estimatedHours: 6,
-        source: 'manual',
-      },
-      {
-        id: `demo-task-2-${idSuffix}`,
-        title: 'Define target process and acceptance criteria',
-        status: 'IN_PROGRESS',
-        priority: 'high',
-        dueDate: dateOnlyInDays(7),
-        assigneeName: users[1] ? `${users[1].firstName} ${users[1].lastName}` : 'Business Analyst',
-        assigneeId: users[1]?.id,
-        description: 'Document future-state flow and measurable outcomes.',
-        estimatedHours: 12,
-        source: 'manual',
-      },
-      {
-        id: `demo-task-3-${idSuffix}`,
-        title: 'Configure pilot environment and integrations',
-        status: 'TODO',
-        priority: 'medium',
-        dueDate: dateOnlyInDays(14),
-        assigneeName: users[2] ? `${users[2].firstName} ${users[2].lastName}` : 'Technical Lead',
-        assigneeId: users[2]?.id,
-        description: 'Prepare pilot setup and data exchange between systems.',
-        estimatedHours: 16,
-        source: 'ai',
-      },
-      {
-        id: `demo-task-4-${idSuffix}`,
-        title: 'Pilot readiness checkpoint',
-        status: 'TODO',
-        priority: 'medium',
-        isMilestone: true,
-        milestoneDate: dateOnlyInDays(21),
-        dueDate: dateOnlyInDays(21),
-        assigneeName: users[0] ? `${users[0].firstName} ${users[0].lastName}` : 'Project Owner',
-        assigneeId: users[0]?.id,
-        description: 'Go/no-go checkpoint before pilot launch.',
-        source: 'manual',
-      },
-    ];
-
-    const demoDependencies: TaskDependency[] = [
-      {
-        id: `demo-dep-1-${idSuffix}`,
-        taskId: demoTasks[0].id,
-        taskTitle: demoTasks[0].title,
-        taskStatus: demoTasks[0].status,
-        taskPriority: demoTasks[0].priority,
-        taskIndexCode: demoTasks[0].id,
-        dependencyType: 'FS',
-        lagDays: 0,
-        notes: 'Process definition starts after kick-off alignment.',
-        direction: 'predecessor',
-        createdAt: dateInDays(-2),
-      },
-      {
-        id: `demo-dep-2-${idSuffix}`,
-        taskId: demoTasks[2].id,
-        taskTitle: demoTasks[2].title,
-        taskStatus: demoTasks[2].status,
-        taskPriority: demoTasks[2].priority,
-        taskIndexCode: demoTasks[2].id,
-        dependencyType: 'FS',
-        lagDays: 2,
-        notes: 'Pilot setup can start 2 days after process definition starts.',
-        direction: 'successor',
-        createdAt: dateInDays(-1),
-      },
-    ];
-
-    const stakeholderSettings = (
-      triggers: StakeholderNotificationSettings['triggers']
-    ): StakeholderNotificationSettings => ({
-      enabled: true,
-      triggers,
-      emailEnabled: true,
-      inAppEnabled: true,
-    });
-
-    const stakeholderUsers = users.slice(0, 4);
-    const demoStakeholders: Stakeholder[] =
-      stakeholderUsers.length > 0
-        ? stakeholderUsers.map((u, idx) => ({
-            id: `demo-stk-${idx + 1}-${idSuffix}`,
-            decisionId: initiativeId,
-            userId: u.id,
-            userName: `${u.firstName} ${u.lastName}`.trim(),
-            userEmail: u.email,
-            role:
-              idx === 0
-                ? 'accountable'
-                : idx === 1
-                  ? 'responsible'
-                  : idx === 2
-                    ? 'consulted'
-                    : 'informed',
-            notificationSettings:
-              idx <= 1
-                ? stakeholderSettings(['on_create', 'on_update', 'on_status_change'])
-                : stakeholderSettings(['on_comment', 'on_status_change']),
-          }))
-        : [
-            {
-              id: `demo-stk-fallback-1-${idSuffix}`,
-              decisionId: initiativeId,
-              userId: 'demo-user-accountable',
-              userName: 'Business Owner',
-              userEmail: 'owner@example.com',
-              role: 'accountable',
-              notificationSettings: stakeholderSettings([
-                'on_create',
-                'on_update',
-                'on_status_change',
-              ]),
-            },
-            {
-              id: `demo-stk-fallback-2-${idSuffix}`,
-              decisionId: initiativeId,
-              userId: 'demo-user-responsible',
-              userName: 'Execution Lead',
-              userEmail: 'lead@example.com',
-              role: 'responsible',
-              notificationSettings: stakeholderSettings(['on_update', 'on_comment']),
-            },
-          ];
-
-    const demoReminders: ReminderRuleWithDelivery[] = [
-      {
-        id: `demo-rem-1-${idSuffix}`,
-        type: 'before_due',
-        days: 3,
-        recipients: 'both',
-        inAppNotification: true,
-        emailNotification: true,
-        message: 'Prepare status update before target date.',
-        enabled: true,
-      },
-      {
-        id: `demo-rem-2-${idSuffix}`,
-        type: 'after_due',
-        days: 2,
-        recipients: 'stakeholders',
-        inAppNotification: true,
-        emailNotification: false,
-        message: 'Task overdue - review blockers and mitigation plan.',
-        enabled: true,
-      },
-    ];
-
-    const escalationUser = users[1] || users[0];
-    const demoEscalationRules: EscalationRuleWithConfig[] = [
-      {
-        id: `demo-esc-${idSuffix}`,
-        enabled: true,
-        escalateTo: escalationUser?.id || 'demo-escalation-owner',
-        escalateToName: escalationUser
-          ? `${escalationUser.firstName} ${escalationUser.lastName}`.trim()
-          : 'Program Sponsor',
-        afterDays: 3,
-        message: 'Escalate if initiative critical path slips.',
-        warningDays: 4,
-        criticalDays: 2,
-        escalationMode: 'manager_review',
-        delivery: {
-          coreChannels: ['in_app'],
-          integrationChannels: [],
-          syncTargets: [],
-        },
-      },
-    ];
-
-    const demoRaid: RaidItem[] = [
-      {
-        id: `demo-raid-1-${idSuffix}`,
-        type: 'risk',
-        title: 'Data quality may delay pilot readiness',
-        description: 'Source systems still contain inconsistent master data.',
-        severity: 'HIGH',
-        status: 'open',
-        owner: users[2] ? `${users[2].firstName} ${users[2].lastName}` : 'Technical Lead',
-        mitigationPlan: 'Run data cleanup sprint before integration freeze.',
-      },
-      {
-        id: `demo-raid-2-${idSuffix}`,
-        type: 'issue',
-        title: 'Limited availability of integration specialist',
-        description: 'Shared specialist supports multiple initiatives in parallel.',
-        severity: 'MEDIUM',
-        status: 'monitoring',
-        owner: users[0] ? `${users[0].firstName} ${users[0].lastName}` : 'Project Owner',
-        mitigationPlan: 'Secure backup resource from partner team.',
-      },
-      {
-        id: `demo-raid-3-${idSuffix}`,
-        type: 'dependency',
-        title: 'Waiting for security review approval',
-        description: 'Pilot cannot start before IAM policy sign-off.',
-        severity: 'HIGH',
-        status: 'open',
-      },
-    ];
-
-    const demoDecisions: Decision[] = [
-      {
-        id: `demo-dec-1-${idSuffix}`,
-        type: 'GOVERNANCE_DECISION_MAKING',
-        title: 'Approve pilot scope and timeline',
-        status: 'PENDING',
-        dueDate: dateOnlyInDays(5),
-        ownerName: users[0] ? `${users[0].firstName} ${users[0].lastName}` : 'Project Owner',
-      },
-    ];
-
-    const demoComments: Comment[] = [
-      {
-        id: `demo-com-1-${idSuffix}`,
-        content:
-          'Kick-off done. Next step: confirm target process KPIs and owners before pilot build.',
-        authorId: users[0]?.id || 'demo-author-1',
-        authorName: users[0] ? `${users[0].firstName} ${users[0].lastName}` : 'Project Owner',
-        createdAt: dateInDays(-1),
-        likes: 2,
-      },
-    ];
-
-    const demoLinkedItems: LinkedItem[] = [
-      {
-        id: `demo-linked-1-${idSuffix}`,
-        type: 'report',
-        title: 'Current process maturity baseline',
-        status: 'ready',
-        linkRelation: 'informs',
-        linkDirection: 'outgoing',
-      },
-      {
-        id: `demo-linked-2-${idSuffix}`,
-        type: 'external',
-        title: 'Vendor integration guideline',
-        externalUrl: 'https://example.com/integration-guideline',
-        linkRelation: 'related',
-        linkDirection: 'outgoing',
-      },
-    ];
-
-    if (!summary.trim()) {
-      setSummary(
-        'Automate and standardize key handover activities to reduce cycle time and improve quality.'
-      );
-    }
-    if (!description.trim()) {
-      setDescription(
-        'This initiative introduces a structured handover flow with clear ownership, checkpoints and escalation rules.'
-      );
-    }
-
-    if (inScopeItems.length === 0) {
-      setInScopeItems([
-        'Standard handover checklist for core process',
-        'Pilot automation in one business unit',
-        'KPI dashboard for cycle time and quality',
-      ]);
-    }
-    if (outScopeItems.length === 0) {
-      setOutScopeItems([
-        'Legacy process redesign in all business units',
-        'ERP replacement or major platform changes',
-      ]);
-    }
-    if (killCriteriaItems.length === 0) {
-      setKillCriteriaItems([
-        'No measurable cycle-time improvement after pilot',
-        'Security or compliance gate not approved',
-      ]);
-    }
-
-    if (targetStateItems.length === 0) {
-      setTargetStateItems([
-        { id: `ts-1-${idSuffix}`, text: 'Consistent handover workflow across teams', done: false },
-        { id: `ts-2-${idSuffix}`, text: 'Transparent ownership and accountability', done: false },
-      ]);
-    }
-    if (successCriteriaItems.length === 0) {
-      setSuccessCriteriaItems([
-        { id: `sc-1-${idSuffix}`, text: 'Reduce average handover time by 25%', done: false },
-        { id: `sc-2-${idSuffix}`, text: 'Achieve >= 95% checklist completeness', done: false },
-      ]);
-    }
-    if (deliverableItems.length === 0) {
-      setDeliverableItems([
-        { id: `dl-1-${idSuffix}`, text: 'Approved pilot process map', done: false },
-        { id: `dl-2-${idSuffix}`, text: 'Readiness and escalation playbook', done: false },
-      ]);
-    }
-
-    if (tasks.length === 0) setTasks(demoTasks);
-    if (dependencies.length === 0) setDependencies(demoDependencies);
-    if (stakeholders.length === 0) setStakeholders(demoStakeholders);
-    if (reminders.length === 0) setReminders(demoReminders);
-    if (escalationRules.length === 0) setEscalationRules(demoEscalationRules);
-    if (raidItems.length === 0) setRaidItems(demoRaid);
-    if (decisions.length === 0) setDecisions(demoDecisions);
-    if (comments.length === 0) setComments(demoComments);
-    if (linkedItems.length === 0) setLinkedItems(demoLinkedItems);
-    if (tags.length === 0) setTags(['pilot', 'automation', 'high-impact']);
-
-    setThresholds({
-      warningDays: 4,
-      criticalDays: 2,
-      showOverdueAlert: true,
-    });
-
-    if (!ownerId && users[0]?.id) setOwnerId(users[0].id);
-    if (!sponsorId && (users[1]?.id || users[0]?.id)) setSponsorId(users[1]?.id || users[0].id);
-    if (!targetDate) setTargetDate(dateOnlyInDays(30));
-    if (!startDate) setStartDate(dateOnlyInDays(-2));
-    if (!endDate) setEndDate(dateOnlyInDays(30));
-
-    setDemoDataInjected(true);
-    toast.success(isPolish ? 'Wypełniono dane testowe inicjatywy' : 'Initiative test data filled');
-  }, [
-    comments.length,
-    decisions.length,
-    demoDataInjected,
-    dependencies.length,
-    description,
-    endDate,
-    inScopeItems.length,
-    initiative,
-    initiativeId,
-    isLoading,
-    isPolish,
-    killCriteriaItems.length,
-    linkedItems.length,
-    outScopeItems.length,
-    ownerId,
-    raidItems.length,
-    reminders.length,
-    escalationRules.length,
-    sponsorId,
-    stakeholders.length,
-    startDate,
-    successCriteriaItems.length,
-    summary,
-    tags.length,
-    targetDate,
-    targetStateItems.length,
-    tasks.length,
-    users,
-  ]);
 
   // ==========================================
   // HANDLERS
@@ -3897,6 +3585,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleOpenTaskArtifact = useCallback(
     (taskId: string) => {
+      if (isShowcaseArtifactId(taskId)) {
+        toast(
+          isPolish
+            ? 'To zadanie demo jest pokazane w kontekście inicjatywy.'
+            : 'This demo task is presented inside the initiative view.'
+        );
+        return;
+      }
       if (onOpenTask) {
         onOpenTask(taskId);
         return;
@@ -3917,6 +3613,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleOpenDecisionArtifact = useCallback(
     (decisionId: string) => {
+      if (isShowcaseArtifactId(decisionId)) {
+        toast(
+          isPolish
+            ? 'Ta decyzja demo jest pokazana w kontekście inicjatywy.'
+            : 'This demo decision is presented inside the initiative view.'
+        );
+        return;
+      }
       if (onOpenDecision) {
         onOpenDecision(decisionId);
         return;
@@ -4370,7 +4074,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       comments: ['comments'],
       history: ['activity-log'],
       attachments: ['attachments-links'],
-      linkedItems: ['attachments-links'],
+      linkedItems: ['attachments-links', 'used-in'],
       kpis: ['kpi'],
     }),
     []
@@ -4499,6 +4203,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           attachments.length + linkedItems.length > 0
             ? attachments.length + linkedItems.length
             : undefined,
+        component: null,
+      },
+      {
+        id: 'used-in',
+        icon: Link2,
+        label: { en: 'Used in (backlinks)', pl: 'Użyte w (powiązania)' },
         component: null,
       },
       {
@@ -6747,6 +6457,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onDraftPriorityChange={setNCommentPriority}
                 onAIEnhance={() => handleGenerateAI('comments')}
                 isAIEnhancing={isGeneratingAI === 'comments'}
+                locked={!canEditCards}
                 getPriorityDotClass={getPriorityDotClass}
                 getCommentPriority={getCommentPriority}
                 getPriorityButtonClass={getPriorityButtonClass}
@@ -7252,7 +6963,59 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               }}
               onNavigateLinkedItem={openLinkedItemTarget}
               searchLinkedItems={searchLinkedItems}
+              readOnly={!canEditCards}
             />
+          );
+          break;
+        }
+
+        // ── V4-IDEA-09: Used in (backlinks) — LinkGraph parity with Ideas/Notebook/Tools ──
+        case 'used-in': {
+          const openBacklinkItem = (sourceType: string, sourceId: string) => {
+            window.dispatchEvent(
+              new CustomEvent('mywork-open-item', {
+                detail: { type: sourceType, id: sourceId, name: `${sourceType} ${sourceId}` },
+              })
+            );
+          };
+          component = (
+            <EmbeddedView
+              title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+              count={initiativeBacklinks.length}
+              loading={initiativeBacklinksLoading}
+              readOnly
+              viewModes={['list']}
+            >
+              {initiativeBacklinks.length === 0 && !initiativeBacklinksLoading ? (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                  {isPolish ? 'Brak powiązań' : 'No links yet'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {initiativeBacklinks.slice(0, 10).map((bl) => (
+                    <div
+                      key={bl.id}
+                      className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {getSourceDisplayLabel(bl.sourceType, isPolish)}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          {bl.sourceId}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                      >
+                        <ExternalLink size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </EmbeddedView>
           );
           break;
         }
@@ -7351,6 +7114,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     handleRemoveLinkedItem,
     searchLinkedItems,
     openLinkedItemTarget,
+    initiativeBacklinks,
+    initiativeBacklinksLoading,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {

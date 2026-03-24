@@ -17,6 +17,104 @@ const router = Router();
 router.use(defaultRateLimiter);
 
 // ==========================================
+// DEMO & TRIAL CONVERSION ANALYTICS
+// ==========================================
+
+/**
+ * GET /api/superadmin/analytics/demo-trial
+ * Demo/trial funnel analytics from conversion_events
+ */
+router.get(
+  '/demo-trial',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const days = 30;
+      const [
+        byType,
+        last7Demo,
+        last7Trial,
+        last7Paid,
+        trialWarnings,
+        recentEvents,
+      ] = await Promise.all([
+        dbAll(
+          `SELECT event_type, COUNT(*) as count FROM conversion_events
+           WHERE created_at > datetime('now', '-' || ? || ' days')
+           GROUP BY event_type`,
+          [days]
+        ),
+        dbGet(
+          `SELECT COUNT(*) as count FROM conversion_events
+           WHERE event_type = 'DEMO' AND created_at > datetime('now', '-7 days')`,
+          []
+        ),
+        dbGet(
+          `SELECT COUNT(*) as count FROM conversion_events
+           WHERE event_type = 'TRIAL_START' AND created_at > datetime('now', '-7 days')`,
+          []
+        ),
+        dbGet(
+          `SELECT COUNT(*) as count FROM conversion_events
+           WHERE event_type = 'PAID' AND created_at > datetime('now', '-7 days')`,
+          []
+        ),
+        dbGet(
+          `SELECT COUNT(*) as count FROM conversion_events
+           WHERE event_type = 'trial_expiry_warning_shown' AND created_at > datetime('now', '-' || ? || ' days')`,
+          [days]
+        ),
+        dbAll(
+          `SELECT id, event_type, organization_id, user_id, source, metadata, created_at
+           FROM conversion_events
+           WHERE created_at > datetime('now', '-' || ? || ' days')
+           ORDER BY created_at DESC LIMIT 50`,
+          [days]
+        ),
+      ]);
+
+      const byTypeMap = (byType || []).reduce((acc: Record<string, number>, row: any) => {
+        acc[row.event_type] = row.count;
+        return acc;
+      }, {});
+
+      return res.json({
+        summary: {
+          last7Days: {
+            demo: (last7Demo as any)?.count ?? 0,
+            trialStart: (last7Trial as any)?.count ?? 0,
+            paid: (last7Paid as any)?.count ?? 0,
+          },
+          last30Days: byTypeMap,
+          trialWarningsShown: (trialWarnings as any)?.count ?? 0,
+        },
+        recentEvents: (recentEvents || []).map((e: any) => {
+          let metadata: Record<string, unknown> | undefined;
+          try {
+            metadata = e.metadata ? JSON.parse(e.metadata) : undefined;
+          } catch {
+            metadata = undefined;
+          }
+          return {
+            id: e.id,
+            eventType: e.event_type,
+            organizationId: e.organization_id,
+            userId: e.user_id,
+            source: e.source,
+            metadata,
+            createdAt: e.created_at,
+          };
+        }),
+      });
+    } catch (error: any) {
+      logger.error('[Analytics] Demo-trial analytics error:', error);
+      return res.status(500).json({ error: error?.message || 'Failed to fetch demo-trial analytics' });
+    }
+  })
+);
+
+// ==========================================
 // ANALYTICS DASHBOARDS
 // ==========================================
 

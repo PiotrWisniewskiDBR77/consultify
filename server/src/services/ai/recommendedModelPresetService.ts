@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { listAITaskDefinitions } from './aiTaskCatalog.js';
 
 type PurposeKind = 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL';
 type Tier = 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING' | 'FREE';
@@ -47,57 +48,13 @@ const DEFAULT_PURPOSES: Array<{
   default_tier?: Tier | null;
   requirements?: any;
   description?: string;
-}> = [
-  // Chat
-  { purpose: 'chat_simple', kind: 'TEXT_LLM', default_tier: 'BUDGET' },
-  { purpose: 'chat_complex', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'chat_confirm', kind: 'TEXT_LLM', default_tier: 'BUDGET' },
-  // Tools / sessions
-  { purpose: 'tool_recommendation', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'session_missing_items', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'session_summary', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'assessment_explain', kind: 'TEXT_LLM', default_tier: 'PREMIUM' },
-  // Initiatives / governance
-  { purpose: 'validate_initiative', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'governance_risk_scan', kind: 'TEXT_LLM', default_tier: 'REASONING' },
-  { purpose: 'build_roadmap', kind: 'TEXT_LLM', default_tier: 'REASONING' },
-  // Results
-  { purpose: 'results_anomaly_insights', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'results_report_draft', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  // Reports / decks
-  { purpose: 'report_section', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'full_report', kind: 'TEXT_LLM', default_tier: 'REASONING' },
-  { purpose: 'deck_outline', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'deck_copy_polish', kind: 'TEXT_LLM', default_tier: 'BUDGET' },
-  // Deep Research (Evidence Ledger chain)
-  { purpose: 'deep_research_plan', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'deep_research_claims_extract', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'deep_research_synthesis', kind: 'TEXT_LLM', default_tier: 'REASONING' },
-  { purpose: 'deep_research_contradictions', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  { purpose: 'deep_research_export_polish', kind: 'TEXT_LLM', default_tier: 'BUDGET' },
-  { purpose: 'deep_research_quality_gate', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
-  // Vision
-  {
-    purpose: 'vision_extract',
-    kind: 'TEXT_LLM',
-    default_tier: 'STANDARD',
-    requirements: { vision: true },
-  },
-  {
-    purpose: 'vision_compare',
-    kind: 'TEXT_LLM',
-    default_tier: 'REASONING',
-    requirements: { vision: true },
-  },
-  // Images
-  { purpose: 'image_cover', kind: 'IMAGE_MODEL' },
-  { purpose: 'image_diagram', kind: 'IMAGE_MODEL' },
-  { purpose: 'image_slide_asset', kind: 'IMAGE_MODEL' },
-  // Business models (placeholders for v3)
-  { purpose: 'lean_suggestions', kind: 'BUSINESS_MODEL' },
-  { purpose: 'waste_detection', kind: 'BUSINESS_MODEL' },
-  { purpose: 'process_optimization', kind: 'BUSINESS_MODEL' },
-];
+}> = listAITaskDefinitions({ includeLegacy: true }).map((definition) => ({
+  purpose: definition.purpose,
+  kind: definition.kind as PurposeKind,
+  default_tier: (definition.defaultTier as Tier | null | undefined) ?? null,
+  requirements: definition.requirements,
+  description: definition.description,
+}));
 
 function envKeyForProvider(provider: ProviderKey): string | null {
   if (provider === 'openrouter') return 'OPENROUTER_API_KEY';
@@ -706,15 +663,23 @@ export async function applyRecommendedModelPreset(params: {
 
   await assignMany('chat_simple', chainFast, 10);
   await assignMany('chat_confirm', chainFast, 10);
-  await assignMany('deck_copy_polish', chainFast, 10);
+  await assignMany('deep_research_export_polish', chainFast, 10);
 
   await assignMany('chat_complex', [...chainFast, ...chainDeep], 10);
+  await assignMany('chat_with_files', [...chainFast, ...chainDeep], 10);
   await assignMany('tool_recommendation', [...chainFast, ...chainDeep], 10);
   await assignMany('session_missing_items', [...chainFast, ...chainDeep], 10);
+  await assignMany('presentation_slide_copy', [...chainFast, ...chainDeep], 10);
+  await assignMany('deck_copy_polish', [...chainFast, ...chainDeep], 10);
 
   await assignMany('session_summary', chainDeep.length ? chainDeep : chainFast, 10);
+  await assignMany('report_section_draft', chainDeep.length ? chainDeep : chainFast, 10);
   await assignMany('report_section', chainDeep.length ? chainDeep : chainFast, 10);
+  await assignMany('presentation_deck_outline', chainDeep.length ? chainDeep : chainFast, 10);
   await assignMany('deck_outline', chainDeep.length ? chainDeep : chainFast, 10);
+  await assignMany('chat_with_pdf', chainDeep.length ? chainDeep : chainFast, 10);
+  await assignMany('document_answer', chainDeep.length ? chainDeep : chainFast, 10);
+  await assignMany('document_extract', chainDeep.length ? chainDeep : chainFast, 10);
 
   // Deep Research purposes: prefer deep chain (quality + citations), fallback to fast.
   const chainResearchDeep = chainDeep.length ? chainDeep : chainFast;
@@ -723,14 +688,18 @@ export async function applyRecommendedModelPreset(params: {
   await assignMany('deep_research_synthesis', chainResearchDeep, 10);
   await assignMany('deep_research_contradictions', chainResearchDeep, 10);
   await assignMany('deep_research_quality_gate', chainResearchDeep, 10);
-  await assignMany('deep_research_export_polish', chainFast, 10);
 
+  await assignMany('report_executive_synthesis', chainDeep, 10);
+  await assignMany('report_evidence_validation', chainDeep, 10);
+  await assignMany('report_quality_gate', chainDeep.length ? chainDeep : chainFast, 10);
   await assignMany('full_report', chainDeep, 10);
   await assignMany('build_roadmap', chainDeep, 10);
   await assignMany('governance_risk_scan', chainDeep, 10);
   await assignMany('validate_initiative', chainDeep.length ? chainDeep : chainFast, 10);
 
   // Vision purposes: prefer deep chain (usually better multimodal), fallback to fast chain
+  await assignMany('document_compare', chainDeep.length ? chainDeep : chainFast, 10);
+  await assignMany('presentation_vision_qc', chainDeep.length ? chainDeep : chainFast, 10);
   await assignMany('vision_extract', chainDeep.length ? chainDeep : chainFast, 10);
   await assignMany('vision_compare', chainDeep.length ? chainDeep : chainFast, 10);
 
@@ -739,6 +708,7 @@ export async function applyRecommendedModelPreset(params: {
     Boolean
   ) as string[];
   if (imageChain.length > 0) {
+    await assignMany('presentation_visual_generation', imageChain, 10);
     await assignMany('image_cover', imageChain, 10);
     await assignMany('image_diagram', imageChain, 10);
     await assignMany('image_slide_asset', imageChain, 10);

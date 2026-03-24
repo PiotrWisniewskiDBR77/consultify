@@ -56,15 +56,23 @@ export const PaymentMethodsView: React.FC = () => {
         Api.getPaymentFailures(),
         Api.getPaymentFailureStats(),
       ]);
-      const methodsList = Array.isArray(methodsRes) ? methodsRes : (methodsRes as any)?.methods || [];
-      const failuresList = Array.isArray(failuresRes) ? failuresRes : (failuresRes as any)?.failures || [];
+      const methodsList = Array.isArray(methodsRes)
+        ? methodsRes
+        : (methodsRes as any)?.methods || [];
+      const failuresList = Array.isArray(failuresRes)
+        ? failuresRes
+        : (failuresRes as any)?.failures || [];
       setMethods(methodsList);
       setFailures(failuresList);
       const failureStats = statsRes as any;
       const totalMethods = methodsList.length;
-      const activeMethods = methodsList.filter((m: any) => m.is_active !== false && m.status !== 'expired').length;
+      const activeMethods = methodsList.filter(
+        (m: any) => m.is_active !== false && m.status !== 'expired'
+      ).length;
       const totalFailures = failureStats?.total || failuresList.length;
-      const pendingFailures = failureStats?.pending || failuresList.filter((f: any) => f.status === 'pending' || f.status === 'retrying').length;
+      const pendingFailures =
+        failureStats?.pending ||
+        failuresList.filter((f: any) => f.status === 'pending' || f.status === 'retrying').length;
       setStats({
         totalMethods,
         activeMethods,

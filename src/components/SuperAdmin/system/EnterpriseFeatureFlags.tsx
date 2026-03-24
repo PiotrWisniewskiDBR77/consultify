@@ -309,7 +309,9 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="text-sm text-slate-400 dark:text-slate-500">Total Flags</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{flags.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            {flags.length}
+          </div>
         </div>
         <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
           <div className="text-sm text-slate-400 dark:text-slate-500">Enabled</div>

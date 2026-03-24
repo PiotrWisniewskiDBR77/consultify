@@ -64,6 +64,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
+import { useAppStore } from '@/store/useAppStore';
+
 import { Api } from '../../../services/api';
 import type { PMOCategory } from '../../../types/myWork';
 import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
@@ -82,6 +84,12 @@ export type FocusItemType = 'task' | 'decision';
 
 export type FocusFilter = 'all' | 'tasks' | 'decisions';
 export type FocusSort = 'manual' | 'priority' | 'dueDate';
+
+type FocusRules = {
+  maxToday: number;
+  maxWeek: number;
+  capacityAware: boolean;
+};
 
 export interface FocusItem {
   id: string;
@@ -134,7 +142,12 @@ interface FocusViewProps {
 // ============================================================================
 
 const MAX_PER_COLUMN = 40;
-const MAX_TODAY_AUTO = 10;
+const FOCUS_TEMPLATE_STORAGE_KEY = 'consultify-focus-template';
+const FOCUS_RULE_TEMPLATES = {
+  balanced: { key: 'balanced', label: 'Balanced', maxToday: 5, maxWeek: 15, capacityAware: true },
+  deepWork: { key: 'deepWork', label: 'Deep Work', maxToday: 3, maxWeek: 10, capacityAware: true },
+  manager: { key: 'manager', label: 'Manager', maxToday: 7, maxWeek: 20, capacityAware: false },
+} as const;
 const PRIORITY_RANK: Record<string, number> = {
   urgent: 0,
   critical: 1,
@@ -150,6 +163,18 @@ const priorityBorderColor: Record<string, string> = {
   medium: 'border-l-blue-400',
   low: 'border-l-slate-300 dark:border-l-slate-600',
 };
+
+function loadFocusTemplateKey(): keyof typeof FOCUS_RULE_TEMPLATES {
+  try {
+    const stored = localStorage.getItem(FOCUS_TEMPLATE_STORAGE_KEY);
+    if (stored && stored in FOCUS_RULE_TEMPLATES) {
+      return stored as keyof typeof FOCUS_RULE_TEMPLATES;
+    }
+  } catch {
+    // ignore
+  }
+  return 'balanced';
+}
 
 const columnConfig: Record<
   FocusColumn,
@@ -887,6 +912,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
   controls,
 }) => {
   const { t } = useTranslation();
+  const currentUser = useAppStore((state) => state.currentUser);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FocusItem[]>([]);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
@@ -894,6 +920,19 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [internalShowAIPlan, setInternalShowAIPlan] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [focusRules, setFocusRules] = useState<FocusRules>({
+    maxToday: 5,
+    maxWeek: 15,
+    capacityAware: true,
+  });
+  const [workloadSummary, setWorkloadSummary] = useState<{
+    total: number;
+    overdue: number;
+    atRisk: number;
+  } | null>(null);
+  const [activeTemplate, setActiveTemplate] =
+    useState<keyof typeof FOCUS_RULE_TEMPLATES>(loadFocusTemplateKey);
+  const [rulesSaving, setRulesSaving] = useState(false);
 
   // Filters
   const [internalFilter, setInternalFilter] = useState<FocusFilter>('all');
@@ -934,11 +973,19 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const loadFocus = useCallback(async () => {
     try {
       setLoading(true);
-      const [tasksRes, decisionsRes, focusStateRes] = await Promise.all([
+      const [tasksRes, decisionsRes, focusStateRes, rulesRes, workloadRes] = await Promise.all([
         Api.get('/my-work/tasks?limit=200').catch(() => ({ tasks: [] })),
         Api.get('/my-work/decisions?limit=120').catch(() => ({ decisions: [] })),
         Api.get('/my-work/focus/state').catch(() => ({ items: [] })),
+        Api.getFocusRules().catch(() => ({ maxToday: 5, maxWeek: 15, capacityAware: true })),
+        Api.get('/tasks/my-workload').catch(() => ({ total: 0, overdue: 0, atRisk: 0 })),
       ]);
+      setFocusRules(rulesRes);
+      setWorkloadSummary({
+        total: Number((workloadRes as any)?.total || 0),
+        overdue: Number((workloadRes as any)?.overdue || 0),
+        atRisk: Number((workloadRes as any)?.atRisk || 0),
+      });
 
       const tasks = Array.isArray(tasksRes) ? tasksRes : tasksRes.tasks || [];
       const decisions = Array.isArray(decisionsRes) ? decisionsRes : decisionsRes.decisions || [];
@@ -1115,9 +1162,26 @@ export const FocusView: React.FC<FocusViewProps> = ({
       }
 
       // Cap Today at MAX_TODAY_AUTO; overflow spills to thisWeek
-      if (byCol.today.length > MAX_TODAY_AUTO) {
-        const overflow = byCol.today.splice(MAX_TODAY_AUTO);
+      if (byCol.today.length > focusRules.maxToday) {
+        const overflow = byCol.today.splice(focusRules.maxToday);
         byCol.thisWeek.unshift(...overflow.map((it) => ({ ...it, column: 'thisWeek' as const })));
+      }
+
+      if (focusRules.capacityAware) {
+        const activeWeekItems = byCol.thisWeek.filter((i) => !i.isCompleted);
+        if (
+          activeWeekItems.length + byCol.today.filter((i) => !i.isCompleted).length >
+          focusRules.maxWeek
+        ) {
+          const allowedWeek = Math.max(
+            0,
+            focusRules.maxWeek - byCol.today.filter((i) => !i.isCompleted).length
+          );
+          const overflow = activeWeekItems.slice(allowedWeek);
+          const overflowIds = new Set(overflow.map((item) => item.id));
+          byCol.thisWeek = byCol.thisWeek.filter((item) => !overflowIds.has(item.id));
+          byCol.later.unshift(...overflow.map((item) => ({ ...item, column: 'later' as const })));
+        }
       }
 
       const allItems = [
@@ -1133,7 +1197,29 @@ export const FocusView: React.FC<FocusViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [focusRules.capacityAware, focusRules.maxToday, focusRules.maxWeek, t]);
+
+  const persistFocusRules = useCallback(
+    async (nextRules: FocusRules, templateKey?: keyof typeof FOCUS_RULE_TEMPLATES) => {
+      try {
+        setRulesSaving(true);
+        setFocusRules(nextRules);
+        await Api.updateFocusRules(nextRules);
+        if (templateKey) {
+          setActiveTemplate(templateKey);
+          localStorage.setItem(FOCUS_TEMPLATE_STORAGE_KEY, templateKey);
+        }
+        toast.success(t('myWork.focus.rulesSaved', 'Focus rules updated'));
+        loadFocus();
+      } catch (error) {
+        console.error('Failed to persist focus rules:', error);
+        toast.error(t('myWork.focus.error', 'Failed to update'));
+      } finally {
+        setRulesSaving(false);
+      }
+    },
+    [loadFocus, t]
+  );
 
   useEffect(() => {
     loadFocus();
@@ -1176,6 +1262,54 @@ export const FocusView: React.FC<FocusViewProps> = ({
       later: filtered.filter((i) => i.column === 'later' && !todayIds.has(i.id)).sort(sortFn),
     };
   }, [items, filter, hideCompleted, sort]);
+
+  const activeCounts = useMemo(
+    () => ({
+      today: itemsByColumn.today.filter((item) => !item.isCompleted).length,
+      thisWeek: itemsByColumn.thisWeek.filter((item) => !item.isCompleted).length,
+      later: itemsByColumn.later.filter((item) => !item.isCompleted).length,
+    }),
+    [itemsByColumn]
+  );
+
+  const canMoveToColumn = useCallback(
+    (targetColumn: FocusColumn, movingItemId?: string) => {
+      const todayCount = itemsByColumn.today.filter(
+        (item) => !item.isCompleted && item.id !== movingItemId
+      ).length;
+      const thisWeekTotal =
+        itemsByColumn.today.filter((item) => !item.isCompleted && item.id !== movingItemId).length +
+        itemsByColumn.thisWeek.filter((item) => !item.isCompleted && item.id !== movingItemId)
+          .length;
+
+      if (targetColumn === 'today' && todayCount >= focusRules.maxToday) {
+        toast.error(
+          t(
+            'myWork.focus.limitToday',
+            'Today limit reached. Adjust focus rules or move something out.'
+          )
+        );
+        return false;
+      }
+
+      if (
+        focusRules.capacityAware &&
+        (targetColumn === 'today' || targetColumn === 'thisWeek') &&
+        thisWeekTotal >= focusRules.maxWeek
+      ) {
+        toast.error(
+          t(
+            'myWork.focus.limitWeek',
+            'This week capacity is full. Move items to Later or increase the weekly limit.'
+          )
+        );
+        return false;
+      }
+
+      return true;
+    },
+    [focusRules.capacityAware, focusRules.maxToday, focusRules.maxWeek, itemsByColumn, t]
+  );
 
   // Flat list for keyboard navigation
   const flatItems = useMemo(
@@ -1348,6 +1482,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
         .map((it, idx) => ({ ...it, position: idx }));
       const targetItems = [...itemsByColumn[targetCol]];
       const insertAt = targetItems.findIndex((i) => i.id === over.id);
+      if (!canMoveToColumn(targetCol, activeItem.id)) {
+        loadFocus();
+        return;
+      }
       const moving: FocusItem = { ...activeItem, column: targetCol };
       targetItems.splice(insertAt >= 0 ? insertAt : targetItems.length, 0, moving);
       const targetItemsRe = targetItems.map((it, idx) => ({ ...it, position: idx }));
@@ -1414,6 +1552,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
   const handleSnooze = async (item: FocusItem, targetColumn: FocusColumn) => {
     if (item.column === targetColumn) return;
+    if (!canMoveToColumn(targetColumn, item.id)) return;
 
     try {
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, column: targetColumn } : i)));
@@ -1483,6 +1622,151 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
   return (
     <div className="p-4 h-full min-h-0">
+      <div className="mb-4 grid grid-cols-1 xl:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {t('myWork.focus.rules', 'Focus rules')}
+              </div>
+              <div className="mt-1 text-sm font-semibold text-navy-900 dark:text-white">
+                {t('myWork.focus.owner', 'Planner')}{' '}
+                {currentUser?.firstName || currentUser?.email || ''}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {activeCounts.today}/{focusRules.maxToday}{' '}
+                {t('myWork.focus.columns.today', 'Today')} ·{' '}
+                {activeCounts.today + activeCounts.thisWeek}/{focusRules.maxWeek}{' '}
+                {t('myWork.focus.columns.thisWeek', 'This Week')}
+              </div>
+            </div>
+            {rulesSaving ? (
+              <Loader2 size={16} className="animate-spin text-brand" />
+            ) : (
+              <Target size={16} className="text-brand" />
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(Object.keys(FOCUS_RULE_TEMPLATES) as (keyof typeof FOCUS_RULE_TEMPLATES)[]).map(
+              (key) => {
+                const template = FOCUS_RULE_TEMPLATES[key];
+                const active = activeTemplate === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() =>
+                      persistFocusRules(
+                        {
+                          maxToday: template.maxToday,
+                          maxWeek: template.maxWeek,
+                          capacityAware: template.capacityAware,
+                        },
+                        key
+                      )
+                    }
+                    className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
+                      active
+                        ? 'border-brand/40 bg-brand/10 text-brand'
+                        : 'border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <Sparkles size={12} />
+                    {template.label}
+                  </button>
+                );
+              }
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {t('myWork.focus.capacity', 'Capacity summary')}
+          </div>
+          <div className="mt-2 flex items-center gap-4">
+            <div>
+              <div className="text-lg font-semibold text-navy-900 dark:text-white">
+                {workloadSummary?.total ?? 0}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('myWork.focus.openItems', 'Open items')}
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                {workloadSummary?.atRisk ?? 0}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('myWork.focus.atRisk', 'At risk')}
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-rose-600 dark:text-rose-400">
+                {workloadSummary?.overdue ?? 0}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('myWork.focus.overdue', 'Overdue')}
+              </div>
+            </div>
+          </div>
+          <label className="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={focusRules.capacityAware}
+              onChange={(e) =>
+                persistFocusRules(
+                  { ...focusRules, capacityAware: e.target.checked },
+                  activeTemplate
+                )
+              }
+            />
+            {t('myWork.focus.capacityAware', 'Keep week capacity-aware')}
+          </label>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {t('myWork.focus.limits', 'Limits')}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <label className="text-xs text-slate-600 dark:text-slate-300">
+              {t('myWork.focus.maxToday', 'Max today')}
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={focusRules.maxToday}
+                onChange={(e) =>
+                  setFocusRules((prev) => ({
+                    ...prev,
+                    maxToday: Math.max(1, Math.min(20, Number(e.target.value) || 1)),
+                  }))
+                }
+                onBlur={() => persistFocusRules(focusRules, activeTemplate)}
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2"
+              />
+            </label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">
+              {t('myWork.focus.maxWeek', 'Max this week')}
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={focusRules.maxWeek}
+                onChange={(e) =>
+                  setFocusRules((prev) => ({
+                    ...prev,
+                    maxWeek: Math.max(1, Math.min(50, Number(e.target.value) || 1)),
+                  }))
+                }
+                onBlur={() => persistFocusRules(focusRules, activeTemplate)}
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
       {/* Kanban Board + Right panel (KANON v3: no extra toolbars in content) */}
       {items.length > 0 ? (
         <div className="flex gap-3 min-h-0 h-full">
@@ -1525,7 +1809,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
               style={{ width: 'clamp(340px, 28%, 480px)' }}
             >
-              <PreviewPaneShell title={t('myWork.focus.aiPlan', 'AI Plan')} onClose={() => setShowAIPlan(false)}>
+              <PreviewPaneShell
+                title={t('myWork.focus.aiPlan', 'AI Plan')}
+                onClose={() => setShowAIPlan(false)}
+              >
                 <AIPlanView embedded onClose={() => setShowAIPlan(false)} />
               </PreviewPaneShell>
             </div>
@@ -1568,7 +1855,8 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           thisWeek: 'later',
                           later: 'later',
                         };
-                        if (selectedItem.column !== 'later') handleSnooze(selectedItem, next[selectedItem.column]);
+                        if (selectedItem.column !== 'later')
+                          handleSnooze(selectedItem, next[selectedItem.column]);
                       }}
                       disabled={selectedItem.column === 'later'}
                       className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"

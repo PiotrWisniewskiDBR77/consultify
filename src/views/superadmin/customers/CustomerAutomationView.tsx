@@ -105,7 +105,9 @@ const CustomerAutomationView: React.FC = () => {
     }
   };
 
-  const safeParseJson = (value: string): { ok: true; value: any } | { ok: false; error: string } => {
+  const safeParseJson = (
+    value: string
+  ): { ok: true; value: any } | { ok: false; error: string } => {
     if (!value?.trim()) return { ok: true, value: {} };
     try {
       const parsed = JSON.parse(value);
@@ -244,9 +246,7 @@ const CustomerAutomationView: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">{rules.length}</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Total Rules
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Total Rules</span>
             </div>
           </div>
         </Card>
@@ -257,9 +257,7 @@ const CustomerAutomationView: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">{activeRules}</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Active Rules
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Active Rules</span>
             </div>
           </div>
         </Card>
@@ -270,9 +268,7 @@ const CustomerAutomationView: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalExecutions}</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Total Executions
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Total Executions</span>
             </div>
           </div>
         </Card>
@@ -286,9 +282,7 @@ const CustomerAutomationView: React.FC = () => {
         {rules.length === 0 ? (
           <div className="text-center py-8">
             <Zap className="w-12 h-12 text-gray-600 dark:text-gray-400 mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">
-              No automation rules configured
-            </p>
+            <p className="text-slate-600 dark:text-slate-400">No automation rules configured</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="mt-4 text-blue-400 hover:text-blue-300"
@@ -536,7 +530,9 @@ const CustomerAutomationView: React.FC = () => {
                 <pre className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
                   {(() => {
                     const parsed = safeParseJson(selectedRule.trigger_config || '{}');
-                    return parsed.ok ? JSON.stringify(parsed.value, null, 2) : selectedRule.trigger_config;
+                    return parsed.ok
+                      ? JSON.stringify(parsed.value, null, 2)
+                      : selectedRule.trigger_config;
                   })()}
                 </pre>
               </div>
@@ -547,7 +543,9 @@ const CustomerAutomationView: React.FC = () => {
                 <pre className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
                   {(() => {
                     const parsed = safeParseJson(selectedRule.action_config || '{}');
-                    return parsed.ok ? JSON.stringify(parsed.value, null, 2) : selectedRule.action_config;
+                    return parsed.ok
+                      ? JSON.stringify(parsed.value, null, 2)
+                      : selectedRule.action_config;
                   })()}
                 </pre>
               </div>
@@ -562,9 +560,7 @@ const CustomerAutomationView: React.FC = () => {
                   <Loader2 className="w-4 h-4 animate-spin" /> Loading…
                 </div>
               ) : ruleExecutions.length === 0 ? (
-                <div className="text-sm text-slate-600 dark:text-slate-400">
-                  No executions yet.
-                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">No executions yet.</div>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                   {ruleExecutions.map((ex, idx) => (

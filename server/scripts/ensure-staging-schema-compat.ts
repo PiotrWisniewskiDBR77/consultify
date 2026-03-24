@@ -1,4 +1,6 @@
 #!/usr/bin/env tsx
+import '../src/config/loadEnv.js';
+
 /**
  * Ensure STAGING DB schema is compatible with current backend expectations.
  *
@@ -11,16 +13,25 @@
  *   ENV_FILE=.env.staging.local npx tsx server/scripts/ensure-staging-schema-compat.ts
  */
 
-import dotenv from 'dotenv';
 import { Pool } from 'pg';
 
-dotenv.config({ path: process.env.ENV_FILE || '.env.staging.local' });
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
+import {
+  assertNoPrivateRailwayDbHostOutsideRailway,
+  resolveReachableDatabaseUrl,
+} from '../src/config/databaseTargetResolver.js';
 
-const databaseUrl = process.env.DATABASE_URL;
+assertNoPrivateRailwayDbHostOutsideRailway(process.env);
+const resolvedDb = resolveReachableDatabaseUrl({
+  databaseUrl: process.env.DATABASE_URL,
+  publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+});
+const databaseUrl = resolvedDb.databaseUrl;
 if (!databaseUrl) {
   throw new Error('DATABASE_URL is required');
+}
+if (resolvedDb.reason) {
+  // eslint-disable-next-line no-console
+  console.warn(`[ensure-staging-schema-compat] ${resolvedDb.reason}`);
 }
 
 const pool = new Pool({ connectionString: databaseUrl });

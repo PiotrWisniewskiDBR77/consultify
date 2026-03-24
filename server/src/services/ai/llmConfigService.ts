@@ -53,6 +53,10 @@ type ProviderRow = {
 
 export type ProviderConfig = ProviderRow & {
   id: string;
+  rowId?: string;
+  modelId?: string;
+  apiKey?: string | null;
+  isDefault?: boolean;
   supportsStreaming: boolean;
   supportsVision: boolean;
   supportsTools: boolean;
@@ -121,7 +125,7 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     name: 'Anthropic Claude',
     envKey: 'ANTHROPIC_API_KEY',
     defaultEndpoint: 'https://api.anthropic.com/v1/messages',
-    defaultModel: 'claude-3-5-sonnet-20241022',
+    defaultModel: 'claude-sonnet-4-6',
     costPer1k: 0.015,
     supportsStreaming: true,
     supportsVision: true,
@@ -310,6 +314,64 @@ export class LLMConfigService {
     this.cacheTTL = 5 * 60 * 1000;
     this.healthStatus = new Map();
     this.initialized = false;
+  }
+
+  private getProviderCacheKey(
+    row: Pick<ProviderRow, 'id' | 'provider' | 'model_id'> | Pick<ProviderConfig, 'provider' | 'id'>
+  ): string {
+    const provider = String(row.provider || '')
+      .trim()
+      .toLowerCase();
+    const rawId = 'model_id' in row ? row.model_id : row.id;
+    const identity = String(rawId || '').trim();
+    if (provider && identity) return `${provider}::${identity.toLowerCase()}`;
+    if (provider) return provider;
+    return identity.toLowerCase();
+  }
+
+  private selectPreferredProviderConfig(
+    providerKey: string,
+    providers: ProviderConfig[]
+  ): ProviderConfig | null {
+    const normalizedKey = String(providerKey || '')
+      .trim()
+      .toLowerCase();
+    if (!normalizedKey) return null;
+
+    const direct = providers.find(
+      (provider) => this.getProviderCacheKey(provider) === normalizedKey
+    );
+    if (direct) return direct;
+
+    const candidates = providers
+      .filter((provider) => {
+        const providerName = String(provider.provider || '')
+          .trim()
+          .toLowerCase();
+        const providerModelId = String(provider.model_id || provider.id || '')
+          .trim()
+          .toLowerCase();
+        const rowId = String((provider as any).rowId || '')
+          .trim()
+          .toLowerCase();
+        return (
+          providerName === normalizedKey ||
+          providerModelId === normalizedKey ||
+          rowId === normalizedKey
+        );
+      })
+      .sort((a, b) => {
+        const defaultDelta =
+          Number(Boolean(b.is_default ?? b.isDefault)) - Number(Boolean(a.is_default ?? a.isDefault));
+        if (defaultDelta !== 0) return defaultDelta;
+        const priorityDelta = Number(b.priority || 0) - Number(a.priority || 0);
+        if (priorityDelta !== 0) return priorityDelta;
+        const activeDelta = Number(Boolean(b.is_active)) - Number(Boolean(a.is_active));
+        if (activeDelta !== 0) return activeDelta;
+        return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+      });
+
+    return candidates[0] || null;
   }
 
   async initialize(): Promise<void> {
@@ -657,7 +719,8 @@ export class LLMConfigService {
     try {
       const openrouterRow = await this.getProviderFromDb('openrouter');
       const hasOpenrouterKey =
-        !!String(openrouterRow?.api_key || '').trim() || !!String(this.getApiKeyFromEnv('openrouter') || '').trim();
+        !!String(openrouterRow?.api_key || '').trim() ||
+        !!String(this.getApiKeyFromEnv('openrouter') || '').trim();
       if (hasOpenrouterKey) {
         await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider != ?', [
           false,
@@ -835,7 +898,10 @@ export class LLMConfigService {
       return Array.from(this.providerCache.values()).map((provider) => ({
         ...provider,
         healthStatus:
-          this.healthStatus.get(provider.provider) || provider.healthStatus || 'unknown',
+          this.healthStatus.get(this.getProviderCacheKey(provider)) ||
+          this.healthStatus.get(provider.provider) ||
+          provider.healthStatus ||
+          'unknown',
       }));
     }
 
@@ -845,7 +911,7 @@ export class LLMConfigService {
 
     this.providerCache.clear();
     for (const row of rows || []) {
-      this.providerCache.set(row.provider, this.enrichProviderConfig(row));
+      this.providerCache.set(this.getProviderCacheKey(row), this.enrichProviderConfig(row));
     }
     this.cacheExpiry = Date.now() + this.cacheTTL;
 
@@ -853,8 +919,11 @@ export class LLMConfigService {
   }
 
   async getProviderConfig(providerId: string): Promise<ProviderConfig | null> {
-    if (this.providerCache.has(providerId) && this.cacheExpiry > Date.now()) {
-      return this.providerCache.get(providerId) || null;
+    const cachedProviders =
+      this.cacheExpiry > Date.now() ? Array.from(this.providerCache.values()) : [];
+    if (cachedProviders.length > 0) {
+      const cached = this.selectPreferredProviderConfig(providerId, cachedProviders);
+      if (cached) return cached;
     }
 
     // Best-effort initialization so callers can use the service without
@@ -862,12 +931,15 @@ export class LLMConfigService {
     // If DB is unavailable, fall back to env-only config.
     try {
       await this.initialize();
-      const dbProvider = await this.getProviderFromDb(providerId);
+      const dbProvider = (await this.getProviderById(providerId)) || (await this.getProviderFromDb(providerId));
       if (dbProvider) {
         const enriched = this.enrichProviderConfig(dbProvider);
-        this.providerCache.set(providerId, enriched);
+        this.providerCache.set(this.getProviderCacheKey(dbProvider), enriched);
         return enriched;
       }
+      const providers = await this.getAllProviders(false);
+      const selected = this.selectPreferredProviderConfig(providerId, providers);
+      if (selected) return selected;
     } catch (err: unknown) {
       aiLogger.warn(
         'LLMConfigService',
@@ -909,7 +981,11 @@ export class LLMConfigService {
 
     return {
       ...dbRow,
+      rowId: dbRow.id,
       id: dbRow.model_id || dbRow.id || dbRow.provider,
+      modelId: dbRow.model_id || dbRow.id || dbRow.provider,
+      apiKey: dbRow.api_key,
+      isDefault: Boolean(dbRow.is_default),
       supportsStreaming: definition.supportsStreaming ?? true,
       supportsVision: definition.supportsVision ?? false,
       supportsTools: definition.supportsTools ?? false,
@@ -917,7 +993,11 @@ export class LLMConfigService {
       requiresJWT: definition.requiresJWT || false,
       isLocal: definition.isLocal || false,
       isConfigured: !!dbRow.api_key,
-      healthStatus: this.healthStatus.get(dbRow.provider) || 'unknown',
+      healthStatus:
+        this.healthStatus.get(this.getProviderCacheKey(dbRow)) ||
+        this.healthStatus.get(dbRow.provider) ||
+        dbRow.health_status ||
+        'unknown',
     };
   }
 
@@ -925,7 +1005,7 @@ export class LLMConfigService {
     const providers = await this.getAllProviders();
     const configured = providers.filter((provider) => provider.isConfigured && provider.is_active);
 
-    return configured
+    const ordered = configured
       .sort((a, b) => {
         const healthScore: Record<string, number> = {
           healthy: 3,
@@ -941,7 +1021,10 @@ export class LLMConfigService {
 
         return (b.priority || 0) - (a.priority || 0);
       })
-      .map((provider) => provider.provider);
+      .map((provider) => String(provider.provider || '').toLowerCase())
+      .filter(Boolean);
+
+    return Array.from(new Set(ordered));
   }
 
   async getNextFallback(

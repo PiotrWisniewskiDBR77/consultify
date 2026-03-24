@@ -149,9 +149,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-slate-500 w-10 text-right">
-                        {views}
-                      </span>
+                      <span className="text-[10px] text-slate-500 w-10 text-right">{views}</span>
                       {avgDur > 0 && (
                         <span className="text-[9px] text-slate-400 w-12 text-right">
                           {(avgDur / 1000).toFixed(1)}s

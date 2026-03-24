@@ -1,0 +1,9 @@
+{
+  "name": "basic-profit-and-loss",
+  "fileName": "sample-profit-loss.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 4,
+  "expectedMinMapped": 3,
+  "text": "Profit and Loss Statement\nFor the year ended 2025\nRevenue 2025 2400 2024 2100\nCost of goods sold 2025 (1500) 2024 (1300)\nGross profit 2025 900 2024 800\nOperating expenses 2025 (300) 2024 (260)\nEBITDA 2025 600 2024 540\nEBIT 2025 520 2024 470\nNet income 2025 410 2024 360"
+}

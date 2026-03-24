@@ -389,7 +389,7 @@ export class EscalationService {
   }> {
     const decision = await queryHelpers.queryOne<DecisionRow>(
       `SELECT d.*, 
-        (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blocked_count
+        (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE) as blocked_count
        FROM decisions d
        WHERE d.id = ?`,
       [decisionId]
@@ -425,7 +425,7 @@ export class EscalationService {
   }> {
     const decisions = await queryHelpers.queryAll<DecisionRow>(
       `SELECT d.*, 
-        (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blocked_count
+        (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE) as blocked_count
        FROM decisions d
        WHERE d.organization_id = ?
        AND d.status IN ('pending', 'escalated')`,

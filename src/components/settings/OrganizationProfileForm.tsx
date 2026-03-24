@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { OrganizationContextOverview } from './OrganizationContextOverview';
 
 interface OrganizationProfileFormProps {
   currentUser: User;
@@ -352,6 +353,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
   });
 
   const effectiveOrgId = organizationId || currentUser.organizationId;
+  const canRebuildContext = ['admin', 'administrator', 'owner', 'superadmin', 'super_admin'].includes(
+    String(currentUser?.role || '')
+      .trim()
+      .toLowerCase()
+  );
 
   useEffect(() => {
     if (effectiveOrgId) {
@@ -543,6 +549,11 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           Refresh
         </button>
       </div>
+
+      <OrganizationContextOverview
+        organizationId={effectiveOrgId}
+        canRebuild={canRebuildContext}
+      />
 
       {/* Sections */}
       <div className="space-y-4">

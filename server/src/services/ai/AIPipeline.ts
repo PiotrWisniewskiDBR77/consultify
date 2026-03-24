@@ -23,6 +23,7 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
+import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
 
@@ -239,14 +240,23 @@ export class AIPipeline {
       (request as any)._modelConfigForLog = {
         provider: modelConfig?.provider || null,
         model: modelConfig?.model || null,
+        releaseBundleId: (modelConfig as any)?.releaseBundleId || null,
+        promptKey: (modelConfig as any)?.promptKey || null,
+        promptVersion: (modelConfig as any)?.promptVersion || null,
+        policyVersion: (modelConfig as any)?.policyVersion || null,
       };
 
       // 6b. Enforce AI Budgets + Model Permissions (SuperAdmin)
       const budgetsEnabled =
-        String(process.env.AI_BUDGETS_ENABLED || '').trim().toLowerCase() !== 'false';
+        String(process.env.AI_BUDGETS_ENABLED || '')
+          .trim()
+          .toLowerCase() !== 'false';
       const orgId = request.organizationId;
       const userId = request.userId;
-      const normalizeModelId = (m: string) => String(m || '').split('/').pop() || String(m || '');
+      const normalizeModelId = (m: string) =>
+        String(m || '')
+          .split('/')
+          .pop() || String(m || '');
 
       let aiBudgetService: any = null;
       const getAiBudgetService = async () => {
@@ -257,19 +267,25 @@ export class AIPipeline {
       };
 
       const enforceBudgetsAndPerms = async (provider: string, modelId: string) => {
-        if (!budgetsEnabled || !orgId || !userId) return { allowed: true, warnings: [] as string[] };
+        if (!budgetsEnabled || !orgId || !userId)
+          return { allowed: true, warnings: [] as string[] };
         const svc = await getAiBudgetService();
 
         // Explicit deny rules (we treat permissions as "deny list" by default)
         try {
           const perms = await svc.getModelPermissions(String(orgId), 'organization', String(orgId));
           const normalized = normalizeModelId(modelId);
-          const hit = (perms || []).find((p: any) => p?.modelId === modelId || p?.modelId === normalized);
+          const hit = (perms || []).find(
+            (p: any) => p?.modelId === modelId || p?.modelId === normalized
+          );
           if (hit && hit.isAllowed === false) {
             throw new Error(`Model not allowed by policy: ${modelId}`);
           }
           if (hit?.maxTokensPerRequest && Number(hit.maxTokensPerRequest) > 0) {
-            modelConfig.maxTokens = Math.min(modelConfig.maxTokens, Number(hit.maxTokensPerRequest));
+            modelConfig.maxTokens = Math.min(
+              modelConfig.maxTokens,
+              Number(hit.maxTokensPerRequest)
+            );
           }
         } catch (permErr: any) {
           // If permissions table is not available, don't break AI (best-effort).
@@ -388,7 +404,10 @@ export class AIPipeline {
             }
           }
         } catch (e: any) {
-          logger.warn('[AIPipeline] Streaming budget record failed:', String(e?.message || e || '').slice(0, 200));
+          logger.warn(
+            '[AIPipeline] Streaming budget record failed:',
+            String(e?.message || e || '').slice(0, 200)
+          );
         }
 
         return {
@@ -408,7 +427,12 @@ export class AIPipeline {
 
       // 7. Execute with provider (non-streaming)
       await enforceBudgetsAndPerms(modelConfig.provider, modelConfig.model);
-      const response = await this.executeWithProvider(prompt, modelConfig, request.options);
+      const response = await this.executeWithProvider(
+        request,
+        prompt,
+        modelConfig,
+        request.options
+      );
 
       // 8. Post-process response
       const processedResponse = await this.postProcess(response, capability);
@@ -427,7 +451,10 @@ export class AIPipeline {
           });
         }
       } catch (e: any) {
-        logger.warn('[AIPipeline] Budget record failed:', String(e?.message || e || '').slice(0, 200));
+        logger.warn(
+          '[AIPipeline] Budget record failed:',
+          String(e?.message || e || '').slice(0, 200)
+        );
       }
 
       // 9. Log and track
@@ -1766,11 +1793,17 @@ export class AIPipeline {
     maxTokens: number;
     endpoint?: string | null;
     apiKey?: string | null;
+    routingTrace?: any;
+    releaseBundleId?: string | null;
+    promptKey?: string | null;
+    promptVersion?: string | null;
+    policyVersion?: string | null;
   }> {
     // 1) Explicit overrides from request options (user-selected model or direct provider/model)
     const selectedTier = request.options?.selectedTier;
     const explicitModel = request.options?.selectedModelId || request.options?.model;
     const explicitProvider = request.options?.provider;
+    const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
 
     if (explicitModel) {
       // Fast-path for local inference: user-provided Ollama does not require a DB provider row.
@@ -1784,6 +1817,27 @@ export class AIPipeline {
           maxTokens: request.options?.maxTokens || capability.maxTokens,
           endpoint,
           apiKey: null,
+          routingTrace: {
+            requestedPurpose: request.purpose || request.capability || null,
+            normalizedPurpose: request.purpose || request.capability || null,
+            organizationId: request.organizationId || null,
+            tier: selectedTier || 'STANDARD',
+            selected: {
+              provider: 'ollama',
+              id: explicitModel,
+              tier: selectedTier || 'STANDARD',
+              source: 'explicit_model',
+            },
+            candidates: [
+              {
+                provider: 'ollama',
+                id: explicitModel,
+                tier: selectedTier || 'STANDARD',
+                source: 'explicit_model',
+              },
+            ],
+            skipped: [],
+          },
         };
       }
 
@@ -1798,25 +1852,80 @@ export class AIPipeline {
         : cfg.endpoint;
 
       logger.info(`[AIPipeline] Selected explicit model: ${provider}/${cfg.id}`);
+      const explicitTrace = {
+        requestedPurpose: request.purpose || request.capability || null,
+        normalizedPurpose: request.purpose || request.capability || null,
+        organizationId: request.organizationId || null,
+        tier: tierForConfig,
+        selected: {
+          provider,
+          id: cfg.id,
+          tier: tierForConfig,
+          source: 'explicit_model',
+        },
+        candidates: [
+          {
+            provider,
+            id: cfg.id,
+            tier: tierForConfig,
+            source: 'explicit_model',
+          },
+        ],
+        skipped: [],
+      };
+      (request as any)._routingTrace = explicitTrace;
+      (request as any)._routingParams = {
+        capability: routingCapability,
+        purpose: request.purpose || routingCapability,
+        organizationId: request.organizationId,
+        tier: tierForConfig,
+        options: { tier: tierForConfig },
+      };
       return {
         provider,
         model: cfg.id,
         maxTokens: request.options?.maxTokens || capability.maxTokens,
         endpoint,
         apiKey: cfg.apiKey,
+        routingTrace: explicitTrace,
       };
     }
 
-    // 2) Dynamic routing by tier/capability
-    const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
+    // 2) Dynamic routing by tier/purpose
+    const attachmentDocIdsRaw =
+      (request.context as any)?.attachmentDocIds ||
+      (Array.isArray((request.context as any)?.attachments)
+        ? (request.context as any)?.attachments.map((a: any) => a?.docId).filter(Boolean)
+        : []);
+    const resolvedPurpose =
+      normalizePurposeKey(request.purpose) ||
+      (routingCapability === 'chat'
+        ? inferChatTaskPurpose({
+            explicitPurpose: request.purpose,
+            capability: routingCapability,
+            message: request.prompt,
+            attachments: ((request.context as any)?.attachments || []) as any[],
+            attachmentDocIds: attachmentDocIdsRaw,
+            deepResearch: Boolean((request.options as any)?.aiModes?.deepResearch),
+          })
+        : normalizePurposeKey(routingCapability) || routingCapability);
     const routed = await modelRouter.select({
       capability: routingCapability,
-      purpose: request.purpose || routingCapability,
+      purpose: resolvedPurpose,
       dataClass: (request as any).dataClass,
       organizationId: request.organizationId,
       options: { tier: selectedTier },
       tier: selectedTier,
     } as any);
+    (request as any)._routingTrace = (routed as any).routingTrace || null;
+    (request as any)._routingParams = {
+      capability: routingCapability,
+      purpose: resolvedPurpose,
+      dataClass: (request as any).dataClass,
+      organizationId: request.organizationId,
+      options: { tier: selectedTier },
+      tier: selectedTier,
+    };
 
     logger.info(
       `[AIPipeline] Routed model: ${routed.provider}/${routed.id} (tier: ${routed.tier})`
@@ -1828,10 +1937,16 @@ export class AIPipeline {
       maxTokens: request.options?.maxTokens || capability.maxTokens,
       endpoint: routed.endpoint,
       apiKey: routed.apiKey,
+      routingTrace: (routed as any).routingTrace,
+        releaseBundleId: (routed as any).releaseBundleId || null,
+        promptKey: (routed as any).promptKey || null,
+        promptVersion: (routed as any).promptVersion || null,
+        policyVersion: (routed as any).policyVersion || null,
     };
   }
 
   private async executeWithProvider(
+    request: AIPipelineRequest,
     messages: ChatMessage[],
     modelConfig: {
       provider: string;
@@ -1839,6 +1954,11 @@ export class AIPipeline {
       maxTokens: number;
       endpoint?: string | null;
       apiKey?: string | null;
+      routingTrace?: any;
+      releaseBundleId?: string | null;
+      promptKey?: string | null;
+      promptVersion?: string | null;
+      policyVersion?: string | null;
     },
     options?: AIOptions
   ): Promise<{
@@ -1893,35 +2013,53 @@ export class AIPipeline {
         `[AIPipeline] Primary provider failed (${modelConfig.provider}/${modelConfig.model}): ${primaryMsg.slice(0, 200)}`
       );
 
-      const tierForFallback = ((options as any)?.selectedTier || 'STANDARD') as any;
-      const fallbackChain: string[] =
-        typeof (modelRouter as any).getFallbackChain === 'function'
-          ? ((modelRouter as any).getFallbackChain(tierForFallback) as string[])
-          : [];
-
-      const candidateModelIds = Array.from(new Set(fallbackChain.filter(Boolean))) as string[];
-
       let lastError: Error | null = primaryError as Error;
-      for (const candidateModelId of candidateModelIds) {
-        if (candidateModelId === modelConfig.model) continue;
+      const routeCandidates =
+        (await (modelRouter as any).getRuntimeFallbackCandidates?.(
+          (request as any)._routingParams || {
+            capability: request.capability === 'chatStream' ? 'chat' : request.capability,
+            purpose: (request as any).purpose || request.capability,
+            dataClass: (request as any).dataClass,
+            organizationId: request.organizationId,
+            options: { tier: (options as any)?.selectedTier },
+            tier: (options as any)?.selectedTier,
+          },
+          [modelConfig.model]
+        )) || [];
+
+      for (const candidate of routeCandidates) {
+        if (candidate.id === modelConfig.model) continue;
         try {
-          const cfg = await modelRouter.getProviderConfig(candidateModelId, tierForFallback);
-          const providerId = String((cfg as any)?.provider || '');
-          const modelId = String((cfg as any)?.id || candidateModelId);
-          const apiKey = (cfg as any)?.apiKey;
-          const endpoint = (cfg as any)?.endpoint;
+          const providerId = String((candidate as any)?.provider || '');
+          const modelId = String((candidate as any)?.id || '');
+          const apiKey = (candidate as any)?.apiKey;
+          const endpoint = (candidate as any)?.endpoint;
 
           const isConfigured =
             providerId.toLowerCase() === 'ollama' ||
             (typeof apiKey === 'string' && apiKey.trim().length > 0);
           if (!isConfigured) continue;
 
-          logger.info(`[AIPipeline] Attempting fallback: ${providerId}/${modelId}`);
+          logger.info(
+            `[AIPipeline] Attempting fallback: ${providerId}/${modelId} (source: ${String((candidate as any)?.source || 'runtime')})`
+          );
+          (request as any)._routingTrace =
+            (candidate as any)?.routingTrace || (request as any)._routingTrace;
+          (request as any)._modelConfigForLog = {
+            provider: providerId,
+            model: modelId,
+            releaseBundleId: (candidate as any)?.releaseBundleId || null,
+            promptKey: (candidate as any)?.promptKey || null,
+            promptVersion: (candidate as any)?.promptVersion || null,
+            policyVersion: (candidate as any)?.policyVersion || null,
+          };
           return await callOnce({ provider: providerId, model: modelId, endpoint, apiKey });
         } catch (fbError: any) {
           lastError = fbError as Error;
           const fbMsg = String(fbError?.message || fbError || '');
-          logger.warn(`[AIPipeline] Fallback failed (${candidateModelId}): ${fbMsg.slice(0, 200)}`);
+          logger.warn(
+            `[AIPipeline] Fallback failed (${String((candidate as any)?.id || 'unknown')}): ${fbMsg.slice(0, 200)}`
+          );
         }
       }
 
@@ -2012,6 +2150,7 @@ export class AIPipeline {
         null,
       promptVersion: (request as any)?._promptVersion ?? null,
       promptSsotUsed: (request as any)?._promptSsotUsed ?? false,
+      routingTrace: (request as any)?._routingTrace ?? null,
     };
 
     logger.info(
@@ -2188,6 +2327,7 @@ export class AIPipeline {
             promptKey: (request.options as any)?.promptKey || (request as any)?._promptKey || null,
             promptVersion: (request as any)?._promptVersion || null,
             promptSsotUsed: (request as any)?._promptSsotUsed || false,
+            routing_trace: (request as any)?._routingTrace || null,
             ...(priceSnapshotId ? { price_snapshot_id: priceSnapshotId } : {}),
             ...(estimatedCost
               ? {
@@ -2289,6 +2429,7 @@ export class AIPipeline {
             traceId,
             error_class: errorClass,
             retryable: Boolean((error as any)?.retryable),
+            routing_trace: (request as any)?._routingTrace || null,
           }),
         ]
       );

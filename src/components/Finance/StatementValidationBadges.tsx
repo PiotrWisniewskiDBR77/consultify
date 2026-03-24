@@ -1,0 +1,53 @@
+import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import React from 'react';
+
+import { type FinanceStatementValidation } from '../Economics/financeTypes';
+
+interface Props {
+  validations: FinanceStatementValidation[];
+  emptyLabel: string;
+}
+
+const STATUS_CONFIG: Record<FinanceStatementValidation['status'], { bg: string; text: string; icon: React.ReactNode }> = {
+  fail: {
+    bg: 'bg-rose-50 border-rose-200/60 dark:bg-rose-500/10 dark:border-rose-500/20',
+    text: 'text-rose-700 dark:text-rose-300',
+    icon: <XCircle size={11} className="text-rose-500 flex-shrink-0" />,
+  },
+  warning: {
+    bg: 'bg-amber-50 border-amber-200/60 dark:bg-amber-500/10 dark:border-amber-500/20',
+    text: 'text-amber-700 dark:text-amber-300',
+    icon: <AlertTriangle size={11} className="text-amber-500 flex-shrink-0" />,
+  },
+  pass: {
+    bg: 'bg-emerald-50 border-emerald-200/60 dark:bg-emerald-500/10 dark:border-emerald-500/20',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    icon: <CheckCircle2 size={11} className="text-emerald-500 flex-shrink-0" />,
+  },
+};
+
+export const StatementValidationBadges: React.FC<Props> = ({ validations, emptyLabel }) => {
+  if (!validations.length) {
+    if (!emptyLabel) return null;
+    return <div className="text-xs text-slate-500 dark:text-slate-400">{emptyLabel}</div>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5" role="list" aria-label="Validation results">
+      {validations.map((validation) => {
+        const cfg = STATUS_CONFIG[validation.status] || STATUS_CONFIG.pass;
+        return (
+          <span
+            key={`${validation.checkCode}-${validation.computedAt || ''}`}
+            role="listitem"
+            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium ${cfg.bg} ${cfg.text}`}
+            title={validation.message || validation.checkName}
+          >
+            {cfg.icon}
+            {validation.checkName}
+          </span>
+        );
+      })}
+    </div>
+  );
+};

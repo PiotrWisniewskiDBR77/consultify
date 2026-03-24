@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet } from '../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -177,6 +177,16 @@ const normalizePermissionRole = (role?: string): string => {
   }
 };
 
+const splitDisplayName = (name?: string): { firstName?: string; lastName?: string } => {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return {};
+  const [firstName, ...rest] = trimmed.split(/\s+/);
+  return {
+    firstName: firstName || undefined,
+    lastName: rest.length > 0 ? rest.join(' ') : undefined,
+  };
+};
+
 /**
  * Attach user data to request
  */
@@ -209,6 +219,7 @@ const attachUser = async (
     id: decoded.id,
     email: decoded.email || '',
     name: decoded.name || 'User',
+    ...splitDisplayName(decoded.name || 'User'),
     role: mapRole(req.userRole),
     organizationId: req.organizationId || '',
     isSuperAdmin: decoded.isSuperAdmin || false,
@@ -237,6 +248,59 @@ const attachUser = async (
 };
 
 /**
+ * V4-ENT-01: Session hardening — track activity & validate active sessions.
+ * Runs fire-and-forget after attachUser so it doesn't add latency.
+ */
+const trackSessionActivity = (req: AuthRequest, res: Response): void => {
+  if (!req.userId) return;
+  const userId = req.userId;
+
+  (async () => {
+    try {
+      const session = await dbGet<{ id: string; is_active: boolean | number | null }>(
+        `SELECT id, is_active FROM user_sessions
+         WHERE user_id = ?
+           AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')
+         ORDER BY last_activity_at DESC LIMIT 1`,
+        [userId],
+      );
+
+      if (session) {
+        if (session.is_active !== true && session.is_active !== 1) return;
+        res.setHeader('X-Session-Id', session.id);
+        await dbRun(
+          `UPDATE user_sessions SET last_activity_at = datetime('now') WHERE id = ?`,
+          [session.id],
+        );
+      }
+    } catch {
+      // Non-critical — don't break auth flow on session tracking errors
+    }
+  })();
+};
+
+// In-memory cache for revoked-token lookups to avoid hitting slow DB on every request.
+// Entries expire after REVOKE_CACHE_TTL_MS. On token revocation the server restarts
+// or the cache naturally expires, so the window is acceptably short.
+const REVOKE_CACHE_TTL_MS = 30_000;
+const _revokeCache = new Map<string, { revoked: boolean; ts: number }>();
+const _revokeAllCache = new Map<string, { jti: string | null; ts: number }>();
+
+function getCachedRevoke(jti: string): boolean | undefined {
+  const entry = _revokeCache.get(jti);
+  if (!entry) return undefined;
+  if (Date.now() - entry.ts > REVOKE_CACHE_TTL_MS) { _revokeCache.delete(jti); return undefined; }
+  return entry.revoked;
+}
+
+function getCachedRevokeAll(userId: string): { jti: string | null } | undefined {
+  const entry = _revokeAllCache.get(userId);
+  if (!entry) return undefined;
+  if (Date.now() - entry.ts > REVOKE_CACHE_TTL_MS) { _revokeAllCache.delete(userId); return undefined; }
+  return { jti: entry.jti };
+}
+
+/**
  * Check if token has been revoked
  */
 const checkTokenRevocation = async (
@@ -248,32 +312,40 @@ const checkTokenRevocation = async (
   const { dbGet } = await getDeps();
 
   if (!decoded.jti) {
-    // No jti - older token format, just continue
     await attachUser(decoded, req, next);
     return;
   }
 
   try {
-    // Check if specific token is revoked
-    const revokedToken = await dbGet<{ jti: string }>(
-      'SELECT jti FROM revoked_tokens WHERE jti = ?',
-      [decoded.jti]
-    );
+    // Check if specific token is revoked (with cache)
+    let isRevoked = getCachedRevoke(decoded.jti);
+    if (isRevoked === undefined) {
+      const revokedToken = await dbGet<{ jti: string }>(
+        'SELECT jti FROM revoked_tokens WHERE jti = ?',
+        [decoded.jti]
+      );
+      isRevoked = !!revokedToken;
+      _revokeCache.set(decoded.jti, { revoked: isRevoked, ts: Date.now() });
+    }
 
-    if (revokedToken) {
+    if (isRevoked) {
       res.status(401).json({ error: 'Token has been revoked' });
       return;
     }
 
-    // Check for "revoke-all" marker for this user
-    const revokeAllRow = await dbGet<{ jti: string }>(
-      "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
-      [decoded.id]
-    );
+    // Check for "revoke-all" marker for this user (with cache)
+    let revokeAllEntry = getCachedRevokeAll(decoded.id);
+    if (revokeAllEntry === undefined) {
+      const revokeAllRow = await dbGet<{ jti: string }>(
+        "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
+        [decoded.id]
+      );
+      revokeAllEntry = { jti: revokeAllRow?.jti ?? null };
+      _revokeAllCache.set(decoded.id, { jti: revokeAllEntry.jti, ts: Date.now() });
+    }
 
-    if (revokeAllRow) {
-      // Check if token was issued before the revoke-all
-      const revokeTime = parseInt(revokeAllRow.jti.split('-').pop() || '0', 10);
+    if (revokeAllEntry.jti) {
+      const revokeTime = parseInt(revokeAllEntry.jti.split('-').pop() || '0', 10);
       const tokenIssuedAt = (decoded.iat || 0) * 1000;
 
       if (tokenIssuedAt < revokeTime) {
@@ -288,7 +360,6 @@ const checkTokenRevocation = async (
     await attachUser(decoded, req, next);
   } catch (dbErr) {
     logger.error('Error checking revoked tokens:', dbErr);
-    // Continue anyway - don't block on DB errors
     await attachUser(decoded, req, next);
   }
 };
@@ -416,6 +487,7 @@ export const verifyToken = asyncHandler(
       });
 
       await checkTokenRevocation(decoded, req, res, next);
+      trackSessionActivity(req, res);
     } catch (err: any) {
       logger.error('[AuthMiddleware] Verification failed:', err.message);
       if (err.name === 'TokenExpiredError') {

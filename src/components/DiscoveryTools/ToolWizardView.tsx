@@ -166,6 +166,34 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
           if (onOpenInitiative) {
             onOpenInitiative(result.id);
           }
+        } else if (type === 'idea') {
+          const result = await Api.createMyIdea({
+            title: `${config.toolName.en} — Idea`,
+            body:
+              sessionData.review?.summaries?.[0] ||
+              sessionData.define?.intent ||
+              `${config.toolName.en} idea created from tool session ${sessionId}.`,
+            tags: [toolType, 'tool-output', 'idea'],
+            sourceType: 'tool',
+          });
+          trackFunnelEvent('tools_wizard_output_created', { toolType, outputType: type });
+          toast.success(t('tools.wizard.ideaCreated', 'Idea created'));
+
+          setSessionData((prev) => ({
+            ...prev,
+            outputs: [
+              ...prev.outputs,
+              {
+                id: result.id,
+                type: 'idea',
+                title: result.title,
+                status: 'created',
+                sourceType: 'tool',
+                sourceId: sessionId,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }));
         } else {
           toast.success(t('tools.wizard.outputCreated', 'Output created'));
           trackFunnelEvent('tools_wizard_output_created', { toolType, outputType: type });

@@ -431,8 +431,8 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
               <p className="text-sm text-amber-800 dark:text-amber-300">
-                VAT validation is currently not configured. Integration with VIES (EU) or Stripe
-                Tax is required.
+                VAT validation is currently not configured. Integration with VIES (EU) or Stripe Tax
+                is required.
               </p>
             </div>
           </div>

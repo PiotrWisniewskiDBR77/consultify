@@ -1,0 +1,14 @@
+{
+  "name": "polish-manufacturing-profit-and-loss",
+  "fileName": "seed-pl-manufacturing-2025.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 6,
+  "expectedMinMapped": 5,
+  "entityName": "Fabryka Test Sp. z o.o.",
+  "periodStart": "2025-01-01",
+  "periodEnd": "2025-12-31",
+  "periodLabel": "FY 2025",
+  "seedOutcome": "ready",
+  "text": "Rachunek zysków i strat\nZa rok obrotowy 2025\nPrzychody ze sprzedaży 2025 3820 2024 3410\nKoszt własny sprzedaży 2025 (2460) 2024 (2210)\nZysk brutto na sprzedaży 2025 1360 2024 1200\nKoszty operacyjne 2025 (540) 2024 (500)\nEBITDA 2025 920 2024 790\nEBIT 2025 820 2024 700\nZysk netto 2025 610 2024 520"
+}

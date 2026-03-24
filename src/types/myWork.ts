@@ -605,6 +605,10 @@ export type NotebookVisibility = 'private' | 'project';
 export type NotebookMaturity = 'seed' | 'growing' | 'mature' | 'actionable';
 export type NotebookPageStatus = 'inbox' | 'active' | 'converted' | 'archived';
 
+/** V4-NOTE-05: Knowledge lifecycle governance */
+export type NotebookVerificationStatus = 'unverified' | 'verified' | 'disputed';
+export type NotebookReviewCadence = 'weekly' | 'monthly' | 'quarterly' | 'never';
+
 export interface NotebookPage {
   id: string;
   title: string;
@@ -620,10 +624,20 @@ export interface NotebookPage {
   pinned: boolean;
   convertedTo:
     | {
-        type: 'task' | 'decision' | 'initiative' | 'report' | 'presentation';
+        type: 'task' | 'decision' | 'initiative' | 'report' | 'presentation' | 'assessment';
         id: string;
       }[]
     | null;
+  /** V4-NOTE-05: Owner (owner_user_id in DB) */
+  ownerUserId?: string;
+  /** V4-NOTE-05: Verification status for knowledge governance */
+  verificationStatus?: NotebookVerificationStatus;
+  /** V4-NOTE-05: How often page should be reviewed */
+  reviewCadence?: NotebookReviewCadence;
+  /** V4-NOTE-05: When page became stale (no review within cadence) */
+  staleAt?: string | null;
+  /** V4-NOTE-05: Last verification/review timestamp */
+  lastReviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

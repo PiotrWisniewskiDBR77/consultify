@@ -214,6 +214,69 @@ export interface ChatCitation {
 }
 
 /**
+ * V4 Canonical Advisor Citation — richer than ChatCitation, used by AdvisorResponse pipeline
+ */
+export interface AdvisorCitation {
+  id: string;
+  artifactType: string;
+  artifactId: string;
+  fragmentId?: string;
+  title: string;
+  excerpt?: string;
+  url?: string;
+  confidence?: number;
+  verified?: boolean;
+}
+
+/**
+ * V4 Proposed Action — executable action suggested by the advisor
+ */
+export interface ProposedAction {
+  id: string;
+  actionType: string;
+  label: string;
+  description?: string;
+  params: Record<string, unknown>;
+  preview?: string;
+  diff?: { before?: Record<string, unknown>; after: Record<string, unknown> };
+  requiresApproval: boolean;
+  estimatedImpact?: 'low' | 'medium' | 'high';
+}
+
+/**
+ * V4 Advisor Question — follow-up question from the advisor
+ */
+export interface AdvisorQuestion {
+  id: string;
+  text: string;
+  questionType: string;
+  options?: string[];
+  required: boolean;
+}
+
+/**
+ * V4 Canonical AdvisorResponse — unified AI response schema
+ */
+export interface AdvisorResponse {
+  id: string;
+  intent: string;
+  answer: string;
+  citations: AdvisorCitation[];
+  proposedActions: ProposedAction[];
+  questions: AdvisorQuestion[];
+  confidence: number;
+  safetyNotes: string[];
+  reasoning?: string;
+  metadata?: {
+    model?: string;
+    tokensUsed?: number;
+    latencyMs?: number;
+    purpose?: string;
+    contextArtifacts?: string[];
+  };
+}
+
+/**
  * Action button in AI response
  */
 export interface ChatResponseAction {
@@ -1257,4 +1320,28 @@ export interface PromptVariable {
   description?: string;
   defaultValue?: string;
   required: boolean;
+}
+
+// ==========================================
+// V4-AI-03: CLAIM-CITATION VALIDATION TYPES
+// ==========================================
+
+export interface ClaimWithCitation {
+  id: string;
+  text: string;
+  startOffset: number;
+  endOffset: number;
+  citations: Array<{ citationId: string; relevance: number }>;
+  verified: boolean;
+  verificationStatus: 'verified' | 'unverified' | 'missing_citation' | 'weak_citation';
+}
+
+export interface ClaimValidationResult {
+  totalClaims: number;
+  citedClaims: number;
+  uncitedClaims: number;
+  coverageScore: number;
+  claims: ClaimWithCitation[];
+  passesPolicy: boolean;
+  policyViolations: string[];
 }

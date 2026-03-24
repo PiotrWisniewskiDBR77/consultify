@@ -152,8 +152,12 @@ export const StrategicDirectionsTab: React.FC = () => {
       {strategies.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
           <Target size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No Strategic Directions</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Add strategic directions to guide AI behavior</p>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+            No Strategic Directions
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Add strategic directions to guide AI behavior
+          </p>
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
@@ -167,14 +171,15 @@ export const StrategicDirectionsTab: React.FC = () => {
             <div
               key={s.id}
               className={`bg-white dark:bg-navy-800 border dark:border-navy-700 rounded-xl p-6 transition-colors ${
-                s.is_active
-                  ? 'border-indigo-200 ring-1 ring-indigo-200'
-                  : 'border-slate-200'
+                s.is_active ? 'border-indigo-200 ring-1 ring-indigo-200' : 'border-slate-200'
               }`}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900/60">
-                  <Target className={s.is_active ? 'text-indigo-500' : 'text-slate-400'} size={24} />
+                  <Target
+                    className={s.is_active ? 'text-indigo-500' : 'text-slate-400'}
+                    size={24}
+                  />
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -219,7 +224,9 @@ export const StrategicDirectionsTab: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{s.description}</p>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                  {s.description}
+                </p>
                 {s.target_date && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Target: {new Date(s.target_date).toLocaleDateString()}
@@ -231,7 +238,9 @@ export const StrategicDirectionsTab: React.FC = () => {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs text-slate-500 dark:text-slate-400">Progress</span>
-                  <span className="text-xs text-slate-700 dark:text-slate-200 font-medium">{s.progress_percentage || 0}%</span>
+                  <span className="text-xs text-slate-700 dark:text-slate-200 font-medium">
+                    {s.progress_percentage || 0}%
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
                   <div
@@ -244,7 +253,9 @@ export const StrategicDirectionsTab: React.FC = () => {
               {/* Success Metrics */}
               {s.success_metrics && s.success_metrics.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Success Metrics:</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                    Success Metrics:
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {s.success_metrics.map((metric, idx) => (
                       <span
@@ -319,9 +330,7 @@ export const StrategicDirectionsTab: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Priority
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
                   <select
                     value={strategyForm.priority}
                     onChange={(e) =>
@@ -338,7 +347,9 @@ export const StrategicDirectionsTab: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Target Date</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Target Date
+                  </label>
                   <input
                     type="date"
                     value={strategyForm.target_date}

@@ -41,8 +41,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
-import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { ImportReportModal } from '../Reports/ImportReportModal';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 
 // ============================================
 // Types
@@ -673,34 +673,96 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                   label: isPolish ? 'Podgląd raportu' : 'View Report',
                                   icon: Eye,
                                   variant: 'primary',
-                                  onClick: () => handleOpenReport(report.id, report.name, report.status),
+                                  onClick: () =>
+                                    handleOpenReport(report.id, report.name, report.status),
                                 },
                               ];
                               if (report.status === 'IN_REVIEW') {
                                 actions.push(
-                                  { id: 'approve', label: isPolish ? 'Zatwierdź' : 'Approve', icon: CheckCircle2, divider: true, onClick: () => handleApproveReport(report.id) },
-                                  { id: 'send-back', label: isPolish ? 'Odeślij do edycji' : 'Send Back', icon: ArrowRight, onClick: () => handleSendBack(report.id) },
+                                  {
+                                    id: 'approve',
+                                    label: isPolish ? 'Zatwierdź' : 'Approve',
+                                    icon: CheckCircle2,
+                                    divider: true,
+                                    onClick: () => handleApproveReport(report.id),
+                                  },
+                                  {
+                                    id: 'send-back',
+                                    label: isPolish ? 'Odeślij do edycji' : 'Send Back',
+                                    icon: ArrowRight,
+                                    onClick: () => handleSendBack(report.id),
+                                  }
                                 );
                               }
                               if (report.status === 'APPROVED') {
-                                actions.push({ id: 'send-int', label: isPolish ? 'Wyślij wewn.' : 'Send Internal', icon: Send, divider: true, onClick: () => handleMarkSentInternal(report.id) });
+                                actions.push({
+                                  id: 'send-int',
+                                  label: isPolish ? 'Wyślij wewn.' : 'Send Internal',
+                                  icon: Send,
+                                  divider: true,
+                                  onClick: () => handleMarkSentInternal(report.id),
+                                });
                               }
                               if (report.status === 'SENT_INTERNAL') {
-                                actions.push({ id: 'send-ext', label: isPolish ? 'Wyślij zewn.' : 'Send External', icon: ArrowRight, divider: true, onClick: () => handleMarkSentExternal(report.id) });
+                                actions.push({
+                                  id: 'send-ext',
+                                  label: isPolish ? 'Wyślij zewn.' : 'Send External',
+                                  icon: ArrowRight,
+                                  divider: true,
+                                  onClick: () => handleMarkSentExternal(report.id),
+                                });
                               }
-                              const exportable = ['GENERATED','IN_REVIEW','APPROVED','SENT_INTERNAL','SENT_EXTERNAL','UTILIZED'];
+                              const exportable = [
+                                'GENERATED',
+                                'IN_REVIEW',
+                                'APPROVED',
+                                'SENT_INTERNAL',
+                                'SENT_EXTERNAL',
+                                'UTILIZED',
+                              ];
                               if (exportable.includes(report.status)) {
                                 actions.push(
-                                  { id: 'pdf', label: isPolish ? 'Eksportuj PDF' : 'Export PDF', icon: FileText, divider: true, onClick: () => handleExportPDF(report.id, report.name) },
-                                  { id: 'pptx', label: isPolish ? 'Eksportuj PPTX' : 'Export PPTX', icon: FileText, onClick: () => handleExportPPTX(report.id, report.name) },
-                                  { id: 'word', label: isPolish ? 'Eksportuj Word' : 'Export Word', icon: FileText, onClick: () => handleExportWord(report.id, report.name) },
+                                  {
+                                    id: 'pdf',
+                                    label: isPolish ? 'Eksportuj PDF' : 'Export PDF',
+                                    icon: FileText,
+                                    divider: true,
+                                    onClick: () => handleExportPDF(report.id, report.name),
+                                  },
+                                  {
+                                    id: 'pptx',
+                                    label: isPolish ? 'Eksportuj PPTX' : 'Export PPTX',
+                                    icon: FileText,
+                                    onClick: () => handleExportPPTX(report.id, report.name),
+                                  },
+                                  {
+                                    id: 'word',
+                                    label: isPolish ? 'Eksportuj Word' : 'Export Word',
+                                    icon: FileText,
+                                    onClick: () => handleExportWord(report.id, report.name),
+                                  }
                                 );
                               }
-                              if (['GENERATED','IN_REVIEW','APPROVED','UTILIZED'].includes(report.status)) {
-                                actions.push({ id: 'share', label: isPolish ? 'Utwórz link' : 'Share link', icon: Link2, onClick: () => handleCreateShareLink(report.id) });
+                              if (
+                                ['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(
+                                  report.status
+                                )
+                              ) {
+                                actions.push({
+                                  id: 'share',
+                                  label: isPolish ? 'Utwórz link' : 'Share link',
+                                  icon: Link2,
+                                  onClick: () => handleCreateShareLink(report.id),
+                                });
                               }
                               if (report.canGenerateInitiatives && !report.initiativesGenerated) {
-                                actions.push({ id: 'initiatives', label: isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives', icon: Lightbulb, divider: true, onClick: () => onCreateInitiatives(report.id) });
+                                actions.push({
+                                  id: 'initiatives',
+                                  label: isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives',
+                                  icon: Lightbulb,
+                                  divider: true,
+                                  onClick: () => onCreateInitiatives(report.id),
+                                });
                               }
                               return actions;
                             })()}

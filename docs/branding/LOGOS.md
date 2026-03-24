@@ -2,7 +2,7 @@
 
 ## Source of truth
 
-**Runtime logo assets (source of truth in this repo):**
+**Runtime logo assets generated from `Logo consultinity/`:**
 
 - `public/assets/logos/logo-light.svg` (light UI backgrounds)
 - `public/assets/logos/logo-dark.svg` (dark UI backgrounds)
@@ -10,9 +10,15 @@
   - `public/assets/logos/logo-brand-92004f.svg`
   - `public/assets/logos/logo-brand-1e0058.svg`
 
-> Note: there is also a generator script (`npm run branding:generate`) but the repo must contain the
-> expected `Logo consultinity/` source folder for it to work. If that folder is missing, treat the
-> `public/assets/logos/*.svg` files as the canonical runtime assets.
+Current mapping of the refreshed Consultify wordmarks:
+
+- `logo-light.svg` → `Logo consultinity/consultify-black.svg`
+- `logo-dark.svg` → `Logo consultinity/consultify-white.svg.svg`
+- `logo-brand-1e0058.svg` → `Logo consultinity/consultify-purple.svg`
+- `logo-brand-92004f.svg` → `Logo consultinity/consultify-harvard.svg`
+
+> `npm run branding:generate` now copies these source SVGs directly into `public/assets/logos/`
+> and also regenerates the PNG fallbacks used by cache/PWA paths.
 
 ## Derived (generated) assets
 

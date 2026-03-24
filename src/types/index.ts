@@ -200,6 +200,7 @@ export * from './ui/index';
 export * from './AIContract';
 export * from './discovery';
 export * from './myWork';
+export * from './tablePlatform';
 export * from './workspace';
 
 // Initiative runtime values (const maps, helpers)

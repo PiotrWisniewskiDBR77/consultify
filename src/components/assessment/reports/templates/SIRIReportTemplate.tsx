@@ -24,6 +24,8 @@ import {
 import React from 'react';
 
 import {
+  compute16DScores,
+  SIRI_16D_MAPPING_VERSION,
   SIRI_BUILDING_BLOCKS,
   SIRI_DIMENSIONS,
   SIRI_MATURITY_LEVELS,
@@ -311,7 +313,9 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{a.name}</div>
                   </td>
-                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{a.buildingBlock}</td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {a.buildingBlock}
+                  </td>
                   <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
                     {String(a.dimension || '').replace(/_/g, ' ')}
                   </td>
@@ -319,6 +323,63 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                     <span className="font-semibold text-navy-900 dark:text-white">
                       {(a.score || 0).toFixed(1)}
                     </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* 16D Assessment Matrix (Canon) */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <BarChart3 size={20} />
+          16D Assessment Matrix (SIRI Canon)
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          Full 16-dimension view per SIRI Assessment Matrix methodology (v
+          {SIRI_16D_MAPPING_VERSION}). Aggregation 16D→8D is explicit and versioned.
+        </p>
+        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 dark:text-slate-400">
+                <th className="py-2 pr-4">16D Area</th>
+                <th className="py-2 pr-4">Building Block</th>
+                <th className="py-2 pr-4">Parent Dimension</th>
+                <th className="py-2 pr-2 text-center">Current</th>
+                <th className="py-2 pr-2 text-center">Target</th>
+                <th className="py-2 pr-0 text-center">Gap</th>
+              </tr>
+            </thead>
+            <tbody>
+              {compute16DScores(data).map((s) => (
+                <tr key={s.areaId} className="border-t border-slate-200/60 dark:border-navy-800">
+                  <td className="py-2 pr-4">
+                    <div className="font-semibold text-navy-900 dark:text-white">{s.areaPL}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{s.areaName}</div>
+                  </td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {s.buildingBlock}
+                  </td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {s.parentDimension.replace(/_/g, ' ')}
+                  </td>
+                  <td className="py-2 pr-2 text-center font-bold text-navy-900 dark:text-white">
+                    {s.current.toFixed(1)}
+                  </td>
+                  <td className="py-2 pr-2 text-center text-slate-500 dark:text-slate-400">
+                    {s.target.toFixed(1)}
+                  </td>
+                  <td className="py-2 pr-0 text-center">
+                    {s.gap > 0 ? (
+                      <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded font-bold text-xs">
+                        -{s.gap.toFixed(1)}
+                      </span>
+                    ) : (
+                      <span className="text-emerald-600 dark:text-emerald-400 text-xs">OK</span>
+                    )}
                   </td>
                 </tr>
               ))}

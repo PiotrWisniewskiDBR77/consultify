@@ -42,9 +42,11 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-  const [panelPos, setPanelPos] = useState<{ top: number; left: number; placement: 'top' | 'bottom' } | null>(
-    null
-  );
+  const [panelPos, setPanelPos] = useState<{
+    top: number;
+    left: number;
+    placement: 'top' | 'bottom';
+  } | null>(null);
 
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -155,7 +157,11 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
               role="menu"
               style={
                 panelPos
-                  ? { top: panelPos.top, left: panelPos.left, transformOrigin: panelPos.placement === 'top' ? 'bottom right' : 'top right' }
+                  ? {
+                      top: panelPos.top,
+                      left: panelPos.left,
+                      transformOrigin: panelPos.placement === 'top' ? 'bottom right' : 'top right',
+                    }
                   : { top: -9999, left: -9999 }
               }
               onClick={(e) => {

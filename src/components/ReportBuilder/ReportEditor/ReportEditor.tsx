@@ -42,7 +42,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
+
 import { Api } from '../../../services/api';
+import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import { QualityGatesPanel } from '../QualityGatesPanel';
@@ -597,6 +600,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     initialTemplateId || null
   );
+  const [reportBacklinks, setReportBacklinks] = useState<
+    Array<{ id: string; sourceType: string; sourceId: string }>
+  >([]);
+  const [reportBacklinksLoading, setReportBacklinksLoading] = useState(false);
 
   // ==========================================
   // TEMPLATE PRESETS
@@ -756,6 +763,25 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const reportStatus = (report?.status || 'DRAFT') as ReportStatus;
   const reportIdForActions = report?.id || reportId || null;
 
+  useEffect(() => {
+    if (!reportIdForActions || isTemplateMode) return;
+    setReportBacklinksLoading(true);
+    Api.getLinkGraphBacklinks({ type: 'report', id: reportIdForActions, limit: 50 })
+      .then((rows: any) => {
+        setReportBacklinks(
+          (Array.isArray(rows) ? rows : [])
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+            }))
+            .filter((x) => x.sourceType && x.sourceId)
+        );
+      })
+      .catch(() => setReportBacklinks([]))
+      .finally(() => setReportBacklinksLoading(false));
+  }, [isTemplateMode, reportIdForActions]);
+
   const downloadExport = useCallback(
     async (format: 'pdf' | 'pptx' | 'docx', fileNameBase?: string) => {
       if (!reportIdForActions) return;
@@ -875,15 +901,65 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   // Review panel for report mode
   const reviewPanel = reportIdForActions ? (
-    <ReviewPanel
-      reportId={reportIdForActions}
-      reportStatus={reportStatus}
-      onStatusChange={(newStatus) => {
-        // Update local report state to reflect new status
-        setReport((prev) => (prev ? { ...prev, status: newStatus } : prev));
-      }}
-      isPl={isPl}
-    />
+    <>
+      <ReviewPanel
+        reportId={reportIdForActions}
+        reportStatus={reportStatus}
+        onStatusChange={(newStatus) => {
+          // Update local report state to reflect new status
+          setReport((prev) => (prev ? { ...prev, status: newStatus } : prev));
+        }}
+        isPl={isPl}
+      />
+      <EmbeddedView
+        title={isPl ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+        count={reportBacklinks.length}
+        loading={reportBacklinksLoading}
+        readOnly
+        viewModes={['list']}
+      >
+        {reportBacklinks.length === 0 && !reportBacklinksLoading ? (
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPl ? 'Brak powiązań' : 'No links yet'}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {reportBacklinks.slice(0, 8).map((bl) => (
+              <div
+                key={bl.id}
+                className="flex items-center justify-between gap-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.03] px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
+                    {getSourceDisplayLabel(bl.sourceType, isPl)}
+                  </div>
+                  <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                    {bl.sourceId}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent('mywork-open-item', {
+                        detail: {
+                          type: bl.sourceType,
+                          id: bl.sourceId,
+                          name: `${bl.sourceType} ${bl.sourceId}`,
+                        },
+                      })
+                    )
+                  }
+                  className="shrink-0 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  {isPl ? 'Otwórz' : 'Open'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </EmbeddedView>
+    </>
   ) : (
     <div className="text-sm text-slate-500 dark:text-slate-400">
       {isPl
@@ -1508,9 +1584,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     async (blockId: string) => {
       if (!report?.id || blockId.startsWith('tmp_')) return;
 
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === blockId ? { ...b, isRefreshing: true } : b))
-      );
+      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, isRefreshing: true } : b)));
 
       try {
         const response = await Api.post(
@@ -1526,10 +1600,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           );
 
           if (accept) {
-            await Api.post(
-              `/report-builder/${report.id}/sections/${blockId}/accept-refresh`,
-              { newContent: response.newContent }
-            );
+            await Api.post(`/report-builder/${report.id}/sections/${blockId}/accept-refresh`, {
+              newContent: response.newContent,
+            });
 
             setBlocks((prev) =>
               prev.map((b) =>

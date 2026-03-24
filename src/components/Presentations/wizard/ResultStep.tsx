@@ -64,8 +64,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
             onClick={onOpenBuilder}
             className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-blue-500 shadow-lg shadow-purple-500/25 text-lg"
           >
-            <ExternalLink size={20} />{' '}
-            {t('presentations.result.openBuilder', 'Open Deck Builder')}
+            <ExternalLink size={20} /> {t('presentations.result.openBuilder', 'Open Deck Builder')}
           </button>
         )}
         <button

@@ -15,6 +15,7 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Database,
   Download,
   FileCode,
   FileText,
@@ -23,8 +24,6 @@ import {
   Pencil,
   RefreshCw,
   Sparkles,
-  ThumbsDown,
-  ThumbsUp,
   User,
   Volume2,
   Zap,
@@ -40,6 +39,7 @@ import { ArtifactBadge } from './ArtifactBadge';
 import { CitationList } from './CitationList';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
+import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 
 // ============================================================================
@@ -120,6 +120,8 @@ export interface MessageRendererProps {
   hoveredMessageId: string | null;
   setHoveredMessageId: (id: string | null) => void;
   copiedMessageId: string | null;
+  contextSaveBusyMessageId: string | null;
+  contextSavedMessageIds: Set<string>;
 
   // Multi-select state
   selectedMultiOptions: string[];
@@ -141,6 +143,7 @@ export interface MessageRendererProps {
   handleSaveAsDecision: (messageId: string, content: string) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
   handleSaveAsNote: (messageId: string, content: string) => void;
+  handleSaveToContext: (messageId: string, content: string, role: 'user' | 'ai') => void;
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
@@ -204,6 +207,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   hoveredMessageId,
   setHoveredMessageId,
   copiedMessageId,
+  contextSaveBusyMessageId,
+  contextSavedMessageIds,
   selectedMultiOptions,
   voiceState,
   handleCopyMessage,
@@ -219,6 +224,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleSaveAsDecision,
   handleSaveAsIdea,
   handleSaveAsNote,
+  handleSaveToContext,
   handleRunDirectedDeepening,
   handleMultiSelectToggle,
   handleMultiSelectConfirm,
@@ -234,17 +240,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Quick feedback state (hover toolbar thumbs)
-  const [quickFeedbackGiven, setQuickFeedbackGiven] = useState<'positive' | 'negative' | null>(
-    null
-  );
-
   const isLastMessage = index === displayMessages.length - 1;
   const isHovered = hoveredMessageId === msg.id;
   const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
   const hasCitations = msg.citations && msg.citations.length > 0;
   const isCopied = copiedMessageId === msg.id;
+  const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
+  const isContextSaved = contextSavedMessageIds.has(msg.id);
+  const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
+  const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
   const confirmPayload =
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
@@ -327,7 +332,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {/* AI Message Content */}
             {msg.role === 'ai' ? (
               <div
-                className={`${isDeepThinkingConfirm ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
+                className={`${isDeepThinkingConfirm || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
               >
                 {/* Deep Thinking: Research progress (SSE events) */}
                 {(msg as any).metadata?.researchVisibility?.items && (
@@ -381,7 +386,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {isDeepThinkingConfirm ? (
+                {(msg as any).metadata?.type === 'table_proposal' ? (
+                  <div className="not-prose">
+                    <ChatTableProposalCard
+                      proposal={(msg as any).metadata.proposal}
+                      onStatusChange={() => {}}
+                    />
+                  </div>
+                ) : isDeepThinkingConfirm ? (
                   <div className="space-y-3">
                     <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                       Confirm Understanding (Deep Thinking)
@@ -1168,46 +1180,25 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </button>
                 )}
 
-                {/* Quick Feedback (AI only) */}
-                {msg.role === 'ai' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setQuickFeedbackGiven('positive');
-                        handleFeedback(msg.id, msg.content, {
-                          rating: 'positive',
-                          timestamp: new Date(),
-                        });
-                      }}
-                      className={`p-1 rounded-md transition-colors ${
-                        quickFeedbackGiven === 'positive'
-                          ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
-                          : 'text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                      }`}
-                      title={t('chat.actions.helpful', 'Helpful')}
-                      disabled={!!quickFeedbackGiven}
-                    >
-                      <ThumbsUp size={12} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setQuickFeedbackGiven('negative');
-                        handleFeedback(msg.id, msg.content, {
-                          rating: 'negative',
-                          timestamp: new Date(),
-                        });
-                      }}
-                      className={`p-1 rounded-md transition-colors ${
-                        quickFeedbackGiven === 'negative'
-                          ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30'
-                          : 'text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                      }`}
-                      title={t('chat.actions.notHelpful', 'Not helpful')}
-                      disabled={!!quickFeedbackGiven}
-                    >
-                      <ThumbsDown size={12} />
-                    </button>
-                  </>
+                {canSaveToContext && (
+                  <button
+                    onClick={() => handleSaveToContext(msg.id, msg.content, contextSaveRole)}
+                    disabled={isContextSaveBusy || isContextSaved}
+                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      isContextSaved
+                        ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                        : t('chat.actions.saveToContext', 'Save to Context OS')
+                    }
+                  >
+                    {isContextSaveBusy ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : isContextSaved ? (
+                      <CheckCircle2 size={12} className="text-emerald-500" />
+                    ) : (
+                      <Database size={12} />
+                    )}
+                  </button>
                 )}
 
                 {/* View Artifacts */}
@@ -1218,28 +1209,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     title={t('chat.actions.viewArtifacts', 'View Artifacts')}
                   >
                     <FileCode size={12} />
-                  </button>
-                )}
-
-                {/* Save as Idea (T009) */}
-                {msg.role === 'ai' && (
-                  <button
-                    onClick={() => handleSaveAsIdea(msg.id, msg.content)}
-                    className="p-1 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                    title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-                  >
-                    <Lightbulb size={12} />
-                  </button>
-                )}
-
-                {/* Save as Note (T011) */}
-                {msg.role === 'ai' && (
-                  <button
-                    onClick={() => handleSaveAsNote(msg.id, msg.content)}
-                    className="p-1 rounded-md text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/10"
-                    title={t('myWork.notebook.saveAsNote', 'Save as note')}
-                  >
-                    <Bookmark size={12} />
                   </button>
                 )}
 
@@ -1296,9 +1265,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* Inline Feedback (AI messages only, not streaming) */}
+      {/* Unified Feedback Block (AI only): feedback + idea + note */}
       {msg.role === 'ai' && !msg.isStreaming && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+        <div
+          className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-wrap items-start gap-3 p-2 rounded-lg bg-slate-50/80 dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60`}
+        >
           <InlineResponseFeedback
             messageId={msg.id}
             conversationId={activeConversationId || undefined}
@@ -1306,6 +1277,40 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
             compact={isCompact}
           />
+          <div className="flex items-center gap-1 border-l border-slate-200 dark:border-navy-700 pl-3">
+            <button
+              onClick={() => handleSaveAsIdea(msg.id, msg.content)}
+              className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+            >
+              <Lightbulb size={14} />
+            </button>
+            <button
+              onClick={() => handleSaveAsNote(msg.id, msg.content)}
+              className="p-1.5 rounded-md text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              title={t('myWork.notebook.saveAsNote', 'Save as note')}
+            >
+              <Bookmark size={14} />
+            </button>
+            <button
+              onClick={() => handleSaveToContext(msg.id, msg.content, 'ai')}
+              disabled={isContextSaveBusy || isContextSaved}
+              className="p-1.5 rounded-md text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                isContextSaved
+                  ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                  : t('chat.actions.saveToContext', 'Save to Context OS')
+              }
+            >
+              {isContextSaveBusy ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : isContextSaved ? (
+                <CheckCircle2 size={14} />
+              ) : (
+                <Database size={14} />
+              )}
+            </button>
+          </div>
         </div>
       )}
 

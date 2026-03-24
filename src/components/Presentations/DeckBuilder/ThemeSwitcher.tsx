@@ -9,7 +9,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CURATED_COLOR_SETS, type CuratedColorSet } from '../wizard/types';
-
 import { useDeckTheme } from './DeckThemeContext';
 
 interface ThemeSwitcherProps {
@@ -53,10 +52,14 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
         {/* Font preview */}
         <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-400">
           <span>
-            Heading: <strong style={{ fontFamily: theme.fonts.headingFamily }}>{theme.fonts.headingFamily}</strong>
+            Heading:{' '}
+            <strong style={{ fontFamily: theme.fonts.headingFamily }}>
+              {theme.fonts.headingFamily}
+            </strong>
           </span>
           <span>
-            Body: <span style={{ fontFamily: theme.fonts.bodyFamily }}>{theme.fonts.bodyFamily}</span>
+            Body:{' '}
+            <span style={{ fontFamily: theme.fonts.bodyFamily }}>{theme.fonts.bodyFamily}</span>
           </span>
         </div>
       </div>
@@ -72,14 +75,22 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
                 id: 'brand_kit',
                 name: 'Brand Kit',
                 colors: {
-                  primary: brandKit.primary_color.startsWith('#') ? brandKit.primary_color : `#${brandKit.primary_color}`,
-                  secondary: brandKit.secondary_color.startsWith('#') ? brandKit.secondary_color : `#${brandKit.secondary_color}`,
-                  accent: brandKit.accent_color.startsWith('#') ? brandKit.accent_color : `#${brandKit.accent_color}`,
+                  primary: brandKit.primary_color.startsWith('#')
+                    ? brandKit.primary_color
+                    : `#${brandKit.primary_color}`,
+                  secondary: brandKit.secondary_color.startsWith('#')
+                    ? brandKit.secondary_color
+                    : `#${brandKit.secondary_color}`,
+                  accent: brandKit.accent_color.startsWith('#')
+                    ? brandKit.accent_color
+                    : `#${brandKit.accent_color}`,
                   background: '#FAFBFC',
                   surface: '#FFFFFF',
                   textPrimary: '#0F172A',
                   textSecondary: '#64748B',
-                  heading: brandKit.primary_color.startsWith('#') ? brandKit.primary_color : `#${brandKit.primary_color}`,
+                  heading: brandKit.primary_color.startsWith('#')
+                    ? brandKit.primary_color
+                    : `#${brandKit.primary_color}`,
                 },
                 chartPalette: [],
                 styleTags: ['branded'],
@@ -129,9 +140,7 @@ const ThemeCard: React.FC<{
     </div>
     <div className="flex items-center gap-1">
       {isBrandKit && <Crown size={10} className="text-amber-500" />}
-      <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
-        {colorSet.name}
-      </p>
+      <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{colorSet.name}</p>
     </div>
     {isSelected && (
       <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">

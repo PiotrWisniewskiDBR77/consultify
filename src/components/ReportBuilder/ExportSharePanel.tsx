@@ -22,6 +22,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -71,6 +73,11 @@ interface ExportSharePanelProps {
   blocks?: BlockForReadiness[];
 }
 
+interface QualityGateResponse {
+  canExport: boolean;
+  gates: Array<{ id: string; severity: 'error' | 'warning' | 'info'; message: string }>;
+}
+
 // ==========================================
 // COMPONENT
 // ==========================================
@@ -96,6 +103,8 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [qualityReport, setQualityReport] = useState<QualityGateResponse | null>(null);
+  const [qualityLoading, setQualityLoading] = useState(false);
 
   // Share link form state
   const [password, setPassword] = useState('');
@@ -109,6 +118,24 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
       loadShareLinks();
     }
   }, [showShareModal]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setQualityLoading(true);
+    Api.get(`/api/report-builder/${reportId}/quality-gates`)
+      .then((result: any) => {
+        if (!cancelled) setQualityReport(result as QualityGateResponse);
+      })
+      .catch(() => {
+        if (!cancelled) setQualityReport(null);
+      })
+      .finally(() => {
+        if (!cancelled) setQualityLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportId]);
 
   const loadShareLinks = async () => {
     setIsLoadingLinks(true);
@@ -221,11 +248,21 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
       });
     }
 
-    return warnings;
-  }, [blocks, reportStatus, isPl]);
+    for (const gate of qualityReport?.gates || []) {
+      if (gate.severity !== 'error' && gate.severity !== 'warning') continue;
+      warnings.push({
+        type: gate.severity,
+        message: gate.message,
+      });
+    }
 
-  const hasErrors = readinessWarnings.some((w) => w.type === 'error');
+    return warnings;
+  }, [blocks, reportStatus, isPl, qualityReport]);
+
+  const hasErrors =
+    readinessWarnings.some((w) => w.type === 'error') || qualityReport?.canExport === false;
   const hasWarnings = readinessWarnings.length > 0;
+  const exportDisabled = isLoading || qualityLoading || hasErrors;
 
   return (
     <div className="space-y-4">
@@ -253,10 +290,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
         {/* Export PDF Button */}
         <button
           onClick={handleExportPdf}
-          disabled={isLoading}
+          disabled={exportDisabled}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
         >
-          {isLoading ? (
+          {isLoading || qualityLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Download className="w-4 h-4" />
@@ -268,7 +305,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
         {onExportPptx && (
           <button
             onClick={handleExportPptx}
-            disabled={isLoading}
+            disabled={exportDisabled}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
           >
             {isLoading ? (
@@ -284,7 +321,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
         {onExportWord && (
           <button
             onClick={handleExportWord}
-            disabled={isLoading}
+            disabled={exportDisabled}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
           >
             {isLoading ? (

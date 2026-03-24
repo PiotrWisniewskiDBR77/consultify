@@ -265,9 +265,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                         : 'bg-slate-100 dark:bg-slate-800'
                     }`}
                   >
-                    <Icon
-                      className={`w-5 h-5 ${selected ? 'text-blue-600' : 'text-slate-500'}`}
-                    />
+                    <Icon className={`w-5 h-5 ${selected ? 'text-blue-600' : 'text-slate-500'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-slate-900 dark:text-white text-sm">
@@ -470,9 +468,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             >
               <option value="data-heavy">{isPl ? 'Dużo danych' : 'Data-heavy'}</option>
               <option value="balanced">{isPl ? 'Zbalansowany' : 'Balanced'}</option>
-              <option value="narrative-heavy">
-                {isPl ? 'Narracyjny' : 'Narrative-heavy'}
-              </option>
+              <option value="narrative-heavy">{isPl ? 'Narracyjny' : 'Narrative-heavy'}</option>
             </select>
           </div>
 

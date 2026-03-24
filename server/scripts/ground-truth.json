@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "description": "Manually verified anchor values from PDF financial statements. Values are in the document's NATIVE scaling as detected by the system.",
+    "created": "2026-03-16",
+    "tolerance": 0.05,
+    "note": "Apator: thousands PLN. BMW/Tesla/CocaCola/BP/KGHM: millions (native). BP period=2025 but system detects 2024 — BP values are for 2025 column."
+  },
+  "documents": {
+    "Apator SA Raport R 2024": {
+      "currency": "PLN",
+      "scaling": "thousands",
+      "period": "2024",
+      "BS": {
+        "fsl-bs-total-assets": 546007,
+        "fsl-bs-equity": 425042,
+        "fsl-bs-total-liabilities": 120965,
+        "fsl-bs-total-liabilities-equity": 546007
+      },
+      "P&L": {
+        "fsl-pl-revenue": 536578,
+        "fsl-pl-net": 63081
+      },
+      "CF": {
+        "fsl-cf-operating": 89810,
+        "fsl-cf-investing": -31428,
+        "fsl-cf-financing": -59640,
+        "fsl-cf-net-change-cash": -1258,
+        "fsl-cf-closing-cash": 2040
+      }
+    },
+    "BMW Group Financial Statements 2024": {
+      "currency": "EUR",
+      "scaling": "millions",
+      "period": "2024",
+      "BS": {
+        "fsl-bs-total-assets": 267732,
+        "fsl-bs-equity": 95003,
+        "fsl-bs-total-liabilities-equity": 267732
+      },
+      "P&L": {
+        "fsl-pl-revenue": 142380,
+        "fsl-pl-net": 7678
+      },
+      "CF": {
+        "fsl-cf-operating": 7566,
+        "fsl-cf-investing": -11369,
+        "fsl-cf-financing": 5766
+      }
+    },
+    "Tesla 10-K 2024": {
+      "currency": "USD",
+      "scaling": "millions",
+      "period": "2024",
+      "BS": {
+        "fsl-bs-total-assets": 122070,
+        "fsl-bs-total-liabilities": 48390,
+        "fsl-bs-total-liabilities-equity": 122070
+      },
+      "P&L": {
+        "fsl-pl-revenue": 97690,
+        "fsl-pl-net": 7153
+      },
+      "CF": {
+        "fsl-cf-operating": 14923,
+        "fsl-cf-investing": -18787,
+        "fsl-cf-financing": 3853
+      }
+    },
+    "Coca-Cola 10-K 2025": {
+      "currency": "USD",
+      "scaling": "millions",
+      "period": "2024",
+      "BS": {
+        "fsl-bs-total-assets": 100549,
+        "fsl-bs-equity": 26372,
+        "fsl-bs-total-liabilities-equity": 100549
+      },
+      "P&L": {
+        "fsl-pl-revenue": 47061,
+        "fsl-pl-net": 10649
+      },
+      "CF": {
+        "fsl-cf-operating": 6805,
+        "fsl-cf-investing": 2524,
+        "fsl-cf-financing": -6910
+      }
+    },
+    "BP Annual Report 2025": {
+      "currency": "USD",
+      "scaling": "millions",
+      "period": "2025",
+      "BS": {
+        "fsl-bs-total-assets": 278526,
+        "fsl-bs-equity": 74000,
+        "fsl-bs-total-liabilities": 204526
+      },
+      "P&L": {
+        "fsl-pl-revenue": 189335,
+        "fsl-pl-net": 1295
+      },
+      "CF": {
+        "fsl-cf-operating": 24493,
+        "fsl-cf-investing": -11504,
+        "fsl-cf-financing": -15880
+      }
+    },
+    "KGHM Skonsolidowane SRR 2024": {
+      "currency": "PLN",
+      "scaling": "millions",
+      "period": "2024",
+      "BS": {
+        "fsl-bs-total-assets": 53892,
+        "fsl-bs-equity": 31058
+      },
+      "P&L": {
+        "fsl-pl-revenue": 35320,
+        "fsl-pl-net": 2870
+      },
+      "CF": {
+        "fsl-cf-operating": 4690,
+        "fsl-cf-investing": -5506,
+        "fsl-cf-financing": -217,
+        "fsl-cf-net-change-cash": -1033
+      }
+    }
+  }
+}

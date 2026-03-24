@@ -65,7 +65,9 @@ export const RevenueRecognitionView: React.FC = () => {
         Api.getRevenueRecognitions(),
         Api.getRevenueRecognitionStats(),
       ]);
-      const items = Array.isArray(recognitionsRes) ? recognitionsRes : (recognitionsRes as any)?.items || [];
+      const items = Array.isArray(recognitionsRes)
+        ? recognitionsRes
+        : (recognitionsRes as any)?.items || [];
       setRecognitions(items);
 
       const raw = statsRes as any;
@@ -252,9 +254,7 @@ export const RevenueRecognitionView: React.FC = () => {
               <div className="text-xl font-bold text-slate-900 dark:text-white">
                 {formatCurrency(stats.totalRevenue)}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Total Revenue
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Total Revenue</div>
             </CardContent>
           </Card>
           <Card>
@@ -262,9 +262,7 @@ export const RevenueRecognitionView: React.FC = () => {
               <div className="text-xl font-bold text-green-400">
                 {formatCurrency(stats.recognizedRevenue)}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Recognized
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Recognized</div>
             </CardContent>
           </Card>
           <Card>
@@ -272,33 +270,25 @@ export const RevenueRecognitionView: React.FC = () => {
               <div className="text-xl font-bold text-yellow-400">
                 {formatCurrency(stats.remainingRevenue)}
               </div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Remaining
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Remaining</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pendingItems}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Pending
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Pending</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-blue-400">{stats.inProgressItems}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                In Progress
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">In Progress</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.completedItems}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400">
-                Completed
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Completed</div>
             </CardContent>
           </Card>
         </div>
@@ -435,7 +425,9 @@ export const RevenueRecognitionView: React.FC = () => {
                             </span>
                             <span
                               className={`font-bold ${
-                                item.recognized ? 'text-green-400' : 'text-slate-600 dark:text-slate-400'
+                                item.recognized
+                                  ? 'text-green-400'
+                                  : 'text-slate-600 dark:text-slate-400'
                               }`}
                             >
                               {formatCurrency(item.amount, selectedRecognition.currency)}

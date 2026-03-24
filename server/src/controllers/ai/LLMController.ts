@@ -15,6 +15,37 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 
 export class LLMController {
   private static lastHealthEventWriteAt = new Map<string, number>();
+  private static providerHealthCooldowns = new Map<
+    string,
+    { until: number; error: string; status: 'auth_failed' | 'rate_limited' }
+  >();
+  private static selectCoreProviders<T extends { isDefault?: boolean; provider?: string }>(
+    providers: T[]
+  ): T[] {
+    if (providers.some((provider) => !!provider.isDefault)) {
+      return providers.filter((provider) => !!provider.isDefault);
+    }
+
+    if (providers.some((provider) => String(provider.provider || '').toLowerCase() === 'openrouter')) {
+      return providers.filter(
+        (provider) => String(provider.provider || '').toLowerCase() === 'openrouter'
+      );
+    }
+
+    return providers;
+  }
+
+  private static isAuthLikeProviderError(error: unknown, httpStatus?: number | null): boolean {
+    const msg = String((error as any)?.message || error || '').toLowerCase();
+    return (
+      httpStatus === 401 ||
+      httpStatus === 403 ||
+      msg.includes('incorrect api key') ||
+      msg.includes('invalid api key') ||
+      msg.includes('key invalid') ||
+      msg.includes('unauthorized')
+    );
+  }
   private static resolveEnvConfigured(provider: string): {
     isConfigured: boolean;
     envKey?: string;
@@ -780,6 +811,7 @@ export class LLMController {
             name: provider.name,
             providerId: provider.provider,
             isActive: !!provider.is_active,
+            isDefault: !!provider.is_default,
             status,
             statusLabel: statusLabels[status],
             isHealthy: status === 'healthy',
@@ -797,16 +829,21 @@ export class LLMController {
 
       // Summary should reflect only ACTIVE providers; inactive rows are not part of platform health.
       const activeResults = providerHealthResults.filter((p: any) => !!p.isActive);
-      const healthyCount = activeResults.filter((p: any) => p.status === 'healthy').length;
-      const degradedCount = activeResults.filter((p: any) => p.status === 'degraded').length;
-      const unhealthyCount = activeResults.filter((p: any) => p.status === 'unhealthy').length;
+      // Platform health must reflect providers that actually drive routing.
+      // If a default provider exists, use only default/core providers for the summary.
+      // This prevents optional side providers (for example Gemini) from turning the whole
+      // platform red when the primary routed provider is healthy.
+      const coreResults = LLMController.selectCoreProviders(activeResults);
+      const healthyCount = coreResults.filter((p: any) => p.status === 'healthy').length;
+      const degradedCount = coreResults.filter((p: any) => p.status === 'degraded').length;
+      const unhealthyCount = coreResults.filter((p: any) => p.status === 'unhealthy').length;
 
       return res.json({
         success: true,
         providers: providerHealthResults,
         alerts,
         summary: {
-          total: activeResults.length,
+          total: coreResults.length,
           healthy: healthyCount,
           degraded: degradedCount,
           unhealthy: unhealthyCount,
@@ -814,6 +851,7 @@ export class LLMController {
           degradedCount,
           unhealthyCount,
           inactive: (providerHealthResults.length || 0) - (activeResults.length || 0),
+          activeTotal: activeResults.length,
           lastCheck: new Date().toISOString(),
         },
       });
@@ -1230,6 +1268,7 @@ export class LLMController {
       const healthResults = await Promise.all(
         (providers || []).map(async (provider: any) => {
           const providerId = String(provider.provider || '').toLowerCase();
+          const cooldownKey = `${providerId}:${String(provider.id || provider.model_id || provider.provider || '')}`;
           const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
           const hasKey =
             !!rawKey &&
@@ -1251,6 +1290,20 @@ export class LLMController {
             return row;
           }
 
+          const cooldown = LLMController.providerHealthCooldowns.get(cooldownKey);
+          if (cooldown && cooldown.until > Date.now()) {
+            return {
+              id: provider.id || provider.model_id || provider.provider,
+              name: provider.name || provider.provider,
+              provider: provider.provider,
+              status: 'unhealthy',
+              available: false,
+              error: cooldown.error,
+              lastCheck: nowIso,
+              cooldownUntil: new Date(cooldown.until).toISOString(),
+            };
+          }
+
           try {
             // Local providers can hang when the daemon isn't running; keep them extra-fast by default.
             const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
@@ -1267,6 +1320,17 @@ export class LLMController {
             );
 
             const ok = !!(result as any)?.success;
+            const resultError = String((result as any)?.error || '');
+            const httpStatus = Number((result as any)?.httpStatus || 0) || null;
+            if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
+              LLMController.providerHealthCooldowns.set(cooldownKey, {
+                until: Date.now() + 5 * 60_000,
+                error: resultError || 'Invalid provider credentials',
+                status: 'auth_failed',
+              });
+            } else if (ok) {
+              LLMController.providerHealthCooldowns.delete(cooldownKey);
+            }
             const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
@@ -1304,6 +1368,13 @@ export class LLMController {
             }
             return row;
           } catch (e: any) {
+            if (LLMController.isAuthLikeProviderError(e, null)) {
+              LLMController.providerHealthCooldowns.set(cooldownKey, {
+                until: Date.now() + 5 * 60_000,
+                error: e?.message || String(e),
+                status: 'auth_failed',
+              });
+            }
             const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
@@ -1344,13 +1415,14 @@ export class LLMController {
       );
 
       const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
-      const healthyCount = configuredProviders.filter((p) => p.status === 'healthy').length;
+      const coreProviders = LLMController.selectCoreProviders(configuredProviders);
+      const healthyCount = coreProviders.filter((p) => p.status === 'healthy').length;
       const overall =
-        configuredProviders.length === 0
+        coreProviders.length === 0
           ? 'unhealthy'
           : healthyCount === 0
             ? 'unhealthy'
-            : healthyCount === configuredProviders.length
+            : healthyCount === coreProviders.length
               ? 'healthy'
               : 'degraded';
 

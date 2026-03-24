@@ -6,6 +6,7 @@
  */
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -180,11 +181,15 @@ export async function detectDelaySignals(
     )) || []) as Array<{ id: string }>;
     const dismissedIds = new Set(dismissedRows.map((r) => String(r.id)));
 
+    const initiativeColumns = await getTableColumns('initiatives');
+    const initiativeSelect = (column: string) =>
+      initiativeColumns.has(column) ? column : `NULL as ${column}`;
+
     let initQuery = `
-      SELECT id, name, status, priority, planned_start_date, planned_end_date,
-             start_date, actual_end_date, execution_started_at, sla_deadline,
-             blocked_reason, blocked_at, progress,
-             owner_business_id, owner_execution_id, project_id
+      SELECT id, name, status, ${initiativeSelect('priority')}, ${initiativeSelect('planned_start_date')}, ${initiativeSelect('planned_end_date')},
+             ${initiativeSelect('start_date')}, ${initiativeSelect('actual_end_date')}, ${initiativeSelect('execution_started_at')}, ${initiativeSelect('sla_deadline')},
+             ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('progress')},
+             ${initiativeSelect('owner_business_id')}, ${initiativeSelect('owner_execution_id')}, ${initiativeSelect('project_id')}
       FROM initiatives
       WHERE organization_id = ?
         AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')

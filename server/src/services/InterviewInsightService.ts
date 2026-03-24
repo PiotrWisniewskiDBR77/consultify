@@ -48,6 +48,44 @@ export interface CreateInsightInput {
   createdBy: string;
 }
 
+export interface InsightTheme {
+  title: string;
+  description: string;
+  evidence_refs: string[];
+  strength: 'strong' | 'moderate' | 'weak';
+  crossSessionPattern?: boolean;
+}
+
+export interface InsightIssue {
+  title: string;
+  description: string;
+  severity: 'high' | 'medium' | 'low';
+  evidence_refs: string[];
+  crossSessionPattern?: boolean;
+}
+
+export interface InsightOpportunity {
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  evidence_refs: string[];
+  crossSessionPattern?: boolean;
+}
+
+export interface InsightSignal {
+  title: string;
+  description: string;
+  type: 'tension' | 'gap' | 'contradiction' | 'emerging_pattern';
+}
+
+export interface InsightEvidenceMapEntry {
+  answer_id: string;
+  question_text: string;
+  answer_snippet: string;
+  linked_themes: string[];
+  linked_issues: string[];
+}
+
 export interface Insight {
   id: string;
   organizationId: string;
@@ -56,6 +94,13 @@ export interface Insight {
   sourceSessionIds: string[];
   filters?: Record<string, any>;
   content?: string;
+  executiveSummary?: string;
+  themes?: InsightTheme[];
+  issues?: InsightIssue[];
+  opportunities?: InsightOpportunity[];
+  signals?: InsightSignal[];
+  evidenceMap?: InsightEvidenceMapEntry[];
+  missingData?: string[];
   status: InsightStatus;
   errorMessage?: string;
   sourceSessionCount: number;
@@ -338,10 +383,19 @@ class InterviewInsightService {
 
     const now = new Date().toISOString();
 
-    // Reset status
     await db.run(
       `UPDATE interview_insights 
-       SET status = 'generating', content = NULL, error_message = NULL, updated_at = ?
+       SET status = 'generating',
+           content = NULL,
+           executive_summary = NULL,
+           themes_json = NULL,
+           issues_json = NULL,
+           opportunities_json = NULL,
+           signals_json = NULL,
+           evidence_map_json = NULL,
+           missing_data_json = NULL,
+           error_message = NULL,
+           updated_at = ?
        WHERE id = ?`,
       [now, id]
     );
@@ -370,7 +424,187 @@ class InterviewInsightService {
   // ==========================================
 
   /**
-   * Generate insight content using AI
+   * V6 three-layer truth model prompt.
+   * Replaces all per-promptType templates with a single structured JSON output contract.
+   */
+  private buildV6Prompt(promptType: InsightPromptType, formattedData: string, customPrompt?: string, sessionCount = 1): string {
+    const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
+    const isMultiSession = sessionCount > 1;
+
+    const crossSessionBlock = isMultiSession ? `
+      "cross_session_pattern": true or false (boolean indicating if this spans multiple sessions)` : '';
+
+    const crossSessionInstructions = isMultiSession ? `
+
+CROSS-SESSION ANALYSIS (${sessionCount} respondents):
+- Identify RECURRING themes that appear across multiple respondents
+- Flag CONTRADICTIONS where respondents disagree
+- Note CONSENSUS areas where all respondents align
+- Distinguish single-respondent observations from cross-session patterns
+- In each theme/issue/opportunity, note which sessions support it (by respondent name or session name)
+- Add a "cross_session_pattern" boolean to each theme/issue/opportunity indicating if it spans multiple sessions
+` : '';
+
+    let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
+
+Each answer in the data below is tagged with an [answer_id: ...]. Use these IDs in evidence_refs and evidence_map.
+
+Interview Data:
+${formattedData}
+
+Return ONLY a valid JSON object (no markdown fences, no commentary outside the JSON) with this exact structure:
+
+{
+  "executive_summary": "2-4 sentence overview of the most important findings",
+  "themes": [
+    {
+      "title": "Theme title",
+      "description": "What this theme means, grounded in the data",
+      "evidence_refs": ["answer_id_1", "answer_id_2"],
+      "strength": "strong|moderate|weak"${crossSessionBlock}
+    }
+  ],
+  "issues": [
+    {
+      "title": "Issue title",
+      "description": "What the problem is and why it matters",
+      "severity": "high|medium|low",
+      "evidence_refs": ["answer_id_1"]${crossSessionBlock}
+    }
+  ],
+  "opportunities": [
+    {
+      "title": "Opportunity title",
+      "description": "What the opportunity is and its potential value",
+      "impact": "high|medium|low",
+      "evidence_refs": ["answer_id_1"]${crossSessionBlock}
+    }
+  ],
+  "signals": [
+    {
+      "title": "Signal title",
+      "description": "Description of the tension, gap, contradiction, or emerging pattern",
+      "type": "tension|gap|contradiction|emerging_pattern"
+    }
+  ],
+  "evidence_map": [
+    {
+      "answer_id": "the_answer_id",
+      "question_text": "The original question",
+      "answer_snippet": "Key excerpt from the answer (max 120 chars)",
+      "linked_themes": ["Theme title 1"],
+      "linked_issues": ["Issue title 1"]
+    }
+  ],
+  "missing_data": ["Description of what data is missing or what follow-up questions would help"]
+}
+${crossSessionInstructions}
+Rules:
+- Ground every theme, issue, and opportunity in specific answer_ids from the data.
+- "signals" capture tensions, gaps, contradictions, or emerging patterns that don't fit neatly into themes/issues.
+- Include at least one entry in evidence_map for each answer that contributed to a theme or issue.
+- Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, owners, or mitigation plans.
+- If evidence is weak or incomplete, note it in missing_data.
+- Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume).
+`;
+
+    const extra = (customPrompt || '').trim();
+    if (extra) {
+      prompt += `\nAdditional analysis instructions:\n${extra}\n`;
+    }
+
+    return prompt;
+  }
+
+  /**
+   * Parse the AI JSON response, tolerating markdown fences and minor formatting issues.
+   */
+  private parseV6Response(raw: string): {
+    executive_summary: string;
+    themes: InsightTheme[];
+    issues: InsightIssue[];
+    opportunities: InsightOpportunity[];
+    signals: InsightSignal[];
+    evidence_map: InsightEvidenceMapEntry[];
+    missing_data: string[];
+  } {
+    let cleaned = raw.trim();
+    // Strip markdown code fences if present
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+    const parsed = JSON.parse(cleaned);
+
+    const mapCrossSession = <T extends Record<string, any>>(items: T[]): T[] =>
+      items.map((item) => {
+        if ('cross_session_pattern' in item) {
+          const { cross_session_pattern, ...rest } = item;
+          return { ...rest, crossSessionPattern: Boolean(cross_session_pattern) } as unknown as T;
+        }
+        return item;
+      });
+
+    return {
+      executive_summary: String(parsed.executive_summary || ''),
+      themes: Array.isArray(parsed.themes) ? mapCrossSession(parsed.themes) : [],
+      issues: Array.isArray(parsed.issues) ? mapCrossSession(parsed.issues) : [],
+      opportunities: Array.isArray(parsed.opportunities) ? mapCrossSession(parsed.opportunities) : [],
+      signals: Array.isArray(parsed.signals) ? parsed.signals : [],
+      evidence_map: Array.isArray(parsed.evidence_map) ? parsed.evidence_map : [],
+      missing_data: Array.isArray(parsed.missing_data) ? parsed.missing_data : [],
+    };
+  }
+
+  /**
+   * Build a markdown rendering of the structured V6 data for the legacy `content` column.
+   */
+  private renderV6ContentAsMarkdown(data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>): string {
+    const lines: string[] = [];
+
+    lines.push('## Executive Summary', '', data.executive_summary, '');
+
+    if (data.themes.length > 0) {
+      lines.push('## Themes', '');
+      for (const t of data.themes) {
+        lines.push(`### ${t.title} _(${t.strength})_`, '', t.description, '');
+      }
+    }
+
+    if (data.issues.length > 0) {
+      lines.push('## Issues', '');
+      for (const i of data.issues) {
+        lines.push(`### ${i.title} _(severity: ${i.severity})_`, '', i.description, '');
+      }
+    }
+
+    if (data.opportunities.length > 0) {
+      lines.push('## Opportunities', '');
+      for (const o of data.opportunities) {
+        lines.push(`### ${o.title} _(impact: ${o.impact})_`, '', o.description, '');
+      }
+    }
+
+    if (data.signals.length > 0) {
+      lines.push('## Signals', '');
+      for (const s of data.signals) {
+        lines.push(`- **${s.title}** (${s.type}): ${s.description}`);
+      }
+      lines.push('');
+    }
+
+    if (data.missing_data.length > 0) {
+      lines.push('## Missing Data', '');
+      for (const m of data.missing_data) {
+        lines.push(`- ${m}`);
+      }
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate insight content using AI (V6 three-layer truth model)
    */
   private async generateInsight(
     insightId: string,
@@ -382,47 +616,30 @@ class InterviewInsightService {
     const startTime = Date.now();
 
     try {
-      // Fetch session data
       const sessionData = await this.fetchSessionData(sessionIds);
 
       if (sessionData.length === 0) {
         throw new Error('No session data available for analysis');
       }
 
-      // Format data for prompt
       const formattedData = this.formatSessionDataForPrompt(sessionData);
+      const prompt = this.buildV6Prompt(promptType, formattedData, customPrompt, sessionData.length);
 
-      // Get prompt template
-      const promptTemplate = PROMPT_TEMPLATES[promptType];
-      let prompt = promptTemplate.replace('{DATA}', formattedData);
-      const extra = (customPrompt || '').trim();
-      if (extra) {
-        prompt += `\n\nAdditional instructions:\n${extra}\n`;
-      }
+      const systemPrompt =
+        'You are a senior management consultant performing structured interview analysis. ' +
+        'Return ONLY valid JSON matching the requested schema. ' +
+        'Ground all findings in the provided interview data. ' +
+        'Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, owners, or mitigation plans.';
 
-      // Call LLM (through the unified router) with a stable model selection.
-      // NOTE: `llmService.callText()` requires a `modelConfig` and messages; using `generateResponse()`
-      // keeps this service compatible with the app-wide LLM fallback chain.
-      const actionablePromptTypes: Set<InsightPromptType> = new Set([
-        'recommendations',
-        'opportunity_scan',
-        'risk_assessment',
-        'maturity',
-        'stakeholder_map',
-      ]);
-      const systemPrompt = actionablePromptTypes.has(promptType)
-        ? 'You are a senior management consultant. Write in clear, structured markdown. Be specific and actionable.'
-        : 'You are a senior management consultant. Write in clear, structured markdown. Use only facts grounded in the provided interview data. Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, or mitigation plans.';
       const response = await llmService.generateResponse({
         prompt,
         temperature: 0.3,
         maxTokens: 4000,
-        // "standard" resolves via LLMConfigService fallback chain.
         model: 'standard',
         systemPrompt,
       });
 
-      const content = String((response as any)?.content || (response as any)?.text || '');
+      const rawContent = String((response as any)?.content || (response as any)?.text || '');
       const tokensUsed = Number(
         (response as any)?.usage?.totalTokens ||
           (response as any)?.usage?.total_tokens ||
@@ -431,22 +648,51 @@ class InterviewInsightService {
       );
       const generationTime = Date.now() - startTime;
 
-      // Update with success
+      // Parse structured V6 response
+      const v6Data = this.parseV6Response(rawContent);
+
+      // Render markdown for the legacy `content` column (backward compat)
+      const markdownContent = this.renderV6ContentAsMarkdown(v6Data);
+
       await db.run(
         `UPDATE interview_insights 
-         SET status = 'completed', content = ?, tokens_used = ?, generation_time_ms = ?, updated_at = ?
+         SET status = 'completed',
+             content = ?,
+             executive_summary = ?,
+             themes_json = ?,
+             issues_json = ?,
+             opportunities_json = ?,
+             signals_json = ?,
+             evidence_map_json = ?,
+             missing_data_json = ?,
+             tokens_used = ?,
+             generation_time_ms = ?,
+             updated_at = ?
          WHERE id = ?`,
-        [content, tokensUsed, generationTime, new Date().toISOString(), insightId]
+        [
+          markdownContent,
+          v6Data.executive_summary,
+          JSON.stringify(v6Data.themes),
+          JSON.stringify(v6Data.issues),
+          JSON.stringify(v6Data.opportunities),
+          JSON.stringify(v6Data.signals),
+          JSON.stringify(v6Data.evidence_map),
+          JSON.stringify(v6Data.missing_data),
+          tokensUsed,
+          generationTime,
+          new Date().toISOString(),
+          insightId,
+        ]
       );
 
       logger.info(
-        `[InterviewInsightService] Generated insight ${insightId} in ${generationTime}ms`
+        `[InterviewInsightService] Generated V6 insight ${insightId} in ${generationTime}ms ` +
+        `(${v6Data.themes.length} themes, ${v6Data.issues.length} issues, ${v6Data.opportunities.length} opportunities)`
       );
     } catch (error) {
       const err = error as Error;
       logger.error(`[InterviewInsightService] Failed to generate insight ${insightId}:`, err);
 
-      // Update with failure
       await db.run(
         `UPDATE interview_insights 
          SET status = 'failed', error_message = ?, updated_at = ?
@@ -479,6 +725,7 @@ class InterviewInsightService {
     const sessionDataPromises = (sessions || []).map(async (session: any) => {
       const answers = await db.all<any>(
         `SELECT 
+          q.id,
           q.question_text,
           q.category,
           q.answer_text,
@@ -508,7 +755,7 @@ class InterviewInsightService {
         const answerText = session.answers
           .map(
             (a: any) =>
-              `Q: ${a.question_text}\nA: ${a.answer_text || 'No answer'}${
+              `[answer_id: ${a.id}] Q: ${a.question_text}\nA: ${a.answer_text || 'No answer'}${
                 a.status ? ` (status: ${a.status})` : ''
               }${a.confidence_score ? ` (confidence: ${a.confidence_score}/5)` : ''}`
           )
@@ -552,6 +799,16 @@ ${answerText}
       return [];
     })();
 
+    const safeJsonArray = <T>(raw: unknown): T[] | undefined => {
+      if (!raw || typeof raw !== 'string') return undefined;
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : undefined;
+      } catch {
+        return undefined;
+      }
+    };
+
     return {
       id: row.id,
       organizationId: row.organization_id,
@@ -568,6 +825,13 @@ ${answerText}
           })()
         : undefined,
       content,
+      executiveSummary: row.executive_summary || undefined,
+      themes: safeJsonArray<InsightTheme>(row.themes_json),
+      issues: safeJsonArray<InsightIssue>(row.issues_json),
+      opportunities: safeJsonArray<InsightOpportunity>(row.opportunities_json),
+      signals: safeJsonArray<InsightSignal>(row.signals_json),
+      evidenceMap: safeJsonArray<InsightEvidenceMapEntry>(row.evidence_map_json),
+      missingData: safeJsonArray<string>(row.missing_data_json),
       status: row.status as InsightStatus,
       errorMessage: row.error_message || undefined,
       sourceSessionCount:

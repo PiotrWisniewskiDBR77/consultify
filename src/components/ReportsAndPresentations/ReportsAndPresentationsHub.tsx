@@ -6,26 +6,23 @@
  * Connected to backend: /api/report-builder, /api/presentations
  */
 
-import { BookTemplate, FileText, Filter, Presentation, Sparkles } from 'lucide-react';
+import { BookTemplate, FileText, Filter, Presentation } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
-import { useConversationStore } from '@/store/useConversationStore';
-
-import {
-  type FilterChip,
-  ModuleHub,
-  type ModuleTab,
-  type ViewMode,
-} from '../shared/ModuleHub';
+import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { TemplatesTabContent } from './TemplatesTabContent';
-import type { PresentationSourceType, PresentationStatus, RapTab, ReportStatus, TemplateStatus } from './types';
+import type {
+  PresentationSourceType,
+  PresentationStatus,
+  RapTab,
+  ReportStatus,
+  TemplateStatus,
+} from './types';
 import { PRESENTATION_STATUS_META, REPORT_STATUS_META, SOURCE_TYPE_META } from './types';
 import { usePresentations, useRapActions, useReports, useTemplates } from './useRapData';
 
@@ -33,8 +30,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const openChatWithContext = useOpenChatWithContext();
-  const { isChatCollapsed, toggleChatCollapse } = useConversationStore();
 
   const initialTab = useMemo<RapTab>(() => {
     const params = new URLSearchParams(location.search || '');
@@ -55,9 +50,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('reports_presentations');
 
-  const { reports, loading: reportsLoading, fetchReports } = useReports();
-  const { presentations, loading: presLoading, fetchPresentations } = usePresentations();
-  const { templates, loading: templatesLoading } = useTemplates();
+  const { reports, loading: reportsLoading, error: reportsError, fetchReports } = useReports();
+  const {
+    presentations,
+    loading: presLoading,
+    error: presentationsError,
+    fetchPresentations,
+  } = usePresentations();
+  const { templates, loading: templatesLoading, error: templatesError } = useTemplates();
   const actions = useRapActions();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -125,35 +125,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     setActiveFilters([]);
   }, []);
 
-  const handleOpenAI = useCallback(async () => {
-    try {
-      await openChatWithContext({
-        entityType: 'reports_presentations',
-        entityId: `rap:${activeTab}`,
-        entityName: t('rap.title', 'Reports & Presentations'),
-        contextData: { activeTab, searchQuery, activeFilters },
-      });
-      if (isChatCollapsed) toggleChatCollapse();
-    } catch {
-      // silent
-    }
-  }, [activeFilters, activeTab, isChatCollapsed, openChatWithContext, searchQuery, t, toggleChatCollapse]);
-
-  const aiControl = useMemo(
-    () => (
-      <button
-        type="button"
-        onClick={handleOpenAI}
-        data-testid="rap-ai-button"
-        className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-        title={t('common.ai', 'AI')}
-      >
-        <Sparkles size={18} />
-      </button>
-    ),
-    [handleOpenAI, t]
-  );
-
   const toggleFilter = useCallback(
     (column: string, value: string, label: string, color?: string) => {
       setActiveFilters((prev) => {
@@ -170,7 +141,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       setActiveFilters((prev) => {
         const without = prev.filter((f) => f.column !== column);
         if (!value) return without;
-        return [...without, { id: `${column}:${value}`, column, value, label: label || value, color }];
+        return [
+          ...without,
+          { id: `${column}:${value}`, column, value, label: label || value, color },
+        ];
       });
     },
     []
@@ -185,9 +159,21 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     const statusOptions =
       activeTab === 'templates'
         ? ([
-            { value: 'active', label: t('rap.filters.status.active', 'Active'), dotColor: 'bg-emerald-400' },
-            { value: 'draft', label: t('rap.filters.status.draft', 'Draft'), dotColor: 'bg-slate-400' },
-            { value: 'archived', label: t('rap.filters.status.archived', 'Archived'), dotColor: 'bg-slate-500' },
+            {
+              value: 'active',
+              label: t('rap.filters.status.active', 'Active'),
+              dotColor: 'bg-emerald-400',
+            },
+            {
+              value: 'draft',
+              label: t('rap.filters.status.draft', 'Draft'),
+              dotColor: 'bg-slate-400',
+            },
+            {
+              value: 'archived',
+              label: t('rap.filters.status.archived', 'Archived'),
+              dotColor: 'bg-slate-500',
+            },
           ] as Array<{ value: TemplateStatus; label: string; dotColor: string }>)
         : activeTab === 'reports'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
@@ -210,8 +196,48 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           })) as Array<{ value: PresentationSourceType; label: string; color: string }>)
         : [];
 
+    const reportCanon =
+      activeTab === 'reports' ? (
+        <div className="mr-2 hidden xl:flex items-center gap-2">
+          {[
+            ['R1', t('rap.reportCanon.r1', 'Weekly Execution')],
+            ['R2', t('rap.reportCanon.r2', 'Steering Committee')],
+            ['R3', t('rap.reportCanon.r3', 'Benefits Tracking')],
+            ['R4', t('rap.reportCanon.r4', 'Portfolio Overview')],
+          ].map(([code, label]) => {
+            const checked = activeFilters.some(
+              (f) => f.column === 'reportType' && f.value === code
+            );
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() =>
+                  setSinglePreset(
+                    'reportType',
+                    checked ? null : code,
+                    `${code} · ${label}`,
+                    'bg-primary-400'
+                  )
+                }
+                className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
+                  checked
+                    ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
+                    : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                }`}
+                title={label}
+              >
+                <span className="font-semibold">{code}</span>
+                <span className="truncate max-w-[120px]">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null;
+
     return (
-      <div className="relative">
+      <div className="relative flex items-center">
+        {reportCanon}
         <button
           type="button"
           onClick={() => setFiltersOpen((v) => !v)}
@@ -256,7 +282,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {statusOptions.map((o) => {
-                      const checked = activeFilters.some((f) => f.column === 'status' && f.value === o.value);
+                      const checked = activeFilters.some(
+                        (f) => f.column === 'status' && f.value === o.value
+                      );
                       return (
                         <button
                           key={o.value}
@@ -283,7 +311,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {sourceOptions.map((o) => {
-                        const checked = activeFilters.some((f) => f.column === 'sourceType' && f.value === o.value);
+                        const checked = activeFilters.some(
+                          (f) => f.column === 'sourceType' && f.value === o.value
+                        );
                         return (
                           <button
                             key={o.value}
@@ -295,7 +325,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                                 : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
                             }`}
                           >
-                            <span className={`text-[11px] font-semibold ${o.color}`}>{o.label}</span>
+                            <span className={`text-[11px] font-semibold ${o.color}`}>
+                              {o.label}
+                            </span>
                           </button>
                         );
                       })}
@@ -325,7 +357,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         )}
       </div>
     );
-  }, [activeFilters, activeTab, filtersOpen, t, toggleFilter]);
+  }, [activeFilters, activeTab, filtersOpen, setSinglePreset, t, toggleFilter]);
 
   const commandRowContent = useMemo(() => {
     const chipBase =
@@ -343,19 +375,30 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           ? ('status' as const)
           : ('status' as const);
 
-    const counts = (items || []).reduce((acc, it: any) => {
-      const s = String(it?.[statusKey] ?? '').toLowerCase();
-      if (!s) return acc;
-      acc[s] = (acc[s] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const counts = (items || []).reduce(
+      (acc, it: any) => {
+        const s = String(it?.[statusKey] ?? '').toLowerCase();
+        if (!s) return acc;
+        acc[s] = (acc[s] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     const statusChips =
       activeTab === 'templates'
         ? ([
-            { value: 'active', label: t('rap.filters.status.active', 'Active'), dot: 'bg-emerald-400' },
+            {
+              value: 'active',
+              label: t('rap.filters.status.active', 'Active'),
+              dot: 'bg-emerald-400',
+            },
             { value: 'draft', label: t('rap.filters.status.draft', 'Draft'), dot: 'bg-slate-400' },
-            { value: 'archived', label: t('rap.filters.status.archived', 'Archived'), dot: 'bg-slate-500' },
+            {
+              value: 'archived',
+              label: t('rap.filters.status.archived', 'Archived'),
+              dot: 'bg-slate-500',
+            },
           ] as Array<{ value: string; label: string; dot: string }>)
         : activeTab === 'reports'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
@@ -453,6 +496,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             templates={templates}
             loading={templatesLoading}
+            error={templatesError}
           />
         );
       case 'reports':
@@ -464,6 +508,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             reports={reports}
             loading={reportsLoading}
+            error={reportsError}
             onRefresh={fetchReports}
             actions={actions}
           />
@@ -477,6 +522,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             presentations={presentations}
             loading={presLoading}
+            error={presentationsError}
             onRefresh={fetchPresentations}
             actions={actions}
           />
@@ -512,7 +558,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         newItemLabel={ctaLabels[activeTab]}
         availableViewModes={['table', 'grid']}
         rightControls={rightControls}
-        aiControl={aiControl}
         commandRowContent={commandRowContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>

@@ -87,6 +87,7 @@ export const UpdateDecisionSchema = z.object({
   dueDate: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   impact: z.enum(['low', 'medium', 'high']).optional(),
+  status: z.string().optional(),
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(5000).optional(),
   delegationNote: z.string().max(500).optional(),

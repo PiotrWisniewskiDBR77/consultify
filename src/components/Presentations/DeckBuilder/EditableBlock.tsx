@@ -7,7 +7,6 @@ import { Copy, GripVertical, Image, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
 import type { CardBlock } from '../wizard/types';
-
 import { TipTapEditor } from './TipTapEditor';
 
 interface EditableBlockProps {
@@ -51,7 +50,12 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
         const items = html
           .split(/<li[^>]*>/g)
           .slice(1)
-          .map((li) => li.replace(/<\/li>.*$/s, '').replace(/<[^>]+>/g, '').trim())
+          .map((li) =>
+            li
+              .replace(/<\/li>.*$/s, '')
+              .replace(/<[^>]+>/g, '')
+              .trim()
+          )
           .filter(Boolean);
         if (items.length > 0) {
           onUpdate({ content: { ...block.content, items } });
@@ -98,7 +102,10 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
           </button>
           {block.is_refreshable && (
             <button
-              onClick={(e) => { e.stopPropagation(); onRefresh?.(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRefresh?.();
+              }}
               className="p-1 text-blue-400 hover:text-blue-600"
               title="Refresh from source"
             >
@@ -111,14 +118,20 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             </button>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate();
+            }}
             className="p-1 text-slate-400 hover:text-slate-600"
             title="Duplicate"
           >
             <Copy size={12} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="p-1 text-red-400 hover:text-red-600"
             title="Delete"
           >
@@ -135,11 +148,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             onBlur={handleBlur}
             isHeading={block.type === 'heading'}
             headingLevel={(block.content.level as 1 | 2 | 3 | 4) || 2}
-            className={
-              block.type === 'heading'
-                ? 'text-2xl font-bold'
-                : 'text-sm'
-            }
+            className={block.type === 'heading' ? 'text-2xl font-bold' : 'text-sm'}
             placeholder="Start typing..."
           />
         </div>

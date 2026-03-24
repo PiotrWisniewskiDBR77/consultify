@@ -34,6 +34,7 @@ import { SuperAdminAISettings } from '../../components/SuperAdmin/SuperAdminAISe
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { AdminKnowledgeView } from '../admin/AdminKnowledgeView';
 import { AIIntelligenceView } from './AIIntelligenceView';
+import { AIUseCaseControlPlane } from './AIPlatformModule/Executive/AIUseCaseControlPlane';
 import { LLMManagementView } from './LLMManagementView';
 
 interface AIPlatformModuleProps {
@@ -44,6 +45,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
   const [activeTab, setActiveTab] = useState(initialTab || 'llm-config');
 
   const tabs: Tab[] = [
+    { id: 'operating-system', label: 'Operating System', icon: <Sparkles size={16} /> },
     { id: 'llm-config', label: 'LLM Config', icon: <Cpu size={16} /> },
     { id: 'tier-assignments', label: 'Tier Assignments', icon: <Layers size={16} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
@@ -61,6 +63,8 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({ initialTab }
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'operating-system':
+        return <AIUseCaseControlPlane />;
       case 'llm-config':
         return <LLMManagementView />;
       case 'tier-assignments':

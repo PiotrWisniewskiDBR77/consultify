@@ -186,6 +186,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const reducedMotion = useReducedMotion();
   const motionDuration = reducedMotion ? 0 : 0.22;
 
+  useEffect(() => {
+    if (presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE !== 'true') {
+      setPresentationMode('n');
+    }
+  }, [presentationMode, setPresentationMode]);
+
   // ── State ────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<NotificationData | null>(null);
@@ -2536,24 +2542,6 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   motionDuration={motionDuration}
                 />
               </div>
-            </div>
-          )}
-
-          {/* Temporary: C-mode placeholder */}
-          {presentationMode === 'c' && (
-            <div className="col-span-full mt-4">
-              <Callout
-                variant="warning"
-                title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
-                action={{
-                  label: isPolish ? 'Przełącz na N' : 'Switch to N',
-                  onClick: () => setPresentationMode('n'),
-                }}
-              >
-                {isPolish
-                  ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
-                  : 'This view will be rebuilt. For now, please use N mode (page-first).'}
-              </Callout>
             </div>
           )}
 

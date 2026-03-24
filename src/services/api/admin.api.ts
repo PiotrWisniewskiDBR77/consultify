@@ -23,6 +23,82 @@ export interface AdminAlert {
   resolvedAt?: string;
 }
 
+export type FeatureUpdateStatus = 'draft' | 'review' | 'published' | 'archived';
+export type FeatureUpdateImportance = 'low' | 'normal' | 'high';
+export type FeatureUpdateAudience = 'all' | 'admins' | 'superadmins' | 'roles';
+export type FeatureUpdateSurface = 'global' | 'module' | 'view';
+export type FeatureUpdateChangeType =
+  | 'new_feature'
+  | 'improvement'
+  | 'important_change'
+  | 'risk_or_breaking';
+export type FeatureUpdateScope = 'global' | 'organization';
+
+export interface ManagedFeatureUpdate {
+  id: string;
+  organizationId: string | null;
+  scope: FeatureUpdateScope;
+  title: string;
+  bodyMd: string;
+  tags: string[];
+  importance: FeatureUpdateImportance;
+  status: FeatureUpdateStatus;
+  actionPayload: Record<string, unknown>;
+  audience: FeatureUpdateAudience;
+  targetRoles: string[];
+  surface: FeatureUpdateSurface;
+  moduleId: string | null;
+  targetView: string | null;
+  changeType: FeatureUpdateChangeType;
+  effectiveFrom: string | null;
+  expiresAt: string | null;
+  requiresAck: boolean;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  publishedBy: string | null;
+  analytics: {
+    opened: number;
+    clicked: number;
+    read: number;
+  };
+}
+
+export interface FeatureUpdatesSummary {
+  total: number;
+  draft: number;
+  review: number;
+  published: number;
+  archived: number;
+  global: number;
+  organization: number;
+}
+
+export interface FeatureUpdatesListResponse {
+  summary: FeatureUpdatesSummary;
+  items: ManagedFeatureUpdate[];
+}
+
+export interface ManagedFeatureUpdateInput {
+  organizationId?: string | null;
+  title: string;
+  bodyMd: string;
+  tags?: string[];
+  importance?: FeatureUpdateImportance;
+  status?: Exclude<FeatureUpdateStatus, 'published'>;
+  actionPayload?: Record<string, unknown>;
+  audience?: FeatureUpdateAudience;
+  targetRoles?: string[];
+  surface?: FeatureUpdateSurface;
+  moduleId?: string | null;
+  targetView?: string | null;
+  changeType?: FeatureUpdateChangeType;
+  effectiveFrom?: string | null;
+  expiresAt?: string | null;
+  requiresAck?: boolean;
+}
+
 export const AdminApi = {
   // ==========================================
   // SUPER ADMIN DASHBOARD
@@ -246,6 +322,73 @@ export const AdminApi = {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Failed to fetch alert history');
     return json.alerts;
+  },
+
+  // ==========================================
+  // FEATURE UPDATES MANAGEMENT
+  // ==========================================
+
+  listFeatureUpdates: async (params?: {
+    scope?: 'relevant' | FeatureUpdateScope;
+    status?: FeatureUpdateStatus | 'all';
+    organizationId?: string;
+  }): Promise<FeatureUpdatesListResponse> => {
+    const query = new URLSearchParams();
+    if (params?.scope) query.set('scope', params.scope);
+    if (params?.status) query.set('status', params.status);
+    if (params?.organizationId) query.set('organizationId', params.organizationId);
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const res = await fetch(`${API_URL}/updates/admin/list${suffix}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch feature updates');
+    return {
+      summary: data.summary,
+      items: data.items,
+    };
+  },
+
+  createFeatureUpdate: async (payload: ManagedFeatureUpdateInput): Promise<{ id: string }> => {
+    const res = await fetch(`${API_URL}/updates/admin/create`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create feature update');
+    return { id: data.id };
+  },
+
+  updateFeatureUpdate: async (id: string, payload: ManagedFeatureUpdateInput): Promise<void> => {
+    const res = await fetch(`${API_URL}/updates/admin/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update feature update');
+  },
+
+  publishFeatureUpdate: async (id: string): Promise<{ emailed: boolean }> => {
+    const res = await fetch(`${API_URL}/updates/admin/${id}/publish`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to publish feature update');
+    return { emailed: Boolean(data.emailed) };
+  },
+
+  archiveFeatureUpdate: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/updates/admin/${id}/archive`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to archive feature update');
   },
 
   // ==========================================

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { getDatabase } from '../database/index.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 const db = getDatabase();
 
 /**
@@ -20,10 +21,11 @@ const AIContextBuilder = {
     const helpEvents = await AIContextBuilder._getHelpEvents(orgId);
     const metrics = await AIContextBuilder._getMetrics(orgId);
     const lifecycleEvents = await AIContextBuilder._getLifecycleEvents(orgId);
+    const resolvedContext = await organizationContextService.buildResolvedContext(orgId).catch(() => null);
 
     return {
       orgId,
-      orgName: organization?.name,
+      orgName: resolvedContext?.profile?.companyName || organization?.name,
       timestamp: new Date().toISOString(),
       data: {
         users,
@@ -32,11 +34,13 @@ const AIContextBuilder = {
         help_completion_ratios: AIContextBuilder._calculateHelpCompletionRatios(helpEvents),
         metrics_funnel: AIContextBuilder._processMetricsFunnel(metrics),
         recent_events: lifecycleEvents,
+        organization_context_os: resolvedContext,
       },
       raw: {
         tasks,
         initiatives,
         helpEvents,
+        organization_context_os: resolvedContext,
       },
     };
   },

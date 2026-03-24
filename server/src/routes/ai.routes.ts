@@ -7,6 +7,7 @@ import { Response, Router } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import * as cheerio from 'cheerio';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -15,7 +16,9 @@ import {
   validateParams,
   validateQuery,
 } from '../middleware/validation.middleware.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
@@ -72,6 +75,14 @@ import {
   UpdatePolicyRequestSchema,
   UpdateUserPreferencesRequestSchema,
 } from '../validators/ai.validators.js';
+import {
+  AdvisorExecuteActionRequestSchema,
+  AdvisorFeedbackRequestSchema,
+  AdvisorRespondRequestSchema,
+  AdvisorResponseIdParamSchema,
+  AdvisorResponsesQuerySchema,
+  normalizeToAdvisorResponse,
+} from '../validators/advisorResponse.validators.js';
 
 const router = Router();
 
@@ -232,11 +243,340 @@ router.post(
       if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
     }
 
+    await organizationContextService.recordAttachmentExtraction({
+      organizationId: orgId,
+      userId: req.userId || null,
+      payload: {
+        docId,
+        filename,
+        mimeType,
+        extractedText: text,
+        totalChunks: chunks.length,
+        embeddedChunks,
+      },
+    });
+
     return res.status(201).json({
       success: true,
       docId,
       filename,
       mimeType,
+      totalChunks: chunks.length,
+      embeddedChunks,
+    });
+  })
+);
+
+// -------------------- URL attachments ingestion --------------------
+// Fetches a public URL, extracts text, chunks, stores into knowledge_docs/knowledge_chunks.
+// Policy: requires org internetEnabled (but does NOT depend on Tavily).
+const IngestUrlAttachmentRequestSchema = z.object({
+  url: z.string().trim().url(),
+  title: z.string().trim().min(1).max(200).optional(),
+});
+
+router.post(
+  '/attachments/ingest-url',
+  verifyToken,
+  validateBody(IngestUrlAttachmentRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const inputUrl = String((req.body as any)?.url || '').trim();
+    const providedTitle = String((req.body as any)?.title || '').trim();
+
+    let urlObj: URL;
+    try {
+      urlObj = new URL(inputUrl);
+    } catch {
+      return res.status(400).json({ error: 'Invalid URL' });
+    }
+
+    if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Only http(s) URLs are supported' });
+    }
+
+    // Enforce org internet policy (independent from Tavily).
+    try {
+      const polMod = await import('../services/aiPolicyEngine.js');
+      const AIPolicyEngine = (polMod.default || polMod) as any;
+      const policy = await AIPolicyEngine.getEffectivePolicy(
+        orgId,
+        null,
+        (req as any)?.userId || null
+      );
+      if (!policy?.internetEnabled) {
+        return res.status(403).json({ error: 'Internet access is disabled by policy' });
+      }
+    } catch (err: any) {
+      logger.warn('[AI URL Attachments] Policy engine unavailable:', err?.message || String(err));
+      return res.status(403).json({ error: 'Internet access is disabled by policy' });
+    }
+
+    // SSRF + domain allow/deny checks (reuse governance utility; does not require Tavily)
+    let isUrlSafeFn: any = null;
+    let getDefaultPolicyFn: any = null;
+    try {
+      const gov = await import('../services/ai/webSearchGovernance.js');
+      isUrlSafeFn = (gov as any).isUrlSafe || (gov as any).default?.isUrlSafe;
+      getDefaultPolicyFn = (gov as any).getDefaultPolicy || (gov as any).default?.getDefaultPolicy;
+    } catch {
+      // ignore; we will fallback to a minimal check below
+    }
+
+    if (typeof isUrlSafeFn === 'function' && typeof getDefaultPolicyFn === 'function') {
+      const basePolicy = getDefaultPolicyFn();
+      const check = isUrlSafeFn(inputUrl, { ...basePolicy, internetEnabled: true });
+      if (!check?.safe) {
+        return res.status(400).json({ error: check?.reason || 'URL blocked by security policy' });
+      }
+    } else {
+      // Minimal SSRF check fallback (block localhost/private ranges)
+      const s = inputUrl.toLowerCase();
+      if (
+        s.startsWith('http://localhost') ||
+        s.startsWith('https://localhost') ||
+        s.startsWith('http://127.') ||
+        s.startsWith('https://127.') ||
+        s.startsWith('http://10.') ||
+        s.startsWith('https://10.') ||
+        s.startsWith('http://192.168.') ||
+        s.startsWith('https://192.168.') ||
+        s.startsWith('http://0.0.0.0') ||
+        s.startsWith('https://0.0.0.0')
+      ) {
+        return res.status(400).json({ error: 'URL blocked by security policy' });
+      }
+    }
+
+    const MAX_BYTES = 6 * 1024 * 1024; // 6MB
+    const MAX_TEXT_CHARS = 220_000;
+
+    // Fetch with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    let resp: globalThis.Response;
+    try {
+      resp = await fetch(inputUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: {
+          'user-agent': 'ConsultifyBot/1.0 (+attachments/ingest-url)',
+          accept: 'text/html,text/plain,application/pdf;q=0.9,*/*;q=0.1',
+        },
+      });
+    } catch (err: any) {
+      clearTimeout(timeout);
+      const msg = String(err?.name || err?.message || err);
+      return res.status(502).json({ error: `Failed to fetch URL (${msg})` });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!resp.ok) {
+      return res.status(502).json({ error: `Failed to fetch URL (HTTP ${resp.status})` });
+    }
+
+    const finalUrl = String((resp as any)?.url || inputUrl);
+    if (finalUrl && finalUrl !== inputUrl && typeof isUrlSafeFn === 'function' && typeof getDefaultPolicyFn === 'function') {
+      const basePolicy = getDefaultPolicyFn();
+      const check = isUrlSafeFn(finalUrl, { ...basePolicy, internetEnabled: true });
+      if (!check?.safe) {
+        return res.status(400).json({ error: check?.reason || 'Redirected URL blocked by security policy' });
+      }
+    }
+
+    const contentType = String(resp.headers.get('content-type') || '').toLowerCase();
+    let buf: Buffer;
+    try {
+      const ab = await resp.arrayBuffer();
+      buf = Buffer.from(ab);
+    } catch (err: any) {
+      return res.status(502).json({ error: 'Failed to read URL response body' });
+    }
+
+    if (buf.byteLength > MAX_BYTES) {
+      return res.status(413).json({ error: `URL content too large (${buf.byteLength} bytes)` });
+    }
+
+    // Extract text
+    let extractedText = '';
+    let detectedTitle = providedTitle;
+    let detectedMimeType = contentType || 'text/plain';
+
+    try {
+      const isPdf =
+        contentType.includes('application/pdf') ||
+        finalUrl.toLowerCase().includes('.pdf') ||
+        urlObj.pathname.toLowerCase().endsWith('.pdf');
+      if (isPdf) {
+        detectedMimeType = 'application/pdf';
+        const pdfParseMod = (await import('pdf-parse')) as any;
+        const pdf = pdfParseMod.default || pdfParseMod;
+        const out = await pdf(buf);
+        extractedText = String(out?.text || '');
+      } else if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
+        detectedMimeType = 'text/html';
+        const html = buf.toString('utf8');
+        const $ = cheerio.load(html);
+        $('script, style, noscript, svg, canvas, iframe').remove();
+        if (!detectedTitle) {
+          const t = String($('title').first().text() || '').trim();
+          if (t) detectedTitle = t;
+        }
+        const bodyText = $('body').text();
+        extractedText = String(bodyText || '');
+      } else {
+        // Treat as plain text; best-effort utf8 decode.
+        extractedText = buf.toString('utf8');
+      }
+    } catch (err: any) {
+      logger.warn('[AI URL Attachments] Text extraction failed:', err?.message || String(err));
+      extractedText = '';
+    }
+
+    extractedText = String(extractedText || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+
+    if (!extractedText) {
+      return res.status(400).json({ error: 'Could not extract any text from URL' });
+    }
+    if (extractedText.length > MAX_TEXT_CHARS) {
+      extractedText = extractedText.slice(0, MAX_TEXT_CHARS);
+    }
+
+    const hostname = (() => {
+      try {
+        return new URL(finalUrl).hostname;
+      } catch {
+        return urlObj.hostname;
+      }
+    })();
+    const fallbackName = `${hostname}${urlObj.pathname || ''}`.replace(/\/+$/, '') || hostname || 'url';
+    const filename = (detectedTitle || fallbackName).slice(0, 180);
+    const docId = uuidv4();
+
+    await dbRun(
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, created_at)
+       VALUES (?, ?, ?, 'indexed', CURRENT_TIMESTAMP)`,
+      [docId, filename, finalUrl || inputUrl],
+      { fallback: true } as any
+    );
+    try {
+      await dbRun(`UPDATE knowledge_docs SET category = ? WHERE id = ?`, ['chat_url_attachment', docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await dbRun(`UPDATE knowledge_docs SET organization_id = ? WHERE id = ?`, [orgId, docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+
+    const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
+      const normalized = String(raw || '').replace(/\r\n/g, '\n').trim();
+      const MAX = 1200;
+      const OVERLAP = 150;
+      const out: Array<{ chunkIndex: number; content: string }> = [];
+      if (!normalized) return out;
+
+      const paras = normalized
+        .split(/\n\s*\n/g)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      let buf = '';
+      const flush = () => {
+        const c = buf.trim();
+        if (c) out.push({ chunkIndex: out.length, content: c });
+        buf = '';
+      };
+
+      const pushLong = (p: string) => {
+        const s = p.trim();
+        if (!s) return;
+        if (s.length <= MAX) {
+          out.push({ chunkIndex: out.length, content: s });
+          return;
+        }
+        let i = 0;
+        while (i < s.length) {
+          const chunk = s.slice(i, i + MAX).trim();
+          if (chunk) out.push({ chunkIndex: out.length, content: chunk });
+          if (i + MAX >= s.length) break;
+          i = Math.max(0, i + MAX - OVERLAP);
+        }
+      };
+
+      for (const p of paras) {
+        if (!p) continue;
+        if (!buf) {
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+          continue;
+        }
+        if (buf.length + 2 + p.length <= MAX) {
+          buf += `\n\n${p}`;
+        } else {
+          flush();
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+        }
+      }
+      flush();
+      if (out.length === 0) pushLong(normalized);
+      return out;
+    };
+
+    const ragModule = await import('../services/ragService.js');
+    const ragService = (ragModule.default || ragModule) as any;
+
+    const chunks = makeChunks(extractedText);
+    let embeddedChunks = 0;
+    for (const c of chunks) {
+      const chunkIndex = Number(c.chunkIndex || 0);
+      const content = String(c.content || '').trim();
+      if (!content) continue;
+      const embedding = await ragService.generateEmbedding(content);
+      await dbRun(
+        `INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding)
+         VALUES (?, ?, ?, ?, ?)`,
+        [`${docId}-chk-${chunkIndex}`, docId, content, chunkIndex, JSON.stringify(embedding || [])],
+        { fallback: true } as any
+      );
+      if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
+    }
+
+    await organizationContextService.recordAttachmentExtraction({
+      organizationId: orgId,
+      userId: req.userId || null,
+      payload: {
+        docId,
+        filename,
+        mimeType: detectedMimeType,
+        sourceUrl: finalUrl || inputUrl,
+        extractedTextPreview: extractedText.slice(0, 2000),
+        totalChunks: chunks.length,
+        embeddedChunks,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      docId,
+      filename,
+      mimeType: detectedMimeType,
+      sourceUrl: finalUrl || inputUrl,
       totalChunks: chunks.length,
       embeddedChunks,
     });
@@ -664,9 +1004,9 @@ router.post(
       ja: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
-    const langCode = (language || 'pl').split('-')[0];
-    const langName = languageMap[langCode] || languageMap['pl'];
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]\n`;
+    const langCode = (language || 'en').split('-')[0];
+    const langName = languageMap[langCode] || 'English';
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. Match the user's language naturally. The UI locale is ${langName}.]\n`;
 
     // Confirm schema (structured output)
     // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
@@ -974,8 +1314,9 @@ router.post(
       ja: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
-    const langName = languageMap[language || 'pl'] || languageMap['pl'];
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
+    const langCode = (language || 'en').split('-')[0];
+    const langName = languageMap[langCode] || 'English';
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. If the user writes in English, respond in English. If the user writes in Polish, respond in Polish. Match the user's language naturally. The UI locale is ${langName} but always prioritize the language of the user's message.]\n`;
 
     let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
@@ -1274,6 +1615,16 @@ router.post(
           null;
 
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
+      const attachmentDocIdsForPurpose = Array.isArray((context as any)?.attachmentDocIds)
+        ? ((context as any).attachmentDocIds as any[]).map((id: any) => String(id)).filter(Boolean)
+        : [];
+      const resolvedChatPurpose = inferChatTaskPurpose({
+        capability: 'chat',
+        message,
+        attachments: Array.isArray((context as any)?.attachments) ? (context as any).attachments : [],
+        attachmentDocIds: attachmentDocIdsForPurpose,
+        deepResearch: Boolean(aiModes?.deepResearch),
+      });
 
       let pipelineRequest = {
         type: 'chat',
@@ -1286,6 +1637,7 @@ router.post(
           content: (m as { parts?: Array<{ text: string }> }).parts?.[0]?.text || m.content || '',
         })),
         capability: 'chat',
+        purpose: resolvedChatPurpose,
         screenContext, // Full screen context for AI awareness
         focusMode, // Focus mode for context filtering
         context: {
@@ -1341,6 +1693,7 @@ router.post(
             responseStyle: responseStyle || null,
             selectedTier: selectedTier || null,
             selectedModelId: selectedModelId || null,
+            purpose: resolvedChatPurpose,
             language: language || null,
             resumeFromPartial: Boolean(resumeFromPartial),
             privateMode: Boolean(privateMode),
@@ -5640,6 +5993,720 @@ router.post(
     }
 
     return res.json({ success: true });
+  })
+);
+
+// ==========================================
+// V4-AI-01: Canonical Advisor Response Pipeline
+// ==========================================
+
+router.post(
+  '/advisor/respond',
+  verifyToken,
+  validateBody(AdvisorRespondRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { query, conversationId, context } = req.body;
+    const orgId = req.organizationId!;
+    const userId = req.userId!;
+
+    const startMs = Date.now();
+
+    try {
+      const AIOrchestrator = await getAIOrchestrator();
+      const rawResult = await AIOrchestrator.processMessage(query, userId, orgId, null, {
+        conversationId,
+        context: context || {},
+      });
+
+      const advisorResponse = normalizeToAdvisorResponse(rawResult, {
+        intent: rawResult.intent,
+        purpose: context?.purpose,
+      });
+
+      advisorResponse.metadata = {
+        contextArtifacts: advisorResponse.metadata?.contextArtifacts || [],
+        ...advisorResponse.metadata,
+        latencyMs: Date.now() - startMs,
+      };
+
+      try {
+        await dbRun(
+          `INSERT INTO advisor_response_log
+            (organization_id, user_id, conversation_id, intent, answer_preview,
+             citations_count, actions_count, questions_count, confidence,
+             safety_notes_json, model, tokens_used, latency_ms, purpose, response_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            orgId,
+            userId,
+            conversationId || null,
+            advisorResponse.intent,
+            advisorResponse.answer.slice(0, 500),
+            advisorResponse.citations.length,
+            advisorResponse.proposedActions.length,
+            advisorResponse.questions.length,
+            advisorResponse.confidence,
+            JSON.stringify(advisorResponse.safetyNotes),
+            advisorResponse.metadata?.model || null,
+            advisorResponse.metadata?.tokensUsed || null,
+            advisorResponse.metadata?.latencyMs || null,
+            advisorResponse.metadata?.purpose || null,
+            JSON.stringify(advisorResponse),
+          ]
+        );
+      } catch (logErr: any) {
+        logger.warn('[Advisor] Failed to log response:', logErr?.message);
+      }
+
+      return res.json({ success: true, data: advisorResponse });
+    } catch (err: any) {
+      logger.error('[Advisor] respond error:', err);
+      return res.status(500).json({ error: err?.message || 'Advisor processing failed' });
+    }
+  })
+);
+
+router.post(
+  '/advisor/response/:responseId/feedback',
+  verifyToken,
+  validateParams(AdvisorResponseIdParamSchema),
+  validateBody(AdvisorFeedbackRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { responseId } = req.params;
+    const { score, text } = req.body;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    const existing = await dbGet(
+      `SELECT id FROM advisor_response_log WHERE id = ? AND organization_id = ?`,
+      [responseId, orgId]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Advisor response not found' });
+    }
+
+    await dbRun(
+      `UPDATE advisor_response_log SET feedback_score = ?, feedback_text = ? WHERE id = ?`,
+      [score, text || null, responseId]
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/advisor/responses',
+  verifyToken,
+  validateQuery(AdvisorResponsesQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId!;
+    const { conversationId, intent, limit, offset } = req.query as any;
+
+    let sql = `SELECT id, intent, answer_preview, citations_count, actions_count,
+               questions_count, confidence, model, purpose, feedback_score, created_at
+               FROM advisor_response_log WHERE organization_id = ?`;
+    const params: any[] = [orgId];
+
+    if (conversationId) {
+      sql += ` AND conversation_id = ?`;
+      params.push(conversationId);
+    }
+    if (intent) {
+      sql += ` AND intent = ?`;
+      params.push(intent);
+    }
+
+    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit) || 20, Number(offset) || 0);
+
+    const rows = await dbAll(sql, params);
+    return res.json({ success: true, data: rows });
+  })
+);
+
+router.post(
+  '/advisor/response/:responseId/execute-action',
+  verifyToken,
+  validateParams(AdvisorResponseIdParamSchema),
+  validateBody(AdvisorExecuteActionRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { responseId } = req.params;
+    const { actionId } = req.body;
+    const orgId = req.organizationId!;
+    const userId = req.userId!;
+
+    const row = await dbGet(
+      `SELECT response_json FROM advisor_response_log WHERE id = ? AND organization_id = ?`,
+      [responseId, orgId]
+    );
+    if (!row) {
+      return res.status(404).json({ error: 'Advisor response not found' });
+    }
+
+    let advisorResponse: any;
+    try {
+      advisorResponse = JSON.parse((row as any).response_json);
+    } catch {
+      return res.status(500).json({ error: 'Corrupted response data' });
+    }
+
+    const action = (advisorResponse.proposedActions || []).find((a: any) => a.id === actionId);
+    if (!action) {
+      return res.status(404).json({ error: 'Action not found in response' });
+    }
+
+    if (action.requiresApproval) {
+      return res.status(403).json({ error: 'Action requires explicit approval flow' });
+    }
+
+    try {
+      const actionProposalEngineMod = await import('../ai/actionProposalEngine.js');
+      const executeProposedAction = (actionProposalEngineMod as any).executeProposedAction;
+      if (typeof executeProposedAction !== 'function') {
+        throw new Error('Proposed action executor is unavailable');
+      }
+      const result = await executeProposedAction({
+        action,
+        userId,
+        organizationId: orgId,
+      });
+      return res.json({ success: true, data: result });
+    } catch (execErr: any) {
+      logger.error('[Advisor] Action execution failed:', execErr);
+      return res.status(500).json({ error: execErr?.message || 'Action execution failed' });
+    }
+  })
+);
+
+// ==========================================
+// V4-AI-03: Claim-Citation Validation
+// ==========================================
+
+const ClaimValidateRequestSchema = z.object({
+  responseId: z.string().optional(),
+  text: z.string().min(1),
+  citations: z.array(
+    z.object({
+      id: z.string(),
+      excerpt: z.string().optional(),
+      startOffset: z.number().optional(),
+      endOffset: z.number().optional(),
+    }),
+  ).default([]),
+  policy: z.object({
+    minCoverageScore: z.number().min(0).max(1).optional(),
+    requireAllFactualCited: z.boolean().optional(),
+    maxUncitedClaims: z.number().int().min(0).optional(),
+  }).optional(),
+});
+
+const ClaimExtractRequestSchema = z.object({
+  text: z.string().min(1),
+});
+
+const CoverageStatsQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
+router.post(
+  '/citations/validate',
+  verifyToken,
+  validateBody(ClaimValidateRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, citations, policy } = req.body;
+
+    const { extractClaims, matchClaimsToCitations, validateClaimCitations } = await import(
+      '../services/ai/claimCitationValidator.js'
+    );
+
+    const rawClaims = extractClaims(text);
+    const matched = matchClaimsToCitations(rawClaims, citations, text);
+    const result = validateClaimCitations(matched, policy || {});
+
+    return res.json({ success: true, data: result });
+  }),
+);
+
+router.post(
+  '/citations/extract-claims',
+  verifyToken,
+  validateBody(ClaimExtractRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text } = req.body;
+
+    const { extractClaims } = await import('../services/ai/claimCitationValidator.js');
+    const claims = extractClaims(text);
+
+    return res.json({ success: true, data: { claims } });
+  }),
+);
+
+router.get(
+  '/citations/coverage-stats',
+  verifyToken,
+  validateQuery(CoverageStatsQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId!;
+    const { from, to } = req.query as { from?: string; to?: string };
+
+    const conditions = ['organization_id = ?'];
+    const params: any[] = [orgId];
+
+    if (from) {
+      conditions.push('created_at >= ?');
+      params.push(from);
+    }
+    if (to) {
+      conditions.push('created_at <= ?');
+      params.push(to);
+    }
+
+    const where = conditions.join(' AND ');
+
+    try {
+      const stats = await dbGet(
+        `SELECT
+           COUNT(*) as totalResponses,
+           AVG(CAST(citations_count AS REAL) / NULLIF(
+             json_array_length(json_extract(response_json, '$.answer')), 0
+           )) as avgCoverage,
+           SUM(CASE WHEN citations_count = 0 THEN 1 ELSE 0 END) as responsesBelowThreshold
+         FROM advisor_response_log
+         WHERE ${where}`,
+        params,
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          totalResponses: (stats as any)?.totalResponses || 0,
+          avgCoverage: Math.round(((stats as any)?.avgCoverage || 0) * 100) / 100,
+          responsesBelowThreshold: (stats as any)?.responsesBelowThreshold || 0,
+        },
+      });
+    } catch (err: any) {
+      logger.warn('[Citations] Coverage stats query failed:', err?.message);
+      return res.json({
+        success: true,
+        data: { totalResponses: 0, avgCoverage: 0, responsesBelowThreshold: 0 },
+      });
+    }
+  }),
+);
+
+// -------------------- V4-AI-02: Intent routing + context pack --------------------
+
+const IntentClassifyBodySchema = z.object({
+  message: z.string().min(1),
+  conversationId: z.string().optional(),
+});
+
+const IntentRouteBodySchema = z.object({
+  message: z.string().min(1),
+  conversationId: z.string().optional(),
+  artifactIds: z.array(z.string()).optional(),
+});
+
+const IntentRoutingLogQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  intent: z.string().optional(),
+});
+
+const ContextBuildBodySchema = z.object({
+  intent: z.string().min(1),
+  requiredContext: z.array(z.string()),
+  artifactIds: z.array(z.string()).optional(),
+});
+
+const SnapshotIdParamSchema = z.object({
+  id: z.string().min(1),
+});
+
+router.post(
+  '/intent/classify',
+  verifyToken,
+  validateBody(IntentClassifyBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message } = req.body;
+
+    const { classifyIntent, routeIntent } = await import('../services/ai/intentRouter.js');
+    const { intent, confidence } = classifyIntent(message);
+    const routed = await routeIntent(message, req.organizationId || req.user?.organizationId || 'unknown');
+
+    const rule = [
+      { intent: 'create', contextNeeds: ['tasks', 'initiatives'] },
+      { intent: 'update', contextNeeds: ['tasks', 'initiatives'] },
+      { intent: 'analyze', contextNeeds: ['kpis', 'risks', 'tasks', 'initiatives'] },
+      { intent: 'recommend', contextNeeds: ['tasks', 'risks', 'decisions', 'initiatives'] },
+      { intent: 'compare', contextNeeds: ['initiatives', 'kpis', 'benchmarks'] },
+      { intent: 'summarize', contextNeeds: ['initiatives', 'tasks', 'decisions'] },
+      { intent: 'diagnose', contextNeeds: ['tasks', 'risks', 'decisions', 'signals'] },
+      { intent: 'plan', contextNeeds: ['tasks', 'milestones', 'dependencies'] },
+      { intent: 'explain', contextNeeds: ['knowledge'] },
+      { intent: 'clarify', contextNeeds: [] },
+    ].find(r => r.intent === intent);
+
+    return res.json({
+      success: true,
+      data: {
+        intent,
+        workflow: routed.workflow,
+        confidence,
+        requiredContext: rule?.contextNeeds || ['knowledge'],
+      },
+    });
+  }),
+);
+
+router.post(
+  '/intent/route',
+  verifyToken,
+  validateBody(IntentRouteBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message, conversationId, artifactIds } = req.body;
+    const orgId = req.organizationId!;
+    const userId = req.userId!;
+
+    const { routeIntent } = await import('../services/ai/intentRouter.js');
+    const { buildContextForIntent, saveContextSnapshot } = await import(
+      '../services/ai/contextPackService.js'
+    );
+
+    const result = await routeIntent(message, orgId, { artifactIds });
+
+    const pack = await buildContextForIntent(
+      orgId,
+      result.intent,
+      result.requiredContext,
+      artifactIds,
+    );
+    const snapshotId = await saveContextSnapshot(pack, conversationId);
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_intent_routing_log
+          (organization_id, user_id, message_preview, classified_intent, confidence,
+           selected_tier, selected_purpose, context_snapshot_id, routing_trace_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orgId,
+          userId,
+          message.slice(0, 200),
+          result.intent,
+          result.confidence,
+          result.suggestedModel.tier,
+          result.suggestedModel.purpose,
+          snapshotId,
+          JSON.stringify(result.routingTrace),
+        ],
+      );
+    } catch (logErr: any) {
+      logger.warn('[IntentRouter] Failed to log routing decision:', logErr?.message);
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        ...result,
+        contextSnapshotId: snapshotId,
+        tokenEstimate: pack.metadata.tokenEstimate,
+      },
+    });
+  }),
+);
+
+router.get(
+  '/intent/routing-log',
+  verifyToken,
+  validateQuery(IntentRoutingLogQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId!;
+    const { limit, intent } = req.query as any;
+
+    let sql = `SELECT id, user_id, message_preview, classified_intent, confidence,
+                      selected_tier, selected_purpose, context_snapshot_id, created_at
+               FROM ai_intent_routing_log WHERE organization_id = ?`;
+    const params: any[] = [orgId];
+
+    if (intent) {
+      sql += ` AND classified_intent = ?`;
+      params.push(intent);
+    }
+
+    sql += ` ORDER BY created_at DESC LIMIT ?`;
+    params.push(Number(limit) || 20);
+
+    const rows = await dbAll(sql, params);
+    return res.json({ success: true, data: rows });
+  }),
+);
+
+router.post(
+  '/context/build',
+  verifyToken,
+  validateBody(ContextBuildBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { intent, requiredContext, artifactIds } = req.body;
+    const orgId = req.organizationId!;
+
+    const { buildContextForIntent } = await import('../services/ai/contextPackService.js');
+    const pack = await buildContextForIntent(orgId, intent, requiredContext, artifactIds);
+
+    return res.json({ success: true, data: pack });
+  }),
+);
+
+router.get(
+  '/context/snapshots/:id',
+  verifyToken,
+  validateParams(SnapshotIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const orgId = req.organizationId!;
+
+    const { getContextSnapshot } = await import('../services/ai/contextPackService.js');
+    const snapshot = await getContextSnapshot(id);
+
+    if (!snapshot) {
+      return res.status(404).json({ error: 'Context snapshot not found' });
+    }
+
+    if (snapshot.organizationId !== orgId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    return res.json({ success: true, data: snapshot });
+  }),
+);
+
+// ==================== V4-AI-05: Data Classification & Governance ====================
+
+router.post(
+  '/governance/classify',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { artifacts } = req.body;
+    if (!Array.isArray(artifacts) || artifacts.length === 0) {
+      return res.status(400).json({ error: 'artifacts array is required' });
+    }
+
+    const { classifyAndPersist } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const results = await Promise.all(
+      artifacts.map((a: { artifactType: string; artifactId: string; metadata?: Record<string, any> }) =>
+        classifyAndPersist(orgId, a.artifactType, a.artifactId, a.metadata)
+      )
+    );
+
+    return res.json({ success: true, data: results });
+  })
+);
+
+router.post(
+  '/governance/check-permission',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { artifactType, artifactId, dataClass, purpose } = req.body;
+    if (!artifactType) {
+      return res.status(400).json({ error: 'artifactType is required' });
+    }
+
+    const { classifyDataClass, checkPermittedSource } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const resolvedClass = dataClass || classifyDataClass(artifactType);
+    const result = await checkPermittedSource(orgId, artifactType, resolvedClass);
+
+    return res.json({
+      success: true,
+      data: {
+        artifactType,
+        artifactId: artifactId || null,
+        dataClass: resolvedClass,
+        purpose: purpose || null,
+        ...result,
+      },
+    });
+  })
+);
+
+router.post(
+  '/governance/approval-request',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { actionType, dataClass, context } = req.body;
+    if (!actionType || !dataClass) {
+      return res.status(400).json({ error: 'actionType and dataClass are required' });
+    }
+
+    const { createApprovalRequest } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const request = await createApprovalRequest(orgId, userId, actionType, dataClass, context);
+    return res.json({ success: true, data: request });
+  })
+);
+
+router.get(
+  '/governance/approval-requests',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+
+    const { listApprovalRequests } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const requests = await listApprovalRequests(orgId, status);
+    return res.json({ success: true, data: requests });
+  })
+);
+
+router.post(
+  '/governance/approval-requests/:id/approve',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { approveRequest } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const result = await approveRequest(req.params.id, orgId, userId);
+    if (!result) {
+      return res.status(404).json({ error: 'Approval request not found or already processed' });
+    }
+    return res.json({ success: true, data: result });
+  })
+);
+
+router.post(
+  '/governance/approval-requests/:id/reject',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { reason } = req.body;
+    if (!reason) {
+      return res.status(400).json({ error: 'reason is required' });
+    }
+
+    const { rejectRequest } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const result = await rejectRequest(req.params.id, orgId, userId, reason);
+    if (!result) {
+      return res.status(404).json({ error: 'Approval request not found or already processed' });
+    }
+    return res.json({ success: true, data: result });
+  })
+);
+
+// ==================== V4-AI-06: Budget Preflight & Status ====================
+
+router.post(
+  '/budget/preflight',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { message, intent, contextTokens } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    const { preflightCostEstimate } = await import(
+      '../services/ai/preflightCostService.js'
+    );
+
+    const estimate = await preflightCostEstimate(
+      orgId,
+      message,
+      intent || 'chat',
+      Number(contextTokens) || 0
+    );
+
+    return res.json({ success: true, data: estimate });
+  })
+);
+
+router.get(
+  '/budget/status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { getBudgetStatus } = await import(
+      '../services/ai/preflightCostService.js'
+    );
+
+    const status = await getBudgetStatus(orgId);
+    return res.json({ success: true, data: status });
+  })
+);
+
+router.post(
+  '/budget/tier-override',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const userRole = (req as any).userRole || (req as any).role;
+    if (userRole !== 'admin' && userRole !== 'owner') {
+      return res.status(403).json({ error: 'Admin role required for tier override' });
+    }
+
+    const { requestId, tier, reason } = req.body;
+    if (!requestId || !tier) {
+      return res.status(400).json({ error: 'requestId and tier are required' });
+    }
+
+    const validTiers = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'];
+    if (!validTiers.includes(tier)) {
+      return res.status(400).json({ error: `tier must be one of: ${validTiers.join(', ')}` });
+    }
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_tier_overrides (id, organization_id, request_id, tier, reason, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [uuidv4(), orgId, requestId, tier, reason || null, userId]
+      );
+    } catch (err: any) {
+      logger.warn(`[Budget] Failed to persist tier override: ${err?.message}`);
+    }
+
+    return res.json({
+      success: true,
+      data: { requestId, tier, reason: reason || null, overriddenBy: userId },
+    });
   })
 );
 

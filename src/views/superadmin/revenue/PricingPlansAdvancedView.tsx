@@ -182,7 +182,9 @@ export const PricingPlansAdvancedView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Advanced Pricing Plans</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Advanced Pricing Plans
+          </h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage pricing tiers and feature allocations
           </p>
@@ -246,9 +248,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
                   )}
                 </div>
               </div>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-                {plan.description}
-              </p>
+              <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">{plan.description}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Pricing */}
@@ -526,7 +526,10 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       Feature
                     </th>
                     {comparisonData.plans?.map((plan: any) => (
-                      <th key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <th
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {plan.name}
                       </th>
                     ))}
@@ -534,61 +537,67 @@ export const PricingPlansAdvancedView: React.FC = () => {
                 </thead>
                 <tbody>
                   <tr className="border-b border-slate-200/70 dark:border-white/10">
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      Monthly Price
-                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Monthly Price</td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <td
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {formatCurrency(plan.price_monthly, plan.currency)}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-slate-200/70 dark:border-white/10">
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      Yearly Price
-                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Yearly Price</td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <td
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {formatCurrency(plan.price_yearly, plan.currency)}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-slate-200/70 dark:border-white/10">
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      Max Users
-                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Max Users</td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <td
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {plan.max_users === -1 ? 'Unlimited' : plan.max_users}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-slate-200/70 dark:border-white/10">
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      Max Projects
-                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Max Projects</td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <td
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {plan.max_projects === -1 ? 'Unlimited' : plan.max_projects}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-slate-200/70 dark:border-white/10">
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      Storage
-                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Storage</td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <td
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {plan.max_storage_gb === -1 ? 'Unlimited' : `${plan.max_storage_gb} GB`}
                       </td>
                     ))}
                   </tr>
                   <tr className="border-b border-slate-200/70 dark:border-white/10">
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      Trial Days
-                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Trial Days</td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
+                      <td
+                        key={plan.id}
+                        className="text-center py-3 px-4 text-slate-900 dark:text-white"
+                      >
                         {plan.trial_days > 0 ? `${plan.trial_days} days` : 'No trial'}
                       </td>
                     ))}

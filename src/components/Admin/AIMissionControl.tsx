@@ -147,7 +147,9 @@ export const AIMissionControl: React.FC = () => {
               const activeProviders = status?.providers?.filter((p) => p.status === 'ACTIVE') || [];
               if (activeProviders.length === 0) {
                 return (
-                  <span className="text-slate-600 dark:text-slate-400 text-sm">No active providers</span>
+                  <span className="text-slate-600 dark:text-slate-400 text-sm">
+                    No active providers
+                  </span>
                 );
               }
               return activeProviders.map((p) => (
@@ -166,7 +168,9 @@ export const AIMissionControl: React.FC = () => {
       {/* Capability Tests */}
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-800/60">
-          <h2 className="font-semibold text-slate-900 dark:text-white">AI Capability Diagnostics</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-white">
+            AI Capability Diagnostics
+          </h2>
         </div>
         <div className="divide-y divide-slate-200 dark:divide-white/5">
           {capabilities.map((cap) => (

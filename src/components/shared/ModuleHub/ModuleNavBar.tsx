@@ -306,29 +306,27 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     );
   })();
 
-  const computedToolControl = toolControl
-    ? toolControl
-    : categoryButtons && categoryButtons.length > 0
-      ? // Discovery Tools: category buttons are “Tool” controls (not Primary CTA)
-        (
-          <div className="flex items-center gap-2">
-            {categoryButtons.map((btn) => (
-              <button
-                key={btn.id}
-                onClick={btn.onClick}
-                data-testid={`category-button-${btn.id}`}
-                className={BUTTON_INACTIVE}
-              >
-                {btn.icon}
-                <span>{btn.label}</span>
-                <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
-                  {btn.count}
-                </span>
-              </button>
-            ))}
-          </div>
-        )
-      : null;
+  const computedToolControl = toolControl ? (
+    toolControl
+  ) : categoryButtons && categoryButtons.length > 0 ? (
+    // Discovery Tools: category buttons are “Tool” controls (not Primary CTA)
+    <div className="flex items-center gap-2">
+      {categoryButtons.map((btn) => (
+        <button
+          key={btn.id}
+          onClick={btn.onClick}
+          data-testid={`category-button-${btn.id}`}
+          className={BUTTON_INACTIVE}
+        >
+          {btn.icon}
+          <span>{btn.label}</span>
+          <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+            {btn.count}
+          </span>
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   return (
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">

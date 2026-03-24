@@ -158,3 +158,17 @@ SuperAdmin:
 4) Trial duration = 7 dni (config + UI copy + backend)
 5) Telemetry + SuperAdmin view: demo/trial starts + conversion
 
+---
+
+## 8) V8 Program Decisions
+
+### 8.1 Demo/trial V8 refresh
+
+> V8 Decision W7-11 applied — 2026-03-23
+
+Demo/trial must be refreshed to V8 narrative as part of Landing V8. Do not leave demo/trial at V3 if Landing moves to V8. This can be a scoped Wave 7 refresh; it is not a blocker for earlier platform/runtime waves.
+
+Rule: `commercial narrative surfaces should converge together`.
+
+The V3 demo/trial mechanics (login gate, dataset, AI limits, conversion flow, telemetry) remain sound. What is needed is V8 narrative framing — updated messaging, value proposition alignment with `BUSINESS_POSITIONING_SSOT.md`, and CTA moments reflecting V8 product capabilities.
+

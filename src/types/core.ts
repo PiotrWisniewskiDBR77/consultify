@@ -21,6 +21,7 @@ export interface Invoice {
 
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
+  APP_INTRO = 'APP_INTRO', // In-app orientation screen
   INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
   DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
 
@@ -91,6 +92,7 @@ export enum AppView {
   REPORTS_MANAGEMENT = 'REPORTS_MANAGEMENT', // Management Reports (PMO)
   DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
   PRESENTATIONS = 'PRESENTATIONS', // Presentations library
+  MEETING = 'MEETING', // Meeting workspace
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
   MASTERCLASS = 'MASTERCLASS',
@@ -204,6 +206,7 @@ export enum AppView {
   SUPERADMIN_SECURITY = 'SUPERADMIN_SECURITY',
   SUPERADMIN_CONFIGURATION = 'SUPERADMIN_CONFIGURATION',
   SUPERADMIN_ANALYTICS = 'SUPERADMIN_ANALYTICS', // Custom Dashboards, Reports, Metrics, Predictive
+  SUPERADMIN_VIRTUAL_WORKERS = 'SUPERADMIN_VIRTUAL_WORKERS', // Virtual Workers (Anna, Teresa, etc.)
 
   // SuperAdmin Legacy Views (kept for backward compatibility - used as tab identifiers)
   SUPERADMIN_DASHBOARD = 'SUPERADMIN_DASHBOARD',
@@ -808,6 +811,21 @@ export interface PortfolioSortConfig {
   direction: 'asc' | 'desc';
 }
 
+/** Program - V4-INIT-02 hierarchy entity for portfolio management */
+export interface Program {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  parentProgramId?: string;
+  status: 'active' | 'on_hold' | 'completed' | 'cancelled';
+  ownerUserId?: string;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Portfolio Stats - KPIs for portfolio header */
 export interface PortfolioStats {
   total: number;
@@ -835,6 +853,8 @@ export interface PortfolioInitiative {
   targetQuarter?: string;
   waveId?: string;
   waveName?: string;
+  programId?: string;
+  programName?: string;
   projectId?: string;
   projectName?: string;
   sourceId?: string;
@@ -945,6 +965,9 @@ export interface KPIMeasurement {
   kpiId: string;
   value: number;
   measuredAt: string;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  periodKey?: string | null;
   notes?: string;
   explanation?: string;
   actionItems?: string[];

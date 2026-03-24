@@ -1,7 +1,7 @@
 /**
  * Generic Reports Routes
  * API endpoints for generic (non-assessment) report management.
- * Mounted as a stub route — available in dev/staging, gated in production.
+ * Production-safe: returns explicit 503 when backing storage or LLM configuration is unavailable.
  */
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -107,7 +107,7 @@ router.post(
     try {
       const result = await dbRun(
         `INSERT INTO reports (id, organization_id, name, type, format, status, config, created_by, created_at)
-         VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, datetime('now'))`,
+         VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP)`,
         [id, orgId, name, type || 'custom', format || 'pdf', JSON.stringify(config || {}), userId],
         { fallback: false }
       );
@@ -146,7 +146,7 @@ router.post(
 
       // Mark as generating
       await dbRun(
-        `UPDATE reports SET status = 'generating', last_generated_at = datetime('now') WHERE id = ?`,
+        `UPDATE reports SET status = 'generating', last_generated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [id],
         { fallback: false }
       );

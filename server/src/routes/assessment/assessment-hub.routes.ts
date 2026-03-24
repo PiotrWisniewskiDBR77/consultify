@@ -247,6 +247,44 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 });
 
 /**
+ * GET /api/assessments/canonical-index
+ * V4-ASMT-02: Session→report→version canonical model for unified navigation
+ */
+router.get('/canonical-index', async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDatabase();
+    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+
+    const rows = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT a.id, a.name, a.status, a.updated_at,
+                (SELECT r.id FROM assessment_reports r WHERE r.assessment_id = a.id ORDER BY r.updated_at DESC LIMIT 1) as report_id,
+                (SELECT r.version FROM assessment_reports r WHERE r.assessment_id = a.id ORDER BY r.updated_at DESC LIMIT 1) as report_version
+         FROM assessments a
+         WHERE a.organization_id = ?
+         ORDER BY a.updated_at DESC`,
+        [organizationId],
+        (err: Error | null, r: any[]) => (err ? reject(err) : resolve(r || []))
+      );
+    }).catch(() => []);
+
+    const items = rows.map((r: any) => ({
+      sessionId: r.id,
+      name: r.name,
+      status: r.status,
+      updatedAt: r.updated_at,
+      reportId: r.report_id || null,
+      reportVersion: r.report_version || null,
+    }));
+
+    res.json({ success: true, items });
+  } catch (err: any) {
+    logger.error('[AssessmentHub] canonical-index error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to fetch index' });
+  }
+});
+
+/**
  * GET /api/assessments/:id
  * Returns a single assessment by ID
  */

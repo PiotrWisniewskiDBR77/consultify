@@ -1,10 +1,9 @@
 /**
- * Help Content Configuration
+ * Help shell configuration.
  *
- * Centralized configuration for Help Panel content.
- * Easy to update - just modify HELP_CONFIG values.
- *
- * When you need to update help content, change values here.
+ * Canonical short-form help content now lives in `helpExperience.ts`.
+ * This file stays intentionally small and only keeps shell-level routes
+ * plus legacy helpers for still-unmigrated components.
  */
 
 export interface HelpGuide {
@@ -21,7 +20,6 @@ export interface KnowledgeBaseCategory {
 }
 
 export interface HelpConfig {
-  videoUrl: string;
   docsBaseUrl: string;
   guides: HelpGuide[];
   knowledgeBaseCategories: KnowledgeBaseCategory[];
@@ -33,40 +31,9 @@ export interface HelpConfig {
  * Update these values to change help content across the app
  */
 export const HELP_CONFIG: HelpConfig = {
-  // Introduction video URL (YouTube, Vimeo, etc.)
-  videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // TODO: Replace with actual intro video
-
-  // Base URL for documentation - internal route
   docsBaseUrl: '/docs',
-
-  // Quick guides - links to KB articles
-  guides: [
-    {
-      id: 'gettingStarted',
-      path: '/getting-started',
-      icon: 'Rocket',
-      articleSlug: 'getting-started-consultify',
-    },
-    {
-      id: 'assessment',
-      path: '/assessment-guide',
-      icon: 'ClipboardCheck',
-      articleSlug: 'assessment-guide',
-    },
-    { id: 'initiatives', path: '/initiatives', icon: 'Target', articleSlug: 'initiatives-guide' },
-    { id: 'reports', path: '/reports', icon: 'FileText', articleSlug: 'reports-guide' },
-    { id: 'aiFeatures', path: '/ai-features', icon: 'Bot', articleSlug: 'ai-features-guide' },
-  ],
-
-  // Knowledge Base categories (Coming Soon)
-  knowledgeBaseCategories: [
-    { id: 'tools', icon: 'Wrench', enabled: false },
-    { id: 'methodologies', icon: 'BookOpen', enabled: false },
-    { id: 'caseStudies', icon: 'FolderOpen', enabled: false },
-    { id: 'bestPractices', icon: 'Sparkles', enabled: false },
-  ],
-
-  // Endpoint for "Notify Me" feature
+  guides: [],
+  knowledgeBaseCategories: [],
   notifyEndpoint: '/api/help/knowledge-base/notify',
 };
 
@@ -105,13 +72,6 @@ export function getKnowledgeBaseCategories(): KnowledgeBaseCategory[] {
  */
 export function isKnowledgeBaseReady(): boolean {
   return HELP_CONFIG.knowledgeBaseCategories.some((cat) => cat.enabled);
-}
-
-/**
- * Get video URL
- */
-export function getVideoUrl(): string {
-  return HELP_CONFIG.videoUrl;
 }
 
 /**

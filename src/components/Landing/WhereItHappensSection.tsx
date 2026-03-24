@@ -136,8 +136,10 @@ export const WhereItHappensSection: React.FC = () => {
                   boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.02)',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 40px -12px ${feature.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
-                  (e.currentTarget as HTMLDivElement).style.borderColor = `${feature.accentColor}40`;
+                  (e.currentTarget as HTMLDivElement).style.boxShadow =
+                    `0 0 40px -12px ${feature.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor =
+                    `${feature.accentColor}40`;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLDivElement).style.boxShadow =
@@ -216,7 +218,10 @@ export const WhereItHappensSection: React.FC = () => {
         >
           <div
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-white/35 font-medium"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
           >
             <Target size={12} className="text-primary-400" />
             {t(

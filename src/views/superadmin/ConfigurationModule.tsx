@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 
 import { LegalPanel } from '../../components/SuperAdmin/LegalPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { SystemSettings } from './SystemSettings';
 import { WhitelabelStudioView } from './WhitelabelStudioView';
 
@@ -18,6 +19,17 @@ interface ConfigurationModuleProps {
 
 export const ConfigurationModule: React.FC<ConfigurationModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'settings');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  React.useEffect(() => {
+    const mapping: Record<string, string> = {
+      settings: 'superadmin_configuration_settings',
+      whitelabel: 'superadmin_whitelabel',
+      legal: 'superadmin_configuration_legal',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_settings');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
     { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },

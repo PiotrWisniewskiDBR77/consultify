@@ -108,7 +108,20 @@ const USER_ROLES = [
 ];
 
 export const OrgSetupWizard: React.FC = () => {
-  const { setCurrentView, currentUser } = useAppStore();
+  const { setCurrentView, currentUser, currentOrganization } = useAppStore();
+
+  const handleSkipSetup = async () => {
+    try {
+      await Api.post('/onboarding/skip', {});
+    } catch {
+      // Fallback: try direct org update
+      const orgId = (currentOrganization as any)?.id;
+      if (orgId) {
+        await Api.put(`/organizations/${orgId}`, { onboardingStatus: 'ORG_SETUP_COMPLETED' }).catch(() => {});
+      }
+    }
+    setCurrentView(AppView.AI_CHAT);
+  };
 
   const [state, setState] = useState<OrgSetupState>({
     step: 1,
@@ -583,7 +596,12 @@ export const OrgSetupWizard: React.FC = () => {
               <span>Wstecz</span>
             </button>
           ) : (
-            <div />
+            <button
+              onClick={handleSkipSetup}
+              className="text-sm text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline underline-offset-2 transition-colors"
+            >
+              Pomiń konfigurację
+            </button>
           )}
 
           {state.step < 4 ? (

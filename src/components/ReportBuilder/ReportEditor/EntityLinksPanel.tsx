@@ -224,9 +224,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
             )}
 
             {isExpanded && count === 0 && (
-              <p className="ml-10 text-xs text-gray-600 py-1">
-                {isPl ? 'Brak' : 'None'}
-              </p>
+              <p className="ml-10 text-xs text-gray-600 py-1">{isPl ? 'Brak' : 'None'}</p>
             )}
           </div>
         );

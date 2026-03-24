@@ -15,6 +15,8 @@
 - Przed utworzeniem nowego komponentu — **ZAWSZE** sprawdź czy istnieje w katalogu poniżej.
 - Przed zmianą stylu/układu — **ZAWSZE** przeczytaj odpowiedni standard.
 - Jeśli standard nie opisuje przypadku — **ZAPYTAJ** zamiast wymyślać. Aktualizacja standardu wymaga świadomej decyzji.
+- `README.md` i `FROZEN_LAYOUTS.md` sa autoratywne dla nawigacji po tym pakiecie.
+- Lokalne kopie z sufiksami typu ` 2.md` albo ` 3.md` nie sa autorytatywne i powinny byc traktowane jako snapshot duplicates.
 
 ---
 
@@ -31,6 +33,12 @@ docs/ui-standards/
 
 ---
 
+## ⛔ FROZEN LAYOUTS (NIE ZMIENIAJ)
+
+**[FROZEN_LAYOUTS.md](FROZEN_LAYOUTS.md)** — układy PINOWANE: sidebar order, module topbar order, view-modes order, 1 Command Row, App Table + Preview, Workspace 3-tools strip. Przy nowych taskach i implementacji — **nie rób bałaganu**.
+
+---
+
 ## Szybka nawigacja
 
 | Obszar                   | Dokument                                                                         | Zakres                                                                 |
@@ -38,6 +46,7 @@ docs/ui-standards/
 | **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
 | **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
 | **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
+| **Canvas Mode**          | [00-foundation/canvas-mode.md](00-foundation/canvas-mode.md)                     | Rozszerzenie DBR77 dla experience surfaces (Home tab, landing, onboarding) |
 | **Tożsamość artefaktów** | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md) | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)              |
 | **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)           | 4-warstwowy shell, tokeny rozmiaru                                     |
 | **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)   | Architektura 3 trybów, N blocks kit                                    |
@@ -45,6 +54,9 @@ docs/ui-standards/
 | **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)             | CommentsCanvas, ActivityLog, Risk, Governance                          |
 | **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)             | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
 | **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)   | Standard modala do przeglądu i zastosowania sugestii AI                |
+| **Help + Intro**         | [02-components/help-intro-standard.md](02-components/help-intro-standard.md)      | Delikatny standard intro, contextual help i wejść do AI                |
+| **Help Panel + Intro Spec** | [02-components/help-sidepanel-intro-spec.md](02-components/help-sidepanel-intro-spec.md) | Spec ekranów, sekcji, stanów i zachowań dla helpa i intro          |
+| **Help + Intro Implementation Plan** | [02-components/help-intro-implementation-plan.md](02-components/help-intro-implementation-plan.md) | Kolejność wdrożenia 1:1 dla frontendu, pliki i fazy prac        |
 | **Workspace 3-tools strip** | [02-components/workspace-3-tools-strip.md](02-components/workspace-3-tools-strip.md) | Kanon: Tools / Context / AI Suggestions (prawy panel)              |
 | **Team table**           | [02-components/team-management-table.md](02-components/team-management-table.md) | Standard tabeli zespołu (N‑mode)                                       |
 | **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                       | TaskDetailView — layout, sekcje                                        |
@@ -56,6 +68,7 @@ docs/ui-standards/
 | **Table + Preview**      | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md) | Kanon “tabela + preview pane” (Outlook style)                       |
 | **Golden Standard v3**   | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | SSOT: Table + Cards + Preview (Sprint 1) |
 | **Interactive boards (v3)** | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md) | Kanon tablic KPI/finanse: definicja kolumn + view modes             |
+| **Tools library & detail** | [03-modules/tools-library-detail-standard.md](03-modules/tools-library-detail-standard.md) | Kanon modułu Tools: Goal tab layout, kolory, badge taxonomy, grafiki |
 
 ---
 

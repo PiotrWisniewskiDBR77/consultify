@@ -19,11 +19,13 @@
 
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import feedbackAIService from '../services/feedbackAIService.js';
 import NotificationService from '../services/notificationService.js';
+import slackService from '../services/slackService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -33,32 +35,333 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
+type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
+
+let _feedbackSchemaEnsured = false;
+async function ensureFeedbackSchema(): Promise<void> {
+  if (_feedbackSchemaEnsured) return;
+  try {
+    // Minimal canonical tables for environments without migrations applied.
+    await dbRun(
+      `
+      CREATE TABLE IF NOT EXISTS feedback_items (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        user_id TEXT,
+        feedback_type TEXT,
+        title TEXT,
+        description TEXT,
+        status TEXT,
+        priority TEXT,
+        severity TEXT,
+        source_env TEXT,
+        linked_task_id TEXT,
+        admin_response TEXT,
+        responded_at TIMESTAMP,
+        responded_by TEXT,
+        metadata_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+    );
+    await dbRun(
+      `
+      CREATE TABLE IF NOT EXISTS feedback_items_status_history (
+        id TEXT PRIMARY KEY,
+        feedback_id TEXT NOT NULL,
+        from_status TEXT,
+        to_status TEXT NOT NULL,
+        changed_by TEXT,
+        note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feedback_items_status_history_feedback ON feedback_items_status_history(feedback_id)`
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feedback_items_status_history_created ON feedback_items_status_history(created_at)`
+    );
+    _feedbackSchemaEnsured = true;
+  } catch (err) {
+    logger.warn('[Feedback] Failed to ensure feedback schema (will rely on migrations):', err);
+  }
+}
+
+// Use auth context when token exists, but do not hard-require it
+const optionalVerifyToken = (req: any, res: any, next: any) => {
+  const auth = req?.headers?.authorization;
+  if (!auth) return next();
+  try {
+    return verifyToken(req, res, (err: any) => {
+      if (err) {
+        logger.warn('[Feedback] optional auth failed, continuing as anonymous');
+        return next();
+      }
+      return next();
+    });
+  } catch {
+    return next();
+  }
+};
+
+function getAppEnv(): string {
+  return String(process.env.APP_ENV || process.env.NODE_ENV || 'development').toLowerCase();
+}
+
+function priorityFromEnvAndSeverity(input: {
+  appEnv: string;
+  severity?: string | null;
+  type?: string | null;
+}): TicketPriority {
+  const sev = String(input.severity || '').toUpperCase();
+  const t = String(input.type || '').toUpperCase();
+  const isProd = input.appEnv === 'production';
+
+  if (sev === 'CRITICAL') return 'critical';
+  if (sev === 'HIGH') return isProd ? 'high' : 'medium';
+  if (sev === 'MEDIUM') return isProd ? 'high' : 'medium';
+  if (sev === 'LOW') return isProd ? 'medium' : 'low';
+
+  // Default fallback
+  if (t === 'BUG') return isProd ? 'high' : 'medium';
+  return isProd ? 'medium' : 'low';
+}
+
+function safeJsonParse<T = any>(raw: unknown, fallback: T): T {
+  if (!raw || typeof raw !== 'string') return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function stripJsonFences(raw: string): string {
+  return String(raw || '')
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim();
+}
+
+function safeJsonParseLoose<T = any>(raw: string, fallback: T): T {
+  const cleaned = stripJsonFences(raw);
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    const m = cleaned.match(/\{[\s\S]*\}/);
+    if (m?.[0]) {
+      try {
+        return JSON.parse(m[0]) as T;
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
+  }
+}
+
+/**
+ * POST /api/feedback/compose
+ * LLM-assisted, task-grade report composition.
+ */
+router.post(
+  '/compose',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { type, title, message, severity, appEnv, context } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    // Provider check (same approach as /api/ai/refine-text)
+    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+    const hasDbProvider = !!(await dbGet(
+      `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+    ));
+    if (!hasEnvProvider && !hasDbProvider) {
+      return res.status(500).json({
+        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
+        code: 'NO_LLM_PROVIDER',
+      });
+    }
+
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+
+    // Access policy
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[FeedbackCompose] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    const env = String(appEnv || process.env.APP_ENV || process.env.NODE_ENV || '').toLowerCase();
+    const ctx = context && typeof context === 'object' ? context : {};
+
+    const systemInstruction = `You are a senior product engineer writing actionable internal tickets.
+Return ONLY JSON matching the schema. No markdown.
+
+Rules:
+- Keep language consistent with input.
+- If information is missing, ask questions in questionsToClarify.
+- For IDEAs, focus on user need + outcome instead of steps.
+- Title must be short and specific.
+`;
+
+    const userPrompt = [
+      `Type: ${String(type || 'BUG').toUpperCase()}`,
+      severity ? `Severity: ${String(severity)}` : '',
+      env ? `Env: ${env}` : '',
+      (ctx as any)?.routePath ? `Route: ${(ctx as any).routePath}` : '',
+      (ctx as any)?.moduleName ? `Module: ${(ctx as any).moduleName}` : '',
+      title ? `User-provided title: ${title}` : '',
+      '',
+      'User message:',
+      message,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const ComposeSchema = z.object({
+      // NOTE: OpenAI's strict response_format schema requires `required` to include every key
+      // in `properties`. Zod optional fields can produce an invalid schema.
+      // We keep fields required but allow empty values; the handler normalizes empties to undefined.
+      title: z.string(),
+      summary: z.string(),
+      steps: z.array(z.string()),
+      expected: z.string(),
+      actual: z.string(),
+      impact: z.string(),
+      isLikelyBug: z.boolean(),
+      questionsToClarify: z.array(z.string()),
+    });
+
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: { id: 'budget' },
+      systemPrompt: systemInstruction,
+      messages: [{ role: 'user', content: userPrompt }],
+      schema: ComposeSchema,
+      maxTokens: 700,
+      temperature: 0.2,
+      cache: false,
+    });
+
+    const parsed = (result as any)?.object || null;
+    if (!parsed) {
+      return res.status(500).json({ error: 'AI returned no object', code: 'AI_EMPTY' });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        title: String(parsed.title || '').trim() || undefined,
+        summary: String(parsed.summary || '').trim() || undefined,
+        steps:
+          Array.isArray(parsed.steps) && parsed.steps.length > 0 ? parsed.steps.map(String) : undefined,
+        expected: String(parsed.expected || '').trim() || undefined,
+        actual: String(parsed.actual || '').trim() || undefined,
+        impact: String(parsed.impact || '').trim() || undefined,
+        isLikelyBug: typeof parsed.isLikelyBug === 'boolean' ? parsed.isLikelyBug : undefined,
+        questionsToClarify:
+          Array.isArray(parsed.questionsToClarify) && parsed.questionsToClarify.length > 0
+            ? parsed.questionsToClarify.map(String)
+            : [],
+      },
+    });
+  })
+);
+
+async function createTaskForFeedback(params: {
+  organizationId: string;
+  userId?: string | null;
+  title: string;
+  description: string;
+  priority: TicketPriority;
+  feedbackId: string;
+  appEnv: string;
+}): Promise<string> {
+  const cols = await getTableColumns('tasks');
+  const id = uuidv4();
+  const now = new Date().toISOString();
+
+  // Owner: prefer org owner, fallback to reporter/user.
+  let ownerId: string | null = params.userId || null;
+  try {
+    if (cols.has('owner_id')) {
+      const org = await dbGet<{ owner_id?: string }>(
+        `SELECT owner_id FROM organizations WHERE id = ?`,
+        [params.organizationId]
+      );
+      ownerId = (org?.owner_id as string) || ownerId;
+    }
+  } catch {
+    // ignore
+  }
+
+  const tags = [`feedback:${params.feedbackId}`, `env:${params.appEnv}`];
+
+  const insertCols: string[] = ['id', 'organization_id', 'title', 'description'];
+  const values: unknown[] = [id, params.organizationId, params.title, params.description];
+
+  const optional: Array<[string, unknown]> = [
+    ['status', 'todo'],
+    ['priority', params.priority],
+    ['reporter_id', params.userId || null],
+    ['owner_id', ownerId],
+    ['source', 'feedback'],
+    ['tags', JSON.stringify(tags)],
+    ['created_at', now],
+    ['updated_at', now],
+  ];
+
+  for (const [col, val] of optional) {
+    if (cols.has(col)) {
+      insertCols.push(col);
+      values.push(val);
+    }
+  }
+
+  const placeholders = insertCols.map(() => '?').join(', ');
+  const sql = `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${placeholders})`;
+  const runResult = await dbRun(sql, values);
+  if (!runResult.success) {
+    throw new Error(runResult.error || 'Failed to create task from feedback');
+  }
+  return id;
+}
+
 /**
  * POST /api/feedback
  * Submit new feedback
  */
 router.post(
   '/',
+  optionalVerifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { userId, userEmail, userName, type, message, rating, severity, metadata } = req.body;
+    await ensureFeedbackSchema();
+    const { userId, userEmail, userName, type, message, severity, metadata } = req.body;
 
     if (!message || !type) {
       return res.status(400).json({ error: 'Message and type are required' });
     }
 
-    const id = uuidv4();
-    const cols = await getTableColumns('system_feedback');
-
-    // Schema compatibility:
-    // - legacy schema: (id, user_id, organization_id, feedback_type, message, status, created_at)
-    // - enhanced schema: adds user_name, rating, metadata, admin_response, etc.
-    const insertCols: string[] = ['id', 'message'];
-    const values: unknown[] = [id, message];
-
-    if (cols.has('user_id')) {
-      insertCols.push('user_id');
-      values.push(userId || null);
-    }
+    const appEnv = getAppEnv();
 
     // Resolve organizationId when possible
     let organizationId: string | null = null;
@@ -76,103 +379,165 @@ router.post(
       // ignore
     }
 
-    if (cols.has('organization_id')) {
-      insertCols.push('organization_id');
-      values.push(organizationId || 'system');
+    const orgIdForNotifications = String(organizationId || 'system');
+    const ticketOrgId: string | null = organizationId ? String(organizationId) : null;
+
+    // Canonical: create ticket in feedback_items
+    const feedbackCols = await getTableColumns('feedback_items');
+    const feedbackId = uuidv4();
+
+    const rawTitle = String(req.body.title || '').trim();
+    const inferredTitle =
+      rawTitle ||
+      String(message).split('\n').map((s: string) => s.trim()).filter(Boolean)[0] ||
+      String(message).slice(0, 80);
+    const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
+    const description = String(req.body.description || message || '').trim();
+
+    const priority = priorityFromEnvAndSeverity({ appEnv, severity, type });
+    const status: TicketStatus = 'NEW';
+
+    const contextFields = [
+      'routePath',
+      'deviceType',
+      'screenSize',
+      'uiLanguage',
+      'uiTheme',
+      'workspaceContext',
+    ];
+    const contextMeta: Record<string, unknown> = {};
+    for (const field of contextFields) {
+      if (req.body[field] !== undefined) contextMeta[field] = req.body[field];
     }
 
-    // Feedback type column name differs between schemas
-    if (cols.has('type')) {
-      insertCols.push('type');
-      values.push(type);
-    } else if (cols.has('feedback_type')) {
-      insertCols.push('feedback_type');
-      values.push(type);
-    }
-
-    if (cols.has('user_name')) {
-      insertCols.push('user_name');
-      values.push(userName || null);
-    }
-
-    if (cols.has('rating')) {
-      insertCols.push('rating');
-      values.push(typeof rating === 'number' ? rating : rating ? Number(rating) : null);
-    }
-
-    if (cols.has('metadata')) {
-      const contextFields = [
-        'routePath',
-        'deviceType',
-        'screenSize',
-        'uiLanguage',
-        'uiTheme',
-        'workspaceContext',
-      ];
-      const contextMeta: Record<string, unknown> = {};
-      for (const field of contextFields) {
-        if (req.body[field] !== undefined) contextMeta[field] = req.body[field];
-      }
-      insertCols.push('metadata');
-      values.push(
-        JSON.stringify({
-          ...(metadata || {}),
-          ...contextMeta,
-          ...(userEmail ? { userEmail } : {}),
-          ...(userName ? { userName } : {}),
-          ...(type ? { type } : {}),
-          ...(severity ? { severity } : {}),
-        })
-      );
-    }
-
-    // T106: Write context to dedicated columns if available
-    const contextCols: Record<string, string | undefined> = {
-      route_path: req.body.routePath,
-      device_type: req.body.deviceType,
-      screen_size: req.body.screenSize,
-      ui_language: req.body.uiLanguage,
-      ui_theme: req.body.uiTheme,
-      workspace_context_json: req.body.workspaceContext
-        ? JSON.stringify(req.body.workspaceContext)
-        : undefined,
+    const metadataJson = {
+      ...(metadata || {}),
+      ...contextMeta,
+      appEnv,
+      clientEnv: req.body.clientEnv || undefined,
+      userEmail: userEmail || undefined,
+      userName: userName || undefined,
+      feedbackType: type,
+      severity: severity || undefined,
+      title,
     };
-    for (const [col, val] of Object.entries(contextCols)) {
-      if (val !== undefined && cols.has(col)) {
+
+    const insertCols: string[] = ['id', 'organization_id', 'user_id', 'feedback_type', 'title', 'description'];
+    const values: unknown[] = [
+      feedbackId,
+      ticketOrgId,
+      userId || (req.user?.id as any) || null,
+      String(type).toUpperCase(),
+      title,
+      description,
+    ];
+
+    const optional: Array<[string, unknown]> = [
+      ['category', req.body.category || null],
+      ['priority', priority],
+      ['status', status],
+      ['metadata_json', JSON.stringify(metadataJson)],
+      ['severity', severity || null],
+      ['source_env', appEnv],
+    ];
+
+    for (const [col, val] of optional) {
+      if (feedbackCols.has(col)) {
         insertCols.push(col);
         values.push(val);
       }
     }
-    if (severity && cols.has('severity')) {
-      insertCols.push('severity');
-      values.push(severity);
-    }
-
-    if (cols.has('status')) {
-      insertCols.push('status');
-      values.push('NEW');
-    }
 
     const placeholders = insertCols.map(() => '?').join(', ');
-    const sql = `INSERT INTO system_feedback (${insertCols.join(', ')}) VALUES (${placeholders})`;
-    const runResult = await dbRun(sql, values);
-
-    if (!runResult.success) {
-      throw new Error(runResult.error || 'Failed to insert feedback');
+    const sql = `INSERT INTO feedback_items (${insertCols.join(', ')}) VALUES (${placeholders})`;
+    const insertResult = await dbRun(sql, values);
+    if (!insertResult.success) {
+      throw new Error(insertResult.error || 'Failed to insert feedback ticket');
     }
 
-    // Even if `system_feedback` table doesn't store organization_id (legacy schema),
-    // we still want to route notifications/integrations by the user's organization when possible.
-    const orgIdForNotifications = String(organizationId || 'system');
+    // Auto-create backlog task for every ticket
+    let linkedTaskId: string | null = null;
+    try {
+      if (!ticketOrgId) {
+        throw new Error('No organizationId resolved for ticket; skipping auto-task');
+      }
+      const taskTitle = `[${appEnv.toUpperCase()}] ${String(type).toUpperCase()}: ${title}`;
+      const taskDescription =
+        `${description}\n\n` +
+        `---\n` +
+        `Ticket: ${feedbackId}\n` +
+        `Env: ${appEnv}\n` +
+        `Route: ${String((metadataJson as any)?.routePath || '')}\n` +
+        `User: ${userEmail || userName || userId || 'anonymous'}\n`;
 
-    // Send Notifications (Async)
+      linkedTaskId = await createTaskForFeedback({
+        organizationId: ticketOrgId,
+        userId: userId || (req.user?.id as any) || null,
+        title: taskTitle,
+        description: taskDescription,
+        priority,
+        feedbackId,
+        appEnv,
+      });
+
+      if (feedbackCols.has('linked_task_id') || feedbackCols.has('metadata_json')) {
+        const updateCols: string[] = [];
+        const updateVals: unknown[] = [];
+        const nextMeta = { ...(metadataJson as any), linkedTaskId };
+
+        if (feedbackCols.has('linked_task_id')) {
+          updateCols.push('linked_task_id = ?');
+          updateVals.push(linkedTaskId);
+        }
+        if (feedbackCols.has('metadata_json')) {
+          updateCols.push('metadata_json = ?');
+          updateVals.push(JSON.stringify(nextMeta));
+        }
+        if (feedbackCols.has('updated_at')) {
+          updateCols.push('updated_at = CURRENT_TIMESTAMP');
+        }
+
+        if (updateCols.length > 0) {
+          await dbRun(
+            `UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`,
+            [...updateVals, feedbackId]
+          );
+        }
+      }
+    } catch (e) {
+      logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
+    }
+
+    // Send external notifications (Slack + WhatsApp)
+    try {
+      await slackService.sendNewFeedbackAlert({
+        type,
+        userEmail,
+        userName,
+        message: `${title}\n\n${description}`,
+        severity,
+        priority,
+        routePath: req.body.routePath,
+        deviceType: req.body.deviceType,
+        screenSize: req.body.screenSize,
+        uiLanguage: req.body.uiLanguage,
+        uiTheme: req.body.uiTheme,
+        organizationId: orgIdForNotifications,
+        feedbackId,
+        taskId: linkedTaskId || undefined,
+        appEnv,
+      });
+    } catch (e: unknown) {
+      logger.warn('Slack feedback notification failed:', e);
+    }
+
     try {
       await WhatsAppService.sendNewFeedbackAlert({ userId, userEmail, type, message });
     } catch (e: unknown) {
       logger.warn('WhatsApp notification failed:', e);
     }
 
-    // Create Internal Notification (Triggers Slack via NotificationService)
+    // Create Internal Notification for SuperAdmin
     try {
       const isCritical = severity === 'CRITICAL';
       const notificationType = isCritical ? 'CLIENT_TICKET' : 'USER_FEEDBACK';
@@ -184,23 +549,25 @@ router.post(
         type: notificationType,
         severity: notificationSeverity as 'INFO' | 'WARNING' | 'CRITICAL',
         title: isCritical ? `Critical Feedback: ${type}` : `New Feedback: ${type}`,
-        body: message.substring(0, 200) + (message.length > 200 ? '...' : ''),
-        message: message.substring(0, 200) + (message.length > 200 ? '...' : ''),
+        body: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
+        message: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
         relatedObjectType: 'FEEDBACK',
-        relatedObjectId: id,
+        relatedObjectId: feedbackId,
         isActionable: true,
         actionUrl: '/admin?section=feedback',
         metadata: {
           ...(metadata || {}),
           userEmail,
           feedbackType: type,
+          appEnv,
+          linkedTaskId,
         },
       });
     } catch (noteErr) {
       logger.error('Failed to create notification for feedback:', noteErr);
     }
 
-    return res.json({ success: true, id });
+    return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
   })
 );
 
@@ -211,25 +578,52 @@ router.post(
 router.get(
   '/',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const sql = `SELECT * FROM system_feedback ORDER BY created_at DESC`;
+    await ensureFeedbackSchema();
+    const rows = await dbAll<any>(
+      `
+        SELECT
+          f.id,
+          f.organization_id,
+          f.user_id,
+          u.email as user_email,
+          COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), f.user_id) as user_name,
+          f.feedback_type as type,
+          f.title,
+          f.description as message,
+          UPPER(COALESCE(NULLIF(f.status,''), 'NEW')) as status,
+          f.priority,
+          f.severity,
+          f.source_env,
+          f.linked_task_id,
+          f.admin_response,
+          f.responded_at,
+          f.created_at,
+          f.updated_at,
+          f.metadata_json as metadata
+        FROM feedback_items f
+        LEFT JOIN users u ON u.id = f.user_id
+        ORDER BY f.created_at DESC
+        LIMIT 200
+      `,
+      []
+    );
 
-    const rows = await dbAll<{
-      id: string;
-      user_id: string | null;
-      user_email: string | null;
-      user_name: string | null;
-      type: string;
-      message: string;
-      rating: number | null;
-      status: string;
-      metadata: string | null;
-      admin_response: string | null;
-      responded_at: string | null;
-      created_at: string;
-      updated_at: string | null;
-    }>(sql, []);
+    const shaped = (rows || []).map((r: any) => {
+      const meta = safeJsonParse<Record<string, any>>(r.metadata, {});
+      return {
+        ...r,
+        // Provide legacy context fields used by SuperAdmin view (computed from metadata_json)
+        route_path: meta.routePath || meta.context || null,
+        device_type: meta.deviceType || null,
+        screen_size: meta.screenSize || null,
+        ui_language: meta.uiLanguage || null,
+        ui_theme: meta.uiTheme || null,
+        // Keep metadata as string to match existing UI expectations
+        metadata: r.metadata ? String(r.metadata) : null,
+      };
+    });
 
-    return res.json(rows);
+    return res.json(shaped);
   })
 );
 
@@ -249,24 +643,21 @@ router.patch(
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const current = await dbGet<{ status: string }>(
-      `SELECT status FROM system_feedback WHERE id = ?`,
-      [id]
-    );
+    const current = await dbGet<{ status: string }>(`SELECT status FROM feedback_items WHERE id = ?`, [id]);
     const fromStatus = current?.status || null;
 
-    const sql = `UPDATE system_feedback SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    const sql = `UPDATE feedback_items SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
     const runResult = await dbRun(sql, [status.toUpperCase(), id]);
 
     if (!runResult.success) {
       throw new Error(runResult.error || 'Failed to update feedback status');
     }
 
-    // T106: Record status change in history
+    // Record status change in feedback_items history (if table exists)
     try {
       const { v4: histUuid } = await import('uuid');
       await dbRun(
-        `INSERT INTO feedback_status_history (id, feedback_id, from_status, to_status, changed_by, note, created_at)
+        `INSERT INTO feedback_items_status_history (id, feedback_id, from_status, to_status, changed_by, note, created_at)
          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [histUuid(), id, fromStatus, status.toUpperCase(), changedBy, note || null]
       );
@@ -292,9 +683,29 @@ router.post(
       return res.status(400).json({ error: 'Response is required' });
     }
 
-    const sql = `UPDATE system_feedback SET admin_response = ?, responded_at = CURRENT_TIMESTAMP, status = 'REVIEWED', updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    const cols = await getTableColumns('feedback_items');
+    const updateCols: string[] = [];
+    const params: unknown[] = [];
+    if (cols.has('admin_response')) {
+      updateCols.push('admin_response = ?');
+      params.push(response.trim());
+    }
+    if (cols.has('responded_at')) {
+      updateCols.push('responded_at = CURRENT_TIMESTAMP');
+    }
+    if (cols.has('responded_by')) {
+      updateCols.push('responded_by = ?');
+      params.push((req as any).user?.id || null);
+    }
+    if (cols.has('status')) {
+      updateCols.push(`status = 'REVIEWED'`);
+    }
+    if (cols.has('updated_at')) {
+      updateCols.push('updated_at = CURRENT_TIMESTAMP');
+    }
 
-    const runResult = await dbRun(sql, [response.trim(), id]);
+    const sql = `UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`;
+    const runResult = await dbRun(sql, [...params, id]);
 
     if (!runResult.success) {
       throw new Error(runResult.error || 'Failed to update feedback');
@@ -304,18 +715,15 @@ router.post(
     const feedback = await dbGet<{
       id: string;
       user_id: string | null;
-      user_email: string | null;
-      user_name: string | null;
-      type: string;
-      message: string;
-      rating: number | null;
-      status: string;
-      metadata: string | null;
+      feedback_type: string;
+      title: string;
+      description: string;
+      metadata_json: string | null;
       admin_response: string | null;
       responded_at: string | null;
       created_at: string;
       updated_at: string | null;
-    }>('SELECT * FROM system_feedback WHERE id = ?', [id]);
+    }>('SELECT * FROM feedback_items WHERE id = ?', [id]);
 
     if (feedback && feedback.user_id) {
       try {
@@ -352,18 +760,20 @@ router.get(
     const row = await dbGet<{
       id: string;
       user_id: string | null;
-      user_email: string | null;
-      user_name: string | null;
-      type: string;
-      message: string;
-      rating: number | null;
+      feedback_type: string;
+      title: string;
+      description: string;
       status: string;
-      metadata: string | null;
+      priority?: string | null;
+      severity?: string | null;
+      source_env?: string | null;
+      linked_task_id?: string | null;
+      metadata_json: string | null;
       admin_response: string | null;
       responded_at: string | null;
       created_at: string;
       updated_at: string | null;
-    }>('SELECT * FROM system_feedback WHERE id = ?', [id]);
+    }>('SELECT * FROM feedback_items WHERE id = ?', [id]);
 
     if (!row) {
       return res.status(404).json({ error: 'Feedback not found' });
@@ -372,14 +782,26 @@ router.get(
     let statusHistory: unknown[] = [];
     try {
       statusHistory = await dbAll(
-        `SELECT * FROM feedback_status_history WHERE feedback_id = ? ORDER BY created_at ASC`,
+        `SELECT * FROM feedback_items_status_history WHERE feedback_id = ? ORDER BY created_at ASC`,
         [id]
       );
     } catch {
       /* Table may not exist */
     }
 
-    return res.json({ ...row, statusHistory });
+    const meta = safeJsonParse<Record<string, any>>((row as any).metadata_json, {});
+    return res.json({
+      ...row,
+      type: (row as any).feedback_type,
+      message: (row as any).description,
+      metadata: (row as any).metadata_json,
+      route_path: meta.routePath || meta.context || null,
+      device_type: meta.deviceType || null,
+      screen_size: meta.screenSize || null,
+      ui_language: meta.uiLanguage || null,
+      ui_theme: meta.uiTheme || null,
+      statusHistory,
+    });
   })
 );
 
@@ -391,22 +813,57 @@ router.get(
   '/stats/summary',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const queries = {
-      total: 'SELECT COUNT(*) as count FROM system_feedback',
-      new: "SELECT COUNT(*) as count FROM system_feedback WHERE status = 'NEW'",
+      total: 'SELECT COUNT(*) as count FROM feedback_items',
+      new: "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(status) = 'NEW'",
       pending:
-        "SELECT COUNT(*) as count FROM system_feedback WHERE status IN ('PENDING', 'IN_PROGRESS')",
-      bugs: "SELECT COUNT(*) as count FROM system_feedback WHERE type = 'bug' AND status != 'RESOLVED'",
-      avgRating: 'SELECT AVG(rating) as avg FROM system_feedback WHERE rating IS NOT NULL',
+        "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(status) IN ('PENDING', 'IN_PROGRESS')",
+      bugs:
+        "SELECT COUNT(*) as count FROM feedback_items WHERE UPPER(feedback_type) = 'BUG' AND UPPER(status) != 'RESOLVED'",
     };
 
     const results: Record<string, number> = {};
     const promises = Object.entries(queries).map(async ([key, sql]) => {
       const row = await dbGet<{ avg?: number; count?: number }>(sql, []);
-      results[key] = key === 'avgRating' ? row?.avg || 0 : row?.count || 0;
+      results[key] = row?.count || 0;
     });
 
     await Promise.all(promises);
     return res.json(results);
+  })
+);
+
+/**
+ * GET /api/feedback/backlog/tasks
+ * List tasks created from feedback tickets (for SuperAdmin backlog).
+ */
+router.get(
+  '/backlog/tasks',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const limit = Math.min(Math.max(Number(req.query.limit || 200), 1), 500);
+    const rows = await dbAll<any>(
+      `
+        SELECT
+          id, organization_id, title, description, status, priority,
+          tags, reporter_id, owner_id, created_at, updated_at
+        FROM tasks
+        WHERE CAST(tags AS TEXT) LIKE ?
+        ORDER BY created_at DESC
+        LIMIT ?
+      `,
+      ['%feedback:%', limit]
+    );
+
+    const shaped = (rows || []).map((r: any) => {
+      const tags = safeJsonParse<string[]>(r.tags, []);
+      const feedbackTag = tags.find((t) => typeof t === 'string' && t.startsWith('feedback:')) || null;
+      return {
+        ...r,
+        tags,
+        feedbackId: feedbackTag ? String(feedbackTag).slice('feedback:'.length) : null,
+      };
+    });
+
+    return res.json(shaped);
   })
 );
 
@@ -420,6 +877,7 @@ router.get(
  */
 router.post(
   '/pulse',
+  optionalVerifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { userId, rating, context, comment, timestamp } = req.body;
 
@@ -503,6 +961,7 @@ router.get(
  */
 router.post(
   '/feature',
+  optionalVerifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const {
       userId,

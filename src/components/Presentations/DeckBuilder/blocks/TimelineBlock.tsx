@@ -36,7 +36,10 @@ export const TimelineBlock: React.FC<Props> = ({ block, theme }) => {
             >
               {i + 1}
             </div>
-            <p className="text-[9px] font-medium mt-1" style={{ color: theme.colors.textSecondary }}>
+            <p
+              className="text-[9px] font-medium mt-1"
+              style={{ color: theme.colors.textSecondary }}
+            >
               {item.date}
             </p>
             <p className="text-[10px] font-semibold" style={{ color: theme.colors.heading }}>

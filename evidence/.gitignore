@@ -1,0 +1,6 @@
+# Evidence artifacts contain secrets (tokens, DB URLs) and runtime data.
+# Only the summary/assessment files should be committed.
+*.txt
+*.json
+!.gitignore
+!README.md

@@ -1,0 +1,429 @@
+import { Check, Plus, Sparkles, Trash2, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { SWOTData, SWOTItem, SWOTSignal, ToolSession, useToolStore } from '@/store/useToolStore';
+
+import { InlineAssist } from '../../InlineAssist';
+
+type QuadrantId = SWOTItem['quadrant'];
+
+type BuildPhaseProps = {
+  session: ToolSession;
+  isPolish: boolean;
+  onGenerateSuggestions?: () => void;
+  isGeneratingAI?: boolean;
+};
+
+const QUADRANT_META: Record<
+  QuadrantId,
+  {
+    title: { en: string; pl: string };
+    subtitle: { en: string; pl: string };
+    accent: string;
+    surface: string;
+  }
+> = {
+  strengths: {
+    title: { en: 'Strengths', pl: 'Mocne strony' },
+    subtitle: { en: 'Internal advantages', pl: 'Wewnętrzne przewagi' },
+    accent: 'text-emerald-700 dark:text-emerald-300',
+    surface:
+      'border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/20',
+  },
+  weaknesses: {
+    title: { en: 'Weaknesses', pl: 'Słabe strony' },
+    subtitle: { en: 'Internal constraints', pl: 'Wewnętrzne ograniczenia' },
+    accent: 'text-amber-700 dark:text-amber-300',
+    surface: 'border-amber-200 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/20',
+  },
+  opportunities: {
+    title: { en: 'Opportunities', pl: 'Szanse' },
+    subtitle: { en: 'External upside', pl: 'Zewnętrzny upside' },
+    accent: 'text-sky-700 dark:text-sky-300',
+    surface: 'border-sky-200 bg-sky-50/80 dark:border-sky-900/40 dark:bg-sky-950/20',
+  },
+  threats: {
+    title: { en: 'Threats', pl: 'Zagrożenia' },
+    subtitle: { en: 'External risk', pl: 'Zewnętrzne ryzyko' },
+    accent: 'text-rose-700 dark:text-rose-300',
+    surface: 'border-rose-200 bg-rose-50/80 dark:border-rose-900/40 dark:bg-rose-950/20',
+  },
+};
+
+const ALL_QUADRANTS: QuadrantId[] = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+
+const normalizeKey = (quadrant: QuadrantId, text: string) =>
+  `${quadrant}:${String(text || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()}`;
+
+const getSignalQuadrant = (signal: SWOTSignal): QuadrantId | null =>
+  ALL_QUADRANTS.find((quadrant) => signal.tags?.includes(quadrant)) || null;
+
+function QuadrantCard({
+  quadrant,
+  items,
+  proposals,
+  replaceTargetByProposalId,
+  setReplaceTargetByProposalId,
+  onAcceptProposal,
+  onRejectProposal,
+  isPolish,
+}: {
+  quadrant: QuadrantId;
+  items: SWOTItem[];
+  proposals: SWOTItem[];
+  replaceTargetByProposalId: Record<string, string>;
+  setReplaceTargetByProposalId: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onAcceptProposal: (proposalId: string) => void;
+  onRejectProposal: (proposalId: string) => void;
+  isPolish: boolean;
+}) {
+  const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
+  const [draft, setDraft] = useState('');
+  const meta = QUADRANT_META[quadrant];
+
+  const addItem = () => {
+    if (!draft.trim()) return;
+    addSWOTItem({
+      text: draft.trim(),
+      quadrant,
+      impact: 'medium',
+      source: 'user',
+      confidence: 4,
+      status: 'accepted',
+      proposalStatus: 'accepted',
+    });
+    setDraft('');
+  };
+
+  return (
+    <div className={`rounded-[26px] border p-4 ${meta.surface}`}>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className={`text-sm font-semibold ${meta.accent}`}>
+            {isPolish ? meta.title.pl : meta.title.en}
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? meta.subtitle.pl : meta.subtitle.en}
+          </div>
+        </div>
+        <div className="rounded-full border border-white/70 bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+          {items.length}
+        </div>
+      </div>
+
+      <div className="mb-3 flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              addItem();
+            }
+          }}
+          placeholder={isPolish ? 'Dodaj punkt...' : 'Add point...'}
+          className="h-10 flex-1 rounded-lg border border-white/70 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+        />
+        <button
+          type="button"
+          onClick={addItem}
+          disabled={!draft.trim()}
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-3 text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {items.length === 0 ? (
+          <div className="rounded-xl border-2 border-dashed border-white/70 bg-white/40 p-5 text-center text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-950/30 dark:text-slate-400">
+            {isPolish ? 'Brak punktów w tej ćwiartce.' : 'No points in this quadrant yet.'}
+          </div>
+        ) : (
+          items.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)] dark:border-navy-700 dark:bg-navy-950/50"
+            >
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  {isPolish ? 'Punkt SWOT' : 'SWOT point'}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeSWOTItem(item.id)}
+                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <textarea
+                value={item.text}
+                onChange={(e) => updateSWOTItem(item.id, { text: e.target.value })}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-transparent bg-transparent px-0 py-0 text-sm font-medium leading-relaxed text-slate-900 outline-none dark:text-slate-100"
+              />
+            </div>
+          ))
+        )}
+      </div>
+
+      {proposals.length > 0 ? (
+        <div className="mt-4 space-y-2 border-t border-white/60 pt-4 dark:border-white/10">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            {isPolish ? 'Propozycje AI' : 'AI proposals'}
+          </div>
+          {proposals.map((proposal) => (
+            <div
+              key={proposal.id}
+              className="rounded-2xl border border-violet-200/70 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(76,29,149,0.35)] dark:border-violet-900/40 dark:bg-violet-950/20"
+            >
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-300">
+                  {isPolish ? 'Propozycja AI' : 'AI proposal'}
+                </div>
+                <div className="rounded-full border border-violet-200/70 bg-violet-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-300">
+                  AI
+                </div>
+              </div>
+              <div className="text-sm font-medium leading-relaxed text-slate-900 dark:text-slate-100">
+                {proposal.text}
+              </div>
+              <div className="mt-2">
+                <select
+                  value={replaceTargetByProposalId[proposal.id] || ''}
+                  onChange={(e) =>
+                    setReplaceTargetByProposalId((current) => ({
+                      ...current,
+                      [proposal.id]: e.target.value,
+                    }))
+                  }
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+                >
+                  <option value="">
+                    {isPolish ? 'Akceptuj jako nowy lub wybierz punkt do podmiany' : 'Accept as new or select point to replace'}
+                  </option>
+                  {items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.text}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onAcceptProposal(proposal.id)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/50 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {isPolish ? 'Akceptuj' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRejectProposal(proposal.id)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {isPolish ? 'Odrzuć' : 'Reject'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function SWOTBuildPhase({
+  session,
+  isPolish,
+  onGenerateSuggestions,
+  isGeneratingAI = false,
+}: BuildPhaseProps) {
+  const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
+  const swotData = session.inputData as SWOTData;
+  const signals = swotData.signals || [];
+  const items = swotData.items || [];
+  const [replaceTargetByProposalId, setReplaceTargetByProposalId] = useState<Record<string, string>>(
+    {}
+  );
+
+  const groupedItems = useMemo(
+    () =>
+      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTItem[]>>((acc, quadrant) => {
+        acc[quadrant] = items.filter(
+          (item) =>
+            item.quadrant === quadrant &&
+            item.status !== 'proposed' &&
+            item.proposalStatus !== 'ai-proposed' &&
+            item.proposalStatus !== 'rethinking'
+        );
+        return acc;
+      }, {} as Record<QuadrantId, SWOTItem[]>),
+    [items]
+  );
+
+  const groupedProposals = useMemo(
+    () =>
+      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTItem[]>>((acc, quadrant) => {
+        acc[quadrant] = items.filter(
+          (item) =>
+            item.quadrant === quadrant &&
+            (item.status === 'proposed' ||
+              item.proposalStatus === 'ai-proposed' ||
+              item.proposalStatus === 'rethinking')
+        );
+        return acc;
+      }, {} as Record<QuadrantId, SWOTItem[]>),
+    [items]
+  );
+
+  const groupedAcceptedSignals = useMemo(
+    () =>
+      ALL_QUADRANTS.reduce<Record<QuadrantId, SWOTSignal[]>>((acc, quadrant) => {
+        acc[quadrant] = signals.filter((signal) => {
+          const signalQuadrant = getSignalQuadrant(signal);
+          return (
+            signalQuadrant === quadrant &&
+            signal.tags?.includes('input-proposal') &&
+            signal.state === 'accepted'
+          );
+        });
+        return acc;
+      }, {} as Record<QuadrantId, SWOTSignal[]>),
+    [signals]
+  );
+
+  const existingItemKeys = useMemo(
+    () => new Set(items.map((item) => normalizeKey(item.quadrant, item.text))),
+    [items]
+  );
+
+  const importSignalsIntoMatrix = (signalsToImport: SWOTSignal[]) => {
+    signalsToImport.forEach((signal) => {
+      const quadrant = getSignalQuadrant(signal);
+      if (!quadrant) return;
+      const key = normalizeKey(quadrant, signal.sourceLabel);
+      if (existingItemKeys.has(key)) return;
+
+      addSWOTItem({
+        text: signal.sourceLabel,
+        quadrant,
+        impact: 'medium',
+        source: signal.type === 'ai' || signal.type === 'benchmark' ? 'ai' : 'user',
+        confidence: signal.confidence || 4,
+        status: 'accepted',
+        proposalStatus: 'accepted',
+        linkedSignalIds: [signal.id],
+        userComment: signal.content,
+      });
+    });
+  };
+
+  useEffect(() => {
+    if (items.length > 0) return;
+    const acceptedSignals = Object.values(groupedAcceptedSignals).flat();
+    if (acceptedSignals.length === 0) return;
+    importSignalsIntoMatrix(acceptedSignals);
+  }, [items.length, groupedAcceptedSignals]);
+
+  const acceptProposal = (proposalId: string) => {
+    const targetId = replaceTargetByProposalId[proposalId];
+    const proposal = items.find((item) => item.id === proposalId);
+    if (!proposal) return;
+
+    if (targetId) {
+      const target = items.find((item) => item.id === targetId);
+      if (!target) return;
+      updateSWOTItem(target.id, {
+        text: proposal.text,
+        impact: proposal.impact,
+        confidence: proposal.confidence,
+        source: proposal.source,
+        userComment: proposal.userComment || target.userComment,
+        linkedSignalIds: Array.from(
+          new Set([...(target.linkedSignalIds || []), ...(proposal.linkedSignalIds || [])])
+        ),
+        status: 'accepted',
+        proposalStatus: 'accepted',
+      });
+      removeSWOTItem(proposal.id);
+      setReplaceTargetByProposalId((current) => {
+        const next = { ...current };
+        delete next[proposalId];
+        return next;
+      });
+      return;
+    }
+
+    updateSWOTItem(proposal.id, {
+      status: 'accepted',
+      proposalStatus: 'accepted',
+    });
+  };
+
+  const rejectProposal = (proposalId: string) => {
+    removeSWOTItem(proposalId);
+    setReplaceTargetByProposalId((current) => {
+      const next = { ...current };
+      delete next[proposalId];
+      return next;
+    });
+  };
+
+  return (
+    <div className="space-y-6 p-1">
+      <div className="rounded-[28px] border border-slate-200/70 bg-white p-5 dark:border-navy-700/70 dark:bg-navy-900/40">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+              {isPolish
+                ? 'Tutaj pracujesz tylko na jednej klasycznej macierzy SWOT. AI może zaproponować nowe punkty, ale wszystkie decyzje zapadają bezpośrednio w tych czterech polach.'
+                : 'This step uses one classic SWOT matrix only. AI can propose new points, but every decision is made directly inside these four fields.'}
+            </div>
+            <InlineAssist
+              hint={
+                isPolish
+                  ? 'Akceptacja propozycji doda punkt do ćwiartki albo podmieni wybrany istniejący punkt, jeśli wskażesz go na liście.'
+                  : 'Accepting a proposal adds it to the quadrant or replaces a selected existing point if you choose one from the list.'
+              }
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={onGenerateSuggestions}
+            disabled={!onGenerateSuggestions || isGeneratingAI}
+            className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300"
+          >
+            <Sparkles className={`h-4 w-4 ${isGeneratingAI ? 'animate-pulse' : ''}`} />
+            {isPolish ? 'Analiza rynkowa i propozycje AI' : 'Market analysis and AI proposals'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {ALL_QUADRANTS.map((quadrant) => (
+          <QuadrantCard
+            key={quadrant}
+            quadrant={quadrant}
+            items={groupedItems[quadrant]}
+            proposals={groupedProposals[quadrant]}
+            replaceTargetByProposalId={replaceTargetByProposalId}
+            setReplaceTargetByProposalId={setReplaceTargetByProposalId}
+            onAcceptProposal={acceptProposal}
+            onRejectProposal={rejectProposal}
+            isPolish={isPolish}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default SWOTBuildPhase;

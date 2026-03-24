@@ -1,11 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Handshake,
-  Play,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowRight, CheckCircle2, Play, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -170,7 +164,6 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
           transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-
         {/* Optional video layer */}
         {backgroundLoopUrl && (
           <video
@@ -253,77 +246,77 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               transition={{ duration: 0.5, delay: 0.14 }}
               className="text-base md:text-lg text-white/60 font-medium leading-relaxed max-w-lg"
             >
-              {t(
-                'landing.epicHero.sub',
-                'Diagnose. Plan. Execute. Track ROI — all in one AI workspace built for transformations.'
-              )}
+              {t('landing.epicHero.sub', 'Consulting Intelligence Platform')}
             </motion.p>
 
-              {/* CTAs */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.22 }}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-3"
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.22 }}
+              className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-3"
+            >
+              {/* Primary CTA — filled pill */}
+              <button
+                onClick={() => {
+                  trackFunnelEvent('landing_primary_cta_clicked', {
+                    cta: 'launch_free_trial',
+                    variant,
+                  });
+                  onLaunchTrial();
+                }}
+                className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full text-white font-semibold text-sm overflow-hidden
+                  transition-all duration-300 active:scale-[0.98]"
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
+                  boxShadow: '0 0 50px -14px rgba(124,58,237,0.70), 0 3px 16px rgba(0,0,0,0.35)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                    '0 0 70px -10px rgba(124,58,237,0.85), 0 4px 20px rgba(0,0,0,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                    '0 0 50px -14px rgba(124,58,237,0.70), 0 3px 16px rgba(0,0,0,0.35)';
+                }}
               >
-                {/* Primary CTA — filled pill */}
-                <button
-                  onClick={() => {
-                    trackFunnelEvent('landing_primary_cta_clicked', {
-                      cta: 'launch_free_trial',
-                      variant,
-                    });
-                    onLaunchTrial();
-                  }}
-                  className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full text-white font-semibold text-sm overflow-hidden
-                  transition-all duration-300 active:scale-[0.98]"
-                  style={{
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
-                    boxShadow: '0 0 50px -14px rgba(124,58,237,0.70), 0 3px 16px rgba(0,0,0,0.35)',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                      '0 0 70px -10px rgba(124,58,237,0.85), 0 4px 20px rgba(0,0,0,0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                      '0 0 50px -14px rgba(124,58,237,0.70), 0 3px 16px rgba(0,0,0,0.35)';
-                  }}
-                >
-                  <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_60%)]" />
-                  <span className="relative">{t('landing.profitHero.ctaPrimary', 'Launch Free Trial')}</span>
-                  <ArrowRight size={15} className="relative" />
-                </button>
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_60%)]" />
+                <span className="relative">
+                  {t('landing.profitHero.ctaPrimary', 'Launch Free Trial')}
+                </span>
+                <ArrowRight size={15} className="relative" />
+              </button>
 
-                {/* Secondary CTA — ghost pill */}
-                <button
-                  onClick={() => {
-                    trackFunnelEvent('landing_demo_clicked', { cta: 'open_demo_now', variant });
-                    onOpenDemoNow();
-                  }}
-                  className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-white
+              {/* Secondary CTA — ghost pill */}
+              <button
+                onClick={() => {
+                  trackFunnelEvent('landing_demo_clicked', { cta: 'open_demo_now', variant });
+                  onOpenDemoNow();
+                }}
+                className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-white
                   transition-all duration-300 active:scale-[0.98]"
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'rgba(255,255,255,0.09)';
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      'rgba(168,85,247,0.45)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'rgba(255,255,255,0.05)';
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      'rgba(255,255,255,0.18)';
-                  }}
-                >
-                  <Play size={14} className="text-white/70" fill="currentColor" />
-                  <span>{t('landing.profitHero.ctaSecondary', 'Open Demo Now')}</span>
-                </button>
-              </motion.div>
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    'rgba(255,255,255,0.09)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor =
+                    'rgba(168,85,247,0.45)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    'rgba(255,255,255,0.05)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor =
+                    'rgba(255,255,255,0.18)';
+                }}
+              >
+                <Play size={14} className="text-white/70" fill="currentColor" />
+                <span>{t('landing.profitHero.ctaSecondary', 'Open Demo Now')}</span>
+              </button>
+
+            </motion.div>
 
             {/* Social proof micro-line */}
             <motion.div
@@ -343,7 +336,9 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   </div>
                 ))}
               </div>
-              <span>{t('landing.epicHero.socialProof', 'Trusted by 200+ consulting teams globally')}</span>
+              <span>
+                {t('landing.epicHero.socialProof', 'Trusted by 200+ consulting teams globally')}
+              </span>
             </motion.div>
           </div>
 
@@ -406,31 +401,6 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               <span>{t('landing.epicHero.noCC', 'No credit card required')}</span>
             </div>
           </div>
-
-          {/* Right: Become Partner */}
-          <a
-            href="/become-partner"
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200"
-            style={{
-              background: 'linear-gradient(135deg, rgba(109,40,217,0.80), rgba(192,38,211,0.80))',
-              border: '1px solid rgba(168,85,247,0.35)',
-              color: '#fff',
-              boxShadow: '0 0 20px -8px rgba(124,58,237,0.55)',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                '0 0 30px -6px rgba(124,58,237,0.75)';
-              (e.currentTarget as HTMLAnchorElement).style.opacity = '0.90';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                '0 0 20px -8px rgba(124,58,237,0.55)';
-              (e.currentTarget as HTMLAnchorElement).style.opacity = '1';
-            }}
-          >
-            <Handshake size={13} />
-            <span>{t('partner.becomePartner', 'Become Partner')}</span>
-          </a>
         </motion.div>
       </div>
     </section>

@@ -6,29 +6,19 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import PDFDocument from 'pdfkit';
+import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
-router.use(verifyToken);
-
-// Ensure analytics table exists (G3)
-dbRun(`CREATE TABLE IF NOT EXISTS presentation_analytics (
-  id TEXT PRIMARY KEY,
-  deck_id TEXT NOT NULL,
-  viewer_token TEXT NOT NULL DEFAULT 'anonymous',
-  event_type TEXT NOT NULL DEFAULT 'page_view',
-  card_index INTEGER DEFAULT 0,
-  duration_ms INTEGER DEFAULT 0,
-  user_agent TEXT,
-  ip_hash TEXT,
-  created_at TEXT DEFAULT (datetime('now'))
-)`).catch(() => {});
 
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
@@ -38,6 +28,217 @@ const asyncHandler =
 function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
 }
+
+function isSchemaMissingError(error: unknown): boolean {
+  const msg = String((error as any)?.message || '').toLowerCase();
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('no such table') ||
+    msg.includes('no such column') ||
+    msg.includes('relation')
+  );
+}
+
+function normalizeDeckRow(row: any) {
+  return {
+    ...row,
+    source_artifacts: JSON.parse(row.source_artifacts || '[]'),
+    source_refs: JSON.parse(row.source_refs_json || '[]'),
+    outline_json: JSON.parse(row.outline_json || '[]'),
+    validation_warnings: JSON.parse(row.validation_warnings || '[]'),
+  };
+}
+
+function parseDeckPayload(row: any): any {
+  try {
+    return JSON.parse(row?.deck_json || row?.unified_json || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function getDeckCards(row: any): any[] {
+  const parsed = parseDeckPayload(row);
+  return Array.isArray(parsed.cards)
+    ? parsed.cards
+    : Array.isArray(parsed.slides)
+      ? parsed.slides
+      : [];
+}
+
+function buildAgentReply(appliedActions: string[], isPolish: boolean): string {
+  if (appliedActions.length === 0) {
+    return isPolish
+      ? 'Nie rozpoznałem instrukcji. Spróbuj np. skrócić deck, dodać summary, dodać notes lub odświeżyć dane.'
+      : 'I could not match that instruction. Try asking me to make the deck concise, add a summary, add notes, or refresh the data.';
+  }
+  return isPolish
+    ? `Zastosowałem: ${appliedActions.join(', ')}.`
+    : `Applied: ${appliedActions.join(', ')}.`;
+}
+
+function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
+  const normalized = String(prompt || '').trim().toLowerCase();
+  const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
+  const appliedActions: string[] = [];
+  const nowIso = new Date().toISOString();
+
+  if (
+    normalized.includes('summary') ||
+    normalized.includes('podsum') ||
+    normalized.includes('executive')
+  ) {
+    const hasSummary = cards.some((card: any) => card.intent === 'executive_summary');
+    if (!hasSummary) {
+      const sourceTitles = cards
+        .slice(0, 4)
+        .map((card: any) => String(card.title || card.intent || 'Slide'))
+        .filter(Boolean);
+      cards.splice(1, 0, {
+        card_id: `card-summary-${Date.now()}`,
+        deck_id: deck.deck_id,
+        order_index: 1,
+        intent: 'executive_summary',
+        layout_id: 'content_full',
+        title: isPolish ? 'Podsumowanie zarządcze' : 'Executive Summary',
+        blocks: [
+          {
+            block_id: `block-summary-${Date.now()}`,
+            card_id: `card-summary-${Date.now()}`,
+            type: 'bullet_list',
+            content: {
+              items: sourceTitles.length
+                ? sourceTitles.map((title: string) =>
+                    isPolish ? `Kluczowy punkt: ${title}` : `Key point: ${title}`
+                  )
+                : [isPolish ? 'Dodano sekcję podsumowania.' : 'Summary slide added.'],
+            },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: true,
+          },
+        ],
+        source_refs: [],
+        has_refreshable_data: false,
+        background: { type: 'theme' },
+        animations: { entrance: 'fade', block_stagger: false },
+        is_locked: false,
+      });
+      appliedActions.push(isPolish ? 'dodano slide summary' : 'added summary slide');
+    }
+  }
+
+  if (
+    normalized.includes('concise') ||
+    normalized.includes('short') ||
+    normalized.includes('skr') ||
+    normalized.includes('zwi')
+  ) {
+    for (const card of cards) {
+      for (const block of card.blocks || []) {
+        if (typeof block?.content?.text === 'string') {
+          block.content.text = block.content.text.slice(0, 180);
+        }
+        if (Array.isArray(block?.content?.items)) {
+          block.content.items = block.content.items
+            .slice(0, 4)
+            .map((item: any) =>
+              typeof item === 'string' ? item.slice(0, 120) : String(item?.title || item).slice(0, 120)
+            );
+        }
+      }
+    }
+    appliedActions.push(isPolish ? 'skrócono copy' : 'made copy concise');
+  }
+
+  if (normalized.includes('note') || normalized.includes('speaker') || normalized.includes('notat')) {
+    for (const card of cards) {
+      const firstBlock = (card.blocks || []).find((block: any) => block?.content);
+      const baseText = extractBlockText(firstBlock || {});
+      card.speaker_notes = `${card.title || card.intent}: ${baseText || (isPolish ? 'omów kluczowy komunikat' : 'cover the key message')}`;
+    }
+    deck.speaker_notes_generated = true;
+    appliedActions.push(isPolish ? 'dodano speaker notes' : 'added speaker notes');
+  }
+
+  if (normalized.includes('update data') || normalized.includes('refresh') || normalized.includes('odświe')) {
+    for (const card of cards) {
+      for (const block of card.blocks || []) {
+        if (block?.is_refreshable) {
+          block.content = { ...(block.content || {}), _agent_refreshed_at: nowIso };
+        }
+      }
+    }
+    appliedActions.push(isPolish ? 'odświeżono bloki danych' : 'refreshed data blocks');
+  }
+
+  if (normalized.includes('visual') || normalized.includes('styl') || normalized.includes('design')) {
+    for (const card of cards.slice(0, 3)) {
+      card.background = {
+        type: 'gradient',
+        value: 'linear-gradient(135deg, #0B3D91, #1A8A8A)',
+      };
+    }
+    appliedActions.push(isPolish ? 'wzmocniono styl slajdów' : 'improved slide styling');
+  }
+
+  const reindexedCards = cards.map((card: any, index: number) => ({ ...card, order_index: index }));
+
+  return {
+    deck: {
+      ...deck,
+      cards: reindexedCards,
+      updated_at: nowIso,
+    },
+    reply: buildAgentReply(appliedActions, isPolish),
+    appliedActions,
+  };
+}
+
+async function getTemplateForOrgOrSystem(templateId: string, organizationId: string) {
+  return (await dbGet(
+    `SELECT *
+     FROM presentation_templates
+     WHERE id = ?
+       AND is_active = TRUE
+       AND (organization_id IS NULL OR organization_id = ?)`,
+    [templateId, organizationId]
+  )) as any;
+}
+
+async function enforceNoLegalHold(res: Response, organizationId: string, operation: string) {
+  try {
+    await requireNoLegalHold(organizationId, operation);
+    return true;
+  } catch (error: any) {
+    if (error instanceof OrgPoliciesError || error?.code === 'LEGAL_HOLD') {
+      res.status(403).json({ success: false, error: error.message, code: 'LEGAL_HOLD' });
+      return false;
+    }
+    throw error;
+  }
+}
+
+router.get(
+  '/shared/:token',
+  asyncHandler(async (req, res) => {
+    const row = (await dbGet(
+      `SELECT *
+       FROM presentation_decks
+       WHERE share_token = ?
+         AND (share_expires_at IS NULL OR share_expires_at > CURRENT_TIMESTAMP)`,
+      [req.params.token]
+    )) as any;
+
+    if (!row) {
+      return res.status(404).json({ success: false, error: 'Shared presentation not found' });
+    }
+
+    res.json({ success: true, data: normalizeDeckRow(row) });
+  })
+);
+
+router.use(verifyToken);
 
 // ============================================================
 // TEMPLATES (T059)
@@ -64,7 +265,8 @@ router.get(
 router.get(
   '/templates/:id',
   asyncHandler(async (req, res) => {
-    const row = await dbGet(`SELECT * FROM presentation_templates WHERE id = ?`, [req.params.id]);
+    const orgId = getOrgId(req);
+    const row = await getTemplateForOrgOrSystem(String(req.params.id), orgId);
     if (!row) return res.status(404).json({ success: false, error: 'Template not found' });
     const template = row as any;
     template.outline_json = JSON.parse(template.outline_json || '[]');
@@ -78,9 +280,7 @@ router.post(
   '/templates/:id/clone',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const source = (await dbGet(`SELECT * FROM presentation_templates WHERE id = ?`, [
-      req.params.id,
-    ])) as any;
+    const source = await getTemplateForOrgOrSystem(String(req.params.id), orgId);
     if (!source) return res.status(404).json({ success: false, error: 'Template not found' });
 
     const id = uuidv4().replace(/-/g, '');
@@ -230,15 +430,75 @@ router.post(
   })
 );
 
+/**
+ * POST /api/presentations/decks
+ * Create a deck directly from structured slide JSON (used by Table OS export).
+ */
+router.post(
+  '/decks',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { title, theme, slides, source } = req.body || {};
+
+    if (!title) return res.status(400).json({ success: false, error: 'Title is required' });
+
+    const deckId = uuidv4().replace(/-/g, '');
+    const slideCount = Array.isArray(slides) ? slides.length : 0;
+
+    try {
+      await dbRun(
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [deckId, orgId, title, theme || 'modern', slideCount, JSON.stringify({ source: source || 'idea_table' })]
+      );
+
+      if (Array.isArray(slides)) {
+        for (let i = 0; i < slides.length; i++) {
+          const slide = slides[i];
+          const cardId = uuidv4().replace(/-/g, '');
+          await dbRun(
+            `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [cardId, deckId, i, slide.type || 'content', JSON.stringify(slide.content || slide)]
+          );
+        }
+      }
+
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'create',
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        after: { title, theme, slideCount, source },
+        metadata: { organizationId: orgId },
+      });
+
+      res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
+    } catch (error: any) {
+      logger.error('[presentations] Failed to create deck:', error);
+      res.status(500).json({ success: false, error: error?.message || 'Failed to create deck' });
+    }
+  })
+);
+
 router.get(
   '/decks',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const rows = await dbAll(
-      `SELECT id, title, description, deck_type, audience, goal, language, theme, slide_count, status, export_format, exported_at, created_at, updated_at FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
-      [orgId]
-    );
-    res.json({ success: true, data: rows || [] });
+    try {
+      const rows = await dbAll(
+        `SELECT id, title, description, deck_type, audience, goal, language, theme, presentation_mode, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
+        [orgId]
+      );
+      res.json({ success: true, data: rows || [] });
+    } catch (error) {
+      if (isSchemaMissingError(error)) {
+        logger.warn('[Presentations] Deck listing unavailable: schema not ready');
+        return res.json({ success: true, data: [], unavailable: true });
+      }
+      throw error;
+    }
   })
 );
 
@@ -251,10 +511,7 @@ router.get(
       [req.params.id, orgId]
     )) as any;
     if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
-    row.source_artifacts = JSON.parse(row.source_artifacts || '[]');
-    row.outline_json = JSON.parse(row.outline_json || '[]');
-    row.validation_warnings = JSON.parse(row.validation_warnings || '[]');
-    res.json({ success: true, data: row });
+    res.json({ success: true, data: normalizeDeckRow(row) });
   })
 );
 
@@ -262,6 +519,7 @@ router.get(
   '/decks/:id/download',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
     const deck = (await dbGet(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
@@ -282,14 +540,63 @@ router.get(
   })
 );
 
+router.get(
+  '/decks/:deckId/export/pdf',
+  asyncHandler(async (req, res) => {
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
+
+    const deck = (await dbGet(
+      `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const cards = getDeckCards(deck);
+    const filename = `${String(deck.title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const doc = new PDFDocument({ margin: 48, size: 'A4' });
+    doc.pipe(res);
+
+    cards.forEach((card: any, index: number) => {
+      if (index > 0) doc.addPage();
+      doc.fontSize(22).text(String(card.title || card.key_message || `Slide ${index + 1}`));
+      doc.moveDown(0.5);
+      doc.fontSize(10).fillColor('#666').text(`Slide ${index + 1}`);
+      doc.moveDown(1);
+      const blocks = Array.isArray(card.blocks) ? card.blocks : [];
+      if (blocks.length === 0) {
+        doc.fillColor('#111').fontSize(12).text('No slide content');
+        return;
+      }
+      blocks.slice(0, 8).forEach((block: any) => {
+        const text = extractBlockText(block);
+        if (!text) return;
+        doc.fillColor('#111').fontSize(12).text(`• ${text.slice(0, 500)}`);
+        doc.moveDown(0.35);
+      });
+    });
+
+    doc.end();
+  })
+);
+
 router.delete(
   '/decks/:id',
+  requireAudit,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation deletion'))) return;
     const deck = (await dbGet(
-      `SELECT export_path FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      `SELECT id, title, export_path, share_token, share_expires_at FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
     if (deck?.export_path && fs.existsSync(deck.export_path)) {
       try {
         fs.unlinkSync(deck.export_path);
@@ -299,6 +606,18 @@ router.delete(
       req.params.id,
       orgId,
     ]);
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'delete',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      before: {
+        title: deck.title,
+        shareToken: deck.share_token,
+        shareExpiresAt: deck.share_expires_at,
+      },
+      metadata: { organizationId: orgId },
+    });
     res.json({ success: true });
   })
 );
@@ -306,9 +625,17 @@ router.delete(
 // Share link
 router.post(
   '/decks/:id/share',
+  requireAudit,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { expiresInDays } = req.body;
+    const before = (await dbGet(
+      `SELECT id, title, share_token, share_expires_at FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!before) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
     const token = uuidv4().replace(/-/g, '');
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
@@ -318,59 +645,40 @@ router.post(
       `UPDATE presentation_decks SET share_token = ?, share_expires_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [token, expiresAt, req.params.id, orgId]
     );
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'share',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      before: {
+        shareToken: before.share_token,
+        shareExpiresAt: before.share_expires_at,
+      },
+      after: {
+        shareToken: token,
+        shareExpiresAt: expiresAt,
+      },
+      metadata: { organizationId: orgId, title: before.title },
+    });
     res.json({ success: true, data: { shareToken: token, expiresAt } });
   })
 );
 
-// Intent catalog (for UI)
+// Intent catalog (for UI) — reads from presentation_intents table
 router.get(
   '/intents',
   asyncHandler(async (_req, res) => {
-    const intents = [
-      { id: 'cover', label: 'Cover Slide', description: 'Title page with branding' },
-      {
-        id: 'executive_summary',
-        label: 'Executive Summary',
-        description: 'High-level findings and KPIs',
-      },
-      { id: 'section_intro', label: 'Section Intro', description: 'Section divider with title' },
-      { id: 'key_messages', label: 'Key Messages', description: '3-4 critical takeaways' },
-      {
-        id: 'performance_overview',
-        label: 'KPI Dashboard',
-        description: 'Performance metrics overview',
-      },
-      {
-        id: 'single_insight',
-        label: 'Single Insight',
-        description: 'One chart or metric deep-dive',
-      },
-      { id: 'comparison', label: 'Comparison', description: 'Side-by-side or gap analysis' },
-      { id: 'assessment', label: 'Assessment', description: 'Maturity/score overview' },
-      {
-        id: 'recommendation_portfolio',
-        label: 'Recommendations',
-        description: 'Action recommendations',
-      },
-      {
-        id: 'initiative_portfolio',
-        label: 'Initiative Portfolio',
-        description: 'Initiative cards/table',
-      },
-      {
-        id: 'prioritization_matrix',
-        label: 'Prioritization Matrix',
-        description: 'Impact vs effort quadrants',
-      },
-      { id: 'roadmap', label: 'Roadmap', description: 'Timeline with phases' },
-      {
-        id: 'risk_management',
-        label: 'Risks & Mitigations',
-        description: 'Risk table with actions',
-      },
-      { id: 'next_steps', label: 'Next Steps', description: 'Actions, owners, deadlines' },
-      { id: 'appendix', label: 'Appendix', description: 'Disclaimers & methodology' },
-    ];
+    const rows = await dbAll(
+      `SELECT id, label, label_pl, description, description_pl FROM presentation_intents WHERE is_active = TRUE ORDER BY sort_order ASC`,
+      []
+    );
+    const intents = ((rows || []) as any[]).map((r: any) => ({
+      id: r.id,
+      label: r.label,
+      label_pl: r.label_pl,
+      description: r.description,
+      description_pl: r.description_pl,
+    }));
     res.json({ success: true, data: intents });
   })
 );
@@ -384,6 +692,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation HTML export'))) return;
 
     const deck = await dbGet(
       'SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?',
@@ -395,20 +704,33 @@ router.post(
     }
 
     const { exportDeckAsHtml } = await import('../services/presentationHtmlExportService.js');
-    const deckData = JSON.parse(deck.deck_json || '{}');
+    let deckData: any;
+    try {
+      deckData = JSON.parse(deck.deck_json || deck.unified_json || '{}');
+    } catch {
+      return res.status(422).json({ success: false, error: 'Invalid deck data' });
+    }
 
     const htmlBuffer = await exportDeckAsHtml({
       title: deck.title || 'Presentation',
       cards: deckData.cards || [],
       theme: deckData.theme || {
-        primary: '#6366F1', secondary: '#8B5CF6', accent: '#EC4899',
-        background: '#0F172A', surface: '#1E293B', textPrimary: '#F1F5F9',
-        textSecondary: '#94A3B8', heading: '#F8FAFC',
+        primary: '#6366F1',
+        secondary: '#8B5CF6',
+        accent: '#EC4899',
+        background: '#0F172A',
+        surface: '#1E293B',
+        textPrimary: '#F1F5F9',
+        textSecondary: '#94A3B8',
+        heading: '#F8FAFC',
       },
     });
 
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="${deck.title || 'presentation'}.html"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${deck.title || 'presentation'}.html"`
+    );
     res.send(htmlBuffer);
   })
 );
@@ -440,13 +762,42 @@ router.post(
       return res.json({ success: true, updated: false, reason: 'Block not refreshable' });
     }
 
-    // In production, fetch fresh data from source artifact
-    // For now, return the same content with a timestamp
-    res.json({
-      success: true,
-      updated: true,
-      content: { ...block.content, _refreshed_at: new Date().toISOString() },
-    });
+    const sourceRef = block.source_ref;
+    let freshContent = { ...block.content };
+
+    try {
+      if (sourceRef.artifact_type === 'initiative' && sourceRef.artifact_id) {
+        const init = await dbGet(
+          'SELECT name, status, progress, priority FROM initiatives WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (init) {
+          freshContent = {
+            ...freshContent,
+            ...(init as any),
+            _refreshed_at: new Date().toISOString(),
+          };
+        }
+      } else if (sourceRef.artifact_type === 'kpi' && sourceRef.artifact_id) {
+        const kpi = await dbGet(
+          'SELECT name, current_value, target_value, unit FROM initiative_kpis WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (kpi) {
+          freshContent = {
+            ...freshContent,
+            ...(kpi as any),
+            _refreshed_at: new Date().toISOString(),
+          };
+        }
+      } else {
+        freshContent._refreshed_at = new Date().toISOString();
+      }
+    } catch {
+      freshContent._refreshed_at = new Date().toISOString();
+    }
+
+    res.json({ success: true, updated: true, content: freshContent });
   })
 );
 
@@ -460,12 +811,60 @@ router.put(
     const { deckId } = req.params;
     const orgId = getOrgId(req);
 
+    const deck = await dbGet(
+      'SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      [deckId, orgId]
+    );
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    const bodyStr = JSON.stringify(req.body);
+    if (bodyStr.length > 10_000_000) {
+      return res.status(413).json({ success: false, error: 'Payload too large' });
+    }
+
     await dbRun(
       `UPDATE presentation_decks SET deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(req.body), deckId, orgId]
+      [bodyStr, deckId, orgId]
     );
 
     res.json({ success: true });
+  })
+);
+
+router.post(
+  '/decks/:deckId/agent-edit',
+  asyncHandler(async (req, res) => {
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const prompt = String(req.body?.prompt || '').trim();
+    if (!prompt) return res.status(400).json({ success: false, error: 'prompt is required' });
+
+    const row = (await dbGet(
+      `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const deck = parseDeckPayload(row);
+    const isPolish = String(req.headers['accept-language'] || '').toLowerCase().startsWith('pl');
+    const result = applyAgentEdit(
+      {
+        ...deck,
+        deck_id: deck.deck_id || deckId,
+        title: deck.title || row.title,
+      },
+      prompt,
+      isPolish
+    );
+
+    await dbRun(
+      `UPDATE presentation_decks SET deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(result.deck), deckId, orgId]
+    );
+
+    res.json({ success: true, data: result });
   })
 );
 
@@ -505,9 +904,8 @@ router.post(
     const orgId = getOrgId(req);
     const { deckId } = req.params;
 
-    const { checkDeckQualityGates } = await import(
-      '../services/presentationQualityGatesService.js'
-    );
+    const { checkDeckQualityGates } =
+      await import('../services/presentationQualityGatesService.js');
     const report = await checkDeckQualityGates(orgId, String(deckId));
     res.json({ success: true, data: report });
   })
@@ -558,7 +956,7 @@ router.post(
       const safeName = cardTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
 
       const svg = renderCardToSvg(card, i, title, deck.theme || 'corporate');
-      const pngBuffer = svgToPngBuffer(svg, 1920, 1080);
+      const pngBuffer = await sharp(Buffer.from(svg, 'utf-8')).png().toBuffer();
 
       archive.append(Readable.from(pngBuffer), {
         name: `${String(i + 1).padStart(2, '0')}_${safeName}.png`,
@@ -569,12 +967,7 @@ router.post(
   })
 );
 
-function renderCardToSvg(
-  card: any,
-  index: number,
-  deckTitle: string,
-  theme: string
-): string {
+function renderCardToSvg(card: any, index: number, deckTitle: string, theme: string): string {
   const bgColor = theme === 'minimal' ? '#FFFFFF' : theme === 'modern' ? '#0F172A' : '#1E293B';
   const textColor = theme === 'minimal' ? '#1E293B' : '#F1F5F9';
   const accentColor = theme === 'modern' ? '#8B5CF6' : '#6366F1';
@@ -622,11 +1015,11 @@ function extractBlockText(block: any): string {
 }
 
 function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function svgToPngBuffer(svg: string, _w: number, _h: number): Buffer {
-  return Buffer.from(svg, 'utf-8');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ============================================================
@@ -698,7 +1091,10 @@ router.get(
 
 function hashIp(ip: string): string {
   const { createHash } = require('crypto');
-  return createHash('sha256').update(ip + 'consultify-salt').digest('hex').slice(0, 16);
+  return createHash('sha256')
+    .update(ip + 'consultify-salt')
+    .digest('hex')
+    .slice(0, 16);
 }
 
 // ============================================================

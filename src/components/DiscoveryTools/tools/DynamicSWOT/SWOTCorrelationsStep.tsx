@@ -50,6 +50,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
   const lang = isPolish ? 'pl' : 'en';
   const swotData = session.inputData as SWOTData;
   const correlations = swotData.correlations || [];
+  const tensions = swotData.tensions || [];
 
   // Group correlations by type
   const groupedCorrelations = correlations.reduce(
@@ -83,7 +84,22 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
           </span>
           <div>
             <h4 className={`font-medium text-${config.color}-700 dark:text-${config.color}-300`}>
-              {config.label[lang]}
+              {type === 'SO'
+                ? isPolish
+                  ? 'Attack'
+                  : 'Attack'
+                : type === 'WO'
+                  ? isPolish
+                    ? 'Repair'
+                    : 'Repair'
+                  : type === 'ST'
+                    ? isPolish
+                      ? 'Defend'
+                      : 'Defend'
+                    : isPolish
+                      ? 'Protect'
+                      : 'Protect'}{' '}
+              · {config.label[lang]}
             </h4>
             <p className="text-xs text-slate-400">{config.description[lang]}</p>
           </div>
@@ -149,6 +165,32 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
           </p>
         </div>
       </div>
+
+      {tensions.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {tensions.map((tension) => (
+            <div
+              key={tension.id}
+              className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
+            >
+              <div className="text-xs uppercase tracking-wide text-purple-500 mb-1">
+                {tension.type}
+              </div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                {tension.title}
+              </div>
+              <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                {tension.insight}
+              </div>
+              {tension.whyNow && (
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Dlaczego teraz:' : 'Why now:'} {tension.whyNow}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Correlations by type */}
       {correlations.length > 0 ? (

@@ -107,7 +107,13 @@ interface ActionsMenuProps {
   onDelete: (model: RegistryModel) => void;
 }
 
-function ActionsMenu({ model, onToggleActive, onEdit, onTestConnection, onDelete }: ActionsMenuProps) {
+function ActionsMenu({
+  model,
+  onToggleActive,
+  onEdit,
+  onTestConnection,
+  onDelete,
+}: ActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -222,7 +228,9 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Name
+            </label>
             <input
               type="text"
               value={form.name}
@@ -232,7 +240,9 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Provider</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Provider
+              </label>
               <input
                 type="text"
                 value={form.provider}
@@ -241,7 +251,9 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Model ID</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Model ID
+              </label>
               <input
                 type="text"
                 value={form.model_id}
@@ -252,7 +264,9 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tier</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Tier
+              </label>
               <select
                 value={form.tier}
                 onChange={(e) => setForm({ ...form, tier: e.target.value })}
@@ -277,7 +291,9 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Description
+            </label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -392,7 +408,9 @@ export const ModelCatalogTable: React.FC = () => {
       toast.success(`${model.name} ${nextActive ? 'activated' : 'deactivated'}`);
     } catch (e: any) {
       // revert
-      setModels((prev) => prev.map((m) => (m.id === model.id ? { ...m, isActive: model.isActive } : m)));
+      setModels((prev) =>
+        prev.map((m) => (m.id === model.id ? { ...m, isActive: model.isActive } : m))
+      );
       toast.error(e?.message || 'Failed to update model');
     }
   };

@@ -11,6 +11,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import modelRouter from './ai/modelRouter.js';
 import { buildContextPack, saveContextPackSnapshot, type SourceRef } from './contextPackBuilder.js';
 import { generateNarrative, type NarrativeEngineInput, type NarrativeEngineOutput } from './narrativeEngine/index.js';
 import ReportBuilderService, {
@@ -857,7 +858,8 @@ async function getLLMServiceInstance(): Promise<any> {
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  options?: { purpose?: string; organizationId?: string; tier?: string }
 ): Promise<GenerationResult> {
   logger.info('[ReportGeneration] Generating content with AI...', {
     systemPromptLength: systemPrompt.length,
@@ -876,9 +878,20 @@ async function callAI(
   }
 
   try {
+    const modelCfg = await modelRouter.select({
+      capability: 'report_section',
+      purpose: options?.purpose || 'report_section_draft',
+      organizationId: options?.organizationId,
+      tier: options?.tier,
+    });
     const result = await llm.call({
       type: 'text',
-      modelConfig: { id: 'standard' },
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: modelCfg.endpoint || undefined,
+        apiKey: modelCfg.apiKey || undefined,
+      },
       systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
       maxTokens: maxTokens || 4096,
@@ -999,6 +1012,7 @@ async function generateSectionViaNarrativeEngine(
 
   const input: NarrativeEngineInput = {
     context_pack: contextPack,
+    organizationId,
     report_config: {
       report_type_v3: reportTypeV3,
       goal_v3: goalV3,
@@ -1011,6 +1025,7 @@ async function generateSectionViaNarrativeEngine(
     section_key: section.sectionKey,
     section_type: section.sectionType,
     section_title: section.title,
+    aiPurpose: 'report_section_draft',
   };
 
   const result = await generateNarrative(input);
@@ -1093,7 +1108,11 @@ async function synthesizeExecutiveSummary(
     'Write the executive summary now.',
   ].join('\n');
 
-  const result = await callAI(systemPrompt, userPrompt, 1200);
+  const result = await callAI(systemPrompt, userPrompt, 1200, {
+    purpose: 'report_executive_synthesis',
+    organizationId,
+    tier: 'REASONING',
+  });
 
   const now = new Date().toISOString();
   await queryRun(
@@ -1333,7 +1352,10 @@ export async function generateSectionContent(
   }
 
   // Legacy / fallback path: direct AI call
-  const result = await callAI(prompts.system, prompts.user, maxTokens);
+  const result = await callAI(prompts.system, prompts.user, maxTokens, {
+    purpose: 'report_section_draft',
+    organizationId,
+  });
 
   const isJsonSection = ['initiatives'].includes(section.sectionType);
   const detectedFormat = isJsonSection ? 'json' : undefined;
@@ -1482,7 +1504,11 @@ For each section, provide:
 - 2-3 key points to emphasize
 
 Keep the outline concise (max 400 words). Focus on narrative flow and avoiding repetition between sections.`,
-        600
+        600,
+        {
+          purpose: 'report_executive_synthesis',
+          organizationId,
+        }
       );
 
       reportOutline = outlineResult.content;

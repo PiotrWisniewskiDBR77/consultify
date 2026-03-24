@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { UsageStatsPanel } from '../../components/SuperAdmin/UsageStatsPanel';
 import { BillingCenterView } from './BillingCenterView';
 import { InvoiceCenterView } from './InvoiceCenterView';
@@ -47,6 +48,22 @@ const TAB_HELP_CARDS: Record<string, string> = {
 
 export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'billing');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  React.useEffect(() => {
+    const mapping: Record<string, string> = {
+      billing: 'superadmin_billing',
+      invoices: 'superadmin_invoices',
+      usage: 'superadmin_revenue_usage',
+      pricing: 'superadmin_revenue_pricing',
+      subscriptions: 'superadmin_revenue_subscriptions',
+      recognition: 'superadmin_revenue_recognition',
+      forecasts: 'superadmin_revenue_forecasts',
+      payments: 'superadmin_revenue_payments',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_revenue');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
     { id: 'billing', label: 'Billing', icon: <CreditCard size={16} /> },

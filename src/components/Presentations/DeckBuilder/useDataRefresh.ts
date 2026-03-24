@@ -19,7 +19,10 @@ interface DataRefreshState {
   lastRefreshSummary: string | null;
 }
 
-export function useDataRefresh(deck: Deck | null, updateCard: (cardId: string, updates: Partial<DeckCard>) => void) {
+export function useDataRefresh(
+  deck: Deck | null,
+  updateCard: (cardId: string, updates: Partial<DeckCard>) => void
+) {
   const [state, setState] = useState<DataRefreshState>({
     isRefreshing: false,
     outdatedCardIds: new Set(),

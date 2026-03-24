@@ -1,0 +1,38 @@
+[
+  {
+    "label": "Apator SA Raport R 2024",
+    "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Grupa Apator Raport RS 2023",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Grupa Apator Raport RS 2024",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Raport skonsolidowany Apator",
+    "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  }
+]

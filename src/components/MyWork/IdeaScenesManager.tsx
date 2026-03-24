@@ -1,0 +1,319 @@
+/**
+ * IdeaScenesManager — Saved viewport scenes + Presentation mode.
+ *
+ * Inspired by Apple Freeform Scenes: save named viewports,
+ * navigate between them, present as slides in fullscreen.
+ */
+import {
+  ArrowLeft,
+  ArrowRight,
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  Edit3,
+  Maximize2,
+  Minimize2,
+  Play,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+export interface Scene {
+  id: string;
+  name: string;
+  viewport: { x: number; y: number; zoom: number };
+  createdAt: number;
+}
+
+export interface IdeaScenesManagerProps {
+  scenes: Scene[];
+  onScenesChange: (scenes: Scene[]) => void;
+  currentViewport: { x: number; y: number; zoom: number };
+  onNavigateToScene: (viewport: { x: number; y: number; zoom: number }) => void;
+}
+
+export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
+  scenes,
+  onScenesChange,
+  currentViewport,
+  onNavigateToScene,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [expanded, setExpanded] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const handleAddScene = useCallback(() => {
+    const newScene: Scene = {
+      id: `scene-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: `${isPl ? 'Widok' : 'View'} ${scenes.length + 1}`,
+      viewport: { ...currentViewport },
+      createdAt: Date.now(),
+    };
+    onScenesChange([...scenes, newScene]);
+  }, [currentViewport, isPl, onScenesChange, scenes]);
+
+  const handleDeleteScene = useCallback(
+    (id: string) => {
+      onScenesChange(scenes.filter((s) => s.id !== id));
+    },
+    [onScenesChange, scenes]
+  );
+
+  const handleRenameScene = useCallback(
+    (id: string) => {
+      if (!editName.trim()) return;
+      onScenesChange(scenes.map((s) => (s.id === id ? { ...s, name: editName.trim() } : s)));
+      setEditingId(null);
+    },
+    [editName, onScenesChange, scenes]
+  );
+
+  const handleMoveScene = useCallback(
+    (id: string, direction: 'up' | 'down') => {
+      const idx = scenes.findIndex((s) => s.id === id);
+      if (idx === -1) return;
+      const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= scenes.length) return;
+      const next = [...scenes];
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      onScenesChange(next);
+    },
+    [onScenesChange, scenes]
+  );
+
+  // Presentation mode keyboard navigation
+  useEffect(() => {
+    if (!presentationMode) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPresentationMode(false);
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      }
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        setCurrentSlide((prev) => {
+          const next = Math.min(prev + 1, scenes.length - 1);
+          if (scenes[next]) onNavigateToScene(scenes[next].viewport);
+          return next;
+        });
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentSlide((prev) => {
+          const next = Math.max(prev - 1, 0);
+          if (scenes[next]) onNavigateToScene(scenes[next].viewport);
+          return next;
+        });
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onNavigateToScene, presentationMode, scenes]);
+
+  const startPresentation = useCallback(() => {
+    if (scenes.length === 0) return;
+    setPresentationMode(true);
+    setCurrentSlide(0);
+    onNavigateToScene(scenes[0].viewport);
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  }, [onNavigateToScene, scenes]);
+
+  if (scenes.length === 0 && !expanded) {
+    return (
+      <div className="absolute top-2 right-4 z-[55]">
+        <button
+          onClick={() => {
+            setExpanded(true);
+            handleAddScene();
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+        >
+          <Bookmark size={12} />
+          {isPl ? 'Zapisz widok' : 'Save view'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Scenes panel */}
+      <div className="absolute top-2 right-4 z-[55] w-[220px]">
+        <div className="bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200/40 dark:border-navy-700/40">
+            <div className="flex items-center gap-1.5">
+              <Bookmark size={12} className="text-primary-500" />
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                {isPl ? 'Widoki' : 'Scenes'}
+              </span>
+              <span className="text-[9px] text-slate-400 font-semibold">{scenes.length}</span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              {scenes.length >= 2 && (
+                <button
+                  onClick={startPresentation}
+                  className="p-1 rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors"
+                  title={isPl ? 'Prezentacja' : 'Present'}
+                >
+                  <Play size={12} />
+                </button>
+              )}
+              <button
+                onClick={handleAddScene}
+                className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                <Plus size={12} />
+              </button>
+              <button
+                onClick={() => setExpanded(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </div>
+
+          <div className="max-h-[200px] overflow-y-auto p-1 space-y-0.5">
+            {scenes.map((scene, i) => (
+              <div
+                key={scene.id}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group cursor-pointer"
+                onClick={() => onNavigateToScene(scene.viewport)}
+              >
+                <span className="text-[9px] font-bold text-slate-400 w-3">{i + 1}</span>
+                {editingId === scene.id ? (
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onBlur={() => handleRenameScene(scene.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameScene(scene.id);
+                      if (e.key === 'Escape') setEditingId(null);
+                    }}
+                    className="flex-1 text-[10px] bg-transparent border-b border-primary-400 outline-none text-slate-700 dark:text-slate-300"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="flex-1 text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                    {scene.name}
+                  </span>
+                )}
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveScene(scene.id, 'up');
+                    }}
+                    className="p-0.5 text-slate-400 hover:text-slate-600"
+                  >
+                    <ChevronUp size={10} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveScene(scene.id, 'down');
+                    }}
+                    className="p-0.5 text-slate-400 hover:text-slate-600"
+                  >
+                    <ChevronDown size={10} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingId(scene.id);
+                      setEditName(scene.name);
+                    }}
+                    className="p-0.5 text-slate-400 hover:text-primary-500"
+                  >
+                    <Edit3 size={10} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteScene(scene.id);
+                    }}
+                    className="p-0.5 text-slate-400 hover:text-red-500"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Presentation mode overlay */}
+      {presentationMode && (
+        <div className="fixed inset-x-0 bottom-0 z-[100] flex items-center justify-center py-4">
+          <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-2xl">
+            <button
+              onClick={() => {
+                const prev = Math.max(0, currentSlide - 1);
+                setCurrentSlide(prev);
+                if (scenes[prev]) onNavigateToScene(scenes[prev].viewport);
+              }}
+              disabled={currentSlide === 0}
+              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+            >
+              <ArrowLeft size={18} />
+            </button>
+
+            <div className="flex items-center gap-2">
+              {scenes.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setCurrentSlide(i);
+                    if (scenes[i]) onNavigateToScene(scenes[i].viewport);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === currentSlide ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/60'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                const next = Math.min(scenes.length - 1, currentSlide + 1);
+                setCurrentSlide(next);
+                if (scenes[next]) onNavigateToScene(scenes[next].viewport);
+              }}
+              disabled={currentSlide === scenes.length - 1}
+              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+            >
+              <ArrowRight size={18} />
+            </button>
+
+            <div className="w-px h-6 bg-white/20 mx-1" />
+
+            <span className="text-[11px] text-white/60 font-medium">
+              {currentSlide + 1} / {scenes.length}
+            </span>
+
+            <button
+              onClick={() => {
+                setPresentationMode(false);
+                if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+              }}
+              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors ml-2"
+            >
+              <Minimize2 size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default IdeaScenesManager;

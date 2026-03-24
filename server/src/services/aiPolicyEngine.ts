@@ -131,6 +131,16 @@ const AIPolicyEngine = {
     projectId: string | null = null,
     userId: string | null = null
   ): Promise<EffectivePolicy> => {
+    const safeDbGet = async <T>(sql: string, params: unknown[], fallback: T): Promise<T> => {
+      try {
+        return ((await dbGet(sql, params)) as T) || fallback;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.warn(`[AIPolicyEngine] Falling back due to schema mismatch: ${message}`);
+        return fallback;
+      }
+    };
+
     const RegulatoryModeGuard = await getRegulatoryModeGuard();
     const AIRoleGuard = await getAIRoleGuard();
 
@@ -168,8 +178,11 @@ const AIPolicyEngine = {
     }
 
     // 1. Get organization (tenant) policy
-    const orgPolicy: any =
-      (await dbGet(`SELECT * FROM ai_policies WHERE organization_id = ?`, [organizationId])) || {};
+    const orgPolicy: any = await safeDbGet(
+      `SELECT * FROM ai_policies WHERE organization_id = ?`,
+      [organizationId],
+      {}
+    );
 
     let effectiveLevel: PolicyLevel = (orgPolicy.policy_level as PolicyLevel) || 'ADVISORY';
     const maxLevel: PolicyLevel = (orgPolicy.max_policy_level as PolicyLevel) || 'ASSISTED';
@@ -194,8 +207,11 @@ const AIPolicyEngine = {
     // 3. Check user preferences
     let userPreferences: any = {};
     if (userId) {
-      userPreferences =
-        (await dbGet(`SELECT * FROM ai_user_preferences WHERE user_id = ?`, [userId])) || {};
+      userPreferences = await safeDbGet(
+        `SELECT * FROM ai_user_preferences WHERE user_id = ?`,
+        [userId],
+        {}
+      );
     }
 
     // Ensure we don't exceed max level
@@ -216,7 +232,15 @@ const AIPolicyEngine = {
     return {
       policyLevel: effectiveLevel,
       maxPolicyLevel: maxLevel,
-      internetEnabled: orgPolicy.internet_enabled === 1,
+      // Factory default: internet is enabled unless explicitly disabled (0).
+      // This is still overridden by Regulatory Mode and by missing web-search credentials
+      // (handled in webSearchGovernance).
+      internetEnabled:
+        orgPolicy.internet_enabled === 0
+          ? false
+          : orgPolicy.internet_enabled === 1
+            ? true
+            : true,
       auditRequired: orgPolicy.audit_required !== 0,
       defaultRole: orgPolicy.default_ai_role || 'ADVISOR',
       activeRoles: JSON.parse(

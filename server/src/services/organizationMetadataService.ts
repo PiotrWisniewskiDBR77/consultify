@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 import _logger from '../utils/Logger.js';
 
 class OrganizationMetadataServiceClass {
@@ -41,6 +42,11 @@ class OrganizationMetadataServiceClass {
              ON CONFLICT(organization_id, key) DO UPDATE SET value = excluded.value, value_type = excluded.value_type, category = excluded.category, is_sensitive = excluded.is_sensitive`,
       [orgId, key, value, valueType, category, isSensitive ? 1 : 0]
     );
+    await organizationContextService.recordOrganizationMetadata({
+      organizationId: orgId,
+      userId: null,
+      payload: { key, value, valueType, category, isSensitive },
+    });
   }
 
   async deleteMetadata(orgId: string, key: string): Promise<boolean> {

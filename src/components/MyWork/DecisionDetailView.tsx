@@ -189,6 +189,7 @@ type CommentDateFilter = 'all' | 'today' | '7d' | '30d';
 type IntegrationChannel = 'slack' | 'teams' | 'webhook' | 'jira';
 type CoreDeliveryChannel = 'in_app' | 'email';
 type EscalationMode = 'notify_only' | 'manager_review' | 'executive_alert';
+type DecisionWorkflowStage = 'proposed' | 'review' | 'approve' | 'published';
 
 type DeliveryConfig = {
   coreChannels: CoreDeliveryChannel[];
@@ -258,6 +259,32 @@ const PRIORITY_CONFIG = {
     label: { en: 'Critical', pl: 'Krytyczny' },
     color: 'bg-red-500',
     textColor: 'text-red-500',
+  },
+};
+
+const WORKFLOW_STATUS_CONFIG: Record<
+  DecisionWorkflowStage,
+  { label: { en: string; pl: string }; badgeClass: string }
+> = {
+  proposed: {
+    label: { en: 'Proposed', pl: 'Propozycja' },
+    badgeClass:
+      'bg-slate-500/10 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-navy-700/60',
+  },
+  review: {
+    label: { en: 'In review', pl: 'W przeglądzie' },
+    badgeClass:
+      'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-900/40',
+  },
+  approve: {
+    label: { en: 'Approved for publish', pl: 'Gotowa do publikacji' },
+    badgeClass:
+      'bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-900/40',
+  },
+  published: {
+    label: { en: 'Published', pl: 'Opublikowana' },
+    badgeClass:
+      'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-900/40',
   },
 };
 
@@ -677,6 +704,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<keyof typeof STATUS_CONFIG>('pending');
+  const [workflowStatus, setWorkflowStatus] = useState<DecisionWorkflowStage>('proposed');
+  const [workflowActionLoading, setWorkflowActionLoading] = useState(false);
   const [priority, setPriority] = useState<keyof typeof PRIORITY_CONFIG>('medium');
   const [category, setCategory] = useState<keyof typeof CATEGORY_CONFIG>('technical');
   const [dueDate, setDueDate] = useState('');
@@ -800,6 +829,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     syncURL: true,
   });
   const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE !== 'true') {
+      setPresentationMode('n');
+    }
+  }, [presentationMode, setPresentationMode]);
 
   // Motion helpers: respect prefers-reduced-motion (DBR77 §9.2)
   const motionDuration = reducedMotion ? 0 : 0.18; // 180ms base
@@ -1481,6 +1516,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setTitle(decision.title || '');
       setDescription(decision.description || '');
       setStatus(decision.status?.toLowerCase() || 'pending');
+      setWorkflowStatus(
+        ['proposed', 'review', 'approve', 'published'].includes(
+          String(decision.workflowStatus || '').toLowerCase()
+        )
+          ? (String(decision.workflowStatus).toLowerCase() as DecisionWorkflowStage)
+          : 'proposed'
+      );
       setPriority(normalizePriority(decision.priority));
       setCategory(decision.category || 'technical');
       setDueDate(decision.dueDate ? decision.dueDate.split('T')[0] : '');
@@ -1769,8 +1811,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleApprove = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'APPROVED' });
-      const oldStatus = status;
+      await Api.decideDecision(decisionId, 'approved', rationale || undefined);
       setStatus('approved');
       setDecisionDate(new Date().toISOString());
       addActivityLogEntry(
@@ -1788,11 +1829,66 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
   };
 
+  const handleWorkflowTransition = async (nextStatus: DecisionWorkflowStage) => {
+    if (!decisionId) return;
+    try {
+      setWorkflowActionLoading(true);
+      const previousWorkflow = workflowStatus;
+      const result = await Api.transitionDecisionWorkflow(decisionId, nextStatus);
+      const resolvedWorkflow = ['proposed', 'review', 'approve', 'published'].includes(
+        String(result.workflowStatus || '').toLowerCase()
+      )
+        ? (String(result.workflowStatus).toLowerCase() as DecisionWorkflowStage)
+        : nextStatus;
+
+      setWorkflowStatus(resolvedWorkflow);
+      addActivityLogEntry(
+        'status_change',
+        isPolish ? 'Zmieniono etap workflow decyzji' : 'Decision workflow stage changed',
+        isPolish
+          ? WORKFLOW_STATUS_CONFIG[previousWorkflow].label.pl
+          : WORKFLOW_STATUS_CONFIG[previousWorkflow].label.en,
+        isPolish
+          ? WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.pl
+          : WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.en
+      );
+
+      const createdCount = Array.isArray(result.createdTaskIds) ? result.createdTaskIds.length : 0;
+      if (resolvedWorkflow === 'published' && createdCount > 0) {
+        toast.success(
+          isPolish
+            ? `Opublikowano decyzję i utworzono ${createdCount} task${createdCount === 1 ? '' : 'i'}`
+            : `Decision published and ${createdCount} task${createdCount === 1 ? '' : 's'} created`
+        );
+      } else {
+        toast.success(
+          isPolish
+            ? `Workflow ustawiony na: ${WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.pl}`
+            : `Workflow set to ${WORKFLOW_STATUS_CONFIG[resolvedWorkflow].label.en}`
+        );
+      }
+      emitMyWorkEvent({ type: 'item:updated', entityType: 'decision', entityId: decisionId });
+      onSaved?.({
+        id: decisionId,
+        title,
+        status,
+        workflowStatus: resolvedWorkflow,
+        createdTaskIds: result.createdTaskIds || [],
+      });
+    } catch (error) {
+      console.error('Failed to transition decision workflow', error);
+      toast.error(
+        isPolish ? 'Nie udało się zmienić workflow decyzji' : 'Failed to update decision workflow'
+      );
+    } finally {
+      setWorkflowActionLoading(false);
+    }
+  };
+
   const handleReject = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'REJECTED' });
-      const oldStatus = status;
+      await Api.decideDecision(decisionId, 'rejected', rationale || undefined);
       setStatus('rejected');
       setDecisionDate(new Date().toISOString());
       addActivityLogEntry(
@@ -1813,7 +1909,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleDefer = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'DEFERRED' });
+      await Api.decideDecision(decisionId, 'deferred', rationale || undefined);
       setStatus('deferred');
       addActivityLogEntry(
         'deferred',
@@ -1831,7 +1927,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleEscalate = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'ESCALATED' });
+      await Api.escalateDecision(
+        decisionId,
+        isPolish ? 'Eskalacja z widoku decyzji' : 'Escalated from decision detail'
+      );
       setStatus('escalated');
       addActivityLogEntry(
         'escalated',
@@ -3045,6 +3144,53 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const isPending = status === 'pending' || status === 'escalated' || status === 'deferred';
   const WORKFLOW_LOCKS_ENABLED = false; // temporary: full edit mode during model/design phase
   const isDecisionStageLocked = WORKFLOW_LOCKS_ENABLED && isPending;
+  const workflowMeta = WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed;
+  const workflowActions = (() => {
+    switch (workflowStatus) {
+      case 'proposed':
+        return [
+          {
+            id: 'review',
+            label: isPolish ? 'Wyślij do review' : 'Send to review',
+            onClick: () => handleWorkflowTransition('review'),
+            tone: 'primary' as const,
+          },
+        ];
+      case 'review':
+        return [
+          {
+            id: 'approve',
+            label: isPolish ? 'Zatwierdź etap' : 'Approve stage',
+            onClick: () => handleWorkflowTransition('approve'),
+            tone: 'success' as const,
+          },
+          {
+            id: 'proposed',
+            label: isPolish ? 'Cofnij do draftu' : 'Back to draft',
+            onClick: () => handleWorkflowTransition('proposed'),
+            tone: 'neutral' as const,
+          },
+        ];
+      case 'approve':
+        return [
+          {
+            id: 'published',
+            label: isPolish ? 'Publikuj i utwórz taski' : 'Publish and create tasks',
+            onClick: () => handleWorkflowTransition('published'),
+            tone: 'success' as const,
+          },
+          {
+            id: 'review',
+            label: isPolish ? 'Cofnij do review' : 'Back to review',
+            onClick: () => handleWorkflowTransition('review'),
+            tone: 'neutral' as const,
+          },
+        ];
+      case 'published':
+      default:
+        return [];
+    }
+  })();
   // Defensive fallbacks (prevents crash on unexpected/null values)
   const statusConfig = (STATUS_CONFIG as any)?.[status] ||
     (STATUS_CONFIG as any)?.pending || {
@@ -4293,24 +4439,6 @@ Context: ${JSON.stringify(projectContext)}`;
             buildArtifactCode={buildArtifactCode}
           />
 
-          {/* Temporary: C-mode placeholder */}
-          {presentationMode === 'c' && (
-            <div className="col-span-full mt-4">
-              <Callout
-                variant="warning"
-                title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
-                action={{
-                  label: isPolish ? 'Przełącz na N' : 'Switch to N',
-                  onClick: () => setPresentationMode('n'),
-                }}
-              >
-                {isPolish
-                  ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
-                  : 'This view will be rebuilt. For now, please use N mode (page-first).'}
-              </Callout>
-            </div>
-          )}
-
           {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
                - PropertiesStrip (full-width, under header)
@@ -4426,6 +4554,38 @@ Context: ${JSON.stringify(projectContext)}`;
 
               {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
+                {decisionId && (
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Workflow' : 'Workflow'}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
+                    >
+                      {isPolish ? workflowMeta.label.pl : workflowMeta.label.en}
+                    </span>
+                    {workflowActions.map((action) => (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={action.onClick}
+                        disabled={workflowActionLoading}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                          action.tone === 'primary'
+                            ? 'border border-primary-400/50 bg-primary-500/10 text-primary-700 hover:bg-primary-500/15 dark:text-primary-300'
+                            : action.tone === 'success'
+                              ? 'border border-emerald-400/50 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300'
+                              : 'border border-slate-300/60 text-slate-600 hover:bg-slate-100 dark:border-navy-600/60 dark:text-slate-300 dark:hover:bg-navy-800'
+                        }`}
+                      >
+                        {workflowActionLoading ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : null}
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {/* Action buttons for pending decisions */}
                 {decisionId && isPending && (
                   <div className="flex items-center gap-2">

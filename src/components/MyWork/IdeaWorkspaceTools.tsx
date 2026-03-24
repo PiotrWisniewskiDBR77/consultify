@@ -1,38 +1,59 @@
 /**
- * IdeaWorkspaceTools — Workspace tool panel for Idea Map Workspace.
- * Composes shared Workspace sections (AI, Transform, Share) with
- * idea-specific sections (Challenge, AI Map, Metadata, Convert).
+ * IdeaWorkspaceTools — Right-side tool panel for Idea Map Workspace.
  *
- * Standard "Workspace" pattern — sibling of the notebook AIChatInlinePanel.
+ * Collapsible accordion sections:
+ *   1. Problem — title + description + save/accept
+ *   2. Status  — stage selector, completeness, save status, evidence
+ *   3. Convert — initiative, tasks, decision, chat, report, presentation, action plan, RAID
+ *   4. Metadata — branch, area, priority
  */
 import {
+  Activity,
   CheckCircle2,
   CheckSquare,
   ChevronDown,
+  ChevronRight,
+  FileText,
   GitBranch,
+  Lightbulb,
+  ListChecks,
   MessageSquarePlus,
+  Pencil,
+  Presentation,
   Rocket,
   Save,
+  Shield,
   Sparkles,
   Star,
-  Target,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  AIQuickActions,
-  SectionLabel,
-  ShareSection,
-  ToolsPanelShell,
-  TransformTextSection,
-  type WorkspaceContext,
-} from '@/components/shared/WorkspaceTools';
-import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { useAppStore } from '@/store/useAppStore';
+import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
-type ConvertTarget = 'initiative' | 'task_set' | 'decision' | 'team_chat';
+import {
+  IDEA_STAGE_COLORS,
+  IDEA_STAGE_LABELS,
+  IDEA_STAGES_V5,
+  normalizeStageToV5,
+} from './ideaEntryTypes';
+import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import { MapHealthScore } from './mindmap/MapHealthScore';
+import { MindmapInspector } from './mindmap/MindmapInspector';
+import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
+
+const FIELD_CLASS =
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-purple-400 dark:focus:border-purple-400 transition-colors';
+
+type ConvertTarget =
+  | 'initiative'
+  | 'task_set'
+  | 'decision'
+  | 'team_chat'
+  | 'report'
+  | 'presentation'
+  | 'action_plan'
+  | 'raid_log';
 
 interface IdeaWorkspaceToolsProps {
   open: boolean;
@@ -50,6 +71,9 @@ interface IdeaWorkspaceToolsProps {
   saving: boolean;
   draftSavedLabel: string;
 
+  activeTool: CanvasToolType;
+  selection: IdeaWorkspaceSelection;
+
   onTitleChange: (v: string) => void;
   onSeedTextChange: (v: string) => void;
   onBranchChange: (v: string) => void;
@@ -59,8 +83,54 @@ interface IdeaWorkspaceToolsProps {
   onAcceptChallenge: () => void;
   onConvert: (target: ConvertTarget) => void;
   onOpenChat: () => void;
-  onFocusAICommand?: () => void;
+  onStageChange?: (stage: string) => void;
+  graphNodes?: any[];
+  graphEdges?: any[];
+  evidenceCount?: number;
+  onAISummarize?: () => void;
+  onAIExpand?: () => void;
+  onLayoutChange?: (mode: string) => void;
+  onThemeChange?: (theme: string) => void;
+  onStyleChange?: (patch: Record<string, any>) => void;
+  onFitView?: () => void;
+  onAutoLayout?: () => void;
 }
+
+/* ── Collapsible section wrapper ── */
+const Section: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  defaultOpen?: boolean;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ title, icon, defaultOpen = false, badge, children }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-slate-200/50 dark:border-white/[0.04] last:border-b-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
+      >
+        <span className="text-slate-400 dark:text-slate-500 shrink-0">
+          {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </span>
+        <span className="text-slate-400 dark:text-slate-500 shrink-0">{icon}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex-1">
+          {title}
+        </span>
+        {badge}
+      </button>
+      {open && <div className="px-3 pb-3">{children}</div>}
+    </div>
+  );
+};
+
+const PRIORITY_COLORS: Record<number, string> = {
+  25: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
+  50: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+  75: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+  100: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+};
 
 export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   open,
@@ -76,6 +146,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   isAccepted,
   saving,
   draftSavedLabel,
+  activeTool,
+  selection,
   onTitleChange,
   onSeedTextChange,
   onBranchChange,
@@ -85,58 +157,68 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onAcceptChallenge,
   onConvert,
   onOpenChat,
-  onFocusAICommand,
+  onStageChange,
+  graphNodes = [],
+  graphEdges = [],
+  evidenceCount = 0,
+  onAISummarize,
+  onAIExpand,
+  onLayoutChange,
+  onThemeChange,
+  onStyleChange,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
-  const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'challenge' | 'ai' | 'metadata' | 'convert'>(
-    'challenge'
-  );
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
-  const wsContext: WorkspaceContext = useMemo(
-    () => ({
-      title,
-      content: seedText,
-      tags: [branch, area].filter(Boolean),
-      entityType: 'idea',
-      entityId: ideaId,
-    }),
-    [title, seedText, branch, area, ideaId]
-  );
+  const v5Stage = normalizeStageToV5(stage);
+  const stageLabel = isPl ? IDEA_STAGE_LABELS[v5Stage].pl : IDEA_STAGE_LABELS[v5Stage].en;
+  const stageColor = IDEA_STAGE_COLORS[v5Stage];
+  const stageIdx = IDEA_STAGES_V5.indexOf(v5Stage);
+  const canAdvance = stageIdx >= 0 && stageIdx < IDEA_STAGES_V5.length - 1;
 
-  const sendToChat = useCallback(
-    (prompt: string) => {
-      setChatKickoffMessage(prompt);
-      if (isChatCollapsed) toggleChatCollapse();
+  const [branchEditing, setBranchEditing] = useState(false);
+  const [areaEditing, setAreaEditing] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
+  const branchRef = useRef<HTMLInputElement>(null);
+  const areaRef = useRef<HTMLInputElement>(null);
+
+  const handleBranchBlur = useCallback(() => {
+    setBranchEditing(false);
+    onSave();
+  }, [onSave]);
+  const handleAreaBlur = useCallback(() => {
+    setAreaEditing(false);
+    onSave();
+  }, [onSave]);
+  const handlePrioritySelect = useCallback(
+    (v: number) => {
+      onPriorityChange(v);
+      setPriorityOpen(false);
+      setTimeout(onSave, 50);
     },
-    [setChatKickoffMessage, isChatCollapsed, toggleChatCollapse]
+    [onPriorityChange, onSave]
   );
 
-  const handleAIExpand = useCallback(() => {
-    if (!isAccepted) {
-      toast(isPl ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.');
-      setActiveTab('challenge');
-      return;
-    }
-    const excerpt = (seedText || '').trim().slice(0, 2000);
-    sendToChat(
-      isPl
-        ? `Na podstawie wyzwania "${title}" rozbuduj mapę rekomendacji. Zaproponuj 5-7 nowych gałęzi z konkretnymi akcjami.\n\nOpis:\n${excerpt}`
-        : `Based on challenge "${title}", expand the recommendation map. Propose 5-7 new branches with concrete actions.\n\nDescription:\n${excerpt}`
-    );
-    trackFunnelEvent('notebook_transform_used', {});
-    toast.success(isPl ? 'Wysłano do czata AI' : 'Sent to AI chat');
-  }, [isAccepted, isPl, seedText, sendToChat, title]);
+  const toolLabel = useMemo(() => {
+    const labels: Record<CanvasToolType, string> = {
+      mindmap: isPl ? 'Mapa rekomendacji' : 'Recommendation map',
+      process_flow: isPl ? 'Przepływ' : 'Process Flow',
+      table: isPl ? 'Tabela' : 'Table',
+      whiteboard: isPl ? 'Tablica' : 'Whiteboard',
+    };
+    return labels[activeTool] || activeTool;
+  }, [activeTool, isPl]);
 
-  if (!open) return null;
-
-  const tabs = [
-    { id: 'challenge' as const, label: isPl ? 'Wyzwanie' : 'Challenge' },
-    { id: 'ai' as const, label: 'AI' },
-    { id: 'metadata' as const, label: isPl ? 'Metadane' : 'Metadata' },
-    { id: 'convert' as const, label: isPl ? 'Konwersja' : 'Convert' },
+  const normalizedPriority = Math.max(25, Math.min(100, Math.round(priority / 25) * 25)) || 25;
+  const priorityOptions = [
+    { value: 25, label: isPl ? 'Niski' : 'Low' },
+    { value: 50, label: isPl ? 'Średni' : 'Medium' },
+    { value: 75, label: isPl ? 'Wysoki' : 'High' },
+    { value: 100, label: isPl ? 'Krytyczny' : 'Critical' },
   ];
+  const currentPriorityLabel =
+    priorityOptions.find((o) => o.value === normalizedPriority)?.label ?? 'Medium';
 
   const convertActions: {
     id: ConvertTarget;
@@ -188,241 +270,386 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       gradient: 'from-violet-500/15 to-purple-500/10',
       textColor: 'text-violet-600 dark:text-violet-400',
     },
+    {
+      id: 'report',
+      icon: FileText,
+      labelPl: 'Raport',
+      labelEn: 'Report',
+      descPl: 'Generuj raport z mapy',
+      descEn: 'Generate report from map',
+      gradient: 'from-slate-500/15 to-gray-500/10',
+      textColor: 'text-slate-600 dark:text-slate-400',
+    },
+    {
+      id: 'presentation',
+      icon: Presentation,
+      labelPl: 'Prezentacja',
+      labelEn: 'Presentation',
+      descPl: 'Generuj slajdy z gałęzi',
+      descEn: 'Generate slides from branches',
+      gradient: 'from-indigo-500/15 to-blue-500/10',
+      textColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+      id: 'action_plan',
+      icon: ListChecks,
+      labelPl: 'Plan działania',
+      labelEn: 'Action Plan',
+      descPl: 'Plan z timeline',
+      descEn: 'Plan with timeline',
+      gradient: 'from-teal-500/15 to-cyan-500/10',
+      textColor: 'text-teal-600 dark:text-teal-400',
+    },
+    {
+      id: 'raid_log',
+      icon: Shield,
+      labelPl: 'RAID Log',
+      labelEn: 'RAID Log',
+      descPl: 'Risks, Actions, Issues, Dependencies',
+      descEn: 'Risks, Actions, Issues, Dependencies',
+      gradient: 'from-red-500/15 to-orange-500/10',
+      textColor: 'text-red-600 dark:text-red-400',
+    },
   ];
 
-  const priorityOptions = [
-    { value: 25, label: isPl ? 'Niski' : 'Low' },
-    { value: 50, label: isPl ? 'Średni' : 'Medium' },
-    { value: 75, label: isPl ? 'Wysoki' : 'High' },
-    { value: 100, label: isPl ? 'Krytyczny' : 'Critical' },
-  ];
-
-  const stageLabel = (() => {
-    const s = String(stage || '').toLowerCase();
-    if (s === 'incubating') return isPl ? 'Inkubacja' : 'Incubating';
-    if (s === 'shaping') return isPl ? 'Kształtuje się' : 'Shaping';
-    if (s === 'ready') return isPl ? 'Gotowy' : 'Ready';
-    if (s === 'promoted') return isPl ? 'Promowany' : 'Promoted';
-    return isPl ? 'Iskra' : 'Spark';
-  })();
+  if (!open) return null;
 
   return (
     <ToolsPanelShell
-      title={isPl ? 'Narzędzia' : 'Tools'}
-      subtitle={isPl ? 'Obszar roboczy' : 'Workspace'}
+      title={title || (isPl ? 'Bez tytułu' : 'Untitled')}
+      subtitle={toolLabel}
       icon={
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-sm shadow-amber-500/20">
-          <GitBranch size={13} className="text-white" />
+          <Lightbulb size={13} className="text-white" />
         </div>
       }
       onClose={onClose}
     >
-      {/* ─── Stage badge ─── */}
-      <div className="px-3 pt-3 pb-1">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400/20 to-orange-400/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-            {stageLabel}
-          </span>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
-        </div>
-      </div>
-
-      {/* ─── Tab switcher ─── */}
-      <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
-        <div className="flex items-center gap-1">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                activeTab === t.id
-                  ? 'bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 shadow-sm'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04]'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── Challenge tab (idea-specific) ─── */}
-      {activeTab === 'challenge' && (
-        <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <SectionLabel>{isPl ? 'Opis wyzwania' : 'Challenge description'}</SectionLabel>
-          <textarea
-            value={seedText}
-            onChange={(e) => onSeedTextChange(e.target.value)}
-            rows={6}
-            placeholder={isPl ? 'Opisz problem lub pomysł…' : 'Describe the problem or idea…'}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.02] text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400/40 resize-none transition-all"
-          />
-          <div className="flex items-center gap-2 mt-2">
+      {/* ── 1. Problem ── */}
+      <Section
+        title={isPl ? 'Problem' : 'Problem'}
+        icon={<Pencil size={12} />}
+        defaultOpen
+      >
+        <div className="space-y-2.5">
+          <div>
+            <input
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              placeholder={isPl ? 'Tytuł wyzwania…' : 'Challenge title…'}
+              className={`${FIELD_CLASS} font-semibold`}
+            />
+          </div>
+          <div>
+            <textarea
+              value={seedText}
+              onChange={(e) => onSeedTextChange(e.target.value)}
+              rows={4}
+              placeholder={isPl ? 'Opisz problem lub pomysł…' : 'Describe the problem or idea…'}
+              className={`${FIELD_CLASS} h-auto py-2 resize-none`}
+            />
+          </div>
+          <div className="flex items-center gap-2">
             <button
               onClick={onSave}
               disabled={saving || isDraft}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-500/12 to-teal-500/8 text-emerald-700 dark:text-emerald-300 hover:from-emerald-500/20 hover:to-teal-500/15 border border-emerald-500/10 hover:border-emerald-500/20 transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-colors hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40"
             >
-              <Save size={11} />
+              <Save size={12} />
               {isPl ? 'Zapisz' : 'Save'}
             </button>
-            <button
-              onClick={onAcceptChallenge}
-              disabled={saving || isDraft || !seedText.trim() || isAccepted}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-500/12 to-orange-500/8 text-amber-700 dark:text-amber-300 hover:from-amber-500/20 hover:to-orange-500/15 border border-amber-500/10 hover:border-amber-500/20 transition-all disabled:opacity-50"
-              title={isAccepted ? (isPl ? 'Zaakceptowane' : 'Accepted') : undefined}
-            >
-              <CheckCircle2 size={11} />
-              {isAccepted ? (isPl ? 'Zaakceptowane' : 'Accepted') : isPl ? 'Akceptuj' : 'Accept'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── AI tab (idea-specific) ─── */}
-      {activeTab === 'ai' && (
-        <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <SectionLabel>{isPl ? 'AI: rozbudowa mapy' : 'AI: expand the map'}</SectionLabel>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
-            {isPl
-              ? 'Wybierz gałąź na mapie, potem kliknij AI na mapie. Lub użyj przycisku poniżej.'
-              : 'Pick a branch on the map, then click AI on the map. Or use the button below.'}
-          </div>
-          {!isAccepted && (
-            <div className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-xl p-2.5 mb-3">
-              {isPl
-                ? 'Zaakceptuj wyzwanie, aby odblokować AI.'
-                : 'Accept the challenge to unlock AI.'}
-            </div>
-          )}
-          <button
-            onClick={handleAIExpand}
-            disabled={!isAccepted}
-            className="group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 hover:shadow-md disabled:opacity-40"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-indigo-500/8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/15 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
-              <Sparkles size={16} />
-            </div>
-            <div className="relative flex-1 min-w-0 text-left">
-              <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                {isPl ? 'Rozbuduj mapę z AI' : 'Expand map with AI'}
-              </div>
-              <div className="text-[9px] text-slate-400 dark:text-slate-500">
-                {isPl ? 'Zaproponuje nowe gałęzie' : 'Will propose new branches'}
-              </div>
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* ─── Metadata tab (idea-specific) ─── */}
-      {activeTab === 'metadata' && (
-        <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <SectionLabel>{isPl ? 'Metadane' : 'Metadata'}</SectionLabel>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">
-                {isPl ? 'Gałąź' : 'Branch'}
-              </div>
-              <input
-                value={branch}
-                onChange={(e) => onBranchChange(e.target.value)}
-                placeholder={isPl ? 'np. Finanse' : 'e.g. Finance'}
-                className="w-full h-8 px-2.5 rounded-lg text-[11px] bg-white/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.06] text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">
-                {isPl ? 'Obszar' : 'Area'}
-              </div>
-              <input
-                value={area}
-                onChange={(e) => onAreaChange(e.target.value)}
-                placeholder={isPl ? 'np. Operacje' : 'e.g. Ops'}
-                className="w-full h-8 px-2.5 rounded-lg text-[11px] bg-white/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.06] text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">
-                {isPl ? 'Priorytet' : 'Priority'}
-              </div>
-              <div className="relative">
-                <select
-                  value={String(Math.round(priority / 25) * 25)}
-                  onChange={(e) => onPriorityChange(Number(e.target.value))}
-                  className="appearance-none w-full h-8 px-2.5 pr-7 rounded-lg text-[11px] bg-white/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.06] text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
-                >
-                  {priorityOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={10}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                />
-              </div>
-            </div>
-            <button
-              onClick={onSave}
-              disabled={saving}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-100/80 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-all disabled:opacity-50"
-            >
-              <Save size={11} />
-              {isPl ? 'Zapisz metadane' : 'Save metadata'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Convert tab (idea-specific) ─── */}
-      {activeTab === 'convert' && (
-        <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <SectionLabel>{isPl ? 'Konwersja' : 'Convert'}</SectionLabel>
-          <div className="grid grid-cols-1 gap-1.5">
-            {convertActions.map(
-              ({ id, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => (
-                <button
-                  key={id}
-                  onClick={() => onConvert(id)}
-                  disabled={isDraft}
-                  className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md disabled:opacity-40"
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradient} group-hover:opacity-150 transition-opacity`}
-                  />
-                  <div className="absolute inset-0 border border-current/[0.06] group-hover:border-current/[0.12] rounded-xl transition-colors" />
-                  <div
-                    className={`relative w-7 h-7 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
-                  >
-                    <Icon size={14} />
-                  </div>
-                  <div className="relative flex-1 min-w-0 text-left">
-                    <div className={`text-[11px] font-bold ${textColor}`}>
-                      {isPl ? labelPl : labelEn}
-                    </div>
-                    <div className="text-[9px] text-slate-400 dark:text-slate-500">
-                      {isPl ? descPl : descEn}
-                    </div>
-                  </div>
-                </button>
-              )
+            {!isAccepted && (
+              <button
+                onClick={onAcceptChallenge}
+                disabled={saving || isDraft || !seedText.trim()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-40"
+              >
+                <CheckCircle2 size={12} />
+                {isPl ? 'Akceptuj' : 'Accept'}
+              </button>
+            )}
+            {isAccepted && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 size={12} />
+                {isPl ? 'Zaakceptowane' : 'Accepted'}
+              </span>
             )}
           </div>
         </div>
+      </Section>
+
+      {/* ── 2. Status ── */}
+      <Section
+        title={isPl ? 'Status' : 'Status'}
+        icon={<CheckCircle2 size={12} />}
+        defaultOpen
+        badge={
+          <span
+            className={`inline-flex items-center gap-1 rounded-lg bg-gradient-to-r ${stageColor} px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide`}
+          >
+            <span className="w-1 h-1 rounded-full bg-current opacity-70" />
+            {stageLabel}
+          </span>
+        }
+      >
+        <div className="space-y-3">
+          {/* Stage selector */}
+          <div>
+            <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+              {isPl ? 'Etap' : 'Stage'}
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => !isDraft && setStageDropdownOpen((v) => !v)}
+                disabled={isDraft}
+                className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${stageColor} px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide shadow-sm transition-all disabled:opacity-50`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                {stageLabel}
+                {!isDraft && <ChevronDown size={10} className="opacity-60" />}
+              </button>
+              {canAdvance && onStageChange && v5Stage !== 'converted' && (
+                <button
+                  onClick={() => onStageChange(IDEA_STAGES_V5[stageIdx + 1])}
+                  className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+                >
+                  → {isPl ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en}
+                </button>
+              )}
+              {stageDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 z-[120] w-48 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1">
+                  {IDEA_STAGES_V5.map((s) => {
+                    const label = isPl ? IDEA_STAGE_LABELS[s].pl : IDEA_STAGE_LABELS[s].en;
+                    const isActive = s === v5Stage;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          onStageChange?.(s);
+                          setStageDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
+                          isActive
+                            ? 'font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block w-1.5 h-1.5 rounded-full mr-2 bg-gradient-to-r ${IDEA_STAGE_COLORS[s].split(' ')[0]} ${IDEA_STAGE_COLORS[s].split(' ')[1]}`}
+                        />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Save status + evidence */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
+            {evidenceCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <FileText size={10} />
+                {evidenceCount} {isPl ? 'dowodów' : 'evidence'}
+              </span>
+            )}
+          </div>
+
+          {/* AI actions row */}
+          <div className="flex items-center gap-1.5">
+            {onAISummarize && (
+              <button
+                onClick={onAISummarize}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-violet-500 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-500/5 transition-colors"
+              >
+                <Sparkles size={10} />
+                {isPl ? 'AI podsumuj' : 'AI summarize'}
+              </button>
+            )}
+            {onAIExpand && (
+              <button
+                onClick={onAIExpand}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
+              >
+                <Sparkles size={10} />
+                {isPl ? 'AI rozbuduj' : 'AI expand'}
+              </button>
+            )}
+          </div>
+
+          {/* Completeness */}
+          {graphNodes.length > 0 && (
+            <IdeaCompletenessWidget
+              nodes={graphNodes}
+              edges={graphEdges}
+              title={title}
+              seedText={seedText}
+            />
+          )}
+        </div>
+      </Section>
+
+      {/* ── 3. Convert ── */}
+      <Section
+        title={isPl ? 'Konwertuj' : 'Convert'}
+        icon={<Rocket size={12} />}
+      >
+        {selection.type !== 'none' && selection.count > 0 && (
+          <div className="mb-2 text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-500/5 rounded-lg px-2 py-1.5">
+            {isPl
+              ? `Konwertuj zaznaczenie (${selection.count})`
+              : `Convert selection (${selection.count})`}
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-1.5">
+          {convertActions.map(
+            ({ id, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => (
+              <button
+                key={id}
+                onClick={() => onConvert(id)}
+                disabled={isDraft}
+                className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40"
+              >
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
+                />
+                <div
+                  className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
+                >
+                  <Icon size={12} />
+                </div>
+                <div className="relative flex-1 min-w-0 text-left">
+                  <div className={`text-[11px] font-semibold ${textColor}`}>
+                    {isPl ? labelPl : labelEn}
+                  </div>
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500">
+                    {isPl ? descPl : descEn}
+                  </div>
+                </div>
+              </button>
+            )
+          )}
+        </div>
+      </Section>
+
+      {/* ── 4. Metadata ── */}
+      <Section
+        title={isPl ? 'Metadane' : 'Metadata'}
+        icon={<GitBranch size={12} />}
+      >
+        <div className="flex flex-wrap gap-1.5">
+          {/* Branch pill */}
+          {branchEditing ? (
+            <input
+              ref={branchRef}
+              value={branch}
+              onChange={(e) => onBranchChange(e.target.value)}
+              onBlur={handleBranchBlur}
+              onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
+              placeholder={isPl ? 'Gałąź…' : 'Branch…'}
+              autoFocus
+              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-purple-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+            />
+          ) : (
+            <button
+              onClick={() => setBranchEditing(true)}
+              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            >
+              <GitBranch size={11} className="text-slate-400 shrink-0" />
+              {branch || (isPl ? 'Gałąź' : 'Branch')}
+            </button>
+          )}
+
+          {/* Area pill */}
+          {areaEditing ? (
+            <input
+              ref={areaRef}
+              value={area}
+              onChange={(e) => onAreaChange(e.target.value)}
+              onBlur={handleAreaBlur}
+              onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
+              placeholder={isPl ? 'Obszar…' : 'Area…'}
+              autoFocus
+              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-purple-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+            />
+          ) : (
+            <button
+              onClick={() => setAreaEditing(true)}
+              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            >
+              {area || (isPl ? 'Obszar' : 'Area')}
+            </button>
+          )}
+
+          {/* Priority badge */}
+          <div className="relative">
+            <button
+              onClick={() => setPriorityOpen((v) => !v)}
+              className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors ${PRIORITY_COLORS[normalizedPriority]}`}
+            >
+              {currentPriorityLabel}
+              <ChevronDown size={10} className="opacity-60" />
+            </button>
+            {priorityOpen && (
+              <div className="absolute top-full left-0 mt-1 z-[120] w-32 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1">
+                {priorityOptions.map((o) => (
+                  <button
+                    key={o.value}
+                    onClick={() => handlePrioritySelect(o.value)}
+                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                      o.value === normalizedPriority
+                        ? 'font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full mr-2 ${PRIORITY_COLORS[o.value].split(' ')[0]}`}
+                    />
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {activeTool === 'mindmap' && (
+        <>
+          {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ── */}
+          <Section
+            title={isPl ? 'Inspektor mapy' : 'Map inspector'}
+            icon={<Sparkles size={12} />}
+            defaultOpen
+          >
+            <MindmapInspector
+              selectedNodeId={selection.type === 'node' ? selection.primaryId : undefined}
+              selectedNodeData={
+                selection.type === 'node' && selection.primaryId
+                  ? graphNodes.find((n: any) => n.id === selection.primaryId)?.data
+                  : undefined
+              }
+              currentStructure="mindmap"
+              currentLayoutMode="tree"
+              onUpdateNode={(nodeId, patch) => onStyleChange?.({ nodeId, ...patch })}
+              onSetStructure={(s) => onLayoutChange?.(`structure_${s}`)}
+              onSetLayoutMode={(m) => onLayoutChange?.(m)}
+              onApplyTheme={(t) => onThemeChange?.(t)}
+            />
+          </Section>
+
+          {/* ── 6. Map Health ── */}
+          <Section title={isPl ? 'Zdrowie mapy' : 'Map health'} icon={<Activity size={13} />}>
+            <MapHealthScore
+              nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}
+              edges={graphEdges.map((e: any) => ({ source: e.source, target: e.target }))}
+              visible
+            />
+          </Section>
+        </>
       )}
-
-      {/* ─── AI Quick Actions (shared) ─── */}
-      <AIQuickActions isPl={isPl} onFocusAICommand={onFocusAICommand} onOpenAIChat={onOpenChat} />
-
-      {/* ─── Transform (shared) ─── */}
-      <TransformTextSection isPl={isPl} context={wsContext} />
-
-      {/* ─── Share (shared) ─── */}
-      <ShareSection isPl={isPl} context={wsContext} />
     </ToolsPanelShell>
   );
 };

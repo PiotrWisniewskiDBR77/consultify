@@ -1,9 +1,22 @@
 /**
  * InitiativeSourceLink
  * Displays source link for initiatives (tool, assessment, interview)
+ * Note: sourceType 'tool' displays as "Idea Workspace" (all idea conversions go through tool sessions)
  */
 
 import { ClipboardList, ExternalLink, FileText, Sparkles } from 'lucide-react';
+
+/** Helper to get display label for source type (tool/tool_session/idea -> Idea Workspace) */
+export function getSourceDisplayLabel(sourceType: string, isPolish = false): string {
+  const t = String(sourceType || '').trim().toLowerCase();
+  const ideaTypes = ['tool', 'tool_session', 'idea'];
+  if (ideaTypes.includes(t)) {
+    return isPolish ? 'Workspace pomysłu' : 'Idea Workspace';
+  }
+  if (t === 'assessment') return isPolish ? 'Ocena' : 'Assessment';
+  if (t === 'interview') return isPolish ? 'Wywiad' : 'Interview';
+  return sourceType || '';
+}
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,22 +37,13 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
     return null;
   }
 
-  const getSourceLabel = () => {
-    switch (sourceType.toLowerCase()) {
-      case 'tool':
-        return isPolish ? 'Narzędzie' : 'Tool';
-      case 'assessment':
-        return isPolish ? 'Ocena' : 'Assessment';
-      case 'interview':
-        return isPolish ? 'Wywiad' : 'Interview';
-      default:
-        return sourceType;
-    }
-  };
+  const getSourceLabel = () => getSourceDisplayLabel(sourceType, isPolish) || sourceType;
 
   const getSourceIcon = () => {
     switch (sourceType.toLowerCase()) {
       case 'tool':
+      case 'tool_session':
+      case 'idea':
         return <Sparkles size={16} className="text-amber-400" />;
       case 'assessment':
         return <FileText size={16} className="text-blue-400" />;
@@ -53,13 +57,15 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
   const handleNavigate = () => {
     switch (sourceType.toLowerCase()) {
       case 'tool':
-        navigate(`/discovery/tools/${sourceId}`);
+      case 'tool_session':
+      case 'idea':
+        navigate(`/my-work?tab=ideas&sessionId=${sourceId}`);
         break;
       case 'assessment':
-        navigate(`/discovery/assessment/${sourceId}`);
+        navigate(`/interview?assessmentId=${sourceId}`);
         break;
       case 'interview':
-        navigate(`/discovery/interview/${sourceId}`);
+        navigate(`/interview?interviewId=${sourceId}`);
         break;
       default:
         break;

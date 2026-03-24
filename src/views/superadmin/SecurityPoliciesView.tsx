@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Database,
   Globe,
   Info,
   Key,
@@ -76,7 +77,7 @@ interface Organization {
   hasCustomPolicy: boolean;
 }
 
-type TabType = 'global' | 'organizations' | 'presets' | 'lockouts';
+type TabType = 'global' | 'organizations' | 'presets' | 'lockouts' | 'dataGovernance';
 
 const COMPLIANCE_PRESETS = {
   none: {
@@ -116,6 +117,15 @@ export const SecurityPoliciesView: React.FC = () => {
   const [newBlocklistIP, setNewBlocklistIP] = useState('');
 
   const [orgPoliciesMap, setOrgPoliciesMap] = useState<Map<string, any>>(new Map());
+  const [dataGovPolicies, setDataGovPolicies] = useState<
+    Array<{
+      id: string;
+      organization_id: string;
+      retention_days: number | null;
+      legal_hold_enabled: number;
+      residency_region: string | null;
+    }>
+  >([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -139,6 +149,14 @@ export const SecurityPoliciesView: React.FC = () => {
       setOrganizations(orgsWithPolicy);
 
       setLockouts([]);
+
+      // V4-ENT-04: Data governance (org policies)
+      try {
+        const { policies } = await Api.getOrgPolicies();
+        setDataGovPolicies(policies || []);
+      } catch (_) {
+        setDataGovPolicies([]);
+      }
     } catch (error) {
       console.error('Failed to fetch security data:', error);
     } finally {
@@ -574,7 +592,11 @@ export const SecurityPoliciesView: React.FC = () => {
               if (existingPolicy) {
                 setSelectedPolicy(existingPolicy);
               } else if (globalPolicy) {
-                setSelectedPolicy({ ...globalPolicy, organizationId: org.id, organizationName: org.name });
+                setSelectedPolicy({
+                  ...globalPolicy,
+                  organizationId: org.id,
+                  organizationName: org.name,
+                });
               }
             }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
@@ -735,6 +757,200 @@ export const SecurityPoliciesView: React.FC = () => {
     </div>
   );
 
+  const handleSaveDataGovPolicy = async (
+    orgId: string,
+    patch: {
+      retentionDays?: number | null;
+      legalHoldEnabled?: boolean;
+      residencyRegion?: string | null;
+    }
+  ) => {
+    setSaving(true);
+    try {
+      const updated = await Api.putOrgPolicy(orgId, patch);
+      setDataGovPolicies((prev) => {
+        const idx = prev.findIndex((p) => p.organization_id === orgId);
+        const next = [...prev];
+        if (idx >= 0) next[idx] = updated;
+        else next.push(updated);
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to save data governance policy:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderDataGovernanceTab = () => (
+    <div className="space-y-6">
+      <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
+        <div className="flex items-start gap-3">
+          <Database size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-blue-900 dark:text-blue-300">Retention & Legal Hold</h4>
+            <p className="text-sm text-blue-800 dark:text-blue-400 mt-1">
+              Per-organization data governance: retention period (days), legal hold flag, and data
+              residency region. Legal hold blocks delete/export operations.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-200 dark:border-navy-700">
+              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                Organization
+              </th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                Retention (days)
+              </th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                Legal Hold
+              </th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                Residency Region
+              </th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+            {organizations.map((org) => {
+              const policy = dataGovPolicies.find((p) => p.organization_id === org.id);
+              return (
+                <DataGovRow
+                  key={org.id}
+                  org={org}
+                  policy={policy ?? null}
+                  saving={saving}
+                  onSave={handleSaveDataGovPolicy}
+                />
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const DataGovRow: React.FC<{
+    org: Organization;
+    policy: {
+      retention_days: number | null;
+      legal_hold_enabled: number;
+      residency_region: string | null;
+    } | null;
+    saving: boolean;
+    onSave: (
+      orgId: string,
+      patch: {
+        retentionDays?: number | null;
+        legalHoldEnabled?: boolean;
+        residencyRegion?: string | null;
+      }
+    ) => Promise<void>;
+  }> = ({ org, policy, saving, onSave }) => {
+    const [retentionDays, setRetentionDays] = useState<string>(
+      String(policy?.retention_days ?? '') || ''
+    );
+    const [legalHold, setLegalHold] = useState<boolean>((policy?.legal_hold_enabled ?? 0) === 1);
+    const [residencyRegion, setResidencyRegion] = useState<string>(policy?.residency_region ?? '');
+    const [dirty, setDirty] = useState(false);
+
+    useEffect(() => {
+      setRetentionDays(String(policy?.retention_days ?? '') || '');
+      setLegalHold((policy?.legal_hold_enabled ?? 0) === 1);
+      setResidencyRegion(policy?.residency_region ?? '');
+      setDirty(false);
+    }, [policy?.retention_days, policy?.legal_hold_enabled, policy?.residency_region]);
+
+    const handleRetentionChange = (v: string) => {
+      setRetentionDays(v);
+      setDirty(true);
+    };
+    const handleLegalHoldChange = (v: boolean) => {
+      setLegalHold(v);
+      setDirty(true);
+    };
+    const handleResidencyChange = (v: string) => {
+      setResidencyRegion(v);
+      setDirty(true);
+    };
+
+    const handleSave = () => {
+      onSave(org.id, {
+        retentionDays:
+          retentionDays === '' || retentionDays === null
+            ? null
+            : Math.max(0, parseInt(retentionDays, 10) || 0),
+        legalHoldEnabled: legalHold,
+        residencyRegion: residencyRegion.trim() || null,
+      });
+      setDirty(false);
+    };
+
+    return (
+      <tr className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+        <td className="px-6 py-4">
+          <span className="font-medium text-slate-900 dark:text-white">{org.name}</span>
+          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500 font-mono">
+            {org.id}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <input
+            type="number"
+            min={0}
+            placeholder="None"
+            value={retentionDays}
+            onChange={(e) => handleRetentionChange(e.target.value)}
+            className="w-24 px-3 py-1.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded text-slate-900 dark:text-white text-sm"
+          />
+        </td>
+        <td className="px-6 py-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={legalHold}
+              onChange={(e) => handleLegalHoldChange(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-amber-600"
+            />
+            <span className="text-sm">
+              {legalHold ? (
+                <span className="text-amber-600 dark:text-amber-400 font-medium">Active</span>
+              ) : (
+                <span className="text-slate-500">Off</span>
+              )}
+            </span>
+          </label>
+        </td>
+        <td className="px-6 py-4">
+          <input
+            type="text"
+            placeholder="e.g. EU-GDPR"
+            value={residencyRegion}
+            onChange={(e) => handleResidencyChange(e.target.value)}
+            className="w-32 px-3 py-1.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded text-slate-900 dark:text-white text-sm"
+          />
+        </td>
+        <td className="px-6 py-4 text-right">
+          <button
+            onClick={handleSave}
+            disabled={saving || !dirty}
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2 ml-auto transition-colors"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Save
+          </button>
+        </td>
+      </tr>
+    );
+  };
+
   const renderLockoutsTab = () => (
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
@@ -763,10 +979,7 @@ export const SecurityPoliciesView: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
             {lockouts.map((lockout) => (
-              <tr
-                key={lockout.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
-              >
+              <tr key={lockout.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                 <td className="px-6 py-4">
                   <span className="font-medium text-slate-900 dark:text-white">
                     {lockout.user_email}
@@ -854,6 +1067,7 @@ export const SecurityPoliciesView: React.FC = () => {
           { id: 'organizations', label: 'Organizations', icon: <Building2 size={16} /> },
           { id: 'presets', label: 'Compliance Presets', icon: <ShieldCheck size={16} /> },
           { id: 'lockouts', label: 'Account Lockouts', icon: <Lock size={16} /> },
+          { id: 'dataGovernance', label: 'Data Governance', icon: <Database size={16} /> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -881,6 +1095,7 @@ export const SecurityPoliciesView: React.FC = () => {
           {activeTab === 'organizations' && renderOrganizationsTab()}
           {activeTab === 'presets' && renderPresetsTab()}
           {activeTab === 'lockouts' && renderLockoutsTab()}
+          {activeTab === 'dataGovernance' && renderDataGovernanceTab()}
         </>
       )}
     </div>

@@ -613,7 +613,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <Zap className="w-5 h-5 text-emerald-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">Last DR Test</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      Last DR Test
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-emerald-400">Passed</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">14 days ago</div>
@@ -621,9 +623,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <Clock className="w-5 h-5 text-cyan-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">Recovery Time</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      Recovery Time
+                    </span>
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">4m 32s</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                    4m 32s
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Average restore time
                   </div>
@@ -631,7 +637,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <FileArchive className="w-5 h-5 text-purple-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">Data Integrity</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      Data Integrity
+                    </span>
                   </div>
                   <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">100%</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -641,7 +649,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
               </div>
 
               <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">DR Test History</h4>
+                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
+                  DR Test History
+                </h4>
                 <div className="space-y-2">
                   {[
                     {
@@ -669,7 +679,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     >
                       <div className="flex items-center gap-3">
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
-                        <span className="text-sm text-slate-900 dark:text-slate-100">{test.type}</span>
+                        <span className="text-sm text-slate-900 dark:text-slate-100">
+                          {test.type}
+                        </span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-slate-400 dark:text-slate-500">
                         <span>{test.duration}</span>
@@ -688,7 +700,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Create Backup</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+              Create Backup
+            </h3>
             <div className="space-y-4">
               <p className="text-sm text-slate-400 dark:text-slate-500">Select backup type:</p>
               <div className="grid grid-cols-2 gap-3">

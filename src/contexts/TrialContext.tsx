@@ -56,10 +56,11 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!storedToken) return;
 
     try {
-      // Fetch policy snapshot - correct endpoint
-      const response = await fetch('/api/organization/policy-snapshot', {
-        headers: { Authorization: `Bearer ${storedToken}` },
-      });
+      const headers: Record<string, string> = { Authorization: `Bearer ${storedToken}` };
+      if (useAppStore.getState().isDemoMode) {
+        headers['X-Demo-Mode'] = 'true';
+      }
+      const response = await fetch('/api/organization/policy-snapshot', { headers });
 
       if (response.status === 404) {
         // Endpoint may not exist in some dev/stub setups.

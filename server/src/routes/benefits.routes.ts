@@ -7,6 +7,7 @@ import { type NextFunction, type Request, type Response, Router } from 'express'
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { computeAttribution } from '../services/kpiAttributionService.js';
 import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
 import {
@@ -27,6 +28,22 @@ const asyncHandler =
 
 function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
+}
+
+function getUserId(req: any): string {
+  return req.user?.id || req.user?.userId || '';
+}
+
+function deriveKpiPeriodKey(periodStart?: string | null, measurementFrequency?: string | null): string | null {
+  const start = String(periodStart || '').slice(0, 10);
+  if (!start) return null;
+  const [year, month = '01', day = '01'] = start.split('-');
+  const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
+
+  if (frequency === 'DAILY') return start;
+  if (frequency === 'WEEKLY') return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
+  if (frequency === 'QUARTERLY') return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
+  return `${year}-${month}`;
 }
 
 // ============================================================
@@ -291,6 +308,61 @@ router.put(
   })
 );
 
+router.delete(
+  '/kpis/:kpiId',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { kpiId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
+
+    // Ensure KPI belongs to org (global KPI or initiative-bound KPI).
+    const row = await dbGet<any>(
+      `
+      SELECT k.id
+      FROM initiative_kpis k
+      LEFT JOIN initiatives i ON i.id = k.initiative_id
+      WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
+      `,
+      [kpiId, orgId]
+    );
+    if (!row?.id) return res.status(404).json({ success: false, error: 'KPI not found' });
+
+    // Cascade cleanup (portable across sqlite/postgres):
+    await dbRun(`DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?`, [
+      kpiId,
+      orgId,
+    ]).catch(() => null);
+
+    await dbRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
+      kpiId,
+      orgId,
+    ]).catch(() => null);
+
+    const cases = await dbAll<any>(
+      `SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`,
+      [orgId, kpiId]
+    ).catch(() => []);
+    const caseIds = (cases || []).map((c: any) => String(c.id)).filter(Boolean);
+    if (caseIds.length) {
+      await dbRun(
+        `DELETE FROM kpi_deviation_actions WHERE case_id IN (${caseIds.map(() => '?').join(',')})`,
+        caseIds
+      ).catch(() => null);
+    }
+
+    await dbRun(`DELETE FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`, [
+      orgId,
+      kpiId,
+    ]).catch(() => null);
+
+    // Finally delete KPI.
+    await dbRun(`DELETE FROM initiative_kpis WHERE id = ?`, [kpiId]);
+
+    res.json({ success: true });
+  })
+);
+
 // ============================================================
 // T047: KPI TIME SERIES
 // ============================================================
@@ -306,10 +378,12 @@ router.get(
       `
       SELECT
         ts.*,
+        k.measurement_frequency,
         u.id AS user_id,
         u.first_name AS user_first_name,
         u.last_name AS user_last_name
       FROM kpi_time_series ts
+      LEFT JOIN initiative_kpis k ON k.id = ts.kpi_id
       LEFT JOIN users u ON u.id = ts.recorded_by
       WHERE ts.kpi_id = ? AND ts.organization_id = ?
       ORDER BY ts.period_start DESC, ts.created_at DESC
@@ -322,6 +396,9 @@ router.get(
       kpiId: r.kpi_id,
       value: r.value,
       measuredAt: r.period_start ? String(r.period_start) : null,
+      periodStart: r.period_start ? String(r.period_start) : null,
+      periodEnd: r.period_end ? String(r.period_end) : null,
+      periodKey: deriveKpiPeriodKey(r.period_start, r.measurement_frequency),
       notes: r.notes || null,
       createdAt: r.created_at,
       createdBy: r.user_id
@@ -361,6 +438,12 @@ router.post(
     if (!periodStart) {
       return res.status(400).json({ success: false, error: 'periodStart (or measuredAt) is required' });
     }
+
+    const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
+      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
+      [kpiId]
+    ).catch(() => null);
+    const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -412,7 +495,15 @@ router.post(
 
     res.json({
       success: true,
-      data: { id, kpiId, value: Number(value), measuredAt: periodStart, periodStart, periodEnd },
+      data: {
+        id,
+        kpiId,
+        value: Number(value),
+        measuredAt: periodStart,
+        periodStart,
+        periodEnd,
+        periodKey,
+      },
     });
   })
 );
@@ -499,11 +590,14 @@ router.get(
 
 router.post(
   '/deviation-cases/:caseId/acknowledge',
+  requireAudit as any,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    const before = await dbGet<any>(`SELECT * FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
 
     await dbRun(
       `
@@ -513,18 +607,34 @@ router.post(
       `,
       [caseId, orgId]
     );
+
+    try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deviation_case.acknowledge',
+        resourceType: 'kpi_deviation_case',
+        resourceId: String(caseId),
+        before: before ? { status: before.status } : undefined,
+        after: { status: 'ACKNOWLEDGED' },
+        metadata: { kpiId: before?.kpi_id },
+      });
+    } catch { /* audit best-effort */ }
+
     res.json({ success: true });
   })
 );
 
 router.put(
   '/deviation-cases/:caseId/rca',
+  requireAudit as any,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     const { rcaText } = req.body || {};
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    const before = await dbGet<any>(`SELECT status, rca_text, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
 
     await dbRun(
       `
@@ -535,12 +645,26 @@ router.put(
       `,
       [rcaText != null ? String(rcaText) : null, caseId, orgId]
     );
+
+    try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deviation_case.update_rca',
+        resourceType: 'kpi_deviation_case',
+        resourceId: String(caseId),
+        before: before ? { status: before.status, rcaText: before.rca_text } : undefined,
+        after: { rcaText: rcaText ?? null },
+        metadata: { kpiId: before?.kpi_id },
+      });
+    } catch { /* audit best-effort */ }
+
     res.json({ success: true });
   })
 );
 
 router.post(
   '/deviation-cases/:caseId/actions',
+  requireAudit as any,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { caseId } = req.params;
@@ -550,6 +674,8 @@ router.post(
     const safeTitle = String(title || '').trim();
     if (!safeTitle) return res.status(400).json({ success: false, error: 'title is required' });
 
+    const deviationCase = await dbGet<any>(`SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `
@@ -558,12 +684,25 @@ router.post(
       `,
       [id, caseId, safeTitle, ownerUserId || null, dueDate ? String(dueDate).slice(0, 10) : null]
     );
+
+    try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deviation_case.add_action',
+        resourceType: 'kpi_deviation_case',
+        resourceId: String(caseId),
+        after: { actionId: id, title: safeTitle },
+        metadata: { kpiId: deviationCase?.kpi_id },
+      });
+    } catch { /* audit best-effort */ }
+
     res.json({ success: true, data: { id } });
   })
 );
 
 router.put(
   '/deviation-cases/:caseId/actions/:actionId',
+  requireAudit as any,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { caseId, actionId } = req.params;
@@ -571,6 +710,9 @@ router.put(
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId || !actionId)
       return res.status(400).json({ success: false, error: 'caseId and actionId are required' });
+
+    const beforeAction = await dbGet<any>(`SELECT * FROM kpi_deviation_actions WHERE id = ? AND case_id = ?`, [actionId, caseId]);
+    const deviationCase = await dbGet<any>(`SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
 
     await dbRun(
       `
@@ -595,17 +737,33 @@ router.put(
         orgId,
       ]
     );
+
+    try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deviation_case.update_action',
+        resourceType: 'kpi_deviation_case',
+        resourceId: String(caseId),
+        before: beforeAction ? { actionId, status: beforeAction.status, title: beforeAction.title } : undefined,
+        after: { actionId, status: status || beforeAction?.status, title: title || beforeAction?.title },
+        metadata: { kpiId: deviationCase?.kpi_id },
+      });
+    } catch { /* audit best-effort */ }
+
     res.json({ success: true });
   })
 );
 
 router.post(
   '/deviation-cases/:caseId/resolve',
+  requireAudit as any,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { caseId } = req.params;
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    const before = await dbGet<any>(`SELECT status, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
 
     await dbRun(
       `
@@ -615,26 +773,74 @@ router.post(
       `,
       [caseId, orgId]
     );
+
+    try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deviation_case.resolve',
+        resourceType: 'kpi_deviation_case',
+        resourceId: String(caseId),
+        before: before ? { status: before.status } : undefined,
+        after: { status: 'RESOLVED' },
+        metadata: { kpiId: before?.kpi_id },
+      });
+    } catch { /* audit best-effort */ }
+
     res.json({ success: true });
   })
 );
 
 router.post(
   '/deviation-cases/:caseId/close',
+  requireAudit as any,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
     const { caseId } = req.params;
+    const { evidenceText, evidenceRef, resolutionNotes, linkedInitiativeId, linkedTaskId } = req.body || {};
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
-    await dbRun(
-      `
-      UPDATE kpi_deviation_cases
-      SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND organization_id = ?
-      `,
-      [caseId, orgId]
-    );
+    if (!evidenceText && !evidenceRef) {
+      return res.status(400).json({ success: false, error: 'At least one of evidenceText or evidenceRef is required to close a deviation case' });
+    }
+
+    const before = await dbGet<any>(`SELECT * FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`, [caseId, orgId]);
+
+    try {
+      await dbRun(
+        `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+         evidence_text = ?, evidence_ref = ?, closed_by = ?, resolution_notes = ?,
+         linked_initiative_id = COALESCE(?, linked_initiative_id),
+         linked_task_id = COALESCE(?, linked_task_id)
+         WHERE id = ? AND organization_id = ?`,
+        [
+          evidenceText || null, evidenceRef || null, userId || null, resolutionNotes || null,
+          linkedInitiativeId || null, linkedTaskId || null,
+          caseId, orgId,
+        ]
+      );
+    } catch {
+      await dbRun(
+        `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+         evidence_text = ?, evidence_ref = ?, closed_by = ?, resolution_notes = ?
+         WHERE id = ? AND organization_id = ?`,
+        [evidenceText || null, evidenceRef || null, userId || null, resolutionNotes || null, caseId, orgId]
+      );
+    }
+
+    try {
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deviation_case.close',
+        resourceType: 'kpi_deviation_case',
+        resourceId: String(caseId),
+        before: before ? { status: before.status } : undefined,
+        after: { status: 'CLOSED', hasEvidence: !!(evidenceText || evidenceRef), linkedInitiativeId, linkedTaskId },
+        metadata: { kpiId: before?.kpi_id },
+      });
+    } catch { /* audit best-effort */ }
+
     res.json({ success: true });
   })
 );

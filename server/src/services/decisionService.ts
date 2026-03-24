@@ -441,9 +441,9 @@ class DecisionService {
       old_status: string | null;
       new_status: string | null;
       changed_by: string;
-      created_at: string;
+      changed_at: string;
       details: string | null;
-    }>(`SELECT * FROM decision_history WHERE decision_id = ? ORDER BY created_at ASC`, [
+    }>(`SELECT * FROM decision_history WHERE decision_id = ? ORDER BY changed_at ASC`, [
       decisionId,
     ]);
 
@@ -453,7 +453,7 @@ class DecisionService {
       oldStatus: row.old_status,
       newStatus: row.new_status,
       changedBy: row.changed_by,
-      changedAt: row.created_at,
+      changedAt: row.changed_at,
       details: row.details ? JSON.parse(row.details) : {},
     }));
   }

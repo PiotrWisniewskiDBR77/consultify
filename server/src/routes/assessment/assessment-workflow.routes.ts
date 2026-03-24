@@ -1,3 +1,6 @@
+// DEPRECATED: Use /api/assessment-workflow-v2 instead. This file is kept for backward compatibility.
+// V4-ASMT-02: All new assessment features go to assessment-workflow-v2.routes.ts
+
 /**
  * Assessment Workflow Routes
  * API endpoints for assessment workflow management
@@ -37,6 +40,103 @@ type WorkflowState =
   | 'APPROVED'
   | 'REJECTED'
   | 'ARCHIVED';
+
+function safeJsonParse<T>(raw: unknown, fallback: T): T {
+  if (raw == null || raw === '') return fallback;
+  if (typeof raw === 'object') return raw as T;
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
+function extractAxisScores(summary: any): Record<string, number> {
+  const map: Record<string, number> = {};
+  if (!summary || typeof summary !== 'object') return map;
+
+  const candidates = Array.isArray(summary?.dimensions)
+    ? summary.dimensions
+    : Array.isArray(summary?.axisScores)
+      ? summary.axisScores
+      : Array.isArray(summary?.axes)
+        ? summary.axes
+        : [];
+
+  if (candidates.length > 0) {
+    for (const item of candidates) {
+      const key = String(item?.dimensionId || item?.axisId || item?.id || item?.name || '').trim();
+      const score = Number(item?.score ?? item?.value ?? item?.currentScore);
+      if (key && Number.isFinite(score)) map[key] = score;
+    }
+    return map;
+  }
+
+  for (const [key, value] of Object.entries(summary)) {
+    const score =
+      typeof value === 'number'
+        ? value
+        : typeof value === 'object' && value !== null
+          ? Number((value as any)?.score ?? (value as any)?.value ?? (value as any)?.currentScore)
+          : Number.NaN;
+    if (key && Number.isFinite(score)) map[key] = score;
+  }
+  return map;
+}
+
+function buildAssessmentSnapshot(row: any) {
+  return {
+    assessmentId: String(row?.id || ''),
+    name: row?.name || null,
+    framework: row?.framework || row?.assessment_type || null,
+    overallScore: row?.overall_score != null ? Number(row.overall_score) : null,
+    answers: safeJsonParse<any>(row?.answers, {}),
+    scoreSummary: safeJsonParse<any>(row?.score_summary, {}),
+    capturedAt: new Date().toISOString(),
+    updatedAt: row?.updated_at || null,
+  };
+}
+
+function diffAssessmentSnapshots(fromSnapshot: any, toSnapshot: any) {
+  const fromAxes = extractAxisScores(fromSnapshot?.scoreSummary);
+  const toAxes = extractAxisScores(toSnapshot?.scoreSummary);
+  const axisKeys = Array.from(new Set([...Object.keys(fromAxes), ...Object.keys(toAxes)]));
+
+  const changedAxes = axisKeys
+    .map((key) => {
+      const fromScore = fromAxes[key];
+      const toScore = toAxes[key];
+      if (fromScore === toScore) return null;
+      return {
+        axis: key,
+        fromScore: Number.isFinite(fromScore) ? fromScore : null,
+        toScore: Number.isFinite(toScore) ? toScore : null,
+        delta:
+          Number.isFinite(fromScore) && Number.isFinite(toScore)
+            ? Number((toScore - fromScore).toFixed(2))
+            : null,
+      };
+    })
+    .filter(Boolean);
+
+  const fromOverall = Number(fromSnapshot?.overallScore);
+  const toOverall = Number(toSnapshot?.overallScore);
+  const overallScoreDelta =
+    Number.isFinite(fromOverall) && Number.isFinite(toOverall)
+      ? Number((toOverall - fromOverall).toFixed(2))
+      : null;
+
+  return {
+    overallScoreDelta,
+    changedAxes,
+    changedAxesCount: changedAxes.length,
+    answersChanged:
+      JSON.stringify(fromSnapshot?.answers || {}) !== JSON.stringify(toSnapshot?.answers || {}),
+  };
+}
 
 // =============================================================================
 // WORKFLOW STATUS ENDPOINTS
@@ -494,6 +594,153 @@ router.get('/:assessmentId/versions', async (req: AuthRequest, res: Response) =>
   } catch (err: any) {
     logger.error('[AssessmentWorkflow] Error getting versions:', err);
     res.status(500).json({ error: 'Failed to get versions', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/versions
+ * Create a frozen assessment snapshot version.
+ */
+router.post('/:assessmentId/versions', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const userId = req.user?.id || 'user-default';
+    const db = getDatabase();
+    const requestedSummary = String(req.body?.changeSummary || req.body?.changeLog || '').trim();
+
+    const assessment = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT id, name, framework, assessment_type, overall_score, answers, score_summary, updated_at
+         FROM assessments
+         WHERE id = ? AND organization_id = ?`,
+        [assessmentId, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!assessment?.id) {
+      return res.status(404).json({ error: 'Assessment not found' });
+    }
+
+    const latestVersion = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT version, data FROM assessment_versions WHERE assessment_id = ? ORDER BY version DESC LIMIT 1`,
+        [assessmentId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row || null);
+        }
+      );
+    });
+
+    const snapshot = buildAssessmentSnapshot(assessment);
+    const previousSnapshot = latestVersion?.data ? safeJsonParse<any>(latestVersion.data, null) : null;
+    const diff = previousSnapshot ? diffAssessmentSnapshots(previousSnapshot, snapshot) : null;
+    const changedAxes = diff?.changedAxes?.map((item: any) => item.axis) || [];
+
+    const nextVersion = Number(latestVersion?.version || 0) + 1;
+    const versionId = `version-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const defaultSummary =
+      nextVersion === 1
+        ? 'Initial frozen snapshot'
+        : changedAxes.length > 0
+          ? `Updated axes: ${changedAxes.join(', ')}`
+          : 'No score changes detected';
+
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `INSERT INTO assessment_versions
+          (id, assessment_id, version, assessment_data, data, created_at, created_by, change_summary, change_log, changed_axes)
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?)`,
+        [
+          versionId,
+          assessmentId,
+          nextVersion,
+          JSON.stringify(snapshot),
+          JSON.stringify(snapshot),
+          userId,
+          requestedSummary || defaultSummary,
+          requestedSummary || defaultSummary,
+          JSON.stringify(changedAxes),
+        ],
+        (err: Error | null) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    await new Promise<void>((resolve) => {
+      db.run(
+        `UPDATE assessment_workflows
+         SET current_version = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE assessment_id = ? AND organization_id = ?`,
+        [nextVersion, assessmentId, organizationId],
+        () => resolve()
+      );
+    });
+
+    res.json({
+      success: true,
+      versionId,
+      version: nextVersion,
+      changeSummary: requestedSummary || defaultSummary,
+      changedAxes,
+      snapshot,
+    });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error creating version snapshot:', err);
+    res.status(500).json({ error: 'Failed to create assessment version', message: err.message });
+  }
+});
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/versions/:fromVersion/diff/:toVersion
+ * Compare two frozen assessment versions.
+ */
+router.get('/:assessmentId/versions/:fromVersion/diff/:toVersion', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId, fromVersion, toVersion } = req.params;
+    const db = getDatabase();
+
+    const versions = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT version, data
+         FROM assessment_versions
+         WHERE assessment_id = ? AND version IN (?, ?)
+         ORDER BY version ASC`,
+        [assessmentId, parseInt(fromVersion, 10), parseInt(toVersion, 10)],
+        (err: Error | null, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const fromRow = versions.find((row) => Number(row.version) === parseInt(fromVersion, 10));
+    const toRow = versions.find((row) => Number(row.version) === parseInt(toVersion, 10));
+
+    if (!fromRow || !toRow) {
+      return res.status(404).json({ error: 'One or both assessment versions not found' });
+    }
+
+    const fromSnapshot = safeJsonParse<any>(fromRow.data, {});
+    const toSnapshot = safeJsonParse<any>(toRow.data, {});
+    const diff = diffAssessmentSnapshots(fromSnapshot, toSnapshot);
+
+    res.json({
+      success: true,
+      fromVersion: parseInt(fromVersion, 10),
+      toVersion: parseInt(toVersion, 10),
+      diff,
+    });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error diffing versions:', err);
+    res.status(500).json({ error: 'Failed to diff assessment versions', message: err.message });
   }
 });
 

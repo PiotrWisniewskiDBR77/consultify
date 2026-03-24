@@ -114,14 +114,15 @@ export const CustomerHealthView: React.FC = () => {
               <TrendingUp className="text-green-400" size={20} />
             </div>
             <div className="text-3xl font-bold text-slate-900 dark:text-white">
-              {health.engagement_level || health.engagementLevel || health.engagement_score || 'N/A'}
+              {health.engagement_level ||
+                health.engagementLevel ||
+                health.engagement_score ||
+                'N/A'}
             </div>
             {health.adoption_score !== null && health.adoption_score !== undefined && (
               <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                 Adoption Score:{' '}
-                <span className="text-green-700 dark:text-green-400">
-                  {health.adoption_score}%
-                </span>
+                <span className="text-green-700 dark:text-green-400">{health.adoption_score}%</span>
               </div>
             )}
           </div>

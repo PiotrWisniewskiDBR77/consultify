@@ -200,9 +200,7 @@ export function computeVersionDiff(
   const oldCardIds = new Set(oldDeck.cards.map((c) => c.card_id));
   const newCardIds = new Set(newDeck.cards.map((c) => c.card_id));
 
-  const addedCards = newDeck.cards
-    .filter((c) => !oldCardIds.has(c.card_id))
-    .map((c) => c.card_id);
+  const addedCards = newDeck.cards.filter((c) => !oldCardIds.has(c.card_id)).map((c) => c.card_id);
   const removedCards = oldDeck.cards
     .filter((c) => !newCardIds.has(c.card_id))
     .map((c) => c.card_id);

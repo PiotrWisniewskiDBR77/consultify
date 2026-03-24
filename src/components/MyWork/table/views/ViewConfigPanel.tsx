@@ -1,0 +1,746 @@
+/**
+ * ViewConfigPanel — Configuration panel for view-specific settings.
+ * Allows configuring Kanban group-by, Calendar date field, Gallery cover/size,
+ * visible fields, and common sort/filter rules.
+ */
+import {
+  BarChart3,
+  Calendar,
+  Check,
+  ChevronDown,
+  ClipboardList,
+  GanttChartSquare,
+  Grid3X3,
+  Image,
+  KanbanSquare,
+  Settings2,
+  Table2,
+  Timer,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { ColumnDef } from '../tableTypes';
+import type { FormatRule } from '../ConditionalFormatting';
+import { ConditionalFormattingConfig } from '../ConditionalFormatting';
+import type { RowColorRule } from '../RowColoringConfig';
+import { RowColoringConfig } from '../RowColoringConfig';
+import type { CardSize } from './GalleryView';
+import type { GanttZoom } from './GanttView';
+import type { TimelineZoom } from './TimelineView';
+
+export type PlatformViewType = 'grid' | 'kanban' | 'calendar' | 'gallery' | 'timeline' | 'gantt' | 'form' | 'chart';
+
+export interface ViewConfigState {
+  viewType: PlatformViewType;
+  groupByFieldId?: string;
+  cardFieldIds?: string[];
+  dateFieldId?: string;
+  colorByFieldId?: string;
+  coverImageFieldId?: string;
+  galleryCardSize?: CardSize;
+  visibleFieldIds: string[];
+  startDateFieldId?: string;
+  endDateFieldId?: string;
+  titleFieldId?: string;
+  timelineZoom?: TimelineZoom;
+  dependencyFieldId?: string;
+  progressFieldId?: string;
+  ganttZoom?: GanttZoom;
+  formLayout?: 'single-column' | 'two-column';
+  chartType?: 'bar' | 'line' | 'pie' | 'donut';
+  chartXFieldId?: string;
+  chartYFieldId?: string;
+  chartAggregation?: 'count' | 'sum' | 'avg' | 'min' | 'max';
+  rowColorRules?: RowColorRule[];
+  conditionalFormatRules?: FormatRule[];
+}
+
+export interface ViewConfigPanelProps {
+  open: boolean;
+  onClose: () => void;
+  columns: ColumnDef[];
+  config: ViewConfigState;
+  onChange: (config: ViewConfigState) => void;
+  onSave: () => void;
+}
+
+const VIEW_TYPES: { id: PlatformViewType; icon: React.FC<{ size?: number; className?: string }>; labelEn: string; labelPl: string }[] = [
+  { id: 'grid', icon: Table2, labelEn: 'Grid', labelPl: 'Tabela' },
+  { id: 'kanban', icon: KanbanSquare, labelEn: 'Kanban', labelPl: 'Kanban' },
+  { id: 'calendar', icon: Calendar, labelEn: 'Calendar', labelPl: 'Kalendarz' },
+  { id: 'gallery', icon: Grid3X3, labelEn: 'Gallery', labelPl: 'Galeria' },
+  { id: 'timeline', icon: Timer, labelEn: 'Timeline', labelPl: 'Oś czasu' },
+  { id: 'gantt', icon: GanttChartSquare, labelEn: 'Gantt', labelPl: 'Gantt' },
+  { id: 'form', icon: ClipboardList, labelEn: 'Form', labelPl: 'Formularz' },
+  { id: 'chart', icon: BarChart3, labelEn: 'Chart', labelPl: 'Wykres' },
+];
+
+const CARD_SIZES: { id: CardSize; labelEn: string; labelPl: string }[] = [
+  { id: 'small', labelEn: 'Small', labelPl: 'Mały' },
+  { id: 'medium', labelEn: 'Medium', labelPl: 'Średni' },
+  { id: 'large', labelEn: 'Large', labelPl: 'Duży' },
+];
+
+export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
+  open,
+  onClose,
+  columns,
+  config,
+  onChange,
+  onSave,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [expandedSection, setExpandedSection] = useState<string | null>('type');
+
+  const selectFields = useMemo(
+    () => columns.filter((c) => c.type === 'select' || c.type === 'multiselect' || c.type === 'status'),
+    [columns],
+  );
+
+  const dateFields = useMemo(
+    () => columns.filter((c) => c.type === 'date' || c.type === 'created_time' || c.type === 'last_edited_time'),
+    [columns],
+  );
+
+  const attachmentFields = useMemo(
+    () => columns.filter((c) => c.type === 'file' || c.type === 'url'),
+    [columns],
+  );
+
+  const numberFields = useMemo(
+    () => columns.filter((c) => c.type === 'number' || c.type === 'progress' || c.type === 'currency'),
+    [columns],
+  );
+
+  const relationFields = useMemo(
+    () => columns.filter((c) => c.type === 'relation'),
+    [columns],
+  );
+
+  const textLikeFields = useMemo(
+    () => columns.filter((c) => c.type === 'text' || c.key === 'label'),
+    [columns],
+  );
+
+  const updateConfig = useCallback(
+    (patch: Partial<ViewConfigState>) => {
+      onChange({ ...config, ...patch });
+    },
+    [config, onChange],
+  );
+
+  const toggleVisibleField = useCallback(
+    (fieldId: string) => {
+      const current = new Set(config.visibleFieldIds);
+      if (current.has(fieldId)) {
+        current.delete(fieldId);
+      } else {
+        current.add(fieldId);
+      }
+      updateConfig({ visibleFieldIds: Array.from(current) });
+    },
+    [config.visibleFieldIds, updateConfig],
+  );
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-start justify-end" onClick={onClose}>
+      <div
+        className="w-80 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
+          <div className="flex items-center gap-2">
+            <Settings2 size={14} className="text-slate-500" />
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {isPl ? 'Konfiguracja widoku' : 'View Configuration'}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
+            <X size={14} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* View type selector */}
+          <Section
+            title={isPl ? 'Typ widoku' : 'View type'}
+            id="type"
+            expanded={expandedSection}
+            onToggle={setExpandedSection}
+          >
+            <div className="grid grid-cols-2 gap-1.5 max-h-[200px] overflow-auto">
+              {VIEW_TYPES.map((vt) => {
+                const Icon = vt.icon;
+                const isActive = config.viewType === vt.id;
+                return (
+                  <button
+                    key={vt.id}
+                    onClick={() => updateConfig({ viewType: vt.id })}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-colors ${
+                      isActive
+                        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-500/40'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {isPl ? vt.labelPl : vt.labelEn}
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
+          {/* Group by (grid view) */}
+          {config.viewType === 'grid' && (
+            <Section
+              title={isPl ? 'Grupowanie' : 'Group by'}
+              id="groupBy"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Grupuj po polu' : 'Group by field'}
+                  value={config.groupByFieldId}
+                  options={columns}
+                  onChange={(id) => updateConfig({ groupByFieldId: id || undefined })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* Kanban config */}
+          {config.viewType === 'kanban' && (
+            <Section
+              title={isPl ? 'Ustawienia Kanban' : 'Kanban settings'}
+              id="kanban"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Grupuj po' : 'Group by'}
+                  value={config.groupByFieldId}
+                  options={selectFields}
+                  onChange={(id) => updateConfig({ groupByFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldMultiSelect
+                  label={isPl ? 'Pola na karcie' : 'Card fields'}
+                  selected={config.cardFieldIds || []}
+                  options={columns.filter((c) => c.key !== 'label' && c.key !== 'type')}
+                  onChange={(ids) => updateConfig({ cardFieldIds: ids })}
+                  isPl={isPl}
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* Calendar config */}
+          {config.viewType === 'calendar' && (
+            <Section
+              title={isPl ? 'Ustawienia kalendarza' : 'Calendar settings'}
+              id="calendar"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Pole daty' : 'Date field'}
+                  value={config.dateFieldId}
+                  options={dateFields}
+                  onChange={(id) => updateConfig({ dateFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Kolor wg' : 'Color by'}
+                  value={config.colorByFieldId}
+                  options={selectFields}
+                  onChange={(id) => updateConfig({ colorByFieldId: id })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* Gallery config */}
+          {config.viewType === 'gallery' && (
+            <Section
+              title={isPl ? 'Ustawienia galerii' : 'Gallery settings'}
+              id="gallery"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Pole okładki' : 'Cover image field'}
+                  value={config.coverImageFieldId}
+                  options={attachmentFields}
+                  onChange={(id) => updateConfig({ coverImageFieldId: id })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                    {isPl ? 'Rozmiar karty' : 'Card size'}
+                  </label>
+                  <div className="flex gap-1">
+                    {CARD_SIZES.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => updateConfig({ galleryCardSize: s.id })}
+                        className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                          config.galleryCardSize === s.id
+                            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-500/40'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                        }`}
+                      >
+                        {isPl ? s.labelPl : s.labelEn}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <FieldMultiSelect
+                  label={isPl ? 'Pola na karcie' : 'Card fields'}
+                  selected={config.cardFieldIds || []}
+                  options={columns.filter((c) => c.key !== 'label' && c.key !== 'type')}
+                  onChange={(ids) => updateConfig({ cardFieldIds: ids })}
+                  isPl={isPl}
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* Timeline config */}
+          {config.viewType === 'timeline' && (
+            <Section
+              title={isPl ? 'Ustawienia osi czasu' : 'Timeline settings'}
+              id="timeline"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Pole daty początkowej' : 'Start date field'}
+                  value={config.startDateFieldId}
+                  options={dateFields}
+                  onChange={(id) => updateConfig({ startDateFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole daty końcowej' : 'End date field'}
+                  value={config.endDateFieldId}
+                  options={dateFields}
+                  onChange={(id) => updateConfig({ endDateFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole tytułu' : 'Title field'}
+                  value={config.titleFieldId}
+                  options={textLikeFields}
+                  onChange={(id) => updateConfig({ titleFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Kolor wg' : 'Color by'}
+                  value={config.colorByFieldId}
+                  options={selectFields}
+                  onChange={(id) => updateConfig({ colorByFieldId: id })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                    {isPl ? 'Zoom' : 'Zoom'}
+                  </label>
+                  <div className="flex gap-1">
+                    {(['day', 'week', 'month'] as const).map((z) => (
+                      <button
+                        key={z}
+                        onClick={() => updateConfig({ timelineZoom: z })}
+                        className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                          (config.timelineZoom || 'week') === z
+                            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-500/40'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                        }`}
+                      >
+                        {z === 'day' ? (isPl ? 'Dzień' : 'Day') : z === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* Gantt config */}
+          {config.viewType === 'gantt' && (
+            <Section
+              title={isPl ? 'Ustawienia Gantta' : 'Gantt settings'}
+              id="gantt"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Pole daty początkowej' : 'Start date field'}
+                  value={config.startDateFieldId}
+                  options={dateFields}
+                  onChange={(id) => updateConfig({ startDateFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole daty końcowej' : 'End date field'}
+                  value={config.endDateFieldId}
+                  options={dateFields}
+                  onChange={(id) => updateConfig({ endDateFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole tytułu' : 'Title field'}
+                  value={config.titleFieldId}
+                  options={textLikeFields}
+                  onChange={(id) => updateConfig({ titleFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole zależności' : 'Dependency field'}
+                  value={config.dependencyFieldId}
+                  options={relationFields}
+                  onChange={(id) => updateConfig({ dependencyFieldId: id })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole postępu' : 'Progress field'}
+                  value={config.progressFieldId}
+                  options={numberFields}
+                  onChange={(id) => updateConfig({ progressFieldId: id })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                    {isPl ? 'Zoom' : 'Zoom'}
+                  </label>
+                  <div className="flex gap-1">
+                    {(['day', 'week', 'month'] as const).map((z) => (
+                      <button
+                        key={z}
+                        onClick={() => updateConfig({ ganttZoom: z })}
+                        className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                          (config.ganttZoom || 'week') === z
+                            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-500/40'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                        }`}
+                      >
+                        {z === 'day' ? (isPl ? 'Dzień' : 'Day') : z === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* Form config */}
+          {config.viewType === 'form' && (
+            <Section
+              title={isPl ? 'Ustawienia formularza' : 'Form settings'}
+              id="form"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                    {isPl ? 'Układ' : 'Layout'}
+                  </label>
+                  <div className="flex gap-1">
+                    {(['single-column', 'two-column'] as const).map((l) => (
+                      <button
+                        key={l}
+                        onClick={() => updateConfig({ formLayout: l })}
+                        className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                          (config.formLayout || 'single-column') === l
+                            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-500/40'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                        }`}
+                      >
+                        {l === 'single-column' ? (isPl ? '1 kolumna' : '1 Column') : (isPl ? '2 kolumny' : '2 Columns')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <FieldMultiSelect
+                  label={isPl ? 'Widoczne pola' : 'Visible fields'}
+                  selected={config.visibleFieldIds}
+                  options={columns}
+                  onChange={(ids) => updateConfig({ visibleFieldIds: ids })}
+                  isPl={isPl}
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* Chart config */}
+          {config.viewType === 'chart' && (
+            <Section
+              title={isPl ? 'Ustawienia wykresu' : 'Chart settings'}
+              id="chart"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                    {isPl ? 'Typ wykresu' : 'Chart type'}
+                  </label>
+                  <div className="grid grid-cols-2 gap-1">
+                    {(['bar', 'line', 'pie', 'donut'] as const).map((ct) => (
+                      <button
+                        key={ct}
+                        onClick={() => updateConfig({ chartType: ct })}
+                        className={`px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors capitalize ${
+                          (config.chartType || 'bar') === ct
+                            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300 dark:border-violet-500/40'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                        }`}
+                      >
+                        {ct}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <FieldSelect
+                  label={isPl ? 'Pole osi X' : 'X-Axis field'}
+                  value={config.chartXFieldId}
+                  options={columns}
+                  onChange={(id) => updateConfig({ chartXFieldId: id })}
+                  isPl={isPl}
+                />
+                <FieldSelect
+                  label={isPl ? 'Pole osi Y (liczbowe)' : 'Y-Axis field (numeric)'}
+                  value={config.chartYFieldId}
+                  options={numberFields}
+                  onChange={(id) => updateConfig({ chartYFieldId: id })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                    {isPl ? 'Agregacja' : 'Aggregation'}
+                  </label>
+                  <select
+                    value={config.chartAggregation || 'count'}
+                    onChange={(e) => updateConfig({ chartAggregation: e.target.value as 'count' | 'sum' | 'avg' | 'min' | 'max' })}
+                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                  >
+                    <option value="count">Count</option>
+                    <option value="sum">Sum</option>
+                    <option value="avg">Average</option>
+                    <option value="min">Min</option>
+                    <option value="max">Max</option>
+                  </select>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* Row coloring */}
+          <Section
+            title={isPl ? 'Kolorowanie wierszy' : 'Row coloring'}
+            id="rowColoring"
+            expanded={expandedSection}
+            onToggle={setExpandedSection}
+          >
+            <RowColoringConfig
+              rules={config.rowColorRules || []}
+              fields={columns}
+              onChange={(rules) => updateConfig({ rowColorRules: rules })}
+            />
+          </Section>
+
+          {/* Conditional formatting */}
+          <Section
+            title={isPl ? 'Formatowanie warunkowe' : 'Conditional formatting'}
+            id="conditionalFormatting"
+            expanded={expandedSection}
+            onToggle={setExpandedSection}
+          >
+            <ConditionalFormattingConfig
+              rules={config.conditionalFormatRules || []}
+              fields={columns}
+              onChange={(rules) => updateConfig({ conditionalFormatRules: rules })}
+            />
+          </Section>
+
+          {/* Visible fields */}
+          <Section
+            title={isPl ? 'Widoczne pola' : 'Visible fields'}
+            id="fields"
+            expanded={expandedSection}
+            onToggle={setExpandedSection}
+          >
+            <div className="space-y-0.5 max-h-[200px] overflow-auto">
+              {columns.map((col) => {
+                const isVisible = config.visibleFieldIds.includes(col.key);
+                return (
+                  <button
+                    key={col.key}
+                    onClick={() => toggleVisibleField(col.key)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                        isVisible
+                          ? 'bg-violet-500 border-violet-500'
+                          : 'border-slate-300 dark:border-navy-600'
+                      }`}
+                    >
+                      {isVisible && <Check size={10} className="text-white" />}
+                    </div>
+                    <span className="flex-1 text-left truncate">{col.header}</span>
+                    <span className="text-[9px] text-slate-400">{col.type}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900">
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            >
+              {isPl ? 'Anuluj' : 'Cancel'}
+            </button>
+            <button
+              onClick={() => { onSave(); onClose(); }}
+              className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors"
+            >
+              {isPl ? 'Zapisz' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── Helper sub-components ─────────────────────────────────────────────── */
+
+const Section: React.FC<{
+  title: string;
+  id: string;
+  expanded: string | null;
+  onToggle: (id: string | null) => void;
+  children: React.ReactNode;
+}> = ({ title, id, expanded, onToggle, children }) => {
+  const isOpen = expanded === id;
+  return (
+    <div className="border border-slate-200/60 dark:border-navy-700/40 rounded-xl overflow-hidden">
+      <button
+        onClick={() => onToggle(isOpen ? null : id)}
+        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+      >
+        {title}
+        <ChevronDown
+          size={12}
+          className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {isOpen && <div className="px-3 pb-3">{children}</div>}
+    </div>
+  );
+};
+
+const FieldSelect: React.FC<{
+  label: string;
+  value?: string;
+  options: ColumnDef[];
+  onChange: (id: string) => void;
+  isPl: boolean;
+  allowEmpty?: boolean;
+}> = ({ label, value, options, onChange, isPl, allowEmpty }) => (
+  <div>
+    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+      {label}
+    </label>
+    <select
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+    >
+      {allowEmpty && <option value="">{isPl ? '— Brak —' : '— None —'}</option>}
+      {options.map((col) => (
+        <option key={col.key} value={col.key}>
+          {col.header}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const FieldMultiSelect: React.FC<{
+  label: string;
+  selected: string[];
+  options: ColumnDef[];
+  onChange: (ids: string[]) => void;
+  isPl: boolean;
+}> = ({ label, selected, options, onChange, isPl }) => {
+  const toggle = (key: string) => {
+    const set = new Set(selected);
+    if (set.has(key)) set.delete(key);
+    else set.add(key);
+    onChange(Array.from(set));
+  };
+
+  return (
+    <div>
+      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+        {label}
+      </label>
+      <div className="space-y-0.5 max-h-[120px] overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 p-1">
+        {options.map((col) => {
+          const isSelected = selected.includes(col.key);
+          return (
+            <button
+              key={col.key}
+              onClick={() => toggle(col.key)}
+              className="w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            >
+              <div
+                className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                  isSelected
+                    ? 'bg-violet-500 border-violet-500'
+                    : 'border-slate-300 dark:border-navy-600'
+                }`}
+              >
+                {isSelected && <Check size={8} className="text-white" />}
+              </div>
+              <span className="truncate">{col.header}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default ViewConfigPanel;

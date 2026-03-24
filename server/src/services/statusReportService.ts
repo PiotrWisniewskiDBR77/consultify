@@ -301,23 +301,19 @@ export class StatusReportService {
       [initiativeId, periodStart, periodEnd]
     )) || { completed_this_period: 0 };
 
-    // Budget data (if exists)
+    // Budget data (from execution budget service)
     let budgetData = { consumedPercent: 0, isOverBudget: false, remaining: 0 };
     try {
-      // Dynamic import to avoid circular dependencies and handle possible missing dependency in tests vs prod
-      // In a real TS setup we'd prefer DI, but trying to match logic
-      const { default: BudgetService } = { default: {} } as any; // Stubbed missing service
-      // @ts-ignore
-      const budget = await BudgetService.getBudget(initiativeId, orgId);
-      if (budget) {
+      const { getInitiativeBudgetSummary } = await import('./executionBudgetService.js');
+      const summary = await getInitiativeBudgetSummary(orgId, initiativeId);
+      if (summary) {
         budgetData = {
-          consumedPercent: budget.totals?.consumedPercent || 0,
-          isOverBudget: budget.totals?.isOverBudget || false,
-          remaining: budget.totals?.remaining || 0,
+          consumedPercent: summary.variance.percent,
+          isOverBudget: summary.forecast.isOverBudget,
+          remaining: Math.max(0, summary.planned.total - summary.actual.total),
         };
       }
     } catch (e) {
-      // Budget service might not be available or fails
       logger.warn('StatusReportService: Failed to load budget data', e);
     }
 

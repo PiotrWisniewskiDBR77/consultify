@@ -17,7 +17,14 @@ interface AnimatedBlockProps {
   children: React.ReactNode;
 }
 
-const BLOCK_VARIANTS: Record<string, { initial: Record<string, unknown>; animate: Record<string, unknown>; transition: Record<string, unknown> }> = {
+const BLOCK_VARIANTS: Record<
+  string,
+  {
+    initial: Record<string, unknown>;
+    animate: Record<string, unknown>;
+    transition: Record<string, unknown>;
+  }
+> = {
   heading: {
     initial: { opacity: 0, y: 12 },
     animate: { opacity: 1, y: 0 },
@@ -193,7 +200,8 @@ export const CountUpNumber: React.FC<CountUpProps> = ({
   const isInView = useInView(ref, { once: true });
   const [displayed, setDisplayed] = useState<string>(enabled ? '0' : String(value));
 
-  const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
+  const numericValue =
+    typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : value;
   const prefix = typeof value === 'string' ? value.replace(/[0-9.,%-]+/g, '').trim() : '';
   const isNumeric = !isNaN(numericValue);
 
