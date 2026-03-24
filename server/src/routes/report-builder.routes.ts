@@ -54,6 +54,7 @@ import {
   updateBrandVoice,
 } from '../services/brandVoiceProfileService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -116,6 +117,43 @@ async function notifyOnStatusChange(
       logger.warn('[ReportBuilder] Failed to send notification (non-fatal)', { targetId, err });
     }
   }
+}
+
+async function syncArtifactRegistryForReport(
+  report: any,
+  organizationId: string,
+  userId: string,
+  options?: { visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared' | 'demo' }
+): Promise<void> {
+  const reportId = String(report?.id || '');
+  if (!reportId) return;
+
+  const title = String(report?.title || 'Untitled report');
+  const projectId = report?.projectId ? String(report.projectId) : null;
+  const sourceType = report?.sourceType ? String(report.sourceType) : null;
+  const sourceId = report?.sourceId ? String(report.sourceId) : null;
+
+  await artifactRegistryService.registerArtifactOrigin({
+    organizationId,
+    outputType: 'report',
+    artifactFamily: 'document',
+    originRuntime: 'report',
+    originRecordId: reportId,
+    titleSnapshot: title,
+    ownerUserId: String(report?.createdBy || userId || ''),
+    createdBy: String(report?.createdBy || userId || 'system'),
+    deliveryState: artifactRegistryService.mapReportStatusToDeliveryState(report?.status),
+    visibilityScope: options?.visibilityScope ?? undefined,
+    projectId,
+    originSummary: {
+      sourceType,
+      sourceId,
+      reportType: report?.reportType ? String(report.reportType) : null,
+      templateId: report?.templateId ? String(report.templateId) : null,
+      nativeStatus: report?.status ? String(report.status) : null,
+      sourceTable: 'report_builder_reports',
+    },
+  });
 }
 
 async function enforceQualityGatesForExport(
@@ -1817,6 +1855,17 @@ router.patch('/:id/metadata', async (req: Request, res: Response, next: NextFunc
     });
 
     const refreshed = await ReportBuilderService.getReport(id, organizationId);
+
+    try {
+      if (refreshed?.report) {
+        await syncArtifactRegistryForReport(refreshed.report, organizationId, userId);
+      }
+    } catch (artifactErr: any) {
+      logger.warn('[ReportBuilder] Failed to sync shared artifact registry on metadata update', {
+        reportId: id,
+        message: artifactErr?.message,
+      });
+    }
 
     logger.info('[ReportBuilder] Report metadata updated', { reportId: id, title, userId });
     res.json({ report: refreshed?.report });

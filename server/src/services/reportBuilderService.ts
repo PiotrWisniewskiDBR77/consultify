@@ -12,6 +12,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
 import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
+import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
 // ==========================================
 // TYPES
@@ -789,6 +790,41 @@ export async function createReport(params: CreateReportParams): Promise<{
 
   // Log activity
   await logActivity(reportId, 'CREATED', createdBy, { sourceType, sourceId });
+
+  try {
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'report',
+      originRecordId: reportId,
+      titleSnapshot: title,
+      ownerUserId: createdBy,
+      createdBy,
+      deliveryState: artifactRegistryService.mapReportStatusToDeliveryState('CONFIGURING'),
+      visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+        outputType: 'report',
+        projectId,
+        ownerUserId: createdBy,
+      }),
+      projectId,
+      originSummary: {
+        sourceType,
+        sourceId,
+        reportType,
+        templateId: templateIdToUse || null,
+        nativeStatus: 'CONFIGURING',
+        sourceTable: 'report_builder_reports',
+      },
+    });
+  } catch (err) {
+    await queryRun(`DELETE FROM report_builder_sections WHERE report_id = ?`, [reportId]);
+    await queryRun(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
+      reportId,
+      organizationId,
+    ]);
+    throw err;
+  }
 
   const report: ReportRecord = {
     id: reportId,
@@ -1778,6 +1814,42 @@ export async function duplicateReport(
   }
 
   await logActivity(newReportId, 'DUPLICATED', userId, { originalReportId: reportId });
+
+  try {
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'report',
+      originRecordId: newReportId,
+      titleSnapshot: newTitle || `${original.report.title} (Copy)`,
+      ownerUserId: userId,
+      createdBy: userId,
+      deliveryState: artifactRegistryService.mapReportStatusToDeliveryState('DRAFT'),
+      visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+        outputType: 'report',
+        projectId: original.report.projectId || null,
+        ownerUserId: userId,
+      }),
+      projectId: original.report.projectId || null,
+      originSummary: {
+        sourceType: original.report.sourceType,
+        sourceId: original.report.sourceId,
+        reportType: original.report.reportType,
+        templateId: original.report.templateId || null,
+        nativeStatus: 'DRAFT',
+        sourceTable: 'report_builder_reports',
+        duplicatedFrom: reportId,
+      },
+    });
+  } catch (err) {
+    await queryRun(`DELETE FROM report_builder_sections WHERE report_id = ?`, [newReportId]);
+    await queryRun(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
+      newReportId,
+      organizationId,
+    ]);
+    throw err;
+  }
 
   return {
     report: {

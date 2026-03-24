@@ -17,6 +17,7 @@ import { recordDeckGeneration } from './organizationStyleProfileService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
+import * as artifactRegistryService from './v8/artifactRegistryService.js';
 import type {
   SlideIntent,
   UnifiedReportJSON,
@@ -664,6 +665,37 @@ export async function generateOutline(
     ]
   );
 
+  try {
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: deckId,
+      titleSnapshot: setup.title,
+      ownerUserId: null,
+      createdBy: 'system',
+      deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('draft'),
+      visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+        outputType: 'presentation',
+        ownerUserId: null,
+      }),
+      originSummary: {
+        sourceType: resolvedSourceType,
+        sourceId: resolvedSourceId,
+        sourceArtifacts: setup.sourceArtifacts,
+        nativeStatus: 'draft',
+        sourceTable: 'presentation_decks',
+      },
+    });
+  } catch (err) {
+    await dbRun(`DELETE FROM presentation_decks WHERE id = ? AND organization_id = ?`, [
+      deckId,
+      organizationId,
+    ]);
+    throw err;
+  }
+
   const validationWarnings = validateOutline(outline, setup);
   if (validationWarnings.length > 0) {
     await dbRun(
@@ -686,6 +718,16 @@ export async function generateDeck(
     `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [deckId]
   );
+
+  await artifactRegistryService.registerArtifactOrigin({
+    organizationId,
+    outputType: 'presentation',
+    artifactFamily: 'presentation',
+    originRuntime: 'presentation',
+    originRecordId: deckId,
+    createdBy: 'system',
+    deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('generating'),
+  });
 
   try {
     // Build structured ContextPack for AI consumption
@@ -909,6 +951,23 @@ export async function generateDeck(
       ]
     );
 
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: deckId,
+      createdBy: 'system',
+      deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('ready'),
+      originSummary: {
+        exportPath,
+        exportFormat: 'pptx',
+        slideCount: result.slideCount,
+        nativeStatus: 'ready',
+        sourceTable: 'presentation_decks',
+      },
+    });
+
     // Record deck generation in OrganizationStyleProfile for learning
     try {
       const totalBlocks = enabledSlides.length * 3; // approximate
@@ -938,6 +997,20 @@ export async function generateDeck(
       `UPDATE presentation_decks SET status = 'failed', validation_warnings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [JSON.stringify([err.message]), deckId]
     );
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: deckId,
+      createdBy: 'system',
+      deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('failed'),
+      originSummary: {
+        nativeStatus: 'failed',
+        lastError: err.message,
+        sourceTable: 'presentation_decks',
+      },
+    });
     throw err;
   }
 }

@@ -34,8 +34,9 @@ The implementation agent must treat the following as canonical:
 - `docs/product/REPORTS_AND_PRESENTATIONS_TEMPLATE_GENERATOR_AND_LIBRARY_RUNTIME_V8.md`
 - `docs/product/EXECUTION_RUN_AND_PROPOSAL_SPINE_V8.md`
 - `docs/product/AI_HUMAN_IN_THE_LOOP_GOVERNANCE_ARCHITECTURE_V8.md`
-- `docs/product/FROZEN_LAYOUTS.md` via the UI standards SSOT referenced by repo rules
-- `docs/product/DOCUMENTATION_REGISTRY.MD`
+- `docs/ui-standards/FROZEN_LAYOUTS.md` via the UI standards SSOT referenced by repo rules
+- `docs/product/DOCUMENTATION_REGISTRY.md`
+- `docs/product/V8_1_WAVE1_STATUS.md` for honest scope and evidence boundaries during Wave 1
 
 If implementation detail conflicts with older local patterns, the canonical docs above win.
 
@@ -216,3 +217,11 @@ The goal is:
 - first build safely,
 - then verify deeply,
 - then close the whole `v8 + v8.1` package with final testing and acceptance.
+
+Until the dedicated `Outputs Library` surface and deeper end-to-end evidence are closed, implementation status should be reported as:
+
+`V8.1 Wave 1 substrate in place`
+
+and not:
+
+`V8.1 fully closed`

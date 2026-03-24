@@ -4,7 +4,7 @@
  * Exports Body + Footer for proper TableWithPreviewLayout split.
  */
 
-import { Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink, ShieldCheck } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +25,8 @@ interface PresentationPreviewProps {
   presentation: PresentationItem;
   onOpen?: () => void;
   onExport?: () => void;
+  onStartReview?: () => void;
+  reviewActionDisabled?: boolean;
 }
 
 function usePresentationPreviewData(presentation: PresentationItem) {
@@ -33,6 +35,7 @@ function usePresentationPreviewData(presentation: PresentationItem) {
   const statusMeta =
     PRESENTATION_STATUS_META[presentation.status] || PRESENTATION_STATUS_META.draft;
   const sourceMeta = SOURCE_TYPE_META[presentation.sourceType] || SOURCE_TYPE_META.tool;
+  const governance = presentation.governance;
 
   const pills: MetaPill[] = [
     {
@@ -51,6 +54,10 @@ function usePresentationPreviewData(presentation: PresentationItem) {
     `${isPolish ? 'Źródło' : 'Source'}: ${isPolish ? sourceMeta.labelPl : sourceMeta.label}`,
     `${isPolish ? 'Tryb' : 'Mode'}: ${presentation.presentationMode || 'briefing'}`,
     `${isPolish ? 'Slajdy' : 'Slides'}: ${presentation.slideCount}`,
+    `${isPolish ? 'Visibility' : 'Visibility'}: ${governance?.visibilityScope || '—'}`,
+    `${isPolish ? 'Publish state' : 'Publish state'}: ${governance?.publishState || '—'}`,
+    `${isPolish ? 'Review gates' : 'Review gates'}: ${governance?.reviewGateCount ?? 0}`,
+    `${isPolish ? 'Project' : 'Project'}: ${governance?.projectId || '—'}`,
     `${isPolish ? 'Utworzono' : 'Created'}: ${new Date(presentation.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
     `${isPolish ? 'Ostatnia zmiana' : 'Updated'}: ${new Date(presentation.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`,
   ].join('\n');
@@ -61,6 +68,12 @@ function usePresentationPreviewData(presentation: PresentationItem) {
       : []),
     ...(presentation.sourceRefs?.length
       ? [{ label: `${presentation.sourceRefs.length} ${isPolish ? 'referencji' : 'references'}` }]
+      : []),
+    ...(governance?.publishReviewers?.length
+      ? [{ label: `${governance.publishReviewers.length} ${isPolish ? 'reviewerów' : 'reviewers'}` }]
+      : []),
+    ...(governance?.accessGrants?.length
+      ? [{ label: `${governance.accessGrants.length} ${isPolish ? 'grantów dostępu' : 'access grants'}` }]
       : []),
   ];
 
@@ -100,13 +113,26 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewProps> = ({
   presentation,
   onOpen,
   onExport,
+  onStartReview,
+  reviewActionDisabled,
 }) => {
   const { isPolish, t, relations } = usePresentationPreviewData(presentation);
+  const governance = presentation.governance;
 
   const actionRows: ActionRow[] = [];
   if (onOpen || onExport) {
     actionRows.push({
       buttons: [
+        ...(onStartReview
+          ? [{
+              label: t('rap.actions.startReview', 'Start review'),
+              icon: ShieldCheck,
+              onClick: onStartReview,
+              colorScheme: 'purple' as const,
+              disabled: reviewActionDisabled,
+              shortcut: 'R',
+            }]
+          : []),
         ...(onOpen
           ? [{ label: t('rap.preview.openFull', 'Otwórz pełny'), icon: ExternalLink, onClick: onOpen, colorScheme: 'primary' as const, flex: true, shortcut: 'O' }]
           : []),
@@ -123,7 +149,15 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewProps> = ({
     <div className="space-y-0">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
-          hints={[isPolish ? 'Prezentacja gotowa do przeglądu' : 'Presentation ready for review']}
+          hints={[
+            isPolish ? 'Prezentacja gotowa do przeglądu' : 'Presentation ready for review',
+            governance?.visibilityScope
+              ? `${isPolish ? 'Scope' : 'Scope'}: ${governance.visibilityScope}`
+              : null,
+            governance?.publishState
+              ? `${isPolish ? 'Review' : 'Review'}: ${governance.publishState}`
+              : null,
+          ].filter(Boolean) as string[]}
         />
       </div>
       {relations.length > 0 && (

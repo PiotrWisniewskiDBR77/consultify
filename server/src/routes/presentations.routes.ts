@@ -15,6 +15,7 @@ import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -27,6 +28,10 @@ const asyncHandler =
 
 function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
+}
+
+function getUserId(req: any): string {
+  return req.user?.id || req.userId || 'system';
 }
 
 function isSchemaMissingError(error: unknown): boolean {
@@ -64,6 +69,44 @@ function getDeckCards(row: any): any[] {
     : Array.isArray(parsed.slides)
       ? parsed.slides
       : [];
+}
+
+async function syncArtifactRegistryForDeck(
+  params: {
+    deckId: string;
+    organizationId: string;
+    userId: string;
+    title: string;
+    slideCount?: number;
+    presentationMode?: string | null;
+    exportFormat?: string | null;
+    status?: string | null;
+    source?: unknown;
+  },
+): Promise<void> {
+  await artifactRegistryService.registerArtifactOrigin({
+    organizationId: params.organizationId,
+    outputType: 'presentation',
+    artifactFamily: 'presentation',
+    originRuntime: 'presentation',
+    originRecordId: params.deckId,
+    titleSnapshot: params.title,
+    ownerUserId: params.userId,
+    createdBy: params.userId,
+    deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState(params.status),
+    visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+      outputType: 'presentation',
+      ownerUserId: params.userId,
+    }),
+    originSummary: {
+      presentationMode: params.presentationMode || null,
+      slideCount: params.slideCount ?? null,
+      exportFormat: params.exportFormat || null,
+      source: params.source ?? null,
+      sourceTable: 'presentation_decks',
+      nativeStatus: params.status || 'draft',
+    },
+  });
 }
 
 function buildAgentReply(appliedActions: string[], isPolish: boolean): string {
@@ -439,6 +482,7 @@ router.post(
   requireAudit,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
     const { title, theme, slides, source } = req.body || {};
 
     if (!title) return res.status(400).json({ success: false, error: 'Title is required' });
@@ -473,6 +517,26 @@ router.post(
         after: { title, theme, slideCount, source },
         metadata: { organizationId: orgId },
       });
+
+      try {
+        await syncArtifactRegistryForDeck({
+          deckId,
+          organizationId: orgId,
+          userId,
+          title: String(title),
+          slideCount,
+          presentationMode: 'briefing',
+          status: 'draft',
+          source,
+        });
+      } catch (artifactErr: any) {
+        await dbRun(`DELETE FROM presentation_cards WHERE deck_id = ?`, [deckId]);
+        await dbRun(`DELETE FROM presentation_decks WHERE id = ? AND organization_id = ?`, [
+          deckId,
+          orgId,
+        ]);
+        throw artifactErr;
+      }
 
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
