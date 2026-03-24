@@ -7,7 +7,7 @@
  * Thin orchestrator: delegates to existing services, does not duplicate logic.
  */
 
-import type { ContextSnapshot, ConsumerClass } from '../../types/contextSnapshot.js';
+import type { ContextSnapshot, ConsumerClass, V8ArtifactRef } from '../../types/contextSnapshot.js';
 import type { IntentClassification } from '../../types/chatExecutionIntegration.js';
 import type { PromptPreset, PurposeFamily } from '../../types/promptOsRuntime.js';
 import type { RetrievalRequest } from '../../types/governedRetrieval.js';
@@ -38,7 +38,7 @@ export interface ProcessChatTurnParams {
     artifactId: string;
     artifactType: string;
     artifactModule: string;
-    relationship: string;
+    relationship: V8ArtifactRef['relationship'];
   }>;
   effectiveScopeRef: string;
   resolvedRoleRef: string;
@@ -327,7 +327,7 @@ function deriveLayerStatus(
   if (hasUnavailable) return 'unavailable';
 
   const hasDegraded = layerSignals.some(
-    (s) => s.status === 'warning' || s.status === 'degraded',
+    (s) => s.status === 'warning' || s.status === 'unknown',
   );
   if (hasDegraded) return 'degraded';
 

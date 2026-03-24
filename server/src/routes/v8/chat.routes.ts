@@ -73,7 +73,7 @@ router.post(
         return res.status(400).json({
           error: 'Invalid snapshot parameters',
           code: 'VALIDATION_ERROR',
-          details: err.errors,
+          details: err.issues,
         });
       }
       throw err;
@@ -120,7 +120,7 @@ router.post(
         return res.status(400).json({
           error: 'Invalid handoff parameters',
           code: 'VALIDATION_ERROR',
-          details: err.errors,
+          details: err.issues,
         });
       }
       if (err instanceof Error && err.message.includes('not found')) {
@@ -155,7 +155,7 @@ router.post(
         return res.status(400).json({
           error: 'Invalid binding parameters',
           code: 'VALIDATION_ERROR',
-          details: err.errors,
+          details: err.issues,
         });
       }
       throw err;
@@ -180,7 +180,7 @@ router.post(
         return res.status(400).json({
           error: 'Invalid binding parameters',
           code: 'VALIDATION_ERROR',
-          details: err.errors,
+          details: err.issues,
         });
       }
       throw err;
@@ -205,7 +205,7 @@ router.post(
         return res.status(400).json({
           error: 'Invalid binding parameters',
           code: 'VALIDATION_ERROR',
-          details: err.errors,
+          details: err.issues,
         });
       }
       throw err;

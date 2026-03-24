@@ -101,6 +101,12 @@ function worstStatus(statuses: DomainHealthStatus[]): DomainHealthStatus {
   return 'healthy';
 }
 
+function getNumericMetric(value: unknown, key: string): number {
+  if (!value || typeof value !== 'object') return 0;
+  const raw = (value as Record<string, unknown>)[key];
+  return typeof raw === 'number' ? raw : 0;
+}
+
 async function safeDomainCall<T>(
   domainName: string,
   fn: () => Promise<T>,
@@ -133,7 +139,7 @@ export async function getPlatformHealth(
   if (aiResult.ok) {
     const env = aiResult.data;
     const layerValues = Object.values(env.layers);
-    const allUp = layerValues.every((l) => l === 'healthy' || l === 'active');
+    const allUp = layerValues.every((l) => l === 'healthy');
     domains['aiCore'] = {
       status: allUp ? 'healthy' : 'degraded',
       details: { layerCount: layerValues.length, layers: env.layers },
@@ -151,7 +157,7 @@ export async function getPlatformHealth(
   );
   if (mpResult.ok) {
     const rooms = mpResult.data;
-    const degradedRooms = rooms.filter((r) => r.roomState === 'degraded');
+    const degradedRooms = rooms.filter((r) => r.roomState === 'error');
     domains['multiplayer'] = {
       status: degradedRooms.length > 0 ? 'degraded' : 'healthy',
       details: {
@@ -416,7 +422,7 @@ export async function getPlatformMetrics(
     getDeliveryPipeline(organizationId),
   );
   metrics['outputArtifacts'] = deliveryResult.ok
-    ? (deliveryResult.data as Record<string, unknown>).totalArtifacts as number ?? 0
+    ? getNumericMetric(deliveryResult.data, 'totalArtifacts')
     : 0;
 
   // Finance dashboard
@@ -424,7 +430,7 @@ export async function getPlatformMetrics(
     getFinanceDashboard(organizationId),
   );
   metrics['financeIngestions'] = financeResult.ok
-    ? (financeResult.data as Record<string, unknown>).totalIngestions as number ?? 0
+    ? getNumericMetric(financeResult.data, 'totalIngestions')
     : 0;
 
   // Results dashboard
@@ -432,7 +438,7 @@ export async function getPlatformMetrics(
     getResultsDashboard(organizationId),
   );
   metrics['kpisTracked'] = resultsResult.ok
-    ? (resultsResult.data as Record<string, unknown>).totalKPIs as number ?? 0
+    ? getNumericMetric(resultsResult.data, 'totalKPIs')
     : 0;
 
   // Transformation pipeline
@@ -440,7 +446,7 @@ export async function getPlatformMetrics(
     getTransformationPipeline(organizationId),
   );
   metrics['transformationSources'] = pipelineResult.ok
-    ? (pipelineResult.data as Record<string, unknown>).totalSources as number ?? 0
+    ? getNumericMetric(pipelineResult.data, 'totalSources')
     : 0;
 
   return {
@@ -472,7 +478,7 @@ export async function getDomainReadiness(
   if (aiResult.ok) {
     aiChecks.push({
       name: 'all_layers_active',
-      passed: Object.values(aiResult.data.layers).every((l) => l === 'healthy' || l === 'active'),
+      passed: Object.values(aiResult.data.layers).every((l) => l === 'healthy'),
     });
   }
   domains.push({
@@ -491,7 +497,7 @@ export async function getDomainReadiness(
     passed: mpResult.ok,
   });
   if (mpResult.ok) {
-    const degraded = mpResult.data.filter((r) => r.roomState === 'degraded');
+    const degraded = mpResult.data.filter((r) => r.roomState === 'error');
     mpChecks.push({
       name: 'no_degraded_rooms',
       passed: degraded.length === 0,

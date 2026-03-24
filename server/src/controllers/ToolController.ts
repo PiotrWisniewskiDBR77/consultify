@@ -12,7 +12,6 @@ import organizationContextService from '../services/organizationContext/Organiza
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import KnownToolsService from '../services/KnownToolsService.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   ToolRuntimeContractSchema,

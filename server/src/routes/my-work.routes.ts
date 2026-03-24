@@ -3108,19 +3108,11 @@ router.get(
         const pendingDecs = await queryHelpers.queryAll<{
           id: string;
           title: string;
-<<<<<<< HEAD
-          deadline: string;
-        }>(
-          `SELECT id, title, deadline FROM decisions 
-           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-           ORDER BY deadline ASC NULLS LAST LIMIT 3`,
-=======
           due_date: string | null;
         }>(
           `SELECT id, title, ${decisionDueColumn ? `${decisionDueColumn} as due_date` : 'NULL as due_date'} FROM decisions 
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
            ORDER BY ${decisionDueColumn ? `${decisionDueColumn} ASC NULLS LAST,` : ''} updated_at DESC LIMIT 3`,
->>>>>>> feat/v3-mywork-ai-templates-assets
           [userId, userId, orgId]
         );
         summary.pendingDecisions = pendingDecs || [];
@@ -8793,15 +8785,9 @@ router.get(
           : null;
       if (decCols.has('decision_maker_id')) {
         const pending = await queryHelpers.queryAll<any>(
-<<<<<<< HEAD
-          `SELECT id, title, deadline FROM decisions
-           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-           ORDER BY deadline ASC NULLS LAST LIMIT 5`,
-=======
           `SELECT id, title, ${decisionDueColumn ? `${decisionDueColumn} as due_date` : 'NULL as due_date'} FROM decisions
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
            ORDER BY ${decisionDueColumn ? `${decisionDueColumn} ASC NULLS LAST,` : ''} updated_at DESC LIMIT 5`,
->>>>>>> feat/v3-mywork-ai-templates-assets
           [userId, userId, orgId]
         );
         brief.pendingDecisions = pending || [];

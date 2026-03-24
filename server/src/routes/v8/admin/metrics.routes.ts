@@ -12,17 +12,13 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const snap = getV8MetricsSnapshot();
-    const avgLatency =
-      snap.v8RequestCount > 0
-        ? Math.round(snap.v8TotalLatencyMs / snap.v8RequestCount)
-        : 0;
 
     res.json({
       data: {
-        requests: snap.v8RequestCount,
-        errors: snap.v8ErrorCount,
-        avgLatencyMs: avgLatency,
-        uptime: process.uptime(),
+        requests: snap.requests,
+        errors: snap.errors,
+        avgLatencyMs: snap.avgLatencyMs,
+        uptime: snap.uptime,
       },
       meta: { version: 'v8', collectedAt: new Date().toISOString() },
     });

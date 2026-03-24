@@ -19,12 +19,13 @@ import type {
   RunStateTransition,
 } from '../../types/executionSpine.js';
 import {
+  type ActionPreview,
   CreateProposalParamsSchema,
   CreateRunParamsSchema,
   TERMINAL_STATES,
   VALID_TRANSITIONS,
 } from '../../types/executionSpine.js';
-import type { ActionPreview, V8ArtifactRef } from '../../types/contextSnapshot.js';
+import type { V8ArtifactRef } from '../../types/contextSnapshot.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 

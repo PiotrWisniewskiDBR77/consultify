@@ -347,7 +347,7 @@ export async function getSnapshotChain(
     if (visited.has(currentId)) break;
     visited.add(currentId);
 
-    const row = await dbGet<SnapshotRow>(
+    const row: SnapshotRow | null = await dbGet<SnapshotRow>(
       `SELECT * FROM v8_context_snapshots
        WHERE snapshot_id = ? AND organization_id = ?`,
       [currentId, organizationId],

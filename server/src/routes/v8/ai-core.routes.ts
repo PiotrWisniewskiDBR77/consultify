@@ -57,7 +57,7 @@ router.post(
         return res.status(400).json({
           error: 'Invalid chat turn parameters',
           code: 'VALIDATION_ERROR',
-          details: err.errors,
+          details: err.issues,
         });
       }
       throw err;
