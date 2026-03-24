@@ -36,6 +36,7 @@ const OUTPUT_OPTIONS: Array<{
   label: string;
 }> = [
   { outputType: 'report', artifactFamily: 'document', label: 'Document' },
+  { outputType: 'presentation', artifactFamily: 'presentation', label: 'Presentation' },
 ];
 
 function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
@@ -105,7 +106,7 @@ export function V8ArtifactRunControl({
     currentRun?.runStatus === 'planned' || currentRun?.runStatus === 'retry_requested';
   const canMaterialize =
     currentRun?.runStatus === 'proposal_created' &&
-    currentRun?.plan.outputType === 'report' &&
+    (currentRun?.plan.outputType === 'report' || currentRun?.plan.outputType === 'presentation') &&
     !currentRun.artifactId;
 
   const handlePlan = async () => {

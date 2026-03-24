@@ -425,6 +425,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: mandatory area-by-area closure ledger for the frozen `V8.0 + V8.1` package, tracking scope, canonical docs, implementation mapping, runtime evidence, surface evidence, test/staging evidence, owner, next packet and blocker
   - **Authority**: Highest for package-wide closure status accounting required by the final completion program
 
+- `docs/product/work-packets/V81_ARTIFACT_RUNTIME_EVIDENCE_PACK.md`
+  - **Owner**: Manager Agent
+  - **Scope**: focused evidence pack for the `V8.1` artifact runtime, Outputs Library, My Work outputs bridge, and explicit local-vs-staging sign-off boundaries
+  - **Authority**: High for the local `V8.1` artifact-runtime proof set used by the closure ledger and final evidence assembly
+
 - `docs/product/work-packets/DECISION_LOG_PROGRAM_CONTROL.md`
   - **Owner**: Manager Agent
   - **Scope**: explicit program-control decisions, scope freezes, authority reconciliation and sequencing rules for the frozen closure package

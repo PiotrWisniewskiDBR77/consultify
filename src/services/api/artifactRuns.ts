@@ -62,15 +62,7 @@ export interface CreateArtifactRunFromChatParams {
 export interface MaterializeArtifactRunParams {
   title?: string;
   description?: string;
-  sourceType?:
-    | 'ASSESSMENT'
-    | 'INTERVIEW'
-    | 'TOOL'
-    | 'INITIATIVE'
-    | 'UPLOAD_BUNDLE'
-    | 'FINANCIAL_ANALYSIS'
-    | 'VALUATION'
-    | 'RESULTS_KPI_REPORT';
+  sourceType?: string;
   sourceId?: string;
   sourceName?: string;
   templateId?: string;

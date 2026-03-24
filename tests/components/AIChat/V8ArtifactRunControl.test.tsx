@@ -237,14 +237,139 @@ describe('V8ArtifactRunControl', () => {
     expect(screen.getByTestId('v8-artifact-run-button')).toBeDisabled();
   });
 
-  it('only offers the currently materializable document output in chat control', () => {
+  it('offers the currently materializable document and presentation outputs in chat control', () => {
     render(<V8ArtifactRunControl conversationId="conv-1" defaultGoal="Build board update deck" />);
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
 
     const select = screen.getByTestId('v8-artifact-run-output-type') as HTMLSelectElement;
-    expect(select.options).toHaveLength(1);
+    expect(select.options).toHaveLength(2);
     expect(select.options[0]?.value).toBe('report');
     expect(select.options[0]?.textContent).toBe('Document');
+    expect(select.options[1]?.value).toBe('presentation');
+    expect(select.options[1]?.textContent).toBe('Presentation');
+  });
+
+  it('allows governed presentation planning and materialization from chat control', async () => {
+    createRunMutateAsync.mockResolvedValue({
+      artifactRunId: 'run-p1',
+      executionRunId: 'exec-p1',
+      artifactPlan: {
+        artifactFamily: 'presentation',
+        outputType: 'presentation',
+        titleHint: 'Executive board deck',
+        governancePath: 'execution_spine',
+        visibilityScope: 'private',
+      },
+      run: {
+        runId: 'run-p1',
+        artifactId: null,
+        organizationId: 'org-1',
+        executionRunId: 'exec-p1',
+        contextSnapshotId: 'snap-2',
+        triggerType: 'chat',
+        sourceContextType: 'conversation',
+        sourceContextId: 'conv-1',
+        requestedByUserId: 'user-1',
+        plan: {
+          artifactFamily: 'presentation',
+          outputType: 'presentation',
+          titleHint: 'Executive board deck',
+          governancePath: 'execution_spine',
+          visibilityScope: 'private',
+        },
+        runStatus: 'planned',
+        proposalId: null,
+        retryOfRunId: null,
+        failureReason: null,
+        startedAt: '2026-03-24T10:00:00.000Z',
+        completedAt: null,
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:00:00.000Z',
+      },
+    });
+    acceptPlanMutateAsync.mockResolvedValue({
+      runId: 'run-p1',
+      artifactId: null,
+      organizationId: 'org-1',
+      executionRunId: 'exec-p1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'presentation',
+        outputType: 'presentation',
+        titleHint: 'Executive board deck',
+        governancePath: 'execution_spine',
+        visibilityScope: 'private',
+      },
+      runStatus: 'proposal_created',
+      proposalId: 'proposal-p1',
+      retryOfRunId: null,
+      failureReason: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: null,
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:01:00.000Z',
+    });
+    materializeRunMutateAsync.mockResolvedValue({
+      runId: 'run-p1',
+      artifactId: 'artifact-p1',
+      organizationId: 'org-1',
+      executionRunId: 'exec-p1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'presentation',
+        outputType: 'presentation',
+        titleHint: 'Executive board deck',
+        governancePath: 'execution_spine',
+        visibilityScope: 'private',
+      },
+      runStatus: 'completed',
+      proposalId: 'proposal-p1',
+      retryOfRunId: null,
+      failureReason: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: '2026-03-24T10:02:00.000Z',
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:02:00.000Z',
+    });
+
+    render(<V8ArtifactRunControl conversationId="conv-1" defaultGoal="Build executive deck" />);
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
+    fireEvent.change(screen.getByTestId('v8-artifact-run-output-type'), {
+      target: { value: 'presentation' },
+    });
+    fireEvent.click(screen.getByTestId('v8-artifact-run-plan'));
+
+    await waitFor(() =>
+      expect(createRunMutateAsync).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        contextSnapshotId: 'snap-2',
+        goal: 'Build executive deck',
+        requestedArtifactFamily: 'presentation',
+        requestedOutputType: 'presentation',
+      }),
+    );
+
+    fireEvent.click(await screen.findByTestId('v8-artifact-run-accept'));
+    await waitFor(() => expect(acceptPlanMutateAsync).toHaveBeenCalledWith('run-p1'));
+
+    fireEvent.click(await screen.findByTestId('v8-artifact-run-materialize'));
+    await waitFor(() =>
+      expect(materializeRunMutateAsync).toHaveBeenCalledWith({
+        runId: 'run-p1',
+        params: {
+          title: 'Executive board deck',
+        },
+      }),
+    );
   });
 });
