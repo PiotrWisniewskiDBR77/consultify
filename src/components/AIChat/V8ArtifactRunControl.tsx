@@ -10,7 +10,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { useV8AcceptArtifactRunPlan, useV8CreateArtifactRunFromChat, useV8RetryArtifactRun } from '@/hooks/useV8ArtifactRuns';
+import {
+  useV8AcceptArtifactRunPlan,
+  useV8CreateArtifactRunFromChat,
+  useV8MaterializeArtifactRun,
+  useV8RetryArtifactRun,
+} from '@/hooks/useV8ArtifactRuns';
 import type {
   ArtifactFamily,
   ArtifactPlanOutputType,
@@ -66,6 +71,7 @@ export function V8ArtifactRunControl({
   );
   const createRun = useV8CreateArtifactRunFromChat();
   const acceptPlan = useV8AcceptArtifactRunPlan();
+  const materializeRun = useV8MaterializeArtifactRun();
   const retryRun = useV8RetryArtifactRun();
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
@@ -91,10 +97,18 @@ export function V8ArtifactRunControl({
 
   if (!showV8Chat || !conversationId) return null;
 
-  const isBusy = createRun.isPending || acceptPlan.isPending || retryRun.isPending;
+  const isBusy =
+    createRun.isPending ||
+    acceptPlan.isPending ||
+    materializeRun.isPending ||
+    retryRun.isPending;
   const canPlan = Boolean(latestSnapshot?.snapshotId) && goal.trim().length > 0 && !isBusy;
   const canAccept =
     currentRun?.runStatus === 'planned' || currentRun?.runStatus === 'retry_requested';
+  const canMaterialize =
+    currentRun?.runStatus === 'proposal_created' &&
+    currentRun?.plan.outputType === 'report' &&
+    !currentRun.artifactId;
 
   const handlePlan = async () => {
     if (!latestSnapshot?.snapshotId || !goal.trim()) return;
@@ -150,6 +164,29 @@ export function V8ArtifactRunControl({
         error instanceof Error
           ? error.message
           : t('v8.artifactRun.retryFailed', 'Failed to retry artifact plan'),
+      );
+    }
+  };
+
+  const handleMaterialize = async () => {
+    if (!currentRun?.runId) return;
+    try {
+      const completed = await materializeRun.mutateAsync({
+        runId: currentRun.runId,
+        params: {
+          title: currentRun.plan.titleHint,
+        },
+      });
+      setCurrentRun(completed);
+      setCurrentPlan(completed.plan);
+      toast.success(
+        t('v8.artifactRun.materialized', 'Artifact run materialized into a canonical output'),
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.artifactRun.materializeFailed', 'Failed to materialize artifact run'),
       );
     }
   };
@@ -284,6 +321,11 @@ export function V8ArtifactRunControl({
                   {t('v8.artifactRun.proposalReady', 'Proposal ready')}: {currentRun.proposalId}
                 </div>
               )}
+              {currentRun.artifactId && (
+                <div className="mt-1 text-[11px] text-sky-700 dark:text-sky-300">
+                  {t('v8.artifactRun.artifactReady', 'Artifact ready')}: {currentRun.artifactId}
+                </div>
+              )}
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
                   {currentRun.failureReason}
@@ -305,6 +347,22 @@ export function V8ArtifactRunControl({
                       <CheckCircle2 size={16} />
                     )}
                     {t('v8.artifactRun.acceptButton', 'Accept plan')}
+                  </button>
+                )}
+                {canMaterialize && (
+                  <button
+                    type="button"
+                    data-testid="v8-artifact-run-materialize"
+                    onClick={handleMaterialize}
+                    disabled={isBusy}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-900/70 dark:bg-sky-950/30 dark:text-sky-300"
+                  >
+                    {materializeRun.isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <FileOutput size={16} />
+                    )}
+                    {t('v8.artifactRun.materializeButton', 'Materialize')}
                   </button>
                 )}
                 <button

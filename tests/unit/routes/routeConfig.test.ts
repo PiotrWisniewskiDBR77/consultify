@@ -23,6 +23,12 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/superadmin/revenue')).toBe(AppView.SUPERADMIN_REVENUE);
   });
 
+  it('getAppViewFromPath: keeps nested presentations routes under PRESENTATIONS', () => {
+    expect(getAppViewFromPath('/presentations')).toBe(AppView.PRESENTATIONS);
+    expect(getAppViewFromPath('/presentations/wizard')).toBe(AppView.PRESENTATIONS);
+    expect(getAppViewFromPath('/presentations/builder/deck-1')).toBe(AppView.PRESENTATIONS);
+  });
+
   it('getRouteFromAppView: falls back to chat for unknown view', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     expect(getRouteFromAppView('NOT_A_VIEW' as any)).toBe(ROUTES.AI_CHAT);

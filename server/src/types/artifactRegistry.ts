@@ -38,6 +38,18 @@ export const ArtifactRunStatusValues = [
 ] as const;
 export type ArtifactRunStatus = (typeof ArtifactRunStatusValues)[number];
 
+export const ArtifactRunReportSourceTypeValues = [
+  'ASSESSMENT',
+  'INTERVIEW',
+  'TOOL',
+  'INITIATIVE',
+  'UPLOAD_BUNDLE',
+  'FINANCIAL_ANALYSIS',
+  'VALUATION',
+  'RESULTS_KPI_REPORT',
+] as const;
+export type ArtifactRunReportSourceType = (typeof ArtifactRunReportSourceTypeValues)[number];
+
 export interface ArtifactRecord {
   artifactId: string;
   organizationId: string;
@@ -180,6 +192,19 @@ export interface ArtifactRunRecord {
   updatedAt: string;
 }
 
+export interface MaterializeArtifactRunParams {
+  organizationId: string;
+  runId: string;
+  actorUserId: string;
+  title?: string;
+  description?: string;
+  sourceType?: ArtifactRunReportSourceType;
+  sourceId?: string;
+  sourceName?: string;
+  templateId?: string;
+  config?: Record<string, unknown>;
+}
+
 export const ArtifactRecordSchema = z.object({
   artifactId: z.string().min(1),
   organizationId: z.string().min(1),
@@ -239,4 +264,17 @@ export const ArtifactPlanningRequestSchema = z.object({
   goal: z.string().min(1),
   requestedArtifactFamily: z.enum(ArtifactFamilyValues).optional(),
   requestedOutputType: z.enum(ArtifactPlanOutputTypeValues).optional(),
+});
+
+export const MaterializeArtifactRunParamsSchema = z.object({
+  organizationId: z.string().min(1),
+  runId: z.string().min(1),
+  actorUserId: z.string().min(1),
+  title: z.string().trim().min(1).optional(),
+  description: z.string().trim().min(1).optional(),
+  sourceType: z.enum(ArtifactRunReportSourceTypeValues).optional(),
+  sourceId: z.string().trim().min(1).optional(),
+  sourceName: z.string().trim().min(1).optional(),
+  templateId: z.string().trim().min(1).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
 });

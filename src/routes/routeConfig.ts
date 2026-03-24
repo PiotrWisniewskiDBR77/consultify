@@ -506,6 +506,11 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.FULL_STEP6_REPORTS; // builder or builder/:id
   }
 
+  // Outputs library and nested presentation flows stay under one visible module.
+  if (normalized.startsWith(ROUTES.PRESENTATIONS)) {
+    return AppView.PRESENTATIONS;
+  }
+
   return null;
 }
 

@@ -2,12 +2,16 @@ import { type Request, type Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
+import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
 router.use(verifyToken);
+router.use(requireV8OrgContext);
+router.use(v8OutputsGate);
 
 function getAuthContext(req: any): { userId: string; organizationId: string; roleKey: string | null } {
   return {

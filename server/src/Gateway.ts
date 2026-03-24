@@ -550,8 +550,8 @@ export class ApiGateway {
       // My Work is a production-critical module (not a stub).
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
       app.use('/api/my-work', myWorkRoutes);
-      app.use('/api/artifact-runs', artifactRunsRoutes);
-      app.use('/api/artifacts', artifactsRoutes);
+      app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
+      app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
       app.use('/api/preview-ai', previewAiRoutes);
       app.use('/api/notebook', notebookV4Routes);
 

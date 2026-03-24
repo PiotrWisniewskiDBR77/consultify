@@ -20,16 +20,72 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
 
     CREATE TABLE IF NOT EXISTS report_builder_reports (
       id TEXT PRIMARY KEY,
-      organization_id TEXT,
-      title TEXT,
-      status TEXT,
-      report_type TEXT,
+      organization_id TEXT NOT NULL,
       project_id TEXT,
+      source_type TEXT,
+      source_id TEXT,
+      source_name TEXT,
+      source_framework TEXT,
+      title TEXT,
+      description TEXT,
+      report_type TEXT,
+      template_id TEXT,
+      config_json TEXT,
+      company_context_json TEXT,
+      status TEXT,
       created_by TEXT,
       created_at TEXT,
       updated_at TEXT,
-      source_id TEXT,
+      version INTEGER,
+      report_type_v3 TEXT,
+      goal_v3 TEXT,
+      communication_register TEXT,
+      density TEXT,
+      period_from TEXT,
+      period_to TEXT,
+      confidentiality TEXT,
       source_refs_json TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS report_builder_sections (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      section_key TEXT,
+      section_type TEXT,
+      title TEXT,
+      order_index INTEGER,
+      enabled INTEGER,
+      required INTEGER,
+      length TEXT,
+      language TEXT,
+      content_format TEXT,
+      custom_prompt TEXT,
+      block_type_id TEXT,
+      block_config_json TEXT,
+      render_kind TEXT,
+      repeat_for TEXT,
+      repeat_key TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS report_builder_templates (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT,
+      source_type TEXT,
+      report_type TEXT,
+      sections_json TEXT,
+      is_default INTEGER DEFAULT 0,
+      is_public INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS report_builder_activity (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      action_type TEXT,
+      action_by TEXT,
+      action_at TEXT,
+      metadata TEXT
     );
 
     CREATE TABLE IF NOT EXISTS presentation_decks (
@@ -151,6 +207,10 @@ export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promis
   await run('DELETE FROM v8_publish_records');
   await run('DELETE FROM v8_artifact_runs');
   await run('DELETE FROM v8_output_artifacts');
+  await run('DELETE FROM report_builder_activity');
+  await run('DELETE FROM report_builder_sections');
+  await run('DELETE FROM report_builder_templates');
+  await run('DELETE FROM report_builder_reports');
   await run('DELETE FROM project_members');
   await run('DELETE FROM projects');
 }

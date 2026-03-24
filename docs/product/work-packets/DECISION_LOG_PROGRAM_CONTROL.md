@@ -55,3 +55,11 @@
 - No prior wave is automatically considered "closed" under the 20-wave closure criteria — each must be assessed against the new 5-dimension closure scale (platform/core, integration, UI/product surface, operator/support, content/seed).
 - Forward work packets use `WP-20WX-NN` numbering (20-wave program).
 - Rule: `the 20-wave program defines what closure means; the prior 7-wave work defines what foundation exists`.
+
+## Decision PC-6 — Final frozen package authority reconciliation (2026-03-24)
+
+- `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md` is the **highest closure authority** for the frozen combined package `V8.0 + V8.1`.
+- `docs/product/V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md` is the canonical operating brief for the manager-led 4-track closure model.
+- `docs/product/work-packets/IMPLEMENTATION_CONTROL_BOARD.md` is the **operational execution ledger** for current implementation/runtime/evidence progress.
+- `docs/product/V8_POST_20_WAVE_CLOSURE_PROGRAM.md` and `docs/product/work-packets/POST_20_WAVE_CLOSURE_AUDIT.md` remain historical baseline documents and must not be treated as current repo/runtime truth where later execution evidence or code contradicts them.
+- PC-5 remains valid as historical execution framing for the 20-wave foundation, but does **not** override the final frozen-package closure doctrine.

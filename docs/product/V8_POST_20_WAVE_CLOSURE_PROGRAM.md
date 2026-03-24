@@ -2,9 +2,11 @@
 
 > Status: Draft v8
 > Owner: Product + Engineering
-> Scope: execution-grade program for closing the gap between V8 maturity level 2 (implemented, not wired) and full production closure across all 34 V8 services, 413 functions, 31 type files, 64 test files, 45 migrations and zero API routes / zero frontend integration / zero feature flags / zero operator surfaces
+> Scope: historical execution-grade program for closing the gap between V8 maturity level 2 (implemented, not wired) and full production closure across all 34 V8 services, 413 functions, 31 type files, 64 test files, 45 migrations and zero API routes / zero frontend integration / zero feature flags / zero operator surfaces
 
 ---
+
+> Historical note (2026-03-24): this document remains a baseline snapshot of the post-20-wave closure starting point. It is no longer the primary source for current repo/runtime truth where later code, `IMPLEMENTATION_CONTROL_BOARD.md`, or `V8_V81_FINAL_COMPLETION_PROGRAM.md` show a more advanced state.
 
 ## 1. Closure program objective
 

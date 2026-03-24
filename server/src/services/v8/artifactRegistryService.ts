@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as chatExecutionService from './chatExecutionService.js';
+import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
 import * as publishReviewService from './publishReviewService.js';
 import type {
@@ -13,14 +14,17 @@ import type {
   ArtifactPlanningResult,
   ArtifactRecord,
   ArtifactRunRecord,
+  ArtifactRunReportSourceType,
   ArtifactRunStatus,
   ArtifactVisibilityScope,
   CreateArtifactAccessGrantParams,
+  MaterializeArtifactRunParams,
   RegisterArtifactOriginParams,
 } from '../../types/artifactRegistry.js';
 import {
   ArtifactPlanningRequestSchema,
   CreateArtifactAccessGrantParamsSchema,
+  MaterializeArtifactRunParamsSchema,
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -29,6 +33,16 @@ import logger from '../../utils/Logger.js';
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
 const BACKFILL_TTL_MS = 30_000;
+const SNAPSHOT_SOURCE_KIND_TO_REPORT_SOURCE_TYPE: Record<string, ArtifactRunReportSourceType> = {
+  assessment: 'ASSESSMENT',
+  interview: 'INTERVIEW',
+  tool: 'TOOL',
+  initiative: 'INITIATIVE',
+  upload_bundle: 'UPLOAD_BUNDLE',
+  financial_analysis: 'FINANCIAL_ANALYSIS',
+  valuation: 'VALUATION',
+  results_kpi_report: 'RESULTS_KPI_REPORT',
+};
 
 const backfillWatermark = new Map<string, number>();
 
@@ -1090,6 +1104,74 @@ function inferArtifactPlan(
   };
 }
 
+function mapSnapshotSourceKindToReportSourceType(
+  sourceKind: string | null | undefined,
+): ArtifactRunReportSourceType | null {
+  const normalized = String(sourceKind || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return SNAPSHOT_SOURCE_KIND_TO_REPORT_SOURCE_TYPE[normalized] || null;
+}
+
+async function resolveMaterializedReportParams(
+  current: ArtifactRunRecord,
+  params: MaterializeArtifactRunParams,
+): Promise<{
+  sourceType: ArtifactRunReportSourceType;
+  sourceId: string;
+  sourceName?: string;
+  title: string;
+  description?: string;
+  templateId?: string;
+  config?: Record<string, unknown>;
+}> {
+  const title = String(params.title || current.plan.titleHint || 'Output draft').trim();
+  const description = params.description?.trim() || undefined;
+  const sourceType = params.sourceType;
+  const sourceId = params.sourceId?.trim();
+
+  if ((sourceType && !sourceId) || (!sourceType && sourceId)) {
+    throw new Error('ArtifactRun report materialization requires both sourceType and sourceId');
+  }
+
+  if (sourceType && sourceId) {
+    return {
+      sourceType,
+      sourceId,
+      sourceName: params.sourceName?.trim() || undefined,
+      title,
+      description,
+      templateId: params.templateId?.trim() || undefined,
+      config: params.config,
+    };
+  }
+
+  const snapshot = await contextSnapshotService.getSnapshot(
+    current.contextSnapshotId,
+    params.organizationId,
+  );
+  const derivedSource = (snapshot?.sourceContextRefs || []).find(
+    (ref) => mapSnapshotSourceKindToReportSourceType(ref.sourceKind) && String(ref.sourceId || '').trim(),
+  );
+  if (!derivedSource) {
+    throw new Error(
+      'ArtifactRun report materialization requires sourceType/sourceId or a resolvable snapshot source context',
+    );
+  }
+
+  return {
+    sourceType: mapSnapshotSourceKindToReportSourceType(derivedSource.sourceKind)!,
+    sourceId: String(derivedSource.sourceId).trim(),
+    sourceName: params.sourceName?.trim() || undefined,
+    title,
+    description,
+    templateId: params.templateId?.trim() || undefined,
+    config: params.config,
+  };
+}
+
 async function createArtifactRunRecord(params: {
   organizationId: string;
   executionRunId: string;
@@ -1311,4 +1393,122 @@ export async function retryArtifactRun(params: {
     sourceContextType: current.sourceContextType,
     sourceContextId: current.sourceContextId,
   });
+}
+
+export async function materializeArtifactRun(
+  params: MaterializeArtifactRunParams,
+): Promise<ArtifactRunRecord> {
+  const validated = MaterializeArtifactRunParamsSchema.parse(params);
+  const current = await getArtifactRun(validated.runId, validated.organizationId);
+  if (!current) {
+    throw new Error(`ArtifactRun ${validated.runId} not found`);
+  }
+  if (current.plan.outputType !== 'report') {
+    throw new Error(`ArtifactRun ${validated.runId} only supports report materialization currently`);
+  }
+  if (current.runStatus !== 'proposal_created') {
+    throw new Error(
+      `ArtifactRun ${validated.runId} must be in proposal_created before materialization`,
+    );
+  }
+
+  const reportParams = await resolveMaterializedReportParams(current, validated);
+
+  try {
+    await executionSpineService.submitForReview(
+      current.executionRunId,
+      validated.organizationId,
+      validated.actorUserId,
+    );
+    await executionSpineService.approveRun(
+      current.executionRunId,
+      validated.organizationId,
+      validated.actorUserId,
+      'ArtifactRun materialization approved',
+    );
+    await executionSpineService.applyRun(
+      current.executionRunId,
+      validated.organizationId,
+      validated.actorUserId,
+    );
+
+    const reportBuilderService = await import('../reportBuilderService.js');
+    const created = await reportBuilderService.createReport({
+      organizationId: validated.organizationId,
+      sourceType: reportParams.sourceType,
+      sourceId: reportParams.sourceId,
+      sourceName: reportParams.sourceName,
+      title: reportParams.title,
+      description: reportParams.description,
+      templateId: reportParams.templateId,
+      config: reportParams.config,
+      createdBy: validated.actorUserId,
+    });
+
+    const artifact = await getArtifactByOrigin({
+      organizationId: validated.organizationId,
+      originRuntime: 'report',
+      originRecordId: created.report.id,
+      userId: validated.actorUserId,
+    });
+    if (!artifact) {
+      throw new Error(`Canonical artifact missing for report ${created.report.id}`);
+    }
+
+    await executionSpineService.completeRun(
+      current.executionRunId,
+      validated.organizationId,
+      validated.actorUserId,
+    );
+
+    const now = new Date().toISOString();
+    await dbRun(
+      `UPDATE v8_artifact_runs
+       SET artifact_id = ?, run_status = ?, failure_reason = NULL, completed_at = ?, updated_at = ?
+       WHERE run_id = ? AND organization_id = ?`,
+      [
+        artifact.artifactId,
+        'completed',
+        now,
+        now,
+        validated.runId,
+        validated.organizationId,
+      ],
+    );
+
+    const completed = await getArtifactRun(validated.runId, validated.organizationId);
+    if (!completed) {
+      throw new Error(`ArtifactRun ${validated.runId} not found after materialization`);
+    }
+    return completed;
+  } catch (error) {
+    const failureReason =
+      error instanceof Error ? error.message : 'ArtifactRun materialization failed';
+    const now = new Date().toISOString();
+
+    try {
+      await executionSpineService.transitionRunState(
+        current.executionRunId,
+        validated.organizationId,
+        'failed',
+        validated.actorUserId,
+        failureReason,
+      );
+    } catch (spineError) {
+      logger.warn(`${LOG_PREFIX} Failed to mark execution run as failed after ArtifactRun error`, {
+        runId: validated.runId,
+        executionRunId: current.executionRunId,
+        error: spineError instanceof Error ? spineError.message : String(spineError),
+      });
+    }
+
+    await dbRun(
+      `UPDATE v8_artifact_runs
+       SET run_status = ?, failure_reason = ?, completed_at = ?, updated_at = ?
+       WHERE run_id = ? AND organization_id = ?`,
+      ['failed', failureReason, now, now, validated.runId, validated.organizationId],
+    );
+
+    throw error;
+  }
 }

@@ -15,14 +15,24 @@ vi.mock('../../../server/src/middleware/requireAudit.middleware.js', () => ({
   requireAudit: (_req: any, _res: any, next: any) => next(),
 }));
 
+vi.mock('../../../server/src/middleware/v8Auth.middleware.js', () => ({
+  requireV8OrgContext: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
+  v8OutputsGate: (_req: any, _res: any, next: any) => next(),
+}));
+
 const createArtifactRunFromChatMock = vi.fn();
 const acceptArtifactRunPlanMock = vi.fn();
+const materializeArtifactRunMock = vi.fn();
 const retryArtifactRunMock = vi.fn();
 const getArtifactRunMock = vi.fn();
 
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   createArtifactRunFromChat: (...args: any[]) => createArtifactRunFromChatMock(...args),
   acceptArtifactRunPlan: (...args: any[]) => acceptArtifactRunPlanMock(...args),
+  materializeArtifactRun: (...args: any[]) => materializeArtifactRunMock(...args),
   retryArtifactRun: (...args: any[]) => retryArtifactRunMock(...args),
   getArtifactRun: (...args: any[]) => getArtifactRunMock(...args),
 }));
@@ -38,6 +48,7 @@ describe('artifact-runs routes (HTTP contract; artifactRegistryService mocked)',
     verifyTokenMock.mockReset();
     createArtifactRunFromChatMock.mockReset();
     acceptArtifactRunPlanMock.mockReset();
+    materializeArtifactRunMock.mockReset();
     retryArtifactRunMock.mockReset();
     getArtifactRunMock.mockReset();
     verifyTokenMock.mockImplementation((req: any) => {
@@ -119,6 +130,45 @@ describe('artifact-runs routes (HTTP contract; artifactRegistryService mocked)',
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual(expect.objectContaining({ error: 'ArtifactRun not found' }));
+  });
+
+  it('POST /api/artifact-runs/:runId/materialize passes report materialization params through', async () => {
+    materializeArtifactRunMock.mockResolvedValue({
+      runId: 'ar-1',
+      artifactId: 'artifact-1',
+      runStatus: 'completed',
+      completedAt: '2026-03-24T10:03:00.000Z',
+    });
+
+    const res = await request(app).post('/api/artifact-runs/ar-1/materialize').send({
+      title: 'Board report',
+      sourceType: 'INTERVIEW',
+      sourceId: 'interview-7',
+      sourceName: 'Founder interview',
+      templateId: 'tpl-1',
+      config: { audience: 'board' },
+    });
+
+    expect(res.status).toBe(200);
+    expect(materializeArtifactRunMock).toHaveBeenCalledWith({
+      runId: 'ar-1',
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      title: 'Board report',
+      description: undefined,
+      sourceType: 'INTERVIEW',
+      sourceId: 'interview-7',
+      sourceName: 'Founder interview',
+      templateId: 'tpl-1',
+      config: { audience: 'board' },
+    });
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        runId: 'ar-1',
+        artifactId: 'artifact-1',
+        runStatus: 'completed',
+      }),
+    );
   });
 
   it('POST /api/artifact-runs/:runId/retry returns a new persisted retry envelope', async () => {

@@ -70,8 +70,12 @@ export const RouterSync: React.FC = () => {
       return;
     }
 
-    if (type === 'report') {
-      navigate(`/reports/builder/${id}`, { replace: true });
+    if (type === 'report' || type === 'presentation' || type === 'sheet') {
+      const targetTab =
+        type === 'report' ? 'reports' : type === 'presentation' ? 'presentations' : 'sheets';
+      nextParams.set('tab', targetTab);
+      nextParams.set('selectedArtifact', `${type}:${id}`);
+      navigate(`/presentations?${nextParams.toString()}`, { replace: true });
       return;
     }
 

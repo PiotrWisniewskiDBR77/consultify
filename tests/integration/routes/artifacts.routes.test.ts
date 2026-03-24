@@ -15,6 +15,14 @@ vi.mock('../../../server/src/middleware/requireAudit.middleware.js', () => ({
   requireAudit: (_req: any, _res: any, next: any) => next(),
 }));
 
+vi.mock('../../../server/src/middleware/v8Auth.middleware.js', () => ({
+  requireV8OrgContext: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
+  v8OutputsGate: (_req: any, _res: any, next: any) => next(),
+}));
+
 const getArtifactForUserMock = vi.fn();
 const createArtifactAccessGrantMock = vi.fn();
 

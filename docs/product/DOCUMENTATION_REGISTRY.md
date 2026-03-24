@@ -410,6 +410,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: ready-to-use operating brief for the manager agent supervising 4 parallel workers across canon closure, runtime closure, surface closure, and evidence closure
   - **Authority**: Highest for manager-agent startup context and orchestration rules during final package completion
 
+- `docs/product/work-packets/IMPLEMENTATION_CONTROL_BOARD.md`
+  - **Owner**: Manager Agent
+  - **Scope**: operational execution ledger for the frozen `V8.0 + V8.1` package, tracking current implementation/runtime/evidence progress after the 20-wave foundation
+  - **Authority**: Highest for current closure-execution status reporting below final sign-off authority
+
+- `docs/product/work-packets/DECISION_LOG_PROGRAM_CONTROL.md`
+  - **Owner**: Manager Agent
+  - **Scope**: explicit program-control decisions, scope freezes, authority reconciliation and sequencing rules for the frozen closure package
+  - **Authority**: Highest for program-level decision history and authority-chain reconciliation during final closure
+
 ### Interview (v3 as-is + v6 redesign target)
 
 - `docs/product/INTERVIEW_V8_READINESS_AUDIT.md`
@@ -1123,6 +1133,14 @@ Common examples:
 
 - `docs/product/INITIATIVE_AI_IMPLEMENTATION_REPORT_2026-02-15.md`
   - Snapshot report of shipped Initiative Artifact AI improvements (Scope/Tasks/Decisions/Team/Resources).
+
+### Historical closure baselines (not current runtime truth)
+
+- `docs/product/V8_POST_20_WAVE_CLOSURE_PROGRAM.md`
+  - Historical execution baseline from the moment the repo still treated the V8 runtime as largely unwired. Keep for baseline comparison, not for current closure truth where later execution evidence or code contradicts it.
+
+- `docs/product/work-packets/POST_20_WAVE_CLOSURE_AUDIT.md`
+  - Historical audit snapshot from 2026-03-23. Useful for baseline gap framing, but superseded by later execution-board reports and repo/runtime evidence for current closure status.
 
 ### Generated / internal working artifacts
 

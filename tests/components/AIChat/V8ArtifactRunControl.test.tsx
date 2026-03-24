@@ -9,6 +9,7 @@ import { V8ArtifactRunControl } from '../../../src/components/AIChat/V8ArtifactR
 
 const createRunMutateAsync = vi.fn();
 const acceptPlanMutateAsync = vi.fn();
+const materializeRunMutateAsync = vi.fn();
 const retryRunMutateAsync = vi.fn();
 const useV8SnapshotsMock = vi.fn();
 
@@ -44,6 +45,10 @@ vi.mock('../../../src/hooks/useV8ArtifactRuns', () => ({
     mutateAsync: acceptPlanMutateAsync,
     isPending: false,
   }),
+  useV8MaterializeArtifactRun: () => ({
+    mutateAsync: materializeRunMutateAsync,
+    isPending: false,
+  }),
   useV8RetryArtifactRun: () => ({
     mutateAsync: retryRunMutateAsync,
     isPending: false,
@@ -54,6 +59,7 @@ describe('V8ArtifactRunControl', () => {
   beforeEach(() => {
     createRunMutateAsync.mockReset();
     acceptPlanMutateAsync.mockReset();
+    materializeRunMutateAsync.mockReset();
     retryRunMutateAsync.mockReset();
     useV8SnapshotsMock.mockReset();
     useV8SnapshotsMock.mockReturnValue({
@@ -62,14 +68,14 @@ describe('V8ArtifactRunControl', () => {
     });
   });
 
-  it('creates a governed artifact run from the latest snapshot and allows accept/retry', async () => {
+  it('creates a governed artifact run from the latest snapshot and allows accept/materialize/retry', async () => {
     createRunMutateAsync.mockResolvedValue({
       artifactRunId: 'run-1',
       executionRunId: 'exec-1',
       artifactPlan: {
-        artifactFamily: 'presentation',
-        outputType: 'presentation',
-        titleHint: 'Board update deck',
+        artifactFamily: 'document',
+        outputType: 'report',
+        titleHint: 'Board update report',
         governancePath: 'execution_spine',
         visibilityScope: 'project',
       },
@@ -84,9 +90,9 @@ describe('V8ArtifactRunControl', () => {
         sourceContextId: 'conv-1',
         requestedByUserId: 'user-1',
         plan: {
-          artifactFamily: 'presentation',
-          outputType: 'presentation',
-          titleHint: 'Board update deck',
+          artifactFamily: 'document',
+          outputType: 'report',
+          titleHint: 'Board update report',
           governancePath: 'execution_spine',
           visibilityScope: 'project',
         },
@@ -111,9 +117,9 @@ describe('V8ArtifactRunControl', () => {
       sourceContextId: 'conv-1',
       requestedByUserId: 'user-1',
       plan: {
-        artifactFamily: 'presentation',
-        outputType: 'presentation',
-        titleHint: 'Board update deck',
+        artifactFamily: 'document',
+        outputType: 'report',
+        titleHint: 'Board update report',
         governancePath: 'execution_spine',
         visibilityScope: 'project',
       },
@@ -126,6 +132,32 @@ describe('V8ArtifactRunControl', () => {
       createdAt: '2026-03-24T10:00:00.000Z',
       updatedAt: '2026-03-24T10:01:00.000Z',
     });
+    materializeRunMutateAsync.mockResolvedValue({
+      runId: 'run-1',
+      artifactId: 'artifact-77',
+      organizationId: 'org-1',
+      executionRunId: 'exec-1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'document',
+        outputType: 'report',
+        titleHint: 'Board update report',
+        governancePath: 'execution_spine',
+        visibilityScope: 'project',
+      },
+      runStatus: 'completed',
+      proposalId: 'proposal-7',
+      retryOfRunId: null,
+      failureReason: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: '2026-03-24T10:02:00.000Z',
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:02:00.000Z',
+    });
     retryRunMutateAsync.mockResolvedValue({
       runId: 'run-2',
       artifactId: null,
@@ -137,9 +169,9 @@ describe('V8ArtifactRunControl', () => {
       sourceContextId: 'conv-1',
       requestedByUserId: 'user-1',
       plan: {
-        artifactFamily: 'presentation',
-        outputType: 'presentation',
-        titleHint: 'Board update deck',
+        artifactFamily: 'document',
+        outputType: 'report',
+        titleHint: 'Board update report',
         governancePath: 'execution_spine',
         visibilityScope: 'project',
       },
@@ -157,7 +189,7 @@ describe('V8ArtifactRunControl', () => {
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
     fireEvent.change(screen.getByTestId('v8-artifact-run-output-type'), {
-      target: { value: 'presentation' },
+      target: { value: 'report' },
     });
     fireEvent.click(screen.getByTestId('v8-artifact-run-plan'));
 
@@ -166,18 +198,29 @@ describe('V8ArtifactRunControl', () => {
         conversationId: 'conv-1',
         contextSnapshotId: 'snap-2',
         goal: 'Build board update deck',
-        requestedArtifactFamily: 'presentation',
-        requestedOutputType: 'presentation',
+        requestedArtifactFamily: 'document',
+        requestedOutputType: 'report',
       }),
     );
 
     expect(await screen.findByTestId('v8-artifact-run-summary')).toHaveTextContent(
-      'Board update deck',
+      'Board update report',
     );
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-accept'));
     await waitFor(() => expect(acceptPlanMutateAsync).toHaveBeenCalledWith('run-1'));
     expect(await screen.findByText(/Proposal ready/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-materialize'));
+    await waitFor(() =>
+      expect(materializeRunMutateAsync).toHaveBeenCalledWith({
+        runId: 'run-1',
+        params: {
+          title: 'Board update report',
+        },
+      }),
+    );
+    expect(await screen.findByText(/Artifact ready/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-retry'));
     await waitFor(() => expect(retryRunMutateAsync).toHaveBeenCalledWith('run-1'));

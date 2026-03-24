@@ -54,4 +54,38 @@ export const v8OrgGate = async (
   next();
 };
 
+/**
+ * Post-auth gate for a specific V8 module.
+ * Use this when a route is part of the frozen V8/V8.1 package but lives
+ * outside the `/api/v8/*` namespace and still needs module-accurate gating.
+ */
+export const createV8ModuleGate =
+  (module: string) =>
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const orgId = req.organizationId;
+    if (!orgId) {
+      res.status(400).json({ error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
+      return;
+    }
+
+    try {
+      const enabled = await isV8Enabled(orgId, module);
+      if (!enabled) {
+        res.status(404).json({
+          error: `V8 module "${module}" not enabled for this organization`,
+          code: 'V8_MODULE_DISABLED',
+        });
+        return;
+      }
+
+      (req as any).v8ShadowMode = await isV8ShadowMode(orgId);
+    } catch {
+      (req as any).v8ShadowMode = false;
+    }
+
+    next();
+  };
+
+export const v8OutputsGate = createV8ModuleGate('outputs');
+
 export default v8FeatureGate;

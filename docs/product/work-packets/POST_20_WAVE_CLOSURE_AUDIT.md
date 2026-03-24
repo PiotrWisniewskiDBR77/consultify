@@ -7,6 +7,8 @@
 
 ---
 
+> Historical note (2026-03-24): this audit captures the starting baseline before later route, flag, frontend and operator wiring landed in the repo. Use it as a historical gap snapshot, not as current runtime truth where `IMPLEMENTATION_CONTROL_BOARD.md`, `V8_V81_FINAL_COMPLETION_PROGRAM.md`, or live repo evidence contradict it.
+
 ## 0. Executive finding
 
 **The 20-wave program delivered a substantial backend service foundation. It did NOT deliver a production-ready system.**

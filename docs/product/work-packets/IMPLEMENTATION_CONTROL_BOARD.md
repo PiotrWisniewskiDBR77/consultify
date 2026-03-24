@@ -2,7 +2,7 @@
 
 > Owner: Manager Agent
 > Cadence: Weekly
-> Authority: Source-of-truth chat + POST_20_WAVE_CLOSURE_AUDIT.md
+> Authority: `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md` for final package closure, plus repo/runtime truth for current execution state
 > Mode: **Closure Execution** (switched from wave-based reporting 2026-03-23)
 
 ---
@@ -11,6 +11,9 @@
 
 From this point forward, this board reports closure execution progress, NOT waves.
 The 20-wave foundation phase is complete. The program is now in integration/cutover mode.
+
+This board is the operational execution ledger for the frozen `V8.0 + V8.1` closure package.
+It does not override final sign-off authority defined in `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`.
 
 Maturity scale used in all reports:
 - `not started` → `in progress` → `implemented` → `wired` → `integrated` → `verified` → `blocked` → `needs decision`

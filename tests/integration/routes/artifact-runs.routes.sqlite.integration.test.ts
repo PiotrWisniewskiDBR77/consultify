@@ -18,6 +18,10 @@ const spineMocks = vi.hoisted(() => ({
   initiateHandoff: vi.fn(),
   transitionRunState: vi.fn().mockResolvedValue({}),
   createProposal: vi.fn(),
+  submitForReview: vi.fn().mockResolvedValue({}),
+  approveRun: vi.fn().mockResolvedValue({}),
+  applyRun: vi.fn().mockResolvedValue({}),
+  completeRun: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('../../../server/src/utils/Logger.js', () => ({
@@ -84,6 +88,10 @@ vi.mock('../../../server/src/services/v8/chatExecutionService.js', () => ({
 vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
   transitionRunState: (...args: unknown[]) => spineMocks.transitionRunState(...args),
   createProposal: (...args: unknown[]) => spineMocks.createProposal(...args),
+  submitForReview: (...args: unknown[]) => spineMocks.submitForReview(...args),
+  approveRun: (...args: unknown[]) => spineMocks.approveRun(...args),
+  applyRun: (...args: unknown[]) => spineMocks.applyRun(...args),
+  completeRun: (...args: unknown[]) => spineMocks.completeRun(...args),
 }));
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
@@ -99,7 +107,16 @@ vi.mock('../../../server/src/middleware/requireAudit.middleware.js', () => ({
   requireAudit: (_req: any, _res: any, next: any) => next(),
 }));
 
+vi.mock('../../../server/src/middleware/v8Auth.middleware.js', () => ({
+  requireV8OrgContext: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
+  v8OutputsGate: (_req: any, _res: any, next: any) => next(),
+}));
+
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
+import * as reportBuilderService from '../../../server/src/services/reportBuilderService.js';
 
 describe('artifact-runs routes (sqlite-backed integration)', () => {
   const app = express();
@@ -108,6 +125,7 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
 
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
+    reportBuilderService.setDependencies({ db: sqliteCtx.db as any });
   });
 
   beforeEach(async () => {
@@ -115,7 +133,15 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
     spineMocks.initiateHandoff.mockReset();
     spineMocks.transitionRunState.mockReset();
     spineMocks.createProposal.mockReset();
+    spineMocks.submitForReview.mockReset();
+    spineMocks.approveRun.mockReset();
+    spineMocks.applyRun.mockReset();
+    spineMocks.completeRun.mockReset();
     spineMocks.transitionRunState.mockResolvedValue({});
+    spineMocks.submitForReview.mockResolvedValue({});
+    spineMocks.approveRun.mockResolvedValue({});
+    spineMocks.applyRun.mockResolvedValue({});
+    spineMocks.completeRun.mockResolvedValue({});
   });
 
   afterAll(
@@ -125,18 +151,44 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
   );
 
-  it('persists a run through POST -> GET -> accept-plan -> retry', async () => {
+  it('persists a run through POST -> GET -> accept-plan -> materialize -> retry', async () => {
     spineMocks.initiateHandoff
       .mockResolvedValueOnce({ executionRunId: 'exec-run-1' })
       .mockResolvedValueOnce({ executionRunId: 'exec-run-2' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-abc' });
 
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `INSERT INTO report_builder_templates (
+          id, organization_id, source_type, report_type, sections_json, is_default, is_public
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          'tpl-route-1',
+          'org-a',
+          'INTERVIEW',
+          'INTERVIEW',
+          JSON.stringify([
+            {
+              key: 'summary',
+              type: 'summary',
+              title: 'Summary',
+              required: true,
+              order: 1,
+            },
+          ]),
+          1,
+          0,
+        ],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+
     const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
       conversationId: 'conv-1',
       contextSnapshotId: 'snap-1',
-      goal: 'Create a board deck',
-      requestedArtifactFamily: 'presentation',
-      requestedOutputType: 'presentation',
+      goal: 'Create a board report',
+      requestedArtifactFamily: 'document',
+      requestedOutputType: 'report',
     });
 
     expect(createRes.status).toBe(201);
@@ -162,6 +214,23 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
         proposalId: 'proposal-abc',
       }),
     );
+
+    const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
+      title: 'Board report',
+      sourceType: 'INTERVIEW',
+      sourceId: 'interview-1',
+      sourceName: 'Founder interview',
+      templateId: 'tpl-route-1',
+      config: { audience: 'board' },
+    });
+    expect(materializeRes.status).toBe(200);
+    expect(materializeRes.body.data).toEqual(
+      expect.objectContaining({
+        runId,
+        runStatus: 'completed',
+      }),
+    );
+    expect(materializeRes.body.data.artifactId).toBeTruthy();
 
     const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
     expect(retryRes.status).toBe(201);

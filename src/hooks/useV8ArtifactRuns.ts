@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   ArtifactRunsApi,
+  type MaterializeArtifactRunParams,
   type ArtifactRunPlanningEnvelope,
   type ArtifactRunRecord,
   type CreateArtifactRunFromChatParams,
@@ -15,6 +16,7 @@ export type {
   ArtifactRunRecord,
   ArtifactRunStatus,
   CreateArtifactRunFromChatParams,
+  MaterializeArtifactRunParams,
 } from '@/services/api/artifactRuns';
 
 export const V8_ARTIFACT_RUN_KEYS = {
@@ -53,6 +55,20 @@ export function useV8RetryArtifactRun() {
   const queryClient = useQueryClient();
   return useMutation<ArtifactRunRecord, Error, string>({
     mutationFn: (runId) => ArtifactRunsApi.retry(runId),
+    onSuccess: (run) => {
+      queryClient.setQueryData(V8_ARTIFACT_RUN_KEYS.run(run.runId), run);
+    },
+  });
+}
+
+export function useV8MaterializeArtifactRun() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    ArtifactRunRecord,
+    Error,
+    { runId: string; params: MaterializeArtifactRunParams }
+  >({
+    mutationFn: ({ runId, params }) => ArtifactRunsApi.materialize(runId, params),
     onSuccess: (run) => {
       queryClient.setQueryData(V8_ARTIFACT_RUN_KEYS.run(run.runId), run);
     },

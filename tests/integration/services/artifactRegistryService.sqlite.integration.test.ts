@@ -21,6 +21,10 @@ const spineMocks = vi.hoisted(() => ({
   initiateHandoff: vi.fn(),
   transitionRunState: vi.fn().mockResolvedValue({}),
   createProposal: vi.fn(),
+  submitForReview: vi.fn().mockResolvedValue({}),
+  approveRun: vi.fn().mockResolvedValue({}),
+  applyRun: vi.fn().mockResolvedValue({}),
+  completeRun: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('../../../server/src/utils/Logger.js', () => ({
@@ -87,13 +91,19 @@ vi.mock('../../../server/src/services/v8/chatExecutionService.js', () => ({
 vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
   transitionRunState: (...args: unknown[]) => spineMocks.transitionRunState(...args),
   createProposal: (...args: unknown[]) => spineMocks.createProposal(...args),
+  submitForReview: (...args: unknown[]) => spineMocks.submitForReview(...args),
+  approveRun: (...args: unknown[]) => spineMocks.approveRun(...args),
+  applyRun: (...args: unknown[]) => spineMocks.applyRun(...args),
+  completeRun: (...args: unknown[]) => spineMocks.completeRun(...args),
 }));
 
 import * as artifactRegistryService from '../../../server/src/services/v8/artifactRegistryService.js';
+import * as reportBuilderService from '../../../server/src/services/reportBuilderService.js';
 
 describe('artifactRegistryService (sqlite-backed integration)', () => {
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
+    reportBuilderService.setDependencies({ db: sqliteCtx.db as any });
   });
 
   beforeEach(async () => {
@@ -101,7 +111,15 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     spineMocks.initiateHandoff.mockReset();
     spineMocks.transitionRunState.mockReset();
     spineMocks.createProposal.mockReset();
+    spineMocks.submitForReview.mockReset();
+    spineMocks.approveRun.mockReset();
+    spineMocks.applyRun.mockReset();
+    spineMocks.completeRun.mockReset();
     spineMocks.transitionRunState.mockResolvedValue({});
+    spineMocks.submitForReview.mockResolvedValue({});
+    spineMocks.approveRun.mockResolvedValue({});
+    spineMocks.applyRun.mockResolvedValue({});
+    spineMocks.completeRun.mockResolvedValue({});
   });
 
   afterAll(
@@ -485,6 +503,93 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(accepted.runStatus).toBe('proposal_created');
     expect(accepted.proposalId).toBe('proposal-xyz');
     expect(spineMocks.createProposal).toHaveBeenCalled();
+  });
+
+  it('materializeArtifactRun completes a report run and links the canonical artifact', async () => {
+    spineMocks.initiateHandoff.mockResolvedValue({ executionRunId: 'exec-run-5' });
+    spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-report-1' });
+
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `INSERT INTO report_builder_templates (
+          id, organization_id, source_type, report_type, sections_json, is_default, is_public
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          'tpl-report-1',
+          'org-a',
+          'INTERVIEW',
+          'INTERVIEW',
+          JSON.stringify([
+            {
+              key: 'summary',
+              type: 'summary',
+              title: 'Summary',
+              required: true,
+              order: 1,
+            },
+          ]),
+          1,
+          0,
+        ],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+
+    const created = await artifactRegistryService.createArtifactRunFromChat({
+      organizationId: 'org-a',
+      userId: 'user-owner',
+      conversationId: 'conv-4',
+      contextSnapshotId: 'snap-4',
+      goal: 'Quarterly board report',
+      requestedArtifactFamily: 'document',
+      requestedOutputType: 'report',
+    });
+
+    await artifactRegistryService.acceptArtifactRunPlan({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+    });
+
+    const completed = await artifactRegistryService.materializeArtifactRun({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+      title: 'Quarterly board report',
+      sourceType: 'INTERVIEW',
+      sourceId: 'interview-1',
+      sourceName: 'Founder interview',
+      templateId: 'tpl-report-1',
+      config: { audience: 'board' },
+    });
+
+    expect(completed.runStatus).toBe('completed');
+    expect(completed.artifactId).toBeTruthy();
+    expect(completed.completedAt).toBeTruthy();
+    expect(spineMocks.submitForReview).toHaveBeenCalledWith(
+      'exec-run-5',
+      'org-a',
+      'user-owner',
+    );
+    expect(spineMocks.approveRun).toHaveBeenCalledWith(
+      'exec-run-5',
+      'org-a',
+      'user-owner',
+      'ArtifactRun materialization approved',
+    );
+    expect(spineMocks.applyRun).toHaveBeenCalledWith('exec-run-5', 'org-a', 'user-owner');
+    expect(spineMocks.completeRun).toHaveBeenCalledWith('exec-run-5', 'org-a', 'user-owner');
+
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId: 'org-a',
+      artifactId: completed.artifactId!,
+      userId: 'user-owner',
+      roleKey: null,
+    });
+    expect(artifact).not.toBeNull();
+    expect(artifact?.outputType).toBe('report');
+    expect(artifact?.originRuntime).toBe('report');
+    expect(artifact?.resolvedTitle).toBe('Quarterly board report');
   });
 
   it('retryArtifactRun persists retry lineage and returns a fresh planned run (spine mocked)', async () => {
