@@ -381,6 +381,23 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: end-to-end Report Generator SSOT (R1-R4 canonical report types, wizard/builder, templates, AI narrative, RAG/escalation mapping, export quality gates PDF/DOCX/PPTX)
   - **Authority**: Highest for report generator behavior
 
+### V8.1 - native artifact runtime and outputs closure
+
+- `docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical v8.1 functional doctrine for contextual artifact generation, outputs library as the durable home, `My Work` as personal artifact view, and shared lifecycle across documents, presentations and sheets
+  - **Authority**: Highest for v8.1 product behavior and next-phase outputs operating model
+
+- `docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_IMPLEMENTATION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: implementation-grade plan for the shared artifact substrate, format adapters, APIs, library surfaces, route strategy and rollout order for v8.1
+  - **Authority**: Highest for v8.1 engineering execution and architecture boundaries
+
+- `docs/product/V8_1_IMPLEMENTATION_START_PACKET.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: safe execution brief for the implementation agent building `v8.1`, including guardrails, sequencing, compatibility rules and required evidence against the stabilized `v8` baseline
+  - **Authority**: Highest for v8.1 delivery guardrails and implementation-safe startup context
+
 ### Interview (v3 as-is + v6 redesign target)
 
 - `docs/product/INTERVIEW_V8_READINESS_AUDIT.md`
