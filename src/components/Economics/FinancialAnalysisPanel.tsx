@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronUp,
   DollarSign,
+  ExternalLink,
   FileText,
   Link2,
   Loader2,
@@ -27,6 +28,11 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+
+import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
+import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -87,6 +93,7 @@ type ActiveSection =
   | 'scenarios'
   | 'gates'
   | 'initiative'
+  | 'outputs'
   | 'benefits'
   | 'businesscase';
 
@@ -94,6 +101,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
   analysis,
   onUpdate,
 }) => {
+  const navigate = useNavigate();
   const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [calculatedMetrics, setCalculatedMetrics] = useState<CalculatedMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,9 +118,15 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     scenarios: false,
     gates: false,
     initiative: false,
+    outputs: false,
     benefits: false,
     businesscase: false,
   });
+  const {
+    rows: linkedOutputs,
+    loading: linkedOutputsLoading,
+    error: linkedOutputsError,
+  } = useArtifactOutputsForInitiative(analysis.initiativeId, 8);
 
   const loadScenarios = useCallback(async () => {
     setIsLoadingScenarios(true);
@@ -778,6 +792,36 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         )}
       </div>
 
+      {analysis.initiativeId && (
+        <div className="space-y-0">
+          <SectionHeader
+            title="Linked Outputs"
+            icon={<FileText size={20} />}
+            section="outputs"
+            badge="Canonical artifact outputs for the linked initiative"
+          />
+          {expandedSections.outputs && (
+            <div className="mt-4">
+              <LinkedOutputsSection
+                rows={linkedOutputs}
+                loading={linkedOutputsLoading}
+                error={linkedOutputsError}
+                onOpen={(row) => {
+                  const targetPath =
+                    row.kind === 'sheet'
+                      ? '/presentations?tab=sheets'
+                      : getArtifactPath(
+                          row.kind === 'presentation' ? 'presentation' : 'report',
+                          row.originRecordId,
+                        );
+                  navigate(targetPath);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Benefits Tracking Section */}
       <div className="space-y-0">
         <SectionHeader
@@ -815,6 +859,62 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const LinkedOutputsSection: React.FC<{
+  rows: UnifiedOutputRow[];
+  loading: boolean;
+  error: string | null;
+  onOpen: (row: UnifiedOutputRow) => void;
+}> = ({ rows, loading, error, onOpen }) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 size={24} className="animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+        {error}
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 dark:border-navy-700 px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        No governed outputs are linked to this initiative yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {rows.map((row) => (
+        <button
+          key={`${row.kind}:${row.originRecordId}`}
+          type="button"
+          onClick={() => onOpen(row)}
+          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-4 py-4 text-left hover:border-emerald-400 transition-colors"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-navy-900 dark:text-white">
+                {row.title}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
+              </div>
+            </div>
+            <ExternalLink size={14} className="flex-shrink-0 text-slate-400" />
+          </div>
+        </button>
+      ))}
     </div>
   );
 };
