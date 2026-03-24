@@ -95,12 +95,19 @@ describe('ReportsAndPresentationsHub — canonical registry data path', () => {
         return okJson({
           data: [
             {
-              originRuntime: 'report',
-              originRecordId: 'hub-int-1',
+              originRuntime: 'presentation',
+              originRecordId: 'hub-deck-1',
               artifactId: 'hub-art-1',
               resolvedTitle: 'Hub Integration Canonical Title',
               originStatus: 'ready',
+              deck_type: 'initiative_portfolio',
               ownerUserId: 'hub-owner',
+              sourceInitiativeId: 'init-77',
+              visibilityScope: 'review_shared',
+              publishState: 'in_review',
+              reviewGateCount: 2,
+              exportFormat: 'pdf',
+              slideCount: 9,
               lastTransitionAt: '2026-03-24T10:00:00.000Z',
             },
           ],
@@ -139,6 +146,8 @@ describe('ReportsAndPresentationsHub — canonical registry data path', () => {
     await waitFor(() => {
       expect(screen.getByText('Hub Integration Canonical Title')).toBeInTheDocument();
     });
+    expect(screen.getByText('Source')).toBeInTheDocument();
+    expect(screen.getByText('Review')).toBeInTheDocument();
 
     const urls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.map((c) =>
       String(c[0])

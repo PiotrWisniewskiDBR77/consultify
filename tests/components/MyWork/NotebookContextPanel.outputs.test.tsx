@@ -1,0 +1,130 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { NotebookContextPanel } from '../../../src/components/MyWork/notebook/NotebookContextPanel';
+
+const {
+  apiMock,
+  trackFunnelEventMock,
+  useArtifactOutputsForInitiativesMock,
+} = vi.hoisted(() => ({
+  useArtifactOutputsForInitiativesMock: vi.fn(),
+  trackFunnelEventMock: vi.fn(),
+  apiMock: {
+    suggestMyIdeas: vi.fn(),
+    get: vi.fn(),
+    getLinkGraphBacklinks: vi.fn(),
+    notebookResolveEmbedChips: vi.fn(),
+    createLinkGraphEdge: vi.fn(),
+  },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+  }),
+}));
+
+vi.mock('../../../src/components/shared/NModeBlocks', () => ({
+  EmbeddedView: ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div>
+      <div>{title}</div>
+      <div>{children}</div>
+    </div>
+  ),
+}));
+
+vi.mock('../../../src/components/MyWork/notebook/PulseItemPickerModal', () => ({
+  PulseItemPickerModal: () => null,
+}));
+
+vi.mock('../../../src/components/ReportsAndPresentations/useRapData', () => ({
+  useArtifactOutputsForInitiatives: (...args: unknown[]) => useArtifactOutputsForInitiativesMock(...args),
+}));
+
+vi.mock('../../../src/services/funnelAnalytics', () => ({
+  trackFunnelEvent: (...args: unknown[]) => trackFunnelEventMock(...args),
+}));
+
+vi.mock('../../../src/services/api', () => ({
+  Api: apiMock,
+}));
+
+describe('NotebookContextPanel linked outputs', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    apiMock.suggestMyIdeas.mockResolvedValue([]);
+    apiMock.get.mockResolvedValue([]);
+    apiMock.getLinkGraphBacklinks.mockResolvedValue([
+      {
+        id: 'backlink-1',
+        sourceType: 'initiative',
+        sourceId: 'init-1',
+      },
+    ]);
+    apiMock.notebookResolveEmbedChips.mockResolvedValue({
+      chips: [
+        {
+          artifactType: 'initiative',
+          artifactId: 'init-1',
+          title: 'Growth initiative',
+          snippet: 'Primary linked initiative',
+        },
+      ],
+    });
+    useArtifactOutputsForInitiativesMock.mockReturnValue({
+      rows: [
+        {
+          kind: 'presentation',
+          originRecordId: 'deck-1',
+          artifactId: 'artifact-deck-1',
+          title: 'Board deck',
+          statusKey: 'shared',
+          owner: 'user-1',
+          updatedAt: '2026-03-24T07:00:00.000Z',
+          exportFormats: ['pptx'],
+          governance: { visibilityScope: 'review_shared' },
+        },
+      ],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+  });
+
+  it('renders linked outputs sourced from note initiative backlinks', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    render(
+      <NotebookContextPanel
+        open
+        onClose={vi.fn()}
+        editor={null}
+        noteId="note-1"
+        noteTitle="Q1 planning"
+        noteTags={['board']}
+        allNotes={[]}
+      />,
+    );
+
+    await waitFor(() => expect(apiMock.getLinkGraphBacklinks).toHaveBeenCalled());
+    expect(screen.getByText('Linked outputs')).toBeInTheDocument();
+    expect(screen.getByText('Board deck')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByText('Open')[1]!);
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: {
+          type: 'presentation',
+          id: 'deck-1',
+          name: 'Board deck',
+        },
+      }),
+    );
+  });
+});

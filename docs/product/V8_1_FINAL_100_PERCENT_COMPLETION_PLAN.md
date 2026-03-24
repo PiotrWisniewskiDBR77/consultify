@@ -220,20 +220,15 @@ This is the actual closure gap list that must be driven to zero or explicitly de
    - target architecture,
    - current runtime truth,
    - and historical phased delivery assumptions.
-3. There is no single final closure matrix inside the `V8.1` docs stating:
-   - what is fulfilled,
-   - what is partial,
-   - what is deferred,
-   - and why.
+3. The final closure matrix now exists in `docs/product/work-packets/V81_FINAL_CLOSURE_MATRIX.md`, but the remaining staging/sign-off blockers must still remain explicit.
 
 ### 7.2 Runtime gaps
 
-1. `ArtifactRun` materialization is still `report`-only.
-2. `presentation` does not yet have a fully equivalent governed `ArtifactRun` completion path.
-3. `sheet` is substrate-visible and library-visible, but not yet fully closed as a governed artifact runtime in the same way the docs imply.
-4. Validation is still distributed and format-native rather than clearly elevated into an artifact-stage discipline.
-5. Governance semantics still risk collapsing execution approval and artifact acceptance into the same actor path.
-6. Some planned shared artifact APIs are still absent or only partially represented.
+1. Governed `ArtifactRun` materialization is now closed for `document` and `presentation`, but not for `sheet`.
+2. `sheet` is substrate-visible and library-visible, but not yet fully closed as a governed chat-driven artifact runtime in the same way the broader doctrine implies.
+3. Validation is still distributed and format-native rather than clearly elevated into an artifact-stage discipline.
+4. Governance semantics still risk collapsing execution approval and artifact acceptance into the same actor path.
+5. Some planned shared artifact APIs are still absent or only partially represented.
 
 ### 7.3 Surface gaps
 
@@ -249,16 +244,16 @@ This is the actual closure gap list that must be driven to zero or explicitly de
    - `Waiting For Review`
    - `Recent Outputs`
    - `Artifacts Linked To My Initiatives`
-4. Object-linked outputs panels are not consistently present across key modules.
+4. Object-linked outputs panels are now present on selected key modules, but are not yet consistently propagated across all major module surfaces.
 5. Artifact workspace behavior is still split by format-specific builders rather than experienced as one clearly unified artifact family.
 
 ### 7.4 Evidence and closure gaps
 
-1. Targeted local tests exist, but closure-grade evidence is incomplete.
-2. Full tri-format deep-flow evidence does not yet exist.
+1. Targeted local tests and local browser smoke now exist, but live staging evidence is still incomplete.
+2. Full tri-format local deep-flow evidence now exists for the implemented `document` / `presentation` / governed `sheet` scope.
 3. Staging verification summary is missing.
-4. Operator-ready closure for the artifact runtime is not yet fully documented and evidenced.
-5. The package-level deferred ledger exists in `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, but the `V8.1` artifact-runtime-specific closure matrix still needs reconciliation against that ledger.
+4. Operator-ready closure is now documented through the evidence pack and closure matrix, but still lacks staging confirmation.
+5. The package-level deferred ledger exists in `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, and the `V8.1` artifact-runtime-specific closure matrix now exists in `docs/product/work-packets/V81_FINAL_CLOSURE_MATRIX.md`.
 
 ---
 

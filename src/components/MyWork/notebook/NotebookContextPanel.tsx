@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { useArtifactOutputsForInitiatives } from '@/components/ReportsAndPresentations/useRapData';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { NotebookPage } from '@/types/myWork';
@@ -177,6 +178,24 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     scored.sort((a, b) => b.score - a.score);
     return scored.map((x) => x.n);
   }, [allNotes, noteId, searchTermTokens]);
+
+  const initiativeBacklinkIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          usedIn
+            .filter((item) => String(item.sourceType || '').trim().toLowerCase() === 'initiative')
+            .map((item) => String(item.sourceId || '').trim())
+            .filter(Boolean),
+        ),
+      ),
+    [usedIn],
+  );
+  const {
+    rows: linkedOutputRows,
+    loading: linkedOutputsLoading,
+    error: linkedOutputsError,
+  } = useArtifactOutputsForInitiatives(initiativeBacklinkIds, 8);
 
   useEffect(() => {
     if (!open) return;
@@ -403,7 +422,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   };
 
   const openItem = (
-    type: 'idea' | 'initiative' | 'task' | 'decision' | 'notebook' | 'report' | 'presentation',
+    type: 'idea' | 'initiative' | 'task' | 'decision' | 'notebook' | 'report' | 'presentation' | 'sheet',
     id: string,
     name: string
   ) => {
@@ -597,6 +616,69 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </EmbeddedView>
+            </div>
+
+            <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
+              <EmbeddedView
+                title={pl ? 'Powiązane outputy' : 'Linked outputs'}
+                count={linkedOutputRows.length}
+                loading={linkedOutputsLoading}
+                readOnly
+                viewModes={['list']}
+              >
+                {linkedOutputsError ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    {linkedOutputsError}
+                  </div>
+                ) : initiativeBacklinkIds.length === 0 && !linkedOutputsLoading ? (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                    {pl
+                      ? 'Brak outputów powiązanych z inicjatywami tej notatki.'
+                      : 'No outputs linked to this note initiatives yet.'}
+                  </div>
+                ) : linkedOutputRows.length === 0 && !linkedOutputsLoading ? (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                    {pl ? 'Brak powiązanych outputów.' : 'No linked outputs yet.'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {linkedOutputRows.slice(0, 8).map((row) => (
+                      <div
+                        key={row.artifactId || `${row.kind}:${row.originRecordId}`}
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                              {row.title}
+                            </div>
+                            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                              {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() =>
+                              openItem(
+                                row.kind === 'document'
+                                  ? 'report'
+                                  : row.kind === 'presentation'
+                                    ? 'presentation'
+                                    : 'sheet',
+                                row.originRecordId,
+                                row.title,
+                              )
+                            }
+                            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                          >
+                            <ExternalLink size={12} />
+                            {pl ? 'Otwórz' : 'Open'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </EmbeddedView>

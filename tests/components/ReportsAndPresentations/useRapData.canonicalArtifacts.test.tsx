@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   useArtifactOutputsList,
   useArtifactOutputsForInitiative,
+  useArtifactOutputsForInitiatives,
   useMyWorkArtifactOutputs,
   usePresentations,
   useReports,
@@ -325,6 +326,71 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
         sourceInitiativeId: 'init-1',
       }),
     );
+  });
+
+  it('useArtifactOutputsForInitiatives merges and deduplicates canonical rows across initiative backlinks', async () => {
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      if (url.includes('/api/artifacts?sourceInitiativeId=init-1&limit=8')) {
+        return jsonResponse({
+          data: [
+            {
+              originRuntime: 'report',
+              originRecordId: 'init-r1',
+              artifactId: 'art-shared',
+              resolvedTitle: 'Shared initiative report',
+              originStatus: 'draft',
+              ownerUserId: 'user-a',
+              sourceInitiativeId: 'init-1',
+              lastTransitionAt: '2026-03-24T08:00:00Z',
+            },
+          ],
+        });
+      }
+      if (url.includes('/api/artifacts?sourceInitiativeId=init-2&limit=8')) {
+        return jsonResponse({
+          data: [
+            {
+              originRuntime: 'report',
+              originRecordId: 'init-r1',
+              artifactId: 'art-shared',
+              resolvedTitle: 'Shared initiative report',
+              originStatus: 'draft',
+              ownerUserId: 'user-a',
+              sourceInitiativeId: 'init-1',
+              lastTransitionAt: '2026-03-24T08:00:00Z',
+            },
+            {
+              originRuntime: 'presentation',
+              originRecordId: 'deck-2',
+              artifactId: 'art-deck-2',
+              resolvedTitle: 'Executive deck',
+              originStatus: 'shared',
+              ownerUserId: 'user-b',
+              sourceInitiativeId: 'init-2',
+              lastTransitionAt: '2026-03-24T09:00:00Z',
+            },
+          ],
+        });
+      }
+      return jsonResponse({ data: [] });
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useArtifactOutputsForInitiatives(['init-2', 'init-1', 'init-1']));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(calls).toEqual([
+      expect.stringContaining('/api/artifacts?sourceInitiativeId=init-1&limit=8'),
+      expect.stringContaining('/api/artifacts?sourceInitiativeId=init-2&limit=8'),
+    ]);
+    expect(result.current.rows).toHaveLength(2);
+    expect(result.current.rows.map((row) => row.title)).toEqual([
+      'Shared initiative report',
+      'Executive deck',
+    ]);
+    expect(result.current.error).toBeNull();
   });
 
   it('useReports fails closed when canonical registry is unavailable', async () => {

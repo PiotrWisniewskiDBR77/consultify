@@ -51,6 +51,33 @@ function formatLabel(value: string | null | undefined): string {
     .join(' ');
 }
 
+function formatSourceSummary(
+  row: Pick<UnifiedOutputRow, 'sourceType' | 'sourceInitiativeId'>,
+  t: (key: string, fallback?: string) => string,
+): string {
+  const parts: string[] = [];
+  if (row.sourceType) {
+    parts.push(formatLabel(row.sourceType));
+  }
+  if (row.sourceInitiativeId) {
+    parts.push(t('rap.outputs.source.initiativeLinked', 'Initiative linked'));
+  }
+  return parts.length ? parts.join(' · ') : '—';
+}
+
+function formatReviewSummary(
+  row: Pick<UnifiedOutputRow, 'governance'>,
+  t: (key: string, fallback?: string) => string,
+): string {
+  const state = formatLabel(row.governance?.publishState);
+  if (state === '—') return '—';
+  const gateCount = row.governance?.reviewGateCount;
+  if (typeof gateCount === 'number' && gateCount > 0) {
+    return `${state} (${gateCount})`;
+  }
+  return state;
+}
+
 type AggregateRow = UnifiedOutputRow & { id: string; title: string };
 
 interface OutputsAggregateTabContentProps {
@@ -226,6 +253,26 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         render: (row: AggregateRow) => (
           <span className="text-xs text-slate-600 dark:text-slate-300">
             {formatLabel(row.governance?.visibilityScope)}
+          </span>
+        ),
+      },
+      {
+        id: 'source',
+        label: t('rap.outputs.columns.source', 'Source'),
+        width: '150px',
+        render: (row: AggregateRow) => (
+          <span className="text-xs text-slate-600 dark:text-slate-300">
+            {formatSourceSummary(row, t)}
+          </span>
+        ),
+      },
+      {
+        id: 'review',
+        label: t('rap.outputs.columns.review', 'Review'),
+        width: '130px',
+        render: (row: AggregateRow) => (
+          <span className="text-xs text-slate-600 dark:text-slate-300">
+            {formatReviewSummary(row, t)}
           </span>
         ),
       },
@@ -414,6 +461,18 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                   {t('rap.outputs.preview.reviewersShort', ' gates')})
                 </span>
               ) : null}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.source', 'Source')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {formatSourceSummary(item, t)}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.artifactId', 'Artifact ID')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {item.artifactId || '—'}
+              </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.exports', 'Exports')}:{' '}

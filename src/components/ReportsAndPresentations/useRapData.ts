@@ -442,6 +442,73 @@ export function useArtifactOutputsForInitiative(initiativeId: string | null | un
   return { rows, loading, error, refetch: fetchOutputs };
 }
 
+export function useArtifactOutputsForInitiatives(
+  initiativeIds: string[] | null | undefined,
+  limit = 8,
+) {
+  const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizedIds = Array.from(
+    new Set((initiativeIds || []).map((id) => String(id || '').trim()).filter(Boolean)),
+  ).sort();
+  const idsKey = normalizedIds.join('|');
+
+  const fetchOutputs = useCallback(async () => {
+    if (!normalizedIds.length) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const responses = await Promise.all(
+        normalizedIds.map(async (initiativeId) => {
+          const qs = new URLSearchParams({
+            sourceInitiativeId: initiativeId,
+            limit: String(Math.max(1, limit)),
+          });
+          const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
+          if (!res.ok) {
+            throw new Error('Canonical artifact registry failed to load initiative outputs.');
+          }
+          const data = await res.json();
+          return Array.isArray(data.data) ? data.data : [];
+        }),
+      );
+
+      const seen = new Set<string>();
+      const mapped = responses
+        .flat()
+        .map(mapRegistryItemToUnified)
+        .filter((item: UnifiedOutputRow | null): item is UnifiedOutputRow => {
+          if (!item) return false;
+          const key = item.artifactId || `${item.kind}:${item.originRecordId}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+      setRows(mapped);
+      setError(null);
+    } catch {
+      setRows([]);
+      setError('Canonical artifact registry failed to load initiative outputs.');
+    } finally {
+      setLoading(false);
+    }
+  }, [idsKey, limit]);
+
+  useEffect(() => {
+    void fetchOutputs();
+  }, [fetchOutputs]);
+
+  return { rows, loading, error, refetch: fetchOutputs };
+}
+
 export function usePresentations() {
   const [presentations, setPresentations] = useState<PresentationItem[]>([]);
   const [loading, setLoading] = useState(true);
