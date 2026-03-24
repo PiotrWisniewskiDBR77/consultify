@@ -66,7 +66,21 @@ interface AppProvidersProps {
   children: React.ReactNode;
 }
 
+const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <V8Provider>
+    <TrialProvider>
+      <AccessPolicyProvider>
+        <AIProvider>
+          <HelpProvider>{children}</HelpProvider>
+        </AIProvider>
+      </AccessPolicyProvider>
+    </TrialProvider>
+  </V8Provider>
+);
+
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
+  const isAuthenticated = useAppStore((s) => s.currentUser?.isAuthenticated === true);
+
   // Log initialization for debugging
   React.useEffect(() => {
     console.log('[AppProviders] Initializing providers...');
@@ -78,22 +92,16 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <FeatureFlagsProvider>
-            <V8Provider>
-              <AutoSaveProvider>
-                <TrialProvider>
-                  <AccessPolicyProvider>
-                    <AIProvider>
-                      <HelpProvider>
-                        <TourProvider>
-                          {children}
-                          <Toaster position="bottom-right" />
-                        </TourProvider>
-                      </HelpProvider>
-                    </AIProvider>
-                  </AccessPolicyProvider>
-                </TrialProvider>
-              </AutoSaveProvider>
-            </V8Provider>
+            <AutoSaveProvider>
+              <TourProvider>
+                {isAuthenticated ? (
+                  <AuthenticatedProviders>{children}</AuthenticatedProviders>
+                ) : (
+                  children
+                )}
+                <Toaster position="bottom-right" />
+              </TourProvider>
+            </AutoSaveProvider>
           </FeatureFlagsProvider>
         </BrowserRouter>
       </QueryClientProvider>

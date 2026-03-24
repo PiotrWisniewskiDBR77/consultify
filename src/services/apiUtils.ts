@@ -21,8 +21,9 @@ export const getHeaders = () => {
 export const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
   let res = await fetch(url, { ...options, headers });
+  const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
-  if (res.status === 401) {
+  if (res.status === 401 && hasStoredAuth) {
     console.log('[Api] Got 401, attempting token refresh...');
     const newToken = await tokenService.refreshToken();
     if (newToken) {

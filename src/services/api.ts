@@ -247,8 +247,10 @@ const fetchWithRetry = async (
     if (timer) window.clearTimeout(timer);
   }
 
+  const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
+
   // If 401, try to refresh token and retry once
-  if (res.status === 401) {
+  if (res.status === 401 && hasStoredAuth) {
     console.log('[Api] Got 401, attempting token refresh...');
     const newToken = await tokenService.refreshToken();
     if (newToken) {

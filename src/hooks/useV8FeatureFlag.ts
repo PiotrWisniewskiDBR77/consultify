@@ -9,7 +9,7 @@ import { V8AdminApi } from '@/services/api/v8';
 
 const V8_FLAG_QUERY_KEY = ['v8', 'flags'] as const;
 
-export function useV8FeatureFlag(module?: string) {
+export function useV8FeatureFlag(module?: string, enabled = true) {
   const { data: flags, isLoading, error } = useQuery({
     queryKey: V8_FLAG_QUERY_KEY,
     queryFn: async () => {
@@ -20,6 +20,7 @@ export function useV8FeatureFlag(module?: string) {
         return {} as Record<string, boolean>;
       }
     },
+    enabled,
     staleTime: 60_000,
     retry: false,
   });

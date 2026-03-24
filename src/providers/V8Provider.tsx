@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
+import { useAppStore } from '@/store/useAppStore';
 
 interface V8ContextValue {
   isV8Enabled: boolean;
@@ -18,7 +19,9 @@ interface V8ContextValue {
 const V8Context = createContext<V8ContextValue | null>(null);
 
 export function V8Provider({ children }: { children: React.ReactNode }) {
-  const { flags: rawFlags, isLoading, error } = useV8FeatureFlag();
+  const currentUser = useAppStore((state) => state.currentUser);
+  const isAuthenticated = currentUser?.isAuthenticated === true;
+  const { flags: rawFlags, isLoading, error } = useV8FeatureFlag(undefined, isAuthenticated);
 
   const value = useMemo<V8ContextValue>(() => {
     const flags = error ? undefined : rawFlags;
