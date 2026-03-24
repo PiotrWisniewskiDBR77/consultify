@@ -451,6 +451,14 @@ function cloneMockScreen(): HomeScreenData {
   return JSON.parse(JSON.stringify(MOCK_SCREEN)) as HomeScreenData;
 }
 
+function createEmptyScreen(): HomeScreenData {
+  return {
+    ...cloneMockScreen(),
+    updatedAt: new Date().toISOString(),
+    blocks: [],
+  };
+}
+
 function getDefaultLayout(): HomeLayoutConfig {
   return JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as HomeLayoutConfig;
 }
@@ -671,30 +679,26 @@ export function useHomeData(refreshTrigger?: number): HomeData {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const [screenRes, prefsRes] = await Promise.allSettled([
-        Api.get('/my-work/home/v2').catch(() => null),
-        Api.get('/preferences').catch(() => null),
-      ]);
+    const [screenRes, prefsRes] = await Promise.allSettled([
+      Api.get('/my-work/home/v2'),
+      Api.get('/preferences').catch(() => null),
+    ]);
 
-      const screenData =
-        screenRes.status === 'fulfilled' && screenRes.value?.data?.blocks
-          ? (screenRes.value.data as HomeScreenData)
-          : cloneMockScreen();
-      const savedLayout =
-        prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout
-          ? sanitizeLayout(prefsRes.value.data.home_layout)
-          : getDefaultLayout();
+    const screenData =
+      screenRes.status === 'fulfilled' && screenRes.value?.data?.blocks
+        ? (screenRes.value.data as HomeScreenData)
+        : createEmptyScreen();
+    const savedLayout =
+      prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout
+        ? sanitizeLayout(prefsRes.value.data.home_layout)
+        : getDefaultLayout();
 
-      setScreen(screenData);
-      setLayout(savedLayout);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load home data');
-      setScreen(cloneMockScreen());
-      setLayout(getDefaultLayout());
-    } finally {
-      setLoading(false);
+    setScreen(screenData);
+    setLayout(savedLayout);
+    if (screenRes.status === 'rejected') {
+      setError(screenRes.reason instanceof Error ? screenRes.reason.message : 'Failed to load home data');
     }
+    setLoading(false);
   }, []);
 
   const updateLayout = useCallback(async (newLayout: HomeLayoutConfig) => {

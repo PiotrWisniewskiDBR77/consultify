@@ -1,14 +1,53 @@
-/**
- * SheetsTabContent — honest empty state for governed sheet artifacts (Wave 2 surface).
- * No separate storage shell; listing will use the same registry when sheet runtime lands.
- */
-
 import { Table2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const SheetsTabContent: React.FC = () => {
+import type { FilterChip, ViewMode } from '../shared/ModuleHub';
+import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
+import type { UnifiedOutputRow } from './types';
+import type { useRapActions } from './useRapData';
+
+interface SheetsTabContentProps {
+  viewMode: ViewMode;
+  searchQuery: string;
+  activeFilters: FilterChip[];
+  onFilterChange: (filters: FilterChip[]) => void;
+  rows: UnifiedOutputRow[];
+  loading: boolean;
+  error?: string | null;
+  onRefresh: () => void;
+  actions: ReturnType<typeof useRapActions>;
+}
+
+export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
+  viewMode,
+  searchQuery,
+  activeFilters,
+  onFilterChange,
+  rows,
+  loading,
+  error,
+  onRefresh,
+  actions,
+}) => {
   const { t } = useTranslation();
+  const hasRegistrySheets = rows.length > 0;
+
+  if (hasRegistrySheets || loading || error || searchQuery || activeFilters.length > 0) {
+    return (
+      <OutputsAggregateTabContent
+        viewMode={viewMode}
+        searchQuery={searchQuery}
+        activeFilters={activeFilters}
+        onFilterChange={onFilterChange}
+        rows={rows}
+        loading={loading}
+        error={error}
+        onRefresh={onRefresh}
+        actions={actions}
+      />
+    );
+  }
 
   return (
     <div className="flex items-center justify-center h-full p-6">
@@ -24,13 +63,13 @@ export const SheetsTabContent: React.FC = () => {
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {t(
                 'rap.sheets.emptyBody',
-                'Workbooks and governed exports will appear here through the same canonical artifact registry as documents and presentations. Sheet runtime wiring is in progress; this tab is reserved so the library taxonomy is truthful today.'
+                'Governed workbooks and exports will appear here through the same canonical artifact registry as documents and presentations. This tab now reflects live sheet artifacts as soon as the registry receives them.'
               )}
             </p>
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 pt-2">
               {t(
                 'rap.sheets.emptyHint',
-                'Use Documents or Presentations for live outputs; All / Mine / Needs review already include any sheet rows the registry returns.'
+                'Create or export a governed sheet and it will appear here automatically.'
               )}
             </p>
           </div>

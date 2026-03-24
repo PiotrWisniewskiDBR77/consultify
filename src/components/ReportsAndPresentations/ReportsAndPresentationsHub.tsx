@@ -39,6 +39,7 @@ import {
   usePresentations,
   useRapActions,
   useReports,
+  useSheetOutputs,
   useTemplates,
 } from './useRapData';
 
@@ -115,6 +116,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     error: artifactOutputsError,
     refetch: refetchArtifactOutputs,
   } = useArtifactOutputsList(libraryView);
+  const {
+    rows: sheetRows,
+    loading: sheetsLoading,
+    error: sheetsError,
+    fetchSheets,
+  } = useSheetOutputs();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -825,7 +832,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           />
         );
       case 'outputs_sheets':
-        return <SheetsTabContent />;
+        return (
+          <SheetsTabContent
+            viewMode={viewMode}
+            searchQuery={searchQuery}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            rows={sheetRows}
+            loading={sheetsLoading}
+            error={sheetsError}
+            onRefresh={fetchSheets}
+            actions={actions}
+          />
+        );
       default:
         return null;
     }

@@ -11,6 +11,7 @@ import {
   useArtifactOutputsList,
   usePresentations,
   useReports,
+  useSheetOutputs,
 } from '../../../src/components/ReportsAndPresentations/useRapData';
 
 const originalFetch = globalThis.fetch;
@@ -184,5 +185,85 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(result.current.presentations[0]?.title).toBe('Deck From Registry');
     expect(result.current.presentations[0]?.artifactId).toBe('art-p');
     expect(result.current.error).toBeNull();
+  });
+
+  it('useSheetOutputs consumes GET /api/artifacts?outputType=sheet&limit=200', async () => {
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      if (url.includes('outputType=sheet')) {
+        return jsonResponse({
+          data: [
+            {
+              originRuntime: 'sheet',
+              originRecordId: 'table-77',
+              artifactId: 'art-sheet',
+              resolvedTitle: 'Registry sheet',
+              originStatus: 'generated',
+              ownerUserId: 'owner-s',
+              lastTransitionAt: '2026-03-11T09:00:00Z',
+              exportFormat: 'xlsx',
+            },
+          ],
+        });
+      }
+      return jsonResponse({ data: [] });
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useSheetOutputs());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(calls.some((u) => u.includes('outputType=sheet') && u.includes('limit=200'))).toBe(true);
+    expect(result.current.rows).toHaveLength(1);
+    expect(result.current.rows[0]).toEqual(
+      expect.objectContaining({
+        kind: 'sheet',
+        originRecordId: 'table-77',
+        artifactId: 'art-sheet',
+        title: 'Registry sheet',
+      }),
+    );
+    expect(result.current.error).toBeNull();
+  });
+
+  it('useReports fails closed when canonical registry is unavailable', async () => {
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      }) as Promise<Response>;
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useReports());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(calls).toEqual([expect.stringContaining('/api/artifacts?outputType=report&limit=200')]);
+    expect(result.current.reports).toEqual([]);
+    expect(result.current.error).toBe('Canonical artifact registry failed to load reports.');
+  });
+
+  it('usePresentations fails closed when canonical registry is unavailable', async () => {
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      return Promise.resolve({
+        ok: false,
+        status: 501,
+        json: async () => ({}),
+      }) as Promise<Response>;
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => usePresentations());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(calls).toEqual([expect.stringContaining('/api/artifacts?outputType=presentation&limit=200')]);
+    expect(result.current.presentations).toEqual([]);
+    expect(result.current.error).toBe('Canonical artifact registry failed to load presentations.');
   });
 });

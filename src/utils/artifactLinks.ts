@@ -20,6 +20,7 @@ export type ArtifactType =
   | 'idea'
   | 'notebook'
   | 'presentation'
+  | 'sheet'
   | 'meeting'
   | 'financial_model'
   | 'budget'
@@ -146,6 +147,13 @@ export const ARTIFACT_IDENTITY: Record<ArtifactType, ArtifactIdentity> = {
     labelEn: 'Presentation',
     labelPl: 'Prezentacja',
     prefix: 'DECK',
+  },
+  sheet: {
+    icon: 'FileSpreadsheet',
+    accent: 'emerald',
+    labelEn: 'Sheet',
+    labelPl: 'Arkusz',
+    prefix: 'SHT',
   },
   meeting: {
     icon: 'CalendarDays',
@@ -281,6 +289,8 @@ function getBasePath(type: ArtifactType, id: string): string {
       return '/my-work';
     case 'presentation':
       return `/presentations/builder/${id}`;
+    case 'sheet':
+      return '/presentations';
     case 'meeting':
       return '/meeting';
     // V5-IDEA-34: Finance artifact parity

@@ -66,6 +66,12 @@ vi.mock('../../../src/components/ReportsAndPresentations/useRapData', () => ({
     error: null,
     refetch: vi.fn(),
   }),
+  useSheetOutputs: () => ({
+    rows: [],
+    loading: false,
+    error: null,
+    fetchSheets: vi.fn(),
+  }),
   useRapActions: () => ({
     exportReportPdf: vi.fn(),
     exportDeckPptx: vi.fn(),

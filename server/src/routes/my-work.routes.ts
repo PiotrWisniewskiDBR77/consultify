@@ -12088,8 +12088,7 @@ router.get(
             userId,
             roleKey: req.user?.role ? String(req.user.role) : null,
             limit: 8,
-          })
-          .catch(() => ({ mine: [], review: [], recent: [] })),
+          }),
       ]);
 
       const { appTip, aiPlaybookTip } = pickTipOfDay(now);

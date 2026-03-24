@@ -236,4 +236,15 @@ describe('V8ArtifactRunControl', () => {
 
     expect(screen.getByTestId('v8-artifact-run-button')).toBeDisabled();
   });
+
+  it('only offers the currently materializable document output in chat control', () => {
+    render(<V8ArtifactRunControl conversationId="conv-1" defaultGoal="Build board update deck" />);
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
+
+    const select = screen.getByTestId('v8-artifact-run-output-type') as HTMLSelectElement;
+    expect(select.options).toHaveLength(1);
+    expect(select.options[0]?.value).toBe('report');
+    expect(select.options[0]?.textContent).toBe('Document');
+  });
 });

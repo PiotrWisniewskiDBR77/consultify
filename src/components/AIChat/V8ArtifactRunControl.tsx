@@ -36,8 +36,6 @@ const OUTPUT_OPTIONS: Array<{
   label: string;
 }> = [
   { outputType: 'report', artifactFamily: 'document', label: 'Document' },
-  { outputType: 'presentation', artifactFamily: 'presentation', label: 'Presentation' },
-  { outputType: 'sheet', artifactFamily: 'sheet', label: 'Sheet' },
 ];
 
 function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {

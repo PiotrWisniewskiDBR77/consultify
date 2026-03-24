@@ -137,23 +137,14 @@ export function useReports() {
         return;
       }
 
-      if (artifactRes.status !== 404 && artifactRes.status !== 501) {
-        setReports([]);
-        setError('Canonical artifact registry failed to load reports.');
+      if (allowDemoData && (artifactRes.status === 404 || artifactRes.status === 501)) {
+        setReports(DEMO_REPORTS);
+        setError(null);
         return;
       }
 
-      const res = await fetch(`${API_URL}/report-builder`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        const list = data.reports || data.data || [];
-        const mapped = list.map(mapReport);
-        setReports(mapped);
-        setError(null);
-      } else {
-        setReports([]);
-        setError('Failed to load real reports from the active data source.');
-      }
+      setReports([]);
+      setError('Canonical artifact registry failed to load reports.');
     } catch {
       setReports([]);
       setError('Canonical artifact registry failed to load reports.');
@@ -375,23 +366,14 @@ export function usePresentations() {
         return;
       }
 
-      if (artifactRes.status !== 404 && artifactRes.status !== 501) {
-        setPresentations([]);
-        setError('Canonical artifact registry failed to load presentations.');
+      if (allowDemoData && (artifactRes.status === 404 || artifactRes.status === 501)) {
+        setPresentations(DEMO_PRESENTATIONS);
+        setError(null);
         return;
       }
 
-      const res = await fetch(`${API_URL}/presentations/decks`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        const list = data.data || data.decks || [];
-        const mapped = list.map(mapDeck);
-        setPresentations(mapped);
-        setError(null);
-      } else {
-        setPresentations([]);
-        setError('Failed to load real presentations from the active data source.');
-      }
+      setPresentations([]);
+      setError('Canonical artifact registry failed to load presentations.');
     } catch {
       setPresentations([]);
       setError('Canonical artifact registry failed to load presentations.');
@@ -421,6 +403,52 @@ export function usePresentations() {
   }, []);
 
   return { presentations, loading, error, fetchPresentations, deleteDeck };
+}
+
+export function useSheetOutputs() {
+  const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const allowDemoData = shouldAllowDemoData();
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSheets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/artifacts?outputType=sheet&limit=200`, {
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const list = data.data || [];
+        const mapped = list
+          .map(mapRegistryItemToUnified)
+          .filter((item: UnifiedOutputRow | null): item is UnifiedOutputRow => item?.kind === 'sheet');
+        setRows(mapped);
+        setError(null);
+        return;
+      }
+
+      if (allowDemoData && (res.status === 404 || res.status === 501)) {
+        setRows([]);
+        setError(null);
+        return;
+      }
+
+      setRows([]);
+      setError('Canonical artifact registry failed to load sheets.');
+    } catch {
+      setRows([]);
+      setError('Canonical artifact registry failed to load sheets.');
+    } finally {
+      setLoading(false);
+    }
+  }, [allowDemoData]);
+
+  useEffect(() => {
+    void fetchSheets();
+  }, [fetchSheets]);
+
+  return { rows, loading, error, fetchSheets };
 }
 
 // ─── Templates (merged: report + presentation) ───────────────────
