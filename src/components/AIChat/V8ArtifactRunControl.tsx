@@ -1,9 +1,11 @@
 import {
   CheckCircle2,
   FileOutput,
+  GitBranch,
   Loader2,
   RefreshCw,
   Sparkles,
+  ShieldCheck,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -22,6 +24,14 @@ import type {
   ArtifactRunPlan,
   ArtifactRunRecord,
 } from '@/hooks/useV8ArtifactRuns';
+import {
+  useV8ApproveExecutionRun,
+  useV8ExecutionProposals,
+  useV8ExecutionRun,
+  useV8ExecutionTransitions,
+  useV8RejectExecutionRun,
+  useV8SubmitExecutionReview,
+} from '@/hooks/useV8Execution';
 import { useV8Gate } from '@/hooks/useV8Gate';
 import { useV8Snapshots } from '@/hooks/useV8Chat';
 
@@ -59,6 +69,11 @@ function formatPlanLabel(plan: ArtifactRunPlan | null): string {
   return `${plan.outputType} · ${plan.visibilityScope}`;
 }
 
+function formatExecutionState(state: string | null | undefined): string {
+  if (!state) return 'Unknown';
+  return state.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function V8ArtifactRunControl({
   conversationId,
   defaultGoal = '',
@@ -72,14 +87,20 @@ export function V8ArtifactRunControl({
   const acceptPlan = useV8AcceptArtifactRunPlan();
   const materializeRun = useV8MaterializeArtifactRun();
   const retryRun = useV8RetryArtifactRun();
-
-  const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
-  const latestSnapshot = snapshotItems.length > 0 ? snapshotItems[snapshotItems.length - 1] : null;
   const [isOpen, setIsOpen] = useState(false);
   const [goal, setGoal] = useState(defaultGoal);
   const [selectedOutputType, setSelectedOutputType] = useState<ArtifactPlanOutputType>('report');
   const [currentRun, setCurrentRun] = useState<ArtifactRunRecord | null>(null);
   const [currentPlan, setCurrentPlan] = useState<ArtifactRunPlan | null>(null);
+  const executionRun = useV8ExecutionRun(currentRun?.executionRunId || undefined);
+  const executionProposals = useV8ExecutionProposals(currentRun?.executionRunId || undefined);
+  const executionTransitions = useV8ExecutionTransitions(currentRun?.executionRunId || undefined);
+  const submitExecutionReview = useV8SubmitExecutionReview();
+  const approveExecutionRun = useV8ApproveExecutionRun();
+  const rejectExecutionRun = useV8RejectExecutionRun();
+
+  const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
+  const latestSnapshot = snapshotItems.length > 0 ? snapshotItems[snapshotItems.length - 1] : null;
 
   useEffect(() => {
     setIsOpen(false);
@@ -100,14 +121,25 @@ export function V8ArtifactRunControl({
     createRun.isPending ||
     acceptPlan.isPending ||
     materializeRun.isPending ||
-    retryRun.isPending;
+    retryRun.isPending ||
+    submitExecutionReview.isPending ||
+    approveExecutionRun.isPending ||
+    rejectExecutionRun.isPending;
   const canPlan = Boolean(latestSnapshot?.snapshotId) && goal.trim().length > 0 && !isBusy;
   const canAccept =
     currentRun?.runStatus === 'planned' || currentRun?.runStatus === 'retry_requested';
   const canMaterialize =
     currentRun?.runStatus === 'proposal_created' &&
     (currentRun?.plan.outputType === 'report' || currentRun?.plan.outputType === 'presentation') &&
+    !['rejected', 'failed', 'cancelled', 'expired'].includes(executionRun.data?.state || '') &&
     !currentRun.artifactId;
+  const canSubmitReview = executionRun.data?.state === 'proposals_ready';
+  const canApproveReview = executionRun.data?.state === 'waiting_for_review';
+  const canRejectReview = executionRun.data?.state === 'waiting_for_review';
+  const latestTransition =
+    executionTransitions.data && executionTransitions.data.length > 0
+      ? executionTransitions.data[executionTransitions.data.length - 1]
+      : null;
 
   const handlePlan = async () => {
     if (!latestSnapshot?.snapshotId || !goal.trim()) return;
@@ -186,6 +218,56 @@ export function V8ArtifactRunControl({
         error instanceof Error
           ? error.message
           : t('v8.artifactRun.materializeFailed', 'Failed to materialize artifact run'),
+      );
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!currentRun?.executionRunId) return;
+    try {
+      await submitExecutionReview.mutateAsync(currentRun.executionRunId);
+      toast.success(
+        t('v8.artifactRun.reviewSubmitted', 'Governed execution submitted for review'),
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.artifactRun.reviewSubmitFailed', 'Failed to submit governed execution review'),
+      );
+    }
+  };
+
+  const handleApproveReview = async () => {
+    if (!currentRun?.executionRunId) return;
+    try {
+      await approveExecutionRun.mutateAsync({
+        runId: currentRun.executionRunId,
+        reason: 'Approved from governed artifact run control',
+      });
+      toast.success(t('v8.artifactRun.reviewApproved', 'Governed execution approved'));
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.artifactRun.reviewApproveFailed', 'Failed to approve governed execution'),
+      );
+    }
+  };
+
+  const handleRejectReview = async () => {
+    if (!currentRun?.executionRunId) return;
+    try {
+      await rejectExecutionRun.mutateAsync({
+        runId: currentRun.executionRunId,
+        reason: 'Rejected from governed artifact run control',
+      });
+      toast.success(t('v8.artifactRun.reviewRejected', 'Governed execution rejected'));
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.artifactRun.reviewRejectFailed', 'Failed to reject governed execution'),
       );
     }
   };
@@ -328,6 +410,101 @@ export function V8ArtifactRunControl({
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
                   {currentRun.failureReason}
+                </div>
+              )}
+
+              {currentRun.executionRunId && executionRun.data && (
+                <div
+                  data-testid="v8-artifact-run-governance"
+                  className="mt-3 rounded-2xl border border-violet-200 bg-violet-50/80 p-3 dark:border-violet-900/60 dark:bg-violet-950/20"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-violet-900 dark:text-violet-100">
+                      <ShieldCheck size={15} />
+                      {t('v8.artifactRun.governedExecution', 'Governed execution')}
+                    </div>
+                    <span className="rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300">
+                      {formatExecutionState(executionRun.data.state)}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-violet-800 dark:text-violet-200">
+                    <div className="rounded-xl border border-violet-200/80 bg-white/80 px-2 py-1.5 dark:border-violet-900/60 dark:bg-violet-950/40">
+                      <div className="opacity-70">
+                        {t('v8.artifactRun.proposalsCount', 'Proposals')}
+                      </div>
+                      <div className="mt-0.5 font-semibold">
+                        {executionProposals.data?.length ?? 0}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-violet-200/80 bg-white/80 px-2 py-1.5 dark:border-violet-900/60 dark:bg-violet-950/40">
+                      <div className="opacity-70">
+                        {t('v8.artifactRun.planVersion', 'Plan version')}
+                      </div>
+                      <div className="mt-0.5 font-semibold">{executionRun.data.planVersion}</div>
+                    </div>
+                  </div>
+
+                  {latestTransition && (
+                    <div className="mt-2 flex items-center gap-2 text-[11px] text-violet-700 dark:text-violet-300">
+                      <GitBranch size={13} />
+                      <span>
+                        {formatExecutionState(latestTransition.fromState)} {'->'}{' '}
+                        {formatExecutionState(latestTransition.toState)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {canSubmitReview && (
+                      <button
+                        type="button"
+                        data-testid="v8-artifact-run-submit-review"
+                        onClick={handleSubmitReview}
+                        disabled={isBusy}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-medium text-violet-700 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300 dark:hover:bg-violet-900/60"
+                      >
+                        {submitExecutionReview.isPending ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <ShieldCheck size={14} />
+                        )}
+                        {t('v8.artifactRun.submitReviewButton', 'Submit review')}
+                      </button>
+                    )}
+                    {canApproveReview && (
+                      <button
+                        type="button"
+                        data-testid="v8-artifact-run-approve-review"
+                        onClick={handleApproveReview}
+                        disabled={isBusy}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300"
+                      >
+                        {approveExecutionRun.isPending ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={14} />
+                        )}
+                        {t('v8.artifactRun.approveReviewButton', 'Approve review')}
+                      </button>
+                    )}
+                    {canRejectReview && (
+                      <button
+                        type="button"
+                        data-testid="v8-artifact-run-reject-review"
+                        onClick={handleRejectReview}
+                        disabled={isBusy}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+                      >
+                        {rejectExecutionRun.isPending ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <X size={14} />
+                        )}
+                        {t('v8.artifactRun.rejectReviewButton', 'Reject review')}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 

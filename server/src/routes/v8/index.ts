@@ -10,7 +10,9 @@ import adminMetricsRoutes from './admin/metrics.routes.js';
 import shadowRoutes from './admin/shadow.routes.js';
 import aiCoreRoutes from './ai-core.routes.js';
 import chatRoutes from './chat.routes.js';
+import executionRoutes from './execution.routes.js';
 import healthRoutes from './health.routes.js';
+import retrievalRoutes from './retrieval.routes.js';
 
 const v8Router = Router();
 
@@ -32,5 +34,7 @@ v8Router.use(v8MetricsMiddleware);
 v8Router.use('/health', healthRoutes);
 v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
+v8Router.use('/execution', executionRoutes);
+v8Router.use('/retrieval', retrievalRoutes);
 
 export default v8Router;

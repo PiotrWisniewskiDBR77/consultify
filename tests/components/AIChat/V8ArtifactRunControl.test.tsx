@@ -12,6 +12,12 @@ const acceptPlanMutateAsync = vi.fn();
 const materializeRunMutateAsync = vi.fn();
 const retryRunMutateAsync = vi.fn();
 const useV8SnapshotsMock = vi.fn();
+const submitReviewMutateAsync = vi.fn();
+const approveExecutionRunMutateAsync = vi.fn();
+const rejectExecutionRunMutateAsync = vi.fn();
+const useV8ExecutionRunMock = vi.fn();
+const useV8ExecutionProposalsMock = vi.fn();
+const useV8ExecutionTransitionsMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -55,15 +61,51 @@ vi.mock('../../../src/hooks/useV8ArtifactRuns', () => ({
   }),
 }));
 
+vi.mock('../../../src/hooks/useV8Execution', () => ({
+  useV8ExecutionRun: (...args: any[]) => useV8ExecutionRunMock(...args),
+  useV8ExecutionProposals: (...args: any[]) => useV8ExecutionProposalsMock(...args),
+  useV8ExecutionTransitions: (...args: any[]) => useV8ExecutionTransitionsMock(...args),
+  useV8SubmitExecutionReview: () => ({
+    mutateAsync: submitReviewMutateAsync,
+    isPending: false,
+  }),
+  useV8ApproveExecutionRun: () => ({
+    mutateAsync: approveExecutionRunMutateAsync,
+    isPending: false,
+  }),
+  useV8RejectExecutionRun: () => ({
+    mutateAsync: rejectExecutionRunMutateAsync,
+    isPending: false,
+  }),
+}));
+
 describe('V8ArtifactRunControl', () => {
   beforeEach(() => {
     createRunMutateAsync.mockReset();
     acceptPlanMutateAsync.mockReset();
     materializeRunMutateAsync.mockReset();
     retryRunMutateAsync.mockReset();
+    submitReviewMutateAsync.mockReset();
+    approveExecutionRunMutateAsync.mockReset();
+    rejectExecutionRunMutateAsync.mockReset();
     useV8SnapshotsMock.mockReset();
+    useV8ExecutionRunMock.mockReset();
+    useV8ExecutionProposalsMock.mockReset();
+    useV8ExecutionTransitionsMock.mockReset();
     useV8SnapshotsMock.mockReturnValue({
       data: [{ snapshotId: 'snap-1' }, { snapshotId: 'snap-2' }],
+      isLoading: false,
+    });
+    useV8ExecutionRunMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    });
+    useV8ExecutionProposalsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+    useV8ExecutionTransitionsMock.mockReturnValue({
+      data: [],
       isLoading: false,
     });
   });
@@ -369,6 +411,150 @@ describe('V8ArtifactRunControl', () => {
         params: {
           title: 'Executive board deck',
         },
+      }),
+    );
+  });
+
+  it('surfaces governed execution review actions from the artifact run control', async () => {
+    createRunMutateAsync.mockResolvedValue({
+      artifactRunId: 'run-1',
+      executionRunId: 'exec-1',
+      artifactPlan: {
+        artifactFamily: 'document',
+        outputType: 'report',
+        titleHint: 'Board update report',
+        governancePath: 'execution_spine',
+        visibilityScope: 'project',
+      },
+      run: {
+        runId: 'run-1',
+        artifactId: null,
+        organizationId: 'org-1',
+        executionRunId: 'exec-1',
+        contextSnapshotId: 'snap-2',
+        triggerType: 'chat',
+        sourceContextType: 'conversation',
+        sourceContextId: 'conv-1',
+        requestedByUserId: 'user-1',
+        plan: {
+          artifactFamily: 'document',
+          outputType: 'report',
+          titleHint: 'Board update report',
+          governancePath: 'execution_spine',
+          visibilityScope: 'project',
+        },
+        runStatus: 'proposal_created',
+        proposalId: 'proposal-7',
+        retryOfRunId: null,
+        failureReason: null,
+        startedAt: '2026-03-24T10:00:00.000Z',
+        completedAt: null,
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:00:00.000Z',
+      },
+    });
+    useV8ExecutionRunMock.mockReturnValue({
+      data: {
+        runId: 'exec-1',
+        organizationId: 'org-1',
+        contextSnapshotId: 'snap-2',
+        initiatorUserId: 'user-1',
+        state: 'waiting_for_review',
+        planVersion: 1,
+        goal: 'Build board update deck',
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:01:00.000Z',
+        resolvedAt: null,
+        expiresAt: null,
+        metadata: {},
+      },
+      isLoading: false,
+    });
+    useV8ExecutionProposalsMock.mockReturnValue({
+      data: [
+        {
+          proposalId: 'proposal-7',
+          executionRunId: 'exec-1',
+          contextSnapshotRef: 'snap-2',
+          proposalType: 'create_artifact',
+          summary: 'Create board update report',
+          reason: 'Requested from governed chat',
+          riskClass: 'safe_additive',
+          approvalClass: 'requires_human_approval',
+          status: 'pending_review',
+          createdAt: '2026-03-24T10:01:00.000Z',
+          resolvedAt: null,
+          resolvedBy: null,
+        },
+      ],
+      isLoading: false,
+    });
+    useV8ExecutionTransitionsMock.mockReturnValue({
+      data: [
+        {
+          transitionId: 'tr-1',
+          runId: 'exec-1',
+          fromState: 'planning',
+          toState: 'waiting_for_review',
+          triggeredBy: 'user-1',
+          reason: 'Submitted for review',
+          transitionedAt: '2026-03-24T10:02:00.000Z',
+        },
+      ],
+      isLoading: false,
+    });
+    approveExecutionRunMutateAsync.mockResolvedValue({
+      runId: 'exec-1',
+      organizationId: 'org-1',
+      contextSnapshotId: 'snap-2',
+      initiatorUserId: 'user-1',
+      state: 'approved_for_apply',
+      planVersion: 1,
+      goal: 'Build board update deck',
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:03:00.000Z',
+      resolvedAt: null,
+      expiresAt: null,
+      metadata: {},
+    });
+    rejectExecutionRunMutateAsync.mockResolvedValue({
+      runId: 'exec-1',
+      organizationId: 'org-1',
+      contextSnapshotId: 'snap-2',
+      initiatorUserId: 'user-1',
+      state: 'rejected',
+      planVersion: 1,
+      goal: 'Build board update deck',
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:03:00.000Z',
+      resolvedAt: null,
+      expiresAt: null,
+      metadata: {},
+    });
+
+    render(<V8ArtifactRunControl conversationId="conv-1" defaultGoal="Build board update deck" />);
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
+    fireEvent.click(screen.getByTestId('v8-artifact-run-plan'));
+
+    const governancePanel = await screen.findByTestId('v8-artifact-run-governance');
+    expect(governancePanel).toHaveTextContent('Governed execution');
+    expect(governancePanel).toHaveTextContent('Waiting For Review');
+    expect(governancePanel).toHaveTextContent('Proposals');
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-approve-review'));
+    await waitFor(() =>
+      expect(approveExecutionRunMutateAsync).toHaveBeenCalledWith({
+        runId: 'exec-1',
+        reason: 'Approved from governed artifact run control',
+      }),
+    );
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-reject-review'));
+    await waitFor(() =>
+      expect(rejectExecutionRunMutateAsync).toHaveBeenCalledWith({
+        runId: 'exec-1',
+        reason: 'Rejected from governed artifact run control',
       }),
     );
   });

@@ -645,7 +645,8 @@ async function backfillReportsForOrg(organizationId: string): Promise<number> {
 async function backfillPresentationsForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<PresentationBackfillRow>(
     `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
-            d.export_format, d.created_at, d.updated_at, d.source_id, d.source_refs_json
+            d.export_format, d.created_at, d.updated_at, d.source_id,
+            COALESCE(to_jsonb(d) ->> 'source_artifacts', to_jsonb(d) ->> 'source_refs_json') AS source_refs_json
      FROM presentation_decks d
      LEFT JOIN v8_artifact_origin_links l
        ON l.organization_id = d.organization_id
@@ -882,7 +883,8 @@ async function getArtifactListItemRow(
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            d.source_refs_json AS presentation_source_refs_json,
+            COALESCE(to_jsonb(d) ->> 'source_artifacts', to_jsonb(d) ->> 'source_refs_json')
+              AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -935,7 +937,8 @@ export async function listArtifactsForUser(params: {
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            d.source_refs_json AS presentation_source_refs_json,
+            COALESCE(to_jsonb(d) ->> 'source_artifacts', to_jsonb(d) ->> 'source_refs_json')
+              AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1575,24 +1578,55 @@ export async function materializeArtifactRun(
   }
 
   try {
-    await executionSpineService.submitForReview(
-      current.executionRunId,
-      validated.organizationId,
-      validated.actorUserId,
-    );
-    await executionSpineService.approveRun(
-      current.executionRunId,
-      validated.organizationId,
-      validated.actorUserId,
-      'ArtifactRun materialization approved',
-    );
-    await executionSpineService.applyRun(
-      current.executionRunId,
-      validated.organizationId,
-      validated.actorUserId,
-    );
+    const spineRun = await executionSpineService.getRun(current.executionRunId, validated.organizationId);
+    if (!spineRun) {
+      throw new Error(
+        `Execution run ${current.executionRunId} not found for ArtifactRun ${validated.runId}`,
+      );
+    }
 
-    let artifact: ArtifactListItem | null = null;
+    if (spineRun.state === 'proposals_ready') {
+      await executionSpineService.submitForReview(
+        current.executionRunId,
+        validated.organizationId,
+        validated.actorUserId,
+      );
+      await executionSpineService.approveRun(
+        current.executionRunId,
+        validated.organizationId,
+        validated.actorUserId,
+        'ArtifactRun materialization approved',
+      );
+      await executionSpineService.applyRun(
+        current.executionRunId,
+        validated.organizationId,
+        validated.actorUserId,
+      );
+    } else if (spineRun.state === 'waiting_for_review') {
+      await executionSpineService.approveRun(
+        current.executionRunId,
+        validated.organizationId,
+        validated.actorUserId,
+        'ArtifactRun materialization approved',
+      );
+      await executionSpineService.applyRun(
+        current.executionRunId,
+        validated.organizationId,
+        validated.actorUserId,
+      );
+    } else if (spineRun.state === 'approved_for_apply') {
+      await executionSpineService.applyRun(
+        current.executionRunId,
+        validated.organizationId,
+        validated.actorUserId,
+      );
+    } else if (spineRun.state !== 'applying') {
+      throw new Error(
+        `Execution run ${current.executionRunId} must be proposals_ready, waiting_for_review, approved_for_apply or applying before materialization`,
+      );
+    }
+
+    let resolvedArtifactId: string | null = null;
     if (current.plan.outputType === 'report') {
       const reportParams = await resolveMaterializedReportParams(current, validated);
       const reportBuilderService = await import('../reportBuilderService.js');
@@ -1608,12 +1642,25 @@ export async function materializeArtifactRun(
         createdBy: validated.actorUserId,
       });
 
-      artifact = await getArtifactByOrigin({
+      const artifact = await getArtifactByOrigin({
         organizationId: validated.organizationId,
         originRuntime: 'report',
         originRecordId: created.report.id,
         userId: validated.actorUserId,
       });
+      resolvedArtifactId = artifact?.artifactId || null;
+
+      // Report creation registers the canonical artifact inside the same request path.
+      // If the access-gated lookup races and returns null, fall back to the origin link
+      // that was just persisted instead of failing the whole materialization.
+      if (!resolvedArtifactId) {
+        const link = await getOriginLinkByOrigin(
+          validated.organizationId,
+          'report',
+          created.report.id,
+        );
+        resolvedArtifactId = link?.artifactId || null;
+      }
     } else {
       const presentationParams = await resolveMaterializedPresentationParams(current, validated);
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
@@ -1637,14 +1684,15 @@ export async function materializeArtifactRun(
         originSummary: presentationParams.originSummary,
       });
 
-      artifact = await getArtifactByOrigin({
+      const artifact = await getArtifactByOrigin({
         organizationId: validated.organizationId,
         originRuntime: 'presentation',
         originRecordId: outlined.deckId,
         userId: validated.actorUserId,
       });
+      resolvedArtifactId = artifact?.artifactId || null;
     }
-    if (!artifact) {
+    if (!resolvedArtifactId) {
       throw new Error(
         `Canonical artifact missing for ${current.plan.outputType} materialization ${validated.runId}`,
       );
@@ -1662,7 +1710,7 @@ export async function materializeArtifactRun(
        SET artifact_id = ?, run_status = ?, failure_reason = NULL, completed_at = ?, updated_at = ?
        WHERE run_id = ? AND organization_id = ?`,
       [
-        artifact.artifactId,
+        resolvedArtifactId,
         'completed',
         now,
         now,

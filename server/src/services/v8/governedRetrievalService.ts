@@ -189,6 +189,21 @@ export async function createRetrievalRequest(
   return request;
 }
 
+export async function getRequest(
+  requestId: string,
+  organizationId: string,
+): Promise<RetrievalRequest | null> {
+  const row = await dbGet<RequestRow>(
+    `SELECT * FROM v8_retrieval_requests
+     WHERE request_id = ? AND organization_id = ?`,
+    [requestId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) return null;
+  return rowToRequest(row);
+}
+
 // ==========================================
 // ACL ENFORCEMENT (Decision D10 staleness windows)
 // ==========================================

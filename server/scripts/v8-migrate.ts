@@ -21,7 +21,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '..', 'migrations');
-const MIGRATION_FILE_PATTERN = /^2026\d{4}_v8_.*\.sql$/;
+const MIGRATION_MANIFEST = path.resolve(MIGRATIONS_DIR, 'v8-manifest.json');
+// The frozen package spans both V8.0 and V8.1 wave migrations.
+// Discovery must include both `..._v8_...` and `..._v81_...` files.
+const MIGRATION_FILE_PATTERN = /^2026\d{4}_v8(?:1)?_.*\.sql$/;
 const SCHEMA_NAME = 'v8';
 
 // ---------------------------------------------------------------------------
@@ -49,9 +52,31 @@ function parseMode(): Mode {
 
 function discoverMigrationFiles(): string[] {
   const allFiles = fs.readdirSync(MIGRATIONS_DIR);
-  const v8Files = allFiles
-    .filter((f) => MIGRATION_FILE_PATTERN.test(f))
-    .sort();
+  const discovered = allFiles.filter((f) => MIGRATION_FILE_PATTERN.test(f));
+
+  if (fs.existsSync(MIGRATION_MANIFEST)) {
+    const manifest = JSON.parse(fs.readFileSync(MIGRATION_MANIFEST, 'utf-8')) as {
+      migrations?: Array<{ file: string; order?: number }>;
+    };
+
+    const ordered = (manifest.migrations || [])
+      .filter((entry) => MIGRATION_FILE_PATTERN.test(entry.file))
+      .filter((entry) => discovered.includes(entry.file))
+      .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
+      .map((entry) => entry.file);
+
+    const missingFromManifest = discovered.filter((file) => !ordered.includes(file)).sort();
+    const v8Files = [...ordered, ...missingFromManifest];
+
+    if (v8Files.length === 0) {
+      console.error(`No V8 migration files found in ${MIGRATIONS_DIR}`);
+      process.exit(1);
+    }
+
+    return v8Files;
+  }
+
+  const v8Files = discovered.sort();
 
   if (v8Files.length === 0) {
     console.error(`No V8 migration files found in ${MIGRATIONS_DIR}`);
