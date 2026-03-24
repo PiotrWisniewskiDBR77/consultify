@@ -50,7 +50,7 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
     CREATE TABLE IF NOT EXISTS v8_output_artifacts (
       artifact_id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL,
-      output_type TEXT NOT NULL CHECK (output_type IN ('report', 'presentation')),
+      output_type TEXT NOT NULL CHECK (output_type IN ('report', 'presentation', 'sheet')),
       artifact_family TEXT CHECK (artifact_family IN ('document', 'presentation', 'sheet')),
       delivery_state TEXT NOT NULL DEFAULT 'draft',
       title_snapshot TEXT,

@@ -272,6 +272,80 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(spineMocks.transitionRunState).toHaveBeenCalled();
   });
 
+  it('registerGovernedTableSheetArtifact persists sheet output_type and origin link for tp_tables id', async () => {
+    const record = await artifactRegistryService.registerGovernedTableSheetArtifact({
+      organizationId: 'org-a',
+      userId: 'user-sheet',
+      tableId: 'tp-table-99',
+      tableName: 'Cap table model',
+    });
+
+    expect(record.outputType).toBe('sheet');
+    expect(record.artifactFamily).toBe('sheet');
+    expect(record.deliveryState).toBe('ready');
+    expect(record.visibilityScope).toBe('organization');
+    expect(record.originSummary).toMatchObject({
+      sourceTable: 'tp_tables',
+      exportFormat: 'xlsx',
+      governanceMode: 'governed',
+    });
+
+    const byOrigin = await artifactRegistryService.getArtifactByOrigin({
+      organizationId: 'org-a',
+      originRuntime: 'sheet',
+      originRecordId: 'tp-table-99',
+      userId: 'user-peer',
+      roleKey: null,
+    });
+    expect(byOrigin?.artifactId).toBe(record.artifactId);
+    expect(byOrigin?.resolvedTitle).toBe('Cap table model');
+    expect(byOrigin?.exportFormat).toBe('xlsx');
+  });
+
+  it('registerGovernedTableSheetArtifact refreshes metadata when origin already exists (idempotent)', async () => {
+    const first = await artifactRegistryService.registerGovernedTableSheetArtifact({
+      organizationId: 'org-a',
+      userId: 'user-sheet',
+      tableId: 'tp-table-dup',
+      tableName: 'Version A',
+    });
+    const second = await artifactRegistryService.registerGovernedTableSheetArtifact({
+      organizationId: 'org-a',
+      userId: 'user-sheet',
+      tableId: 'tp-table-dup',
+      tableName: 'Version B',
+    });
+
+    expect(second.artifactId).toBe(first.artifactId);
+    expect(second.titleSnapshot).toBe('Version B');
+
+    const loaded = await artifactRegistryService.getArtifactForUser({
+      organizationId: 'org-a',
+      artifactId: first.artifactId,
+      userId: 'user-stranger',
+      roleKey: null,
+    });
+    expect(loaded?.titleSnapshot).toBe('Version B');
+  });
+
+  it('listArtifactsForUser includes sheet artifacts when outputType filter is sheet', async () => {
+    await artifactRegistryService.registerGovernedTableSheetArtifact({
+      organizationId: 'org-a',
+      userId: 'user-sheet',
+      tableId: 'tp-sheet-list',
+      tableName: 'Only sheet here',
+    });
+
+    const sheets = await artifactRegistryService.listArtifactsForUser({
+      organizationId: 'org-a',
+      userId: 'user-stranger',
+      filters: { outputType: 'sheet', limit: 50 },
+    });
+    expect(sheets.length).toBeGreaterThanOrEqual(1);
+    expect(sheets.every((i) => i.outputType === 'sheet')).toBe(true);
+    expect(sheets.some((i) => i.resolvedTitle === 'Only sheet here')).toBe(true);
+  });
+
   it('listArtifactsForUser applies outputType filter against persisted rows', async () => {
     await artifactRegistryService.registerArtifactOrigin({
       organizationId: 'org-a',
