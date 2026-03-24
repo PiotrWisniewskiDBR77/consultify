@@ -1686,6 +1686,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           }
           return;
         case 'navigate':
+          if (action.target === 'outputs_all') {
+            navigate('/presentations?tab=all');
+            return;
+          }
+          if (action.target === 'outputs_mine') {
+            navigate('/presentations?tab=mine');
+            return;
+          }
+          if (action.target === 'outputs_review') {
+            navigate('/presentations?tab=needs_review');
+            return;
+          }
           setActiveTab(action.target);
           return;
         case 'open':

@@ -41,6 +41,16 @@ function rowKey(row: UnifiedOutputRow): string {
   return `${row.kind}:${row.originRecordId}`;
 }
 
+function formatLabel(value: string | null | undefined): string {
+  const normalized = String(value || '').trim();
+  if (!normalized) return '—';
+  return normalized
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 type AggregateRow = UnifiedOutputRow & { id: string; title: string };
 
 interface OutputsAggregateTabContentProps {
@@ -200,7 +210,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         ],
         render: (row: AggregateRow) => (
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300 capitalize">
-            {row.statusKey}
+            {formatLabel(row.statusKey)}
           </span>
         ),
       },
@@ -208,6 +218,26 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         id: 'owner',
         label: t('rap.columns.owner', 'Właściciel'),
         width: '160px',
+      },
+      {
+        id: 'visibility',
+        label: t('rap.outputs.columns.visibility', 'Visibility'),
+        width: '120px',
+        render: (row: AggregateRow) => (
+          <span className="text-xs text-slate-600 dark:text-slate-300">
+            {formatLabel(row.governance?.visibilityScope)}
+          </span>
+        ),
+      },
+      {
+        id: 'exports',
+        label: t('rap.outputs.columns.exports', 'Exports'),
+        width: '120px',
+        render: (row: AggregateRow) => (
+          <span className="text-xs text-slate-600 dark:text-slate-300">
+            {row.exportFormats.length ? row.exportFormats.join(', ').toUpperCase() : '—'}
+          </span>
+        ),
       },
       {
         id: 'updatedAt',
@@ -360,12 +390,36 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.status', 'Status')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
-                {item.statusKey}
+                {formatLabel(item.statusKey)}
               </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.columns.owner', 'Owner')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">{item.owner}</span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.visibility', 'Visibility')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {formatLabel(item.governance?.visibilityScope)}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.review', 'Review')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {formatLabel(item.governance?.publishState)}
+              </span>
+              {typeof item.governance?.reviewGateCount === 'number' ? (
+                <span className="ml-1">
+                  ({item.governance.reviewGateCount}
+                  {t('rap.outputs.preview.reviewersShort', ' gates')})
+                </span>
+              ) : null}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('rap.outputs.preview.exports', 'Exports')}:{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {item.exportFormats.length ? item.exportFormats.join(', ').toUpperCase() : '—'}
+              </span>
             </div>
             {item.kind === 'sheet' ? (
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">

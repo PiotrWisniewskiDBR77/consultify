@@ -198,7 +198,7 @@ export interface MaterializeArtifactRunParams {
   actorUserId: string;
   title?: string;
   description?: string;
-  sourceType?: ArtifactRunReportSourceType;
+  sourceType?: string;
   sourceId?: string;
   sourceName?: string;
   templateId?: string;
@@ -272,7 +272,7 @@ export const MaterializeArtifactRunParamsSchema = z.object({
   actorUserId: z.string().min(1),
   title: z.string().trim().min(1).optional(),
   description: z.string().trim().min(1).optional(),
-  sourceType: z.enum(ArtifactRunReportSourceTypeValues).optional(),
+  sourceType: z.string().trim().min(1).optional(),
   sourceId: z.string().trim().min(1).optional(),
   sourceName: z.string().trim().min(1).optional(),
   templateId: z.string().trim().min(1).optional(),

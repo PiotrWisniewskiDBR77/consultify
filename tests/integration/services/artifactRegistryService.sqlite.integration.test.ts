@@ -592,6 +592,72 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(artifact?.resolvedTitle).toBe('Quarterly board report');
   });
 
+  it('materializeArtifactRun completes a presentation run and links the canonical artifact', async () => {
+    spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-6' });
+    spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-deck-1' });
+
+    const created = await artifactRegistryService.createArtifactRunFromChat({
+      organizationId: 'org-a',
+      userId: 'user-owner',
+      conversationId: 'conv-6',
+      contextSnapshotId: 'snap-6',
+      goal: 'Executive board deck',
+      requestedArtifactFamily: 'presentation',
+      requestedOutputType: 'presentation',
+    });
+
+    await artifactRegistryService.acceptArtifactRunPlan({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+    });
+
+    const completed = await artifactRegistryService.materializeArtifactRun({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+      title: 'Executive board deck',
+      sourceType: 'tool',
+      sourceId: 'tool-session-1',
+      sourceName: 'Strategy workshop',
+      config: {
+        audience: 'executive',
+        goal: 'decide',
+        language: 'en',
+        theme: 'modern',
+        confidentiality: 'internal',
+      },
+    });
+
+    expect(completed.runStatus).toBe('completed');
+    expect(completed.artifactId).toBeTruthy();
+    expect(completed.completedAt).toBeTruthy();
+    expect(spineMocks.submitForReview).toHaveBeenCalledWith(
+      'exec-run-6',
+      'org-a',
+      'user-owner',
+    );
+    expect(spineMocks.approveRun).toHaveBeenCalledWith(
+      'exec-run-6',
+      'org-a',
+      'user-owner',
+      'ArtifactRun materialization approved',
+    );
+    expect(spineMocks.applyRun).toHaveBeenCalledWith('exec-run-6', 'org-a', 'user-owner');
+    expect(spineMocks.completeRun).toHaveBeenCalledWith('exec-run-6', 'org-a', 'user-owner');
+
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId: 'org-a',
+      artifactId: completed.artifactId!,
+      userId: 'user-owner',
+      roleKey: null,
+    });
+    expect(artifact).not.toBeNull();
+    expect(artifact?.outputType).toBe('presentation');
+    expect(artifact?.originRuntime).toBe('presentation');
+    expect(artifact?.resolvedTitle).toBe('Executive board deck');
+  });
+
   it('retryArtifactRun persists retry lineage and returns a fresh planned run (spine mocked)', async () => {
     spineMocks.initiateHandoff
       .mockResolvedValueOnce({ executionRunId: 'exec-run-3' })

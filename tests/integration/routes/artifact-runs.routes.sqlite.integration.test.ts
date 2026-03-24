@@ -242,4 +242,47 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
       }),
     );
   });
+
+  it('materializes a presentation run through the governed artifact-run route', async () => {
+    spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-presentation-1' });
+    spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-presentation-1' });
+
+    const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: 'conv-presentation-1',
+      contextSnapshotId: 'snap-presentation-1',
+      goal: 'Create a board presentation',
+      requestedArtifactFamily: 'presentation',
+      requestedOutputType: 'presentation',
+    });
+
+    expect(createRes.status).toBe(201);
+    const runId = String(createRes.body.data.run.runId);
+
+    const acceptRes = await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
+    expect(acceptRes.status).toBe(200);
+    expect(acceptRes.body.data.runStatus).toBe('proposal_created');
+
+    const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
+      title: 'Board presentation',
+      sourceType: 'tool',
+      sourceId: 'tool-session-1',
+      sourceName: 'Strategy workshop',
+      config: {
+        audience: 'executive',
+        goal: 'decide',
+        language: 'en',
+        theme: 'modern',
+        confidentiality: 'internal',
+      },
+    });
+
+    expect(materializeRes.status).toBe(200);
+    expect(materializeRes.body.data).toEqual(
+      expect.objectContaining({
+        runId,
+        runStatus: 'completed',
+      }),
+    );
+    expect(materializeRes.body.data.artifactId).toBeTruthy();
+  });
 });

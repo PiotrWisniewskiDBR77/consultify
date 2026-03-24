@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   useArtifactOutputsList,
+  useMyWorkArtifactOutputs,
   usePresentations,
   useReports,
   useSheetOutputs,
@@ -223,6 +224,67 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
         artifactId: 'art-sheet',
         title: 'Registry sheet',
       }),
+    );
+    expect(result.current.error).toBeNull();
+  });
+
+  it('useMyWorkArtifactOutputs consumes GET /api/artifacts/my-work and maps lane payloads', async () => {
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      if (url.includes('/api/artifacts/my-work?limit=8')) {
+        return jsonResponse({
+          mine: [
+            {
+              originRuntime: 'report',
+              originRecordId: 'mine-r1',
+              artifactId: 'art-mine-1',
+              resolvedTitle: 'My weekly report',
+              originStatus: 'draft',
+              ownerUserId: 'user-a',
+              lastTransitionAt: '2026-03-24T08:00:00Z',
+            },
+          ],
+          review: [
+            {
+              originRuntime: 'presentation',
+              originRecordId: 'review-p1',
+              artifactId: 'art-review-1',
+              resolvedTitle: 'Board review deck',
+              originStatus: 'shared',
+              ownerUserId: 'user-b',
+              lastTransitionAt: '2026-03-24T09:00:00Z',
+            },
+          ],
+          recent: [
+            {
+              originRuntime: 'sheet',
+              originRecordId: 'recent-s1',
+              artifactId: 'art-recent-1',
+              resolvedTitle: 'Benefits tracker',
+              originStatus: 'generated',
+              ownerUserId: 'user-c',
+              lastTransitionAt: '2026-03-24T10:00:00Z',
+            },
+          ],
+        });
+      }
+      return jsonResponse({ mine: [], review: [], recent: [] });
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useMyWorkArtifactOutputs());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(calls).toEqual([expect.stringContaining('/api/artifacts/my-work?limit=8')]);
+    expect(result.current.mine[0]).toEqual(
+      expect.objectContaining({ kind: 'document', originRecordId: 'mine-r1' }),
+    );
+    expect(result.current.review[0]).toEqual(
+      expect.objectContaining({ kind: 'presentation', originRecordId: 'review-p1' }),
+    );
+    expect(result.current.recent[0]).toEqual(
+      expect.objectContaining({ kind: 'sheet', originRecordId: 'recent-s1' }),
     );
     expect(result.current.error).toBeNull();
   });

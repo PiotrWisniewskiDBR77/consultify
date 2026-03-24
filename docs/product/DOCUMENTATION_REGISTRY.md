@@ -398,6 +398,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: safe execution brief for the implementation agent building `v8.1`, including guardrails, sequencing, compatibility rules and required evidence against the stabilized `v8` baseline
   - **Authority**: Highest for v8.1 delivery guardrails and implementation-safe startup context
 
+- `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: final closure drill-down for the `V8.1` artifact runtime and outputs scope, including doc-truth reconciliation, runtime closure, surface closure and evidence closure needed to reach honest 100%
+  - **Authority**: Highest for `V8.1` completion sequencing under the frozen package, subordinate to `V8_V81_FINAL_COMPLETION_PROGRAM.md`
+
 ### Final closure of frozen V8.0 + V8.1
 
 - `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`
@@ -414,6 +419,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Owner**: Manager Agent
   - **Scope**: operational execution ledger for the frozen `V8.0 + V8.1` package, tracking current implementation/runtime/evidence progress after the 20-wave foundation
   - **Authority**: Highest for current closure-execution status reporting below final sign-off authority
+
+- `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`
+  - **Owner**: Manager Agent
+  - **Scope**: mandatory area-by-area closure ledger for the frozen `V8.0 + V8.1` package, tracking scope, canonical docs, implementation mapping, runtime evidence, surface evidence, test/staging evidence, owner, next packet and blocker
+  - **Authority**: Highest for package-wide closure status accounting required by the final completion program
 
 - `docs/product/work-packets/DECISION_LOG_PROGRAM_CONTROL.md`
   - **Owner**: Manager Agent

@@ -22,6 +22,7 @@ import type {
   RegisterArtifactOriginParams,
 } from '../../types/artifactRegistry.js';
 import {
+  ArtifactRunReportSourceTypeValues,
   ArtifactPlanningRequestSchema,
   CreateArtifactAccessGrantParamsSchema,
   MaterializeArtifactRunParamsSchema,
@@ -42,6 +43,19 @@ const SNAPSHOT_SOURCE_KIND_TO_REPORT_SOURCE_TYPE: Record<string, ArtifactRunRepo
   financial_analysis: 'FINANCIAL_ANALYSIS',
   valuation: 'VALUATION',
   results_kpi_report: 'RESULTS_KPI_REPORT',
+};
+const VALID_REPORT_SOURCE_TYPES = new Set<string>(ArtifactRunReportSourceTypeValues);
+const SNAPSHOT_SOURCE_KIND_TO_PRESENTATION_SOURCE_ARTIFACT_TYPE: Record<string, string> = {
+  assessment: 'assessment',
+  interview: 'custom',
+  tool: 'tool_session',
+  tool_session: 'tool_session',
+  initiative: 'initiative_portfolio',
+  initiative_portfolio: 'initiative_portfolio',
+  financial_analysis: 'financial_analysis',
+  valuation: 'valuation',
+  report: 'report',
+  results_kpi_report: 'report',
 };
 
 const backfillWatermark = new Map<string, number>();
@@ -1115,6 +1129,15 @@ function mapSnapshotSourceKindToReportSourceType(
   return SNAPSHOT_SOURCE_KIND_TO_REPORT_SOURCE_TYPE[normalized] || null;
 }
 
+function normalizePresentationSourceArtifactType(sourceKind: string | null | undefined): string {
+  const normalized = String(sourceKind || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return SNAPSHOT_SOURCE_KIND_TO_PRESENTATION_SOURCE_ARTIFACT_TYPE[normalized] || 'custom';
+}
+
 async function resolveMaterializedReportParams(
   current: ArtifactRunRecord,
   params: MaterializeArtifactRunParams,
@@ -1129,11 +1152,18 @@ async function resolveMaterializedReportParams(
 }> {
   const title = String(params.title || current.plan.titleHint || 'Output draft').trim();
   const description = params.description?.trim() || undefined;
-  const sourceType = params.sourceType;
+  const normalizedSourceType = params.sourceType?.trim().toUpperCase();
+  const sourceType = normalizedSourceType && VALID_REPORT_SOURCE_TYPES.has(normalizedSourceType)
+    ? (normalizedSourceType as ArtifactRunReportSourceType)
+    : undefined;
   const sourceId = params.sourceId?.trim();
 
-  if ((sourceType && !sourceId) || (!sourceType && sourceId)) {
+  if ((params.sourceType && !sourceId) || (!params.sourceType && sourceId)) {
     throw new Error('ArtifactRun report materialization requires both sourceType and sourceId');
+  }
+
+  if (params.sourceType && !sourceType) {
+    throw new Error('ArtifactRun report materialization received an invalid sourceType');
   }
 
   if (sourceType && sourceId) {
@@ -1169,6 +1199,135 @@ async function resolveMaterializedReportParams(
     description,
     templateId: params.templateId?.trim() || undefined,
     config: params.config,
+  };
+}
+
+async function resolveMaterializedPresentationParams(
+  current: ArtifactRunRecord,
+  params: MaterializeArtifactRunParams,
+): Promise<{
+  title: string;
+  setup: {
+    title: string;
+    templateId?: string;
+    audience: 'sponsor' | 'executive' | 'investor' | 'internal';
+    goal: 'inform' | 'decide' | 'sell' | 'align';
+    language: 'en' | 'pl';
+    theme: 'corporate' | 'minimal' | 'modern';
+    confidentiality: 'confidential' | 'internal' | 'public';
+    sourceArtifacts: Array<{ type: string; id?: string; label: string }>;
+    sourceType?: string;
+    sourceId?: string;
+    visuals?: {
+      enabled?: boolean;
+      priority?: 'quality' | 'cost';
+      imageDensity?: 'low' | 'medium' | 'high';
+    };
+  };
+  originSummary: Record<string, unknown>;
+}> {
+  const title = String(params.title || current.plan.titleHint || 'Executive presentation draft').trim();
+  const cfg = params.config || {};
+  const audience =
+    cfg.audience === 'sponsor' || cfg.audience === 'executive' || cfg.audience === 'investor'
+      ? cfg.audience
+      : 'internal';
+  const goal =
+    cfg.goal === 'decide' || cfg.goal === 'sell' || cfg.goal === 'align' ? cfg.goal : 'inform';
+  const language = cfg.language === 'pl' ? 'pl' : 'en';
+  const theme = cfg.theme === 'corporate' || cfg.theme === 'minimal' ? cfg.theme : 'modern';
+  const confidentiality =
+    cfg.confidentiality === 'confidential' || cfg.confidentiality === 'public'
+      ? cfg.confidentiality
+      : 'internal';
+
+  const directSourceType = params.sourceType?.trim() || undefined;
+  const directSourceId = params.sourceId?.trim() || undefined;
+  const directSourceName = params.sourceName?.trim() || undefined;
+  if ((directSourceType && !directSourceId) || (!directSourceType && directSourceId)) {
+    throw new Error('ArtifactRun presentation materialization requires both sourceType and sourceId');
+  }
+
+  let sourceArtifacts: Array<{ type: string; id?: string; label: string }> = [];
+  let resolvedSourceType = directSourceType;
+  let resolvedSourceId = directSourceId;
+
+  if (directSourceType && directSourceId) {
+    sourceArtifacts = [
+      {
+        type: normalizePresentationSourceArtifactType(directSourceType),
+        id: directSourceId,
+        label: directSourceName || title,
+      },
+    ];
+  } else {
+    const snapshot = await contextSnapshotService.getSnapshot(
+      current.contextSnapshotId,
+      params.organizationId,
+    );
+    const derivedSource = (snapshot?.sourceContextRefs || []).find((ref) =>
+      String(ref.sourceId || '').trim(),
+    );
+    if (derivedSource) {
+      resolvedSourceType = String(derivedSource.sourceKind || '').trim() || undefined;
+      resolvedSourceId = String(derivedSource.sourceId || '').trim() || undefined;
+      sourceArtifacts = [
+        {
+          type: normalizePresentationSourceArtifactType(derivedSource.sourceKind),
+          id: resolvedSourceId,
+          label:
+            String((derivedSource as { title?: string | null }).title || '').trim() ||
+            directSourceName ||
+            title,
+        },
+      ];
+    }
+  }
+
+  if (!sourceArtifacts.length) {
+    sourceArtifacts = [{ type: 'custom', label: directSourceName || title }];
+  }
+
+  const visuals =
+    cfg.visuals && typeof cfg.visuals === 'object'
+      ? {
+          enabled:
+            typeof (cfg.visuals as Record<string, unknown>).enabled === 'boolean'
+              ? Boolean((cfg.visuals as Record<string, unknown>).enabled)
+              : undefined,
+          priority:
+            (cfg.visuals as Record<string, unknown>).priority === 'cost' ? 'cost' : 'quality',
+          imageDensity:
+            (cfg.visuals as Record<string, unknown>).imageDensity === 'low' ||
+            (cfg.visuals as Record<string, unknown>).imageDensity === 'high'
+              ? ((cfg.visuals as Record<string, unknown>).imageDensity as 'low' | 'high')
+              : 'medium',
+        }
+      : undefined;
+
+  return {
+    title,
+    setup: {
+      title,
+      templateId: params.templateId?.trim() || undefined,
+      audience,
+      goal,
+      language,
+      theme,
+      confidentiality,
+      sourceArtifacts,
+      sourceType: resolvedSourceType,
+      sourceId: resolvedSourceId,
+      visuals,
+    },
+    originSummary: {
+      sourceType: resolvedSourceType || null,
+      sourceId: resolvedSourceId || null,
+      sourceArtifacts,
+      materializedVia: 'artifact_run',
+      nativeStatus: 'draft',
+      description: params.description?.trim() || null,
+    },
   };
 }
 
@@ -1403,16 +1562,16 @@ export async function materializeArtifactRun(
   if (!current) {
     throw new Error(`ArtifactRun ${validated.runId} not found`);
   }
-  if (current.plan.outputType !== 'report') {
-    throw new Error(`ArtifactRun ${validated.runId} only supports report materialization currently`);
+  if (current.plan.outputType !== 'report' && current.plan.outputType !== 'presentation') {
+    throw new Error(
+      `ArtifactRun ${validated.runId} only supports report or presentation materialization currently`,
+    );
   }
   if (current.runStatus !== 'proposal_created') {
     throw new Error(
       `ArtifactRun ${validated.runId} must be in proposal_created before materialization`,
     );
   }
-
-  const reportParams = await resolveMaterializedReportParams(current, validated);
 
   try {
     await executionSpineService.submitForReview(
@@ -1432,27 +1591,62 @@ export async function materializeArtifactRun(
       validated.actorUserId,
     );
 
-    const reportBuilderService = await import('../reportBuilderService.js');
-    const created = await reportBuilderService.createReport({
-      organizationId: validated.organizationId,
-      sourceType: reportParams.sourceType,
-      sourceId: reportParams.sourceId,
-      sourceName: reportParams.sourceName,
-      title: reportParams.title,
-      description: reportParams.description,
-      templateId: reportParams.templateId,
-      config: reportParams.config,
-      createdBy: validated.actorUserId,
-    });
+    let artifact: ArtifactListItem | null = null;
+    if (current.plan.outputType === 'report') {
+      const reportParams = await resolveMaterializedReportParams(current, validated);
+      const reportBuilderService = await import('../reportBuilderService.js');
+      const created = await reportBuilderService.createReport({
+        organizationId: validated.organizationId,
+        sourceType: reportParams.sourceType,
+        sourceId: reportParams.sourceId,
+        sourceName: reportParams.sourceName,
+        title: reportParams.title,
+        description: reportParams.description,
+        templateId: reportParams.templateId,
+        config: reportParams.config,
+        createdBy: validated.actorUserId,
+      });
 
-    const artifact = await getArtifactByOrigin({
-      organizationId: validated.organizationId,
-      originRuntime: 'report',
-      originRecordId: created.report.id,
-      userId: validated.actorUserId,
-    });
+      artifact = await getArtifactByOrigin({
+        organizationId: validated.organizationId,
+        originRuntime: 'report',
+        originRecordId: created.report.id,
+        userId: validated.actorUserId,
+      });
+    } else {
+      const presentationParams = await resolveMaterializedPresentationParams(current, validated);
+      const presentationGeneratorService = await import('../presentationGeneratorService.js');
+      const outlined = await presentationGeneratorService.generateOutline(
+        presentationParams.setup as any,
+        validated.organizationId,
+      );
+      await registerArtifactOrigin({
+        organizationId: validated.organizationId,
+        outputType: 'presentation',
+        artifactFamily: 'presentation',
+        originRuntime: 'presentation',
+        originRecordId: outlined.deckId,
+        titleSnapshot: presentationParams.title,
+        ownerUserId: validated.actorUserId,
+        createdBy: validated.actorUserId,
+        deliveryState: mapPresentationStatusToDeliveryState('draft'),
+        visibilityScope: current.plan.visibilityScope,
+        contextSnapshotId: current.contextSnapshotId,
+        executionRunId: current.executionRunId,
+        originSummary: presentationParams.originSummary,
+      });
+
+      artifact = await getArtifactByOrigin({
+        organizationId: validated.organizationId,
+        originRuntime: 'presentation',
+        originRecordId: outlined.deckId,
+        userId: validated.actorUserId,
+      });
+    }
     if (!artifact) {
-      throw new Error(`Canonical artifact missing for report ${created.report.id}`);
+      throw new Error(
+        `Canonical artifact missing for ${current.plan.outputType} materialization ${validated.runId}`,
+      );
     }
 
     await executionSpineService.completeRun(

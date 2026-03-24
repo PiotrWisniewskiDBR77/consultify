@@ -1,8 +1,8 @@
 # Systematyka przegladu planu V8
 
-> Status: working draft
+> Status: aligned reference map for documentation coverage
 > Owner: Product + Engineering
-> Cel: uporzadkowac drzewko z `Plan v8.pdf`, zobaczyc co juz mamy w dokumentacji i planach, a czego jeszcze brakuje przed dalszym przegladem `V8`.
+> Cel: uporzadkowac drzewko z `Plan v8.pdf`, zobaczyc co juz mamy w dokumentacji i planach, a czego jeszcze brakuje w warstwie dokumentacyjnej dla zamrozonego pakietu `V8.0 + V8.1`.
 
 ---
 
@@ -13,6 +13,15 @@ Ten plik nie opisuje "czy funkcja jest juz w 100% zaimplementowana".
 On odpowiada na inne pytanie:
 
 `czy dla danego obszaru mamy juz sensowny, kanoniczny pakiet dokumentacyjny / planistyczny, czy dopiero material czesciowy, czy jeszcze praktycznie nic`
+
+Wazne:
+
+- ten plik opisuje tylko `documentation / planning coverage`,
+- nie jest najwyzsza authority dla frozen scope ani final closure statusu,
+- aktualna authority dla finalnego domkniecia to:
+  - `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`
+  - `docs/product/V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md`
+  - `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`
 
 Legenda:
 
@@ -171,30 +180,31 @@ Jesli patrzymy po Twoim drzewku, to dzis mamy trzy grupy:
 
 - `MyWork`
 - `Tools`
-- `Help`
 - `Admin / Organization`
+- `Superadmin`
 
 ### 4.3 Obszary, ktore sa jeszcze bardziej haslami z planu niz realnym pakietem dokumentacyjnym
 
 - `Landing`
-- `Superadmin`
 - `Edukacja`
-- `Komunikacja`
 - `Mobile`
 - czesc podobszarow `Inicjatywy`, `Wdrozenie`, `Settings`
 
 ---
 
-## 5. Co warto dopisac jako nastepne kanoniczne pliki
+## 5. Historyczne sugestie dalszych kanonicznych plikow
+
+Ponizsza lista ma znaczenie historyczne jako kierunek porzadkowania dokumentacji.
+Nie stanowi aktywnego rozszerzenia frozen closure scope bez jawnej decyzji.
 
 Proponowana kolejnosc dalszego porzadkowania:
 
-1. `LANDING_V8_SSOT.md` - z ofera wartosci, expert systemem i sekcjami strony
-2. `MYWORK_V8_MASTER_PLAN.md` - jeden dach dla Radar, Ideas, Notes, Calendar, Whiteboard, Tables
-3. `TOOLS_V8_SSOT.md` - aktualizacja starego `v3` do nowego kanonu
-4. `FINANCE_V8_SSOT.md` - migracja mocnych specs finansowych do pakietu `v8`
-5. `ORGANIZATION_AND_ADMIN_V8.md` - organization/admin/superadmin w jednym porzadku
-6. `MOBILE_V8_SCOPE.md` - zeby nie zostawic mobile jako pustego hasla
+1. `LANDING_V8_SSOT.md` - historyczna sugestia; obecnie poza aktywnym closure
+2. `MYWORK_V8_MASTER_PLAN.md` - nadal istotne jako brakujacy dach dokumentacyjny
+3. `TOOLS_V8_SSOT.md` - nadal istotne jako brakujacy nowy kanon
+4. `FINANCE_V8_SSOT.md` - historyczna sugestia; pakiet `Finance v8` jest juz mocny dokumentacyjnie
+5. `ORGANIZATION_AND_ADMIN_V8.md` - nadal istotne jako brakujacy wspolny porzadek
+6. `MOBILE_V8_SCOPE.md` - historyczna sugestia; `Mobile` jest poza aktywnym closure
 
 ---
 
@@ -224,7 +234,10 @@ Ten dokument **nie** zastepuje pojedynczych SSOT; scala je w jeden harmonogram A
 
 ---
 
-## 8. Program realizacji `V8`
+## 8. Historyczny program realizacji `V8`
+
+Ten rozdzial zachowujemy jako kontekst historyczny.
+Dla aktywnego frozen closure authority wygrywa sekcja 10 oraz dokumenty `V8_V81_*`.
 
 Po domknieciu glownych pakietow produktowych i przekrojowych `V8`, warstwa wdrozeniowa dla calego programu jest teraz spinana przez:
 
@@ -252,7 +265,10 @@ Zasada:
 
 ---
 
-## 9. Nastepna faza po domknieciu `V8` — `V8.1`
+## 9. Historyczna sekwencja po domknieciu `V8` - `V8.1`
+
+Ten rozdzial opisuje wczesniejsza sekwencje `najpierw V8, potem V8.1`.
+W aktywnym frozen closure nie prowadzimy juz tych programow osobno; final authority jest opisana w sekcji 10.
 
 Po ustabilizowaniu `V8`, stagingu i nowego clean-production baseline kolejna faza rozszerzenia powinna byc traktowana jako kontrolowane rozszerzenie, a nie nowy reset architektury.
 
@@ -295,11 +311,13 @@ Kanoniczne dokumenty tej finalnej fazy:
 
 - `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`
 - `docs/product/V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md`
+- `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md`
 
 Rola tych dokumentow:
 
 - `V8_V81_FINAL_COMPLETION_PROGRAM.md` - finalna definicja `100% closure` dla zamrozonego pakietu `V8.0 + V8.1`
 - `V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md` - gotowy prompt dla manager agenta nadzorujacego 4 worker agentow rownolegle
+- `V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md` - szczegolowy drill-down domkniecia `V8.1 artifact runtime + outputs` wewnatrz tego samego frozen pakietu
 
 Zasada:
 

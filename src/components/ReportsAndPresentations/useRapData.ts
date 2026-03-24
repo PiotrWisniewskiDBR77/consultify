@@ -343,6 +343,54 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
   return { rows, loading, error, refetch: fetchOutputs };
 }
 
+export function useMyWorkArtifactOutputs(limit = 8) {
+  const [mine, setMine] = useState<UnifiedOutputRow[]>([]);
+  const [review, setReview] = useState<UnifiedOutputRow[]>([]);
+  const [recent, setRecent] = useState<UnifiedOutputRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOutputs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/artifacts/my-work?limit=${Math.max(1, limit)}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        setMine([]);
+        setReview([]);
+        setRecent([]);
+        setError('Canonical artifact registry failed to load My Work outputs.');
+        return;
+      }
+      const data = await res.json();
+      const payload = data?.data ?? data ?? {};
+      const mapRows = (items: unknown) =>
+        (Array.isArray(items) ? items : [])
+          .map(mapRegistryItemToUnified)
+          .filter((item: UnifiedOutputRow | null): item is UnifiedOutputRow => !!item);
+
+      setMine(mapRows(payload.mine));
+      setReview(mapRows(payload.review));
+      setRecent(mapRows(payload.recent));
+      setError(null);
+    } catch {
+      setMine([]);
+      setReview([]);
+      setRecent([]);
+      setError('Canonical artifact registry failed to load My Work outputs.');
+    } finally {
+      setLoading(false);
+    }
+  }, [limit]);
+
+  useEffect(() => {
+    void fetchOutputs();
+  }, [fetchOutputs]);
+
+  return { mine, review, recent, loading, error, refetch: fetchOutputs };
+}
+
 export function usePresentations() {
   const [presentations, setPresentations] = useState<PresentationItem[]>([]);
   const [loading, setLoading] = useState(true);

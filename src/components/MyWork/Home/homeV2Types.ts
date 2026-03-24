@@ -48,7 +48,19 @@ export interface HomeChatContextPacket {
 
 export type HomeScreenAction =
   | { type: 'chat'; packet: HomeChatContextPacket }
-  | { type: 'navigate'; target: 'ideas' | 'notebook' | 'calendar' | 'tasks' | 'decisions' | 'manager' }
+  | {
+      type: 'navigate';
+      target:
+        | 'ideas'
+        | 'notebook'
+        | 'calendar'
+        | 'tasks'
+        | 'decisions'
+        | 'manager'
+        | 'outputs_all'
+        | 'outputs_mine'
+        | 'outputs_review';
+    }
   | {
       type: 'open';
       target: 'idea' | 'note' | 'task' | 'decision' | 'report' | 'presentation' | 'sheet';

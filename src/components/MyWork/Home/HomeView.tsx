@@ -4,19 +4,24 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckSquare,
+  FileSpreadsheet,
+  FileText,
   Info,
   Loader2,
   NotebookPen,
+  Presentation,
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 import Api from '@/services/api';
 
+import { useMyWorkArtifactOutputs } from '../../ReportsAndPresentations/useRapData';
+import type { UnifiedOutputRow } from '../../ReportsAndPresentations/types';
 import type {
   HomeScreenAction,
   RadarRecommendation,
@@ -46,6 +51,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const pl = lang.startsWith('pl');
   const { data, loading, error, refresh } = useRadarData(refreshTrigger);
+  const {
+    mine: myOutputs,
+    review: reviewOutputs,
+    recent: recentOutputs,
+    loading: myOutputsLoading,
+    error: myOutputsError,
+  } = useMyWorkArtifactOutputs(8);
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
 
@@ -83,6 +95,32 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
     allSignals.find((signal) => signal.signalId === selectedSignalId) ||
     data?.dailyBriefing.keySignals[0] ||
     null;
+  const prioritizedReviewOutputs = useMemo(() => reviewOutputs.slice(0, 3), [reviewOutputs]);
+  const prioritizedMyOutputs = useMemo(() => {
+    const reviewArtifactIds = new Set(prioritizedReviewOutputs.map((item) => item.artifactId || item.originRecordId));
+    return myOutputs
+      .filter((item) => !reviewArtifactIds.has(item.artifactId || item.originRecordId))
+      .slice(0, 3);
+  }, [myOutputs, prioritizedReviewOutputs]);
+  const prioritizedRecentOutputs = useMemo(() => {
+    const occupiedArtifactIds = new Set(
+      [...prioritizedReviewOutputs, ...prioritizedMyOutputs].map(
+        (item) => item.artifactId || item.originRecordId,
+      ),
+    );
+    return recentOutputs
+      .filter((item) => !occupiedArtifactIds.has(item.artifactId || item.originRecordId))
+      .slice(0, 3);
+  }, [prioritizedMyOutputs, prioritizedReviewOutputs, recentOutputs]);
+
+  const openOutput = useCallback(
+    (row: UnifiedOutputRow) => {
+      const target =
+        row.kind === 'presentation' ? 'presentation' : row.kind === 'sheet' ? 'sheet' : 'report';
+      onAction({ type: 'open', target, id: row.originRecordId });
+    },
+    [onAction]
+  );
 
   async function logRadarAction(
     actionType: RadarActionType,
@@ -319,6 +357,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                 const signal = allSignals.find((item) => item.signalId === signalId);
                 if (signal) void openSignal(signal);
               }}
+            />
+            <OutputsQueuePanel
+              pl={pl}
+              reviewOutputs={prioritizedReviewOutputs}
+              myOutputs={prioritizedMyOutputs}
+              recentOutputs={prioritizedRecentOutputs}
+              loading={myOutputsLoading}
+              error={myOutputsError}
+              onOpenOutput={openOutput}
+              onOpenLibrary={(target) => onAction({ type: 'navigate', target })}
             />
             <SignalListSection
               pl={pl}
@@ -782,6 +830,131 @@ const MetricsPanel: React.FC<{ pl: boolean; data: RadarViewPayload }> = ({ pl, d
   </SectionShell>
 );
 
+const OutputsQueuePanel: React.FC<{
+  pl: boolean;
+  reviewOutputs: UnifiedOutputRow[];
+  myOutputs: UnifiedOutputRow[];
+  recentOutputs: UnifiedOutputRow[];
+  loading: boolean;
+  error: string | null;
+  onOpenOutput: (row: UnifiedOutputRow) => void;
+  onOpenLibrary: (target: 'outputs_all' | 'outputs_mine' | 'outputs_review') => void;
+}> = ({ pl, reviewOutputs, myOutputs, recentOutputs, loading, error, onOpenOutput, onOpenLibrary }) => (
+  <SectionShell
+    title={pl ? 'Moje outputy' : 'My outputs'}
+    subtitle={
+      pl
+        ? 'Osobisty widok artefaktów z tej samej biblioteki outputów.'
+        : 'Personal artifact view over the same outputs library.'
+    }
+  >
+    {loading ? (
+      <div className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400">
+        <Loader2 size={14} className="animate-spin" />
+        {pl ? 'Ładowanie artefaktów...' : 'Loading artifacts...'}
+      </div>
+    ) : error ? (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-100/80 px-4 py-3 text-[13px] text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-slate-500">
+        {pl ? 'Biblioteka outputów jest chwilowo niedostępna.' : 'Outputs library is temporarily unavailable.'}
+      </div>
+    ) : (
+      <div className="space-y-3">
+        <OutputsLane
+          pl={pl}
+          title={pl ? 'Do review' : 'Needs review'}
+          emptyLabel={pl ? 'Brak artefaktów do review.' : 'No artifacts waiting for review.'}
+          rows={reviewOutputs}
+          ctaLabel={pl ? 'Otwórz review queue' : 'Open review queue'}
+          onOpenOutput={onOpenOutput}
+          onOpenLane={() => onOpenLibrary('outputs_review')}
+        />
+        <OutputsLane
+          pl={pl}
+          title={pl ? 'Ostatnie moje' : 'Recent mine'}
+          emptyLabel={pl ? 'Brak osobistych artefaktów.' : 'No personal artifacts yet.'}
+          rows={myOutputs}
+          ctaLabel={pl ? 'Otwórz moje outputy' : 'Open my outputs'}
+          onOpenOutput={onOpenOutput}
+          onOpenLane={() => onOpenLibrary('outputs_mine')}
+        />
+        <OutputsLane
+          pl={pl}
+          title={pl ? 'Ostatnie outputy' : 'Recent outputs'}
+          emptyLabel={pl ? 'Brak ostatnich outputów.' : 'No recent outputs yet.'}
+          rows={recentOutputs}
+          ctaLabel={pl ? 'Otwórz bibliotekę' : 'Open library'}
+          onOpenOutput={onOpenOutput}
+          onOpenLane={() => onOpenLibrary('outputs_all')}
+        />
+      </div>
+    )}
+  </SectionShell>
+);
+
+const OutputsLane: React.FC<{
+  pl: boolean;
+  title: string;
+  emptyLabel: string;
+  rows: UnifiedOutputRow[];
+  ctaLabel: string;
+  onOpenOutput: (row: UnifiedOutputRow) => void;
+  onOpenLane: () => void;
+}> = ({ pl, title, emptyLabel, rows, ctaLabel, onOpenOutput, onOpenLane }) => (
+  <div className="rounded-2xl border border-slate-200 bg-white/80 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+    <div className="flex items-center justify-between gap-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+        {title}
+      </div>
+      <button
+        type="button"
+        onClick={onOpenLane}
+        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+      >
+        {ctaLabel}
+        <ArrowUpRight size={12} />
+      </button>
+    </div>
+    {rows.length ? (
+      <div className="mt-3 space-y-2">
+        {rows.map((row) => (
+          <button
+            key={`${row.kind}:${row.originRecordId}`}
+            type="button"
+            onClick={() => onOpenOutput(row)}
+            className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-left transition hover:bg-white dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.06]"
+          >
+            <div className="rounded-xl bg-slate-900/5 p-2 text-slate-700 dark:bg-white/[0.06] dark:text-slate-200">
+              {row.kind === 'presentation' ? (
+                <Presentation size={14} />
+              ) : row.kind === 'sheet' ? (
+                <FileSpreadsheet size={14} />
+              ) : (
+                <FileText size={14} />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="line-clamp-1 text-[13px] font-semibold text-slate-900 dark:text-slate-100">
+                {row.title}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                <span>{formatOutputKind(row.kind, pl)}</span>
+                <span>•</span>
+                <span>{formatOutputStatus(row.statusKey, pl)}</span>
+                <span>•</span>
+                <span>{formatOutputDate(row.updatedAt, pl)}</span>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-slate-100/70 px-3 py-3 text-[12px] text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-slate-500">
+        {emptyLabel}
+      </div>
+    )}
+  </div>
+);
+
 const SectionShell: React.FC<{
   title: string;
   subtitle: string;
@@ -933,4 +1106,35 @@ function buildNoteBody(signal: RadarSignalCard, pl: boolean): string {
         `Source: ${signal.source.name}`,
         `Tags: ${signal.tags.topics.join(', ') || 'n/a'}`,
       ].join('\n');
+}
+
+function formatOutputKind(kind: UnifiedOutputRow['kind'], pl: boolean): string {
+  if (kind === 'presentation') return pl ? 'Prezentacja' : 'Presentation';
+  if (kind === 'sheet') return pl ? 'Arkusz' : 'Sheet';
+  return pl ? 'Dokument' : 'Document';
+}
+
+function formatOutputStatus(statusKey: string, pl: boolean): string {
+  const normalized = String(statusKey || '').toLowerCase();
+  const labels: Record<string, { pl: string; en: string }> = {
+    draft: { pl: 'Szkic', en: 'Draft' },
+    ready: { pl: 'Gotowe', en: 'Ready' },
+    generated: { pl: 'Wygenerowane', en: 'Generated' },
+    editing: { pl: 'W edycji', en: 'Editing' },
+    shared: { pl: 'Udostępnione', en: 'Shared' },
+    exported: { pl: 'Wyeksportowane', en: 'Exported' },
+    archived: { pl: 'Zarchiwizowane', en: 'Archived' },
+  };
+  const label = labels[normalized];
+  if (label) return pl ? label.pl : label.en;
+  return statusKey || (pl ? 'Status' : 'Status');
+}
+
+function formatOutputDate(value: string, pl: boolean): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(pl ? 'pl-PL' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
 }
