@@ -826,6 +826,7 @@ function matchesViewFilters(item: ArtifactListItem, filters: ArtifactListFilters
   if (filters.artifactFamily && item.artifactFamily !== filters.artifactFamily) return false;
   if (filters.visibilityScope && item.visibilityScope !== filters.visibilityScope) return false;
   if (filters.ownerUserId && item.ownerUserId !== filters.ownerUserId) return false;
+  if (filters.sourceInitiativeId && item.sourceInitiativeId !== filters.sourceInitiativeId) return false;
   if (filters.onlyMine && item.ownerUserId !== currentUserId) return false;
   if (filters.reviewSharedForUserId) {
     const isReviewer = item.publishReviewers.includes(filters.reviewSharedForUserId);

@@ -40,10 +40,14 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
+import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
+import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
@@ -75,7 +79,7 @@ interface InitiativeCompactPanelProps {
   whyRed?: WhyRedChainData | null;
 }
 
-type CompactTab = 'summary' | 'tasks' | 'decisions' | 'raid' | 'finance';
+type CompactTab = 'summary' | 'tasks' | 'decisions' | 'raid' | 'finance' | 'outputs';
 
 interface TaskItem {
   id: string;
@@ -156,6 +160,7 @@ const COMPACT_TABS: { id: CompactTab; labelKey: string; icon: React.ElementType 
   { id: 'decisions', labelKey: 'initiatives.compact.decisions', icon: Scale },
   { id: 'raid', labelKey: 'initiatives.compact.raid', icon: AlertTriangle },
   { id: 'finance', labelKey: 'initiatives.compact.finance', icon: DollarSign },
+  { id: 'outputs', labelKey: 'initiatives.compact.outputs', icon: FolderOpen },
 ];
 
 // ==========================================
@@ -203,6 +208,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   whyRed,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   // Data
   const [initiative, setInitiative] = useState<PortfolioInitiative | null>(propInitiative);
   const [isLoading, setIsLoading] = useState(false);
@@ -216,6 +222,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   } | null>(null);
 
   const id = initiative?.id || propInitiativeId;
+  const {
+    rows: outputRows,
+    loading: outputsLoading,
+    error: outputsError,
+  } = useArtifactOutputsForInitiative(id, 8);
 
   // ==========================================
   // DATA FETCHING
@@ -624,6 +635,8 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 ? decisions.length
                 : tab.id === 'raid'
                   ? raidItems.length
+                  : tab.id === 'outputs'
+                    ? outputRows.length
                   : undefined;
           return (
             <button
@@ -662,6 +675,24 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             {activeTab === 'decisions' && <DecisionsTab decisions={decisions} />}
             {activeTab === 'raid' && <RaidTab items={raidItems} />}
             {activeTab === 'finance' && <FinanceTab initiative={initiative} />}
+            {activeTab === 'outputs' && (
+              <OutputsTab
+                rows={outputRows}
+                loading={outputsLoading}
+                error={outputsError}
+                onOpen={(row) => {
+                  const targetPath =
+                    row.kind === 'sheet'
+                      ? '/presentations?tab=sheets'
+                      : getArtifactPath(
+                          row.kind === 'presentation' ? 'presentation' : 'report',
+                          row.originRecordId,
+                        );
+                  onClose();
+                  navigate(targetPath);
+                }}
+              />
+            )}
           </>
         )}
       </div>
@@ -1248,6 +1279,71 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
           <BudgetControlPanel initiativeId={String(init.id)} />
         </div>
       )}
+    </div>
+  );
+};
+
+const OutputsTab: React.FC<{
+  rows: UnifiedOutputRow[];
+  loading: boolean;
+  error: string | null;
+  onOpen: (row: UnifiedOutputRow) => void;
+}> = ({ rows, loading, error, onOpen }) => {
+  const { t } = useTranslation();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 size={18} className="animate-spin text-purple-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="p-4">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-navy-700 px-3 py-5 text-center text-xs text-slate-500 dark:text-slate-400">
+          {t(
+            'initiatives.compact.outputsEmpty',
+            'No governed outputs are linked to this initiative yet.'
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 space-y-2">
+      {rows.map((row) => (
+        <button
+          key={`${row.kind}:${row.originRecordId}`}
+          type="button"
+          onClick={() => onOpen(row)}
+          className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/40 px-3 py-3 text-left transition hover:bg-white dark:hover:bg-navy-800"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {row.title}
+              </div>
+              <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
+              </div>
+            </div>
+            <ExternalLink size={12} className="flex-shrink-0 text-slate-400" />
+          </div>
+        </button>
+      ))}
     </div>
   );
 };

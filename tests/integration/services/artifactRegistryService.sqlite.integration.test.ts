@@ -480,6 +480,45 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(reportsOnly.every((i) => i.outputType === 'report')).toBe(true);
   });
 
+  it('listArtifactsForUser applies sourceInitiativeId filter against persisted rows', async () => {
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId: 'org-a',
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'report',
+      originRecordId: 'rep-init-a',
+      titleSnapshot: 'Initiative A report',
+      ownerUserId: 'user-owner',
+      createdBy: 'user-owner',
+      deliveryState: 'draft',
+      visibilityScope: 'organization',
+      sourceInitiativeId: 'init-a',
+    });
+    await artifactRegistryService.registerArtifactOrigin({
+      organizationId: 'org-a',
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: 'deck-init-b',
+      titleSnapshot: 'Initiative B deck',
+      ownerUserId: 'user-owner',
+      createdBy: 'user-owner',
+      deliveryState: 'draft',
+      visibilityScope: 'organization',
+      sourceInitiativeId: 'init-b',
+    });
+
+    const initiativeA = await artifactRegistryService.listArtifactsForUser({
+      organizationId: 'org-a',
+      userId: 'user-owner',
+      filters: { sourceInitiativeId: 'init-a', limit: 50 },
+    });
+
+    expect(initiativeA).toHaveLength(1);
+    expect(initiativeA[0]?.resolvedTitle).toBe('Initiative A report');
+    expect(initiativeA[0]?.sourceInitiativeId).toBe('init-a');
+  });
+
   it('acceptArtifactRunPlan updates run row when spine returns a proposal (spine mocked)', async () => {
     spineMocks.initiateHandoff.mockResolvedValue({ executionRunId: 'exec-run-2' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-xyz' });

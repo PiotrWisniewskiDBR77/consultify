@@ -60,6 +60,10 @@ router.get(
           req.query.visibilityScope === 'demo'
             ? req.query.visibilityScope
             : undefined,
+        sourceInitiativeId:
+          typeof req.query.sourceInitiativeId === 'string' && req.query.sourceInitiativeId.trim()
+            ? req.query.sourceInitiativeId.trim()
+            : undefined,
         search: typeof req.query.search === 'string' ? req.query.search : undefined,
         onlyMine: req.query.view === 'mine',
         reviewSharedForUserId: req.query.view === 'review' ? userId : undefined,

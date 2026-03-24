@@ -24,6 +24,7 @@ export interface UnifiedOutputRow {
   updatedAt: string;
   reportType?: string;
   sourceType?: string;
+  sourceInitiativeId?: string;
   slideCount?: number;
   exportFormats: string[];
   governance?: ArtifactGovernanceSummary;

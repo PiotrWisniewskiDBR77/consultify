@@ -256,6 +256,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       owner: r.owner,
       updatedAt: r.updatedAt,
       reportType: r.reportType,
+      sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: r.exportFormats,
       governance: r.governance || baseGov,
     };
@@ -272,6 +273,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       owner: p.owner,
       updatedAt: p.updatedAt,
       sourceType: p.sourceType,
+      sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       slideCount: p.slideCount,
       exportFormats: p.exportFormats,
       governance: p.governance || baseGov,
@@ -288,6 +290,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
+      sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
       governance: baseGov,
     };
@@ -389,6 +392,54 @@ export function useMyWorkArtifactOutputs(limit = 8) {
   }, [fetchOutputs]);
 
   return { mine, review, recent, loading, error, refetch: fetchOutputs };
+}
+
+export function useArtifactOutputsForInitiative(initiativeId: string | null | undefined, limit = 8) {
+  const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOutputs = useCallback(async () => {
+    const normalizedInitiativeId = String(initiativeId || '').trim();
+    if (!normalizedInitiativeId) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const qs = new URLSearchParams({
+        sourceInitiativeId: normalizedInitiativeId,
+        limit: String(Math.max(1, limit)),
+      });
+      const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
+      if (!res.ok) {
+        setRows([]);
+        setError('Canonical artifact registry failed to load initiative outputs.');
+        return;
+      }
+      const data = await res.json();
+      const list = data.data || [];
+      const mapped = list
+        .map(mapRegistryItemToUnified)
+        .filter((item: UnifiedOutputRow | null): item is UnifiedOutputRow => !!item);
+      setRows(mapped);
+      setError(null);
+    } catch {
+      setRows([]);
+      setError('Canonical artifact registry failed to load initiative outputs.');
+    } finally {
+      setLoading(false);
+    }
+  }, [initiativeId, limit]);
+
+  useEffect(() => {
+    void fetchOutputs();
+  }, [fetchOutputs]);
+
+  return { rows, loading, error, refetch: fetchOutputs };
 }
 
 export function usePresentations() {

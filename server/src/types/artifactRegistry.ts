@@ -114,6 +114,7 @@ export interface ArtifactListFilters {
   artifactFamily?: ArtifactFamily;
   visibilityScope?: ArtifactVisibilityScope;
   ownerUserId?: string;
+  sourceInitiativeId?: string;
   search?: string;
   limit?: number;
   onlyMine?: boolean;
