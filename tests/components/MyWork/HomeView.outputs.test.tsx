@@ -29,6 +29,11 @@ vi.mock('../../../src/components/ReportsAndPresentations/useRapData', () => ({
   useMyWorkArtifactOutputs: (...args: unknown[]) => useMyWorkArtifactOutputsMock(...args),
 }));
 
+const useV8MyWorkRoofSummaryMock = vi.fn();
+vi.mock('../../../src/hooks/useV8MyWorkRoof', () => ({
+  useV8MyWorkRoofSummary: (...args: unknown[]) => useV8MyWorkRoofSummaryMock(...args),
+}));
+
 const apiPostMock = vi.fn();
 vi.mock('../../../src/services/api', () => ({
   default: {
@@ -145,11 +150,26 @@ describe('HomeView outputs integration', () => {
       error: null,
       refetch: vi.fn(),
     });
+    useV8MyWorkRoofSummaryMock.mockReturnValue({
+      data: {
+        overallStatus: 'mixed_truth',
+        surfaceMode: 'radar_overlay_with_outputs_bridge',
+        counts: {
+          backed_by_real_service: 2,
+          partial_stitched: 2,
+          placeholder_non_canonical: 4,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    });
   });
 
   it('renders personal outputs lanes from the canonical artifact registry', () => {
     render(<HomeView onAction={vi.fn()} />);
 
+    expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
+    expect(screen.getByText(/Radar overlay \+ outputs bridge/)).toBeInTheDocument();
     expect(screen.getByText('My outputs')).toBeInTheDocument();
     expect(screen.getByText('Needs review')).toBeInTheDocument();
     expect(screen.getByText('Recent mine')).toBeInTheDocument();

@@ -8,3 +8,4 @@ export { V8ChatApi } from './chat';
 export { V8AICoreApi } from './ai-core';
 export { V8AdminApi } from './admin';
 export { V8RetrievalApi } from './retrieval';
+export { V8MyWorkApi } from './my-work';

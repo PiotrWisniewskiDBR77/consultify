@@ -12,6 +12,7 @@ import aiCoreRoutes from './ai-core.routes.js';
 import chatRoutes from './chat.routes.js';
 import executionRoutes from './execution.routes.js';
 import healthRoutes from './health.routes.js';
+import myWorkRoutes from './my-work.routes.js';
 import retrievalRoutes from './retrieval.routes.js';
 
 const v8Router = Router();
@@ -36,5 +37,6 @@ v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/retrieval', retrievalRoutes);
+v8Router.use('/my-work', myWorkRoutes);
 
 export default v8Router;

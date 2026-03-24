@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import Api from '@/services/api';
 
+import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { useMyWorkArtifactOutputs } from '../../ReportsAndPresentations/useRapData';
 import type { UnifiedOutputRow } from '../../ReportsAndPresentations/types';
 import type {
@@ -51,6 +52,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const pl = lang.startsWith('pl');
   const { data, loading, error, refresh } = useRadarData(refreshTrigger);
+  const roofSummary = useV8MyWorkRoofSummary();
   const {
     mine: myOutputs,
     review: reviewOutputs,
@@ -112,6 +114,27 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       .filter((item) => !occupiedArtifactIds.has(item.artifactId || item.originRecordId))
       .slice(0, 3);
   }, [prioritizedMyOutputs, prioritizedReviewOutputs, recentOutputs]);
+
+  const roofTruthStrip = useMemo(() => {
+    if (roofSummary.isLoading) {
+      return pl ? 'Roof truth: sprawdzanie...' : 'Roof truth: checking...';
+    }
+    if (roofSummary.isError || !roofSummary.data) {
+      return null;
+    }
+
+    const counts = roofSummary.data.counts;
+    const surfaceMode =
+      roofSummary.data.surfaceMode === 'radar_overlay_with_outputs_bridge'
+        ? pl
+          ? 'Radar overlay + outputs bridge'
+          : 'Radar overlay + outputs bridge'
+        : roofSummary.data.surfaceMode;
+
+    return `${pl ? 'Roof truth' : 'Roof truth'}: ${surfaceMode} · ${counts.backed_by_real_service} ${pl ? 'real' : 'real'} · ${counts.partial_stitched} ${pl ? 'partial' : 'partial'} · ${counts.placeholder_non_canonical} ${pl ? 'non-canonical' : 'non-canonical'}`;
+  }, [pl, roofSummary.data, roofSummary.isError, roofSummary.isLoading]);
+
+  const roofTruthTone = roofSummary.data?.overallStatus ?? 'mixed_truth';
 
   const openOutput = useCallback(
     (row: UnifiedOutputRow) => {
@@ -280,10 +303,27 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       <BgCanvas />
 
       <div className="relative z-10 flex items-center justify-between px-7 pt-4 pb-2">
-        <span className="text-[13px] font-medium text-slate-500 dark:text-slate-500">
-          {pl ? 'Radar 2.0 · warstwa intelligence' : 'Radar 2.0 · intelligence layer'}
-          {userName ? ` · ${userName}` : ''}
-        </span>
+        <div className="min-w-0">
+          <span className="text-[13px] font-medium text-slate-500 dark:text-slate-500">
+            {pl ? 'Radar 2.0 · warstwa intelligence' : 'Radar 2.0 · intelligence layer'}
+            {userName ? ` · ${userName}` : ''}
+          </span>
+          {roofTruthStrip ? (
+            <div
+              className={cn(
+                'mt-1 inline-flex max-w-full items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                roofTruthTone === 'coherent'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200'
+                  : roofTruthTone === 'partially_coherent'
+                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200'
+                    : 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-400/20 dark:bg-slate-500/10 dark:text-slate-300',
+              )}
+            >
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{roofTruthStrip}</span>
+            </div>
+          ) : null}
+        </div>
         <span className="text-[12px] text-slate-400 dark:text-slate-500">
           {new Date(data.generatedAt).toLocaleTimeString(pl ? 'pl-PL' : 'en-US', {
             hour: '2-digit',

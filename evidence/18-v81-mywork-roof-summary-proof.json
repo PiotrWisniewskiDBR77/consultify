@@ -1,0 +1,121 @@
+{
+  "capturedAt": "2026-03-24T20:58:28.834Z",
+  "base": "https://stage.consultinity.ai",
+  "endpoint": "/api/v8/my-work/roof/summary",
+  "probe": {
+    "attempt": 1,
+    "status": 200,
+    "body": {
+      "data": {
+        "generatedAt": "2026-03-24T20:58:28.771Z",
+        "overallStatus": "mixed_truth",
+        "surfaceMode": "radar_overlay_with_outputs_bridge",
+        "contracts": {
+          "homeV2Endpoint": true,
+          "radarEndpoint": true,
+          "homeViewUsesAggregatedContract": false,
+          "outputsBridgeVisible": true
+        },
+        "homeBlocks": [
+          {
+            "blockName": "aiPulseCore",
+            "maturityLevel": "backed_by_real_service",
+            "serviceRef": "radarService",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "Hero briefing is live and backed by governed Radar runtime."
+          },
+          {
+            "blockName": "momentum",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "Declared in Home V2, but the current Home surface does not render this canonical block contract."
+          },
+          {
+            "blockName": "sparkField",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "Ideas and notes exist in runtime, but the current Home surface does not expose the block as a canonical roof contract."
+          },
+          {
+            "blockName": "decisionTemperature",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "Decision signals are aggregated in Home V2, but not surfaced as a live canonical block in the current roof."
+          },
+          {
+            "blockName": "industryLens",
+            "maturityLevel": "backed_by_real_service",
+            "serviceRef": "radarService",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "External transformation signals are live through Radar-backed Home sections."
+          },
+          {
+            "blockName": "executionCurrent",
+            "maturityLevel": "partial_stitched",
+            "serviceRef": "/api/my-work/home/v2 + artifactRegistryService",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "Execution context is partially present through aggregated Home V2 data and outputs bridge, but not as the frozen canonical block."
+          },
+          {
+            "blockName": "teamSignal",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "The block is specified canonically, but the current Home surface does not present a dedicated team-signal truth layer."
+          },
+          {
+            "blockName": "commandDock",
+            "maturityLevel": "partial_stitched",
+            "serviceRef": "HomeView actions + outputs bridge",
+            "lastAuditedAt": "2026-03-24T20:58:28.771Z",
+            "source": "derived",
+            "rationale": "Home exposes real jump actions and governed outputs entry points, but not yet as the frozen command-dock block contract."
+          }
+        ],
+        "counts": {
+          "backed_by_real_service": 2,
+          "partial_stitched": 2,
+          "placeholder_non_canonical": 4
+        },
+        "inboxMaterialization": {
+          "avgLatencyMs": 0,
+          "latencyBandDistribution": {
+            "near_realtime": 0,
+            "operational": 0,
+            "degraded": 0
+          },
+          "status": "not_proven_yet"
+        },
+        "calendar": [
+          {
+            "phaseName": "phase_a_internal",
+            "status": "active",
+            "blockedBy": null,
+            "source": "derived",
+            "rationale": "Internal MyWork calendar hardening can proceed independently of connector delivery."
+          },
+          {
+            "phaseName": "phase_b_external_sync",
+            "status": "blocked",
+            "blockedBy": "wave5_connector_platform",
+            "source": "derived",
+            "rationale": "External Google/Outlook sync remains blocked on Wave 5 connector delivery."
+          }
+        ]
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  }
+}
