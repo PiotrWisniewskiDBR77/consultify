@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { tableExists } from '../../utils/DbPromise.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   RadarDynamicContext,
@@ -56,6 +57,49 @@ function matchScore(tokens: string[], candidates: string[], weight: number): num
   if (!hits.length) return 0;
   const ratio = Math.min(1, hits.length / Math.max(tokens.length, 1));
   return Math.round(weight * ratio);
+}
+
+async function loadIdeaTitlesForRadar(orgId: string, userId: string): Promise<Array<{ title: string }>> {
+  const result: Array<{ title: string }> = [];
+  const seen = new Set<string>();
+
+  const append = (rows: Array<{ title: string }>) => {
+    for (const row of rows) {
+      const title = String(row?.title || '').trim();
+      if (!title) continue;
+      const key = title.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push({ title });
+      if (result.length >= 6) break;
+    }
+  };
+
+  if (await tableExists('my_ideas')) {
+    append(
+      await queryHelpers.queryAll<{ title: string }>(
+        `SELECT title FROM my_ideas
+         WHERE organization_id = ? AND user_id = ?
+         ORDER BY updated_at DESC
+         LIMIT 6`,
+        [orgId, userId]
+      )
+    );
+  }
+
+  if (result.length < 6 && (await tableExists('ideas'))) {
+    append(
+      await queryHelpers.queryAll<{ title: string }>(
+        `SELECT title FROM ideas
+         WHERE organization_id = ? AND created_by = ?
+         ORDER BY updated_at DESC
+         LIMIT 6`,
+        [orgId, userId]
+      )
+    );
+  }
+
+  return result;
 }
 
 function classifyImpactType(signal: RadarProcessedSignal): RadarImpactType {
@@ -334,13 +378,7 @@ class RadarRankingService {
          LIMIT 6`,
         [orgId, userId, userId]
       ),
-      queryHelpers.queryAll<{ title: string }>(
-        `SELECT title FROM ideas
-         WHERE organization_id = ? AND created_by = ?
-         ORDER BY updated_at DESC
-         LIMIT 6`,
-        [orgId, userId]
-      ),
+      loadIdeaTitlesForRadar(orgId, userId),
       queryHelpers.queryAll<{ title: string }>(
         `SELECT title FROM notebook_pages
          WHERE organization_id = ? AND owner_user_id = ?

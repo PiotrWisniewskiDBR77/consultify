@@ -1,0 +1,55 @@
+{
+  "capturedAt": "2026-03-24T22:10:29.000Z",
+  "base": "https://stage.consultinity.ai",
+  "path": "/my-work",
+  "mode": "authenticated_browser_refresh_after_backend_fix",
+  "summary": {
+    "radarRuntimeRecovered": true,
+    "radarEndpointStatus": 200,
+    "internalErrorVisible": false,
+    "homeViewChunkLoaded": true,
+    "explicitContractLabelsVisible": false
+  },
+  "network": {
+    "mainFrame": {
+      "url": "https://stage.consultinity.ai/my-work",
+      "status": 200
+    },
+    "roofSummary": {
+      "url": "https://stage.consultinity.ai/api/v8/my-work/roof/summary",
+      "status": 200
+    },
+    "radar": {
+      "url": "https://stage.consultinity.ai/api/my-work/radar",
+      "status": 200
+    },
+    "radarActionPost": {
+      "url": "https://stage.consultinity.ai/api/my-work/radar/actions",
+      "status": 200
+    },
+    "homeViewChunk": {
+      "url": "https://stage.consultinity.ai/assets/HomeView-DEWCCw7g.js",
+      "status": 200
+    },
+    "adminFlags": {
+      "url": "https://stage.consultinity.ai/api/v8/admin/flags",
+      "status": 500,
+      "note": "Observed during page refresh but did not block My Work render."
+    }
+  },
+  "surfaceChecks": {
+    "observedSignalsFeed": true,
+    "observedActions": true,
+    "observedWatchlist": true,
+    "observedReviewQueueCta": true,
+    "aiPulseCoreTextVisible": false,
+    "industryLensTextVisible": false,
+    "executionCurrentTextVisible": false,
+    "commandDockTextVisible": false
+  },
+  "notes": [
+    "Previous staging blocker `relation \"ideas\" does not exist` is no longer present in the live browser path because `/api/my-work/radar` now returns 200.",
+    "Authenticated My Work renders real Radar-backed content and actions after refresh.",
+    "The live DOM still does not expose the explicit canonical contract labels expected from local `HomeView` labeling work, so closure proof remains partial."
+  ]
+}
