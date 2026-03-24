@@ -9,6 +9,8 @@ const backendRunner = process.env.E2E_BACKEND_RUNNER || 'tsx'; // 'tsx' | 'build
 const testSupportKey = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 const e2eTmpDir = path.resolve(process.cwd(), '.tmp', 'e2e');
 const allowLocalhostRemote = process.env.E2E_ALLOW_LOCALHOST_REMOTE === 'true';
+const e2eDatabaseUrl =
+  process.env.DATABASE_URL || 'postgresql://user:pass@external-db-host:5432/consultify';
 const backendPort = (() => {
   try {
     return new URL(backendUrl).port || '3001';
@@ -27,6 +29,7 @@ const frontendPort = (() => {
 const backendEnv = [
   'NODE_ENV=test',
   `PORT=${backendPort}`,
+  `DATABASE_URL=${e2eDatabaseUrl}`,
   'MOCK_DB=true',
   'MOCK_REDIS=true',
   'ENABLE_TEST_GATEWAY=true',

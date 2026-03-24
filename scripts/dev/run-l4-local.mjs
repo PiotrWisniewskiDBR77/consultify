@@ -36,13 +36,7 @@ const env = {
   E2E_RUN_ID: id,
 };
 
-// Best-effort: stop any leftover servers on chosen ports (should be none).
-spawnSync(process.execPath, ['scripts/dev/stop-e2e-ports.mjs'], {
-  env,
-  stdio: 'inherit',
-});
-
-const res = spawnSync('playwright', ['test', '--config', 'playwright.smoke.config.ts'], {
+const res = spawnSync('npx', ['playwright', 'test', '--config', 'playwright.smoke.config.ts'], {
   env,
   stdio: 'inherit',
 });
