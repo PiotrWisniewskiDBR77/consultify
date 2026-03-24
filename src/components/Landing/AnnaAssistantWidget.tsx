@@ -151,6 +151,7 @@ export const AnnaAssistantWidget: React.FC = () => {
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
+  const [voiceApiKey, setVoiceApiKey] = useState<string | null>(FRONTEND_GEMINI_KEY || null);
   const [messages, setMessages] = useState<AnnaMessage[]>(() => [
     {
       id: 'anna-welcome',
@@ -189,7 +190,33 @@ export const AnnaAssistantWidget: React.FC = () => {
     const browserWindow = window as AnnaWindow;
     const hasAudioContext = Boolean(window.AudioContext || browserWindow.webkitAudioContext);
     const hasMicrophone = Boolean(navigator.mediaDevices?.getUserMedia);
-    setVoiceAvailable(Boolean(FRONTEND_GEMINI_KEY && hasAudioContext && hasMicrophone));
+    let cancelled = false;
+
+    const applyAvailability = (apiKey: string | null) => {
+      if (cancelled) return;
+      setVoiceApiKey(apiKey);
+      setVoiceAvailable(Boolean(apiKey && hasAudioContext && hasMicrophone));
+    };
+
+    if (FRONTEND_GEMINI_KEY) {
+      applyAvailability(FRONTEND_GEMINI_KEY);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    fetch('/api/public/anna/voice-config')
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const data = await response.json();
+        return typeof data?.apiKey === 'string' && data.apiKey.trim() ? data.apiKey.trim() : null;
+      })
+      .then((apiKey) => applyAvailability(apiKey))
+      .catch(() => applyAvailability(null));
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const teardownVoice = useCallback(async () => {
@@ -261,7 +288,7 @@ export const AnnaAssistantWidget: React.FC = () => {
     if (isLoading) return;
     voiceStartRef.current = Date.now();
 
-    if (!voiceAvailable || !FRONTEND_GEMINI_KEY || typeof window === 'undefined') {
+    if (!voiceAvailable || !voiceApiKey || typeof window === 'undefined') {
       setVoiceStatus('error');
       setVoiceError(copy.voiceUnavailable);
       return;
@@ -295,7 +322,7 @@ export const AnnaAssistantWidget: React.FC = () => {
         throw new Error('AudioContext unavailable');
       }
 
-      const ai = new GoogleGenAI({ apiKey: FRONTEND_GEMINI_KEY });
+      const ai = new GoogleGenAI({ apiKey: voiceApiKey });
       const audioContext = new AudioContextCtor({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
       nextPlayTimeRef.current = audioContext.currentTime;
@@ -427,6 +454,7 @@ export const AnnaAssistantWidget: React.FC = () => {
     isLoading,
     lang,
     teardownVoice,
+    voiceApiKey,
     voiceAvailable,
   ]);
 

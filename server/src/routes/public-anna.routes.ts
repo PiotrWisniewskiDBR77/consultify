@@ -340,6 +340,19 @@ router.post(
 );
 
 router.get(
+  '/voice-config',
+  asyncHandler(async (_req, res: Response) => {
+    const apiKey =
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '';
+
+    return res.json({
+      enabled: Boolean(apiKey),
+      apiKey: apiKey || null,
+    });
+  })
+);
+
+router.get(
   '/voice-context',
   asyncHandler(async (req, res: Response) => {
     const locale =
