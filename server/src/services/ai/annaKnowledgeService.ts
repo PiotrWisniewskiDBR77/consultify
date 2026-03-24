@@ -99,7 +99,7 @@ function detectRequestedProducts(query: string): { matchedProducts: string[]; pr
   const explicitNonConsultify = matchedProducts.filter((product) => product !== 'consultify');
   const primaryProducts =
     explicitNonConsultify.length > 0
-      ? uniq(['consultify', ...explicitNonConsultify])
+      ? uniq([...explicitNonConsultify, 'consultify'])
       : uniq([
           'consultify',
           ...(matchedProducts.includes('vector') ? ['vector'] : []),
@@ -278,7 +278,7 @@ export async function buildAnnaKnowledgeContext(opts: {
   );
   const primaryProducts =
     opts.preferredProducts && opts.preferredProducts.length > 0
-      ? uniq(['consultify', ...opts.preferredProducts])
+      ? uniq([...opts.preferredProducts.filter((product) => product !== 'consultify'), 'consultify'])
       : detected.primaryProducts;
 
   try {

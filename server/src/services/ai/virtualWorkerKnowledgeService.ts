@@ -260,8 +260,12 @@ export async function buildWorkerKnowledgeContext(opts: {
     ? 'consultify'
     : assignedProductSlugs[0] || undefined;
 
-  const primaryProducts = detectedProducts.length > 0
-    ? uniq([...(defaultProduct ? [defaultProduct] : []), ...detectedProducts.filter((p) => assignedProductSlugs.includes(p))])
+  const explicitAssignedProducts = detectedProducts.filter((p) => assignedProductSlugs.includes(p));
+  const primaryProducts = explicitAssignedProducts.length > 0
+    ? uniq([
+        ...explicitAssignedProducts.filter((product) => product !== defaultProduct),
+        ...(defaultProduct ? [defaultProduct] : []),
+      ])
     : defaultProduct ? [defaultProduct] : assignedProductSlugs.slice(0, 2);
 
   try {
