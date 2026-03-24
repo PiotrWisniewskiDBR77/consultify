@@ -36,6 +36,8 @@ export interface UseTablePlatformIntegrationOpts {
   isPl: boolean;
   open: boolean;
   onSelectionChange?: (sel: unknown) => void;
+  /** Canonical `tp_tables.id` to load when deep-linking from governed sheet artifacts. */
+  preferredTableId?: string | null;
 }
 
 export interface UseTablePlatformIntegrationReturn {
@@ -171,9 +173,9 @@ function applyLocalFilterSortGroup(
 export function useTablePlatformIntegration(
   opts: UseTablePlatformIntegrationOpts
 ): UseTablePlatformIntegrationReturn {
-  const { ideaId, locked, isPl, open, onSelectionChange } = opts;
+  const { ideaId, locked, isPl, open, onSelectionChange, preferredTableId } = opts;
 
-  const bridge = useTablePlatformBridge({ ideaId, enabled: open });
+  const bridge = useTablePlatformBridge({ ideaId, enabled: open, preferredTableId });
   const tableId = (bridge.table as { id?: string } | null)?.id ?? null;
   const views = useTablePlatformViews({
     tableId,

@@ -56,20 +56,26 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
 } from '@/components/shared/WorkspacePanelStrip';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
+import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
-import { getArtifactPath } from '@/utils/artifactLinks';
+import {
+  downloadSheetArtifactXlsx,
+  resolveTablePlatformWorkspaceIdForTable,
+} from '@/utils/sheetArtifactOpen';
 
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
@@ -974,10 +980,34 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // F3: Handle mywork-open-item custom event (dispatched by KnowledgePulse, detail views, etc.)
   const navigate = useNavigate();
+  const { isEnabled } = useFeatureFlags();
   useEffect(() => {
     const handler = (e: Event) => {
       const { type, id, name } = (e as CustomEvent).detail || {};
       if (!type || !id) return;
+      if (type === 'sheet') {
+        void (async () => {
+          const tableId = String(id);
+          if (isEnabled('tablePlatformMetadataFirst')) {
+            const ws = await resolveTablePlatformWorkspaceIdForTable(tableId);
+            if (ws) {
+              navigate(buildMyWorkSheetTableOpenPath(ws, tableId));
+              return;
+            }
+          }
+          const ok = await downloadSheetArtifactXlsx(tableId);
+          if (ok) {
+            toast.success(
+              isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)'
+            );
+          } else {
+            toast.error(
+              isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
+            );
+          }
+        })();
+        return;
+      }
       if (
         [
           'initiative',
@@ -1024,7 +1054,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     };
     window.addEventListener('mywork-open-item', handler);
     return () => window.removeEventListener('mywork-open-item', handler);
-  }, [handleOpenDocument, navigate]);
+  }, [handleOpenDocument, isEnabled, isPolish, navigate]);
 
   // URL deep link support:
   // - /my-work?taskId=...
@@ -1682,28 +1712,23 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           }
           if (action.target === 'sheet') {
             void (async () => {
-              try {
-                const token = localStorage.getItem('token');
-                const res = await fetch(
-                  `/api/table-platform/tables/${encodeURIComponent(action.id)}/export/xlsx`,
-                  {
-                    headers: {
-                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
-                  },
+              const tableId = String(action.id);
+              if (isEnabled('tablePlatformMetadataFirst')) {
+                const ws = await resolveTablePlatformWorkspaceIdForTable(tableId);
+                if (ws) {
+                  navigate(buildMyWorkSheetTableOpenPath(ws, tableId));
+                  return;
+                }
+              }
+              const ok = await downloadSheetArtifactXlsx(tableId);
+              if (ok) {
+                toast.success(
+                  isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)'
                 );
-                if (!res.ok) return;
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sheet-${action.id}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-              } catch {
-                /* noop */
+              } else {
+                toast.error(
+                  isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
+                );
               }
             })();
             return;
@@ -1746,6 +1771,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleDecisionClick,
       handleIdeaClick,
       handleTaskClick,
+      isEnabled,
+      isPolish,
+      navigate,
       openChatWithContext,
       setChatKickoffMessage,
     ]

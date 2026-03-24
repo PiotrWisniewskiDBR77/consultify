@@ -12,9 +12,17 @@ import {
   Loader2,
   Presentation,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
+import {
+  downloadSheetArtifactXlsx,
+  resolveTablePlatformWorkspaceIdForTable,
+} from '@/utils/sheetArtifactOpen';
 
 import {
   FilterableTable,
@@ -61,7 +69,32 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const { isEnabled } = useFeatureFlags();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const openGovernedSheetRow = useCallback(
+    async (originRecordId: string) => {
+      const tableId = String(originRecordId);
+      if (isEnabled('tablePlatformMetadataFirst')) {
+        const ws = await resolveTablePlatformWorkspaceIdForTable(tableId);
+        if (ws) {
+          navigate(buildMyWorkSheetTableOpenPath(ws, tableId));
+          return;
+        }
+      }
+      const ok = await downloadSheetArtifactXlsx(tableId);
+      if (ok) {
+        toast.success(
+          isPolish ? 'Pobrano arkusz (.xlsx)' : 'Downloaded spreadsheet (.xlsx)'
+        );
+      } else {
+        toast.error(
+          isPolish ? 'Nie udało się pobrać arkusza' : 'Could not download spreadsheet'
+        );
+      }
+    },
+    [isEnabled, isPolish, navigate]
+  );
 
   const tableRows: AggregateRow[] = useMemo(
     () => rows.map((r) => ({ ...r, id: rowKey(r), title: r.title })),
@@ -201,6 +234,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const openRow = (row: UnifiedOutputRow) => {
     if (row.kind === 'document') navigate(`/reports/builder/${row.originRecordId}`);
     else if (row.kind === 'presentation') navigate(`/presentations/builder/${row.originRecordId}`);
+    else if (row.kind === 'sheet') void openGovernedSheetRow(row.originRecordId);
   };
 
   const getRowActions = (row: AggregateRow): RowAction[] => {
@@ -345,15 +379,17 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         )}
         renderPreviewFooter={(item) => (
           <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-200/70 dark:border-white/[0.08]">
-            {item.kind !== 'sheet' ? (
-              <button
-                type="button"
-                onClick={() => openRow(item)}
-                className="h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
-              >
-                {t('rap.actions.open', 'Otwórz')}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => openRow(item)}
+              className="h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+            >
+              {item.kind === 'sheet'
+                ? isEnabled('tablePlatformMetadataFirst')
+                  ? t('rap.actions.openInWorkspace', 'Open in workspace')
+                  : t('rap.actions.exportXlsx', 'Download XLSX')
+                : t('rap.actions.open', 'Otwórz')}
+            </button>
             {item.artifactId ? (
               <button
                 type="button"

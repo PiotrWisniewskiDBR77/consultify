@@ -166,6 +166,8 @@ import { MobileToolbarMenu } from './table/MobileToolbarMenu';
 interface IdeaTableToolProps {
   open: boolean;
   ideaId: string;
+  /** When set (e.g. `?tpTable=` deep link), load this table-platform table if it belongs to `ideaId`. */
+  preferredPlatformTableId?: string | null;
   locked?: boolean;
   refreshToken?: number;
   focusMode?: 'system' | 'object' | null;
@@ -185,6 +187,7 @@ interface IdeaTableToolProps {
 export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   open,
   ideaId,
+  preferredPlatformTableId = null,
   locked = false,
   refreshToken,
   focusMode,
@@ -207,6 +210,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     isPl,
     open,
     onSelectionChange: onSelectionChange as (sel: unknown) => void | undefined,
+    preferredTableId: preferredPlatformTableId,
   });
 
   // Platform may be active via feature flags, but we can still fall back to

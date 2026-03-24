@@ -10,6 +10,7 @@ import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { Api } from '@/services/api';
@@ -234,6 +235,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   onLockedChange,
 }) => {
   const { i18n } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const deepLinkedTableId = searchParams.get('tpTable');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNewInitial = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
@@ -2264,6 +2267,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaTableTool
               open
               ideaId={realId}
+              preferredPlatformTableId={activeTool === 'table' ? deepLinkedTableId : null}
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}

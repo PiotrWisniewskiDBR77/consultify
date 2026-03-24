@@ -306,6 +306,15 @@ export function getV8SheetArtifactXlsxExportPath(tableId: string): string {
   return `/api/table-platform/tables/${encodeURIComponent(tableId)}/export/xlsx`;
 }
 
+/**
+ * Deep-link into My Work → Ideas → workspace Table tool for a canonical `tp_tables` row.
+ * `workspaceId` is `tp_bases.workspace_id` (idea id). Requires `tablePlatformMetadataFirst`
+ * + bridge support for the grid to load that table id.
+ */
+export function buildMyWorkSheetTableOpenPath(workspaceId: string, tableId: string): string {
+  return `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table?tpTable=${encodeURIComponent(tableId)}`;
+}
+
 export function getArtifactPath(type: ArtifactType, id: string): string {
   const safeId = String(id);
   const code = buildArtifactCode(type, safeId);

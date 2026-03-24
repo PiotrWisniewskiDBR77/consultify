@@ -20,7 +20,8 @@ import type { ColumnDef, TableNode } from './tableTypes';
 import { fieldToColumn, recordToNode } from './tablePlatformMappers';
 
 const PAGE_SIZE = 50;
-const HARD_DISABLE_METADATA_FIRST = true;
+/** When false, `tablePlatformMetadataFirst` feature flag controls metadata-first mode. */
+const HARD_DISABLE_METADATA_FIRST = false;
 
 /** Normalize API response: backend may return snake_case */
 function normalizeField(raw: Record<string, unknown>): TablePlatformField {
@@ -59,6 +60,8 @@ function toBackendSorts(sorts: TPSortRule[]): Array<{ fieldId: string; direction
 export interface UseTablePlatformBridgeOpts {
   ideaId: string;
   enabled: boolean;
+  /** When set, load this `tp_tables` row if it belongs to `ideaId` (via base.workspace_id). */
+  preferredTableId?: string | null;
 }
 
 export interface UseTablePlatformBridgeReturn {
@@ -92,8 +95,29 @@ export interface UseTablePlatformBridgeReturn {
   applySorts: (sorts: TPSortRule[]) => Promise<void>;
 }
 
+async function resolveTargetTableForIdea(
+  ideaId: string,
+  preferredTableId: string | null | undefined,
+  ensured: { baseId: string; tableId: string }
+): Promise<{ baseId: string; tableId: string }> {
+  const fallback = { baseId: ensured.baseId, tableId: ensured.tableId };
+  const raw = preferredTableId?.trim();
+  if (!raw) return fallback;
+  try {
+    const tableRes = (await TablePlatformApi.getTable(raw)) as Record<string, unknown>;
+    const tableBaseId = String(tableRes.base_id ?? tableRes.baseId ?? '');
+    if (!tableBaseId) return fallback;
+    const baseRes = (await TablePlatformApi.getBase(tableBaseId)) as Record<string, unknown>;
+    const workspaceId = String(baseRes.workspace_id ?? baseRes.workspaceId ?? '');
+    if (workspaceId !== ideaId) return fallback;
+    return { baseId: tableBaseId, tableId: raw };
+  } catch {
+    return fallback;
+  }
+}
+
 export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTablePlatformBridgeReturn {
-  const { ideaId, enabled } = opts;
+  const { ideaId, enabled, preferredTableId } = opts;
   const { isEnabled } = useFeatureFlags();
   const isNewPlatform =
     enabled && isEnabled('tablePlatformMetadataFirst') && !HARD_DISABLE_METADATA_FIRST;
@@ -113,7 +137,6 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
 
   const cursorRef = useRef<string | undefined>(undefined);
   const tableIdRef = useRef<string | null>(null);
-  const initRef = useRef(false);
 
   const columns = fields.map(fieldToColumn);
   const nodes = records.map((r) => recordToNode(r, fields));
@@ -168,7 +191,12 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
           return;
         }
 
-        const { baseId, tableId } = result;
+        const { baseId: ensuredBaseId, tableId: ensuredTableId } = result;
+        const { baseId, tableId } = await resolveTargetTableForIdea(
+          ideaId,
+          preferredTableId,
+          { baseId: ensuredBaseId, tableId: ensuredTableId }
+        );
         tableIdRef.current = tableId;
         cursorRef.current = undefined;
 
@@ -219,7 +247,7 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
     } finally {
       setLoading(false);
     }
-  }, [isNewPlatform, enabled, ensureBaseAndTable, filters, sorts]);
+  }, [isNewPlatform, enabled, ensureBaseAndTable, filters, sorts, ideaId, preferredTableId]);
 
   const loadMore = useCallback(async () => {
     const tableId = tableIdRef.current;
@@ -377,9 +405,7 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
 
   useEffect(() => {
     if (!isNewPlatform || !enabled) return;
-    if (initRef.current) return;
-    initRef.current = true;
-    loadData();
+    void loadData();
   }, [isNewPlatform, enabled, loadData]);
 
   const noopReturn: UseTablePlatformBridgeReturn = {
