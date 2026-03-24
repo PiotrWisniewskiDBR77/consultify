@@ -1,0 +1,1306 @@
+import { v4 as uuidv4 } from 'uuid';
+
+import * as chatExecutionService from './chatExecutionService.js';
+import * as executionSpineService from './executionSpineService.js';
+import * as publishReviewService from './publishReviewService.js';
+import type {
+  ArtifactAccessGrant,
+  ArtifactFamily,
+  ArtifactListFilters,
+  ArtifactListItem,
+  ArtifactOriginLink,
+  ArtifactPlanningRequest,
+  ArtifactPlanningResult,
+  ArtifactRecord,
+  ArtifactRunRecord,
+  ArtifactRunStatus,
+  ArtifactVisibilityScope,
+  CreateArtifactAccessGrantParams,
+  RegisterArtifactOriginParams,
+} from '../../types/artifactRegistry.js';
+import {
+  ArtifactPlanningRequestSchema,
+  CreateArtifactAccessGrantParamsSchema,
+  RegisterArtifactOriginParamsSchema,
+} from '../../types/artifactRegistry.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
+
+const LOG_PREFIX = '[V8:ArtifactRegistry]';
+const FALLBACK_ACTOR = 'system';
+const BACKFILL_TTL_MS = 30_000;
+
+const backfillWatermark = new Map<string, number>();
+
+interface ArtifactRow {
+  artifact_id: string;
+  organization_id: string;
+  output_type: 'report' | 'presentation' | 'sheet';
+  artifact_family: ArtifactFamily | null;
+  delivery_state: string;
+  title_snapshot: string | null;
+  owner_user_id: string | null;
+  canonical_home: string | null;
+  visibility_scope: ArtifactVisibilityScope | null;
+  project_id: string | null;
+  context_snapshot_id: string | null;
+  execution_run_id: string | null;
+  template_family_ref: string | null;
+  source_initiative_id: string | null;
+  ai_governance_preset_ref: string | null;
+  origin_summary_json: string | null;
+  created_by: string;
+  created_at: string;
+  last_transition_at: string;
+}
+
+interface ArtifactListRow extends ArtifactRow {
+  origin_runtime: 'report' | 'presentation' | 'sheet' | 'native_artifact' | null;
+  origin_record_id: string | null;
+  report_title: string | null;
+  report_status: string | null;
+  report_type: string | null;
+  report_source_refs_json: string | null;
+  presentation_title: string | null;
+  presentation_status: string | null;
+  presentation_mode: string | null;
+  presentation_slide_count: number | null;
+  presentation_export_format: string | null;
+  presentation_source_refs_json: string | null;
+  publish_state: string | null;
+  publish_reviewers: string | null;
+  review_gate_count: number | null;
+}
+
+interface OriginLinkRow {
+  link_id: string;
+  artifact_id: string;
+  organization_id: string;
+  origin_runtime: 'report' | 'presentation' | 'sheet' | 'native_artifact';
+  origin_record_id: string;
+  is_primary_origin: number;
+  created_at: string;
+}
+
+interface AccessGrantRow {
+  grant_id: string;
+  artifact_id: string;
+  organization_id: string;
+  grant_kind: 'user' | 'role';
+  user_id: string | null;
+  role_key: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+interface ArtifactRunRow {
+  run_id: string;
+  artifact_id: string | null;
+  organization_id: string;
+  execution_run_id: string;
+  context_snapshot_id: string;
+  trigger_type: 'chat' | 'module_action' | 'template' | 'refresh';
+  source_context_type: string | null;
+  source_context_id: string | null;
+  requested_by_user_id: string;
+  plan_json: string;
+  run_status: ArtifactRunStatus;
+  proposal_id: string | null;
+  retry_of_run_id: string | null;
+  failure_reason: string | null;
+  started_at: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ReportBackfillRow {
+  id: string;
+  title: string | null;
+  status: string | null;
+  report_type: string | null;
+  project_id: string | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  source_id: string | null;
+  source_refs_json: string | null;
+}
+
+interface PresentationBackfillRow {
+  id: string;
+  title: string | null;
+  status: string | null;
+  deck_type: string | null;
+  presentation_mode: string | null;
+  slide_count: number | null;
+  export_format: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  source_id: string | null;
+  source_refs_json: string | null;
+}
+
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function mapArtifactRow(row: ArtifactRow): ArtifactRecord {
+  const inferredFamily =
+    row.output_type === 'presentation'
+      ? 'presentation'
+      : row.output_type === 'sheet'
+        ? 'sheet'
+        : 'document';
+  return {
+    artifactId: row.artifact_id,
+    organizationId: row.organization_id,
+    outputType: row.output_type,
+    artifactFamily: row.artifact_family ?? inferredFamily,
+    deliveryState: row.delivery_state,
+    titleSnapshot: row.title_snapshot,
+    ownerUserId: row.owner_user_id,
+    canonicalHome: 'outputs_library',
+    visibilityScope: row.visibility_scope ?? 'organization',
+    projectId: row.project_id,
+    contextSnapshotId: row.context_snapshot_id,
+    executionRunId: row.execution_run_id,
+    templateFamilyRef: row.template_family_ref,
+    sourceInitiativeId: row.source_initiative_id,
+    aiGovernancePresetRef: row.ai_governance_preset_ref,
+    originSummary: safeJsonParse<Record<string, unknown> | null>(row.origin_summary_json, null),
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    lastTransitionAt: row.last_transition_at,
+  };
+}
+
+function mapOriginLinkRow(row: OriginLinkRow): ArtifactOriginLink {
+  return {
+    linkId: row.link_id,
+    artifactId: row.artifact_id,
+    organizationId: row.organization_id,
+    originRuntime: row.origin_runtime,
+    originRecordId: row.origin_record_id,
+    isPrimaryOrigin: row.is_primary_origin === 1,
+    createdAt: row.created_at,
+  };
+}
+
+function mapAccessGrantRow(row: AccessGrantRow): ArtifactAccessGrant {
+  return {
+    grantId: row.grant_id,
+    artifactId: row.artifact_id,
+    organizationId: row.organization_id,
+    grantKind: row.grant_kind,
+    userId: row.user_id,
+    roleKey: row.role_key,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  };
+}
+
+function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
+  const parsedPlan = safeJsonParse<ArtifactPlanningResult['artifactPlan']>(row.plan_json, {
+    artifactFamily: 'document',
+    outputType: 'report',
+    titleHint: 'Output draft',
+    governancePath: 'execution_spine',
+    visibilityScope: 'private',
+  });
+
+  return {
+    runId: row.run_id,
+    artifactId: row.artifact_id,
+    organizationId: row.organization_id,
+    executionRunId: row.execution_run_id,
+    contextSnapshotId: row.context_snapshot_id,
+    triggerType: row.trigger_type,
+    sourceContextType: row.source_context_type,
+    sourceContextId: row.source_context_id,
+    requestedByUserId: row.requested_by_user_id,
+    plan: parsedPlan,
+    runStatus: row.run_status,
+    proposalId: row.proposal_id,
+    retryOfRunId: row.retry_of_run_id,
+    failureReason: row.failure_reason,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapReportStatusToDeliveryState(status: string | null | undefined): string {
+  const normalized = String(status || 'draft').trim().toLowerCase();
+  if (!normalized || normalized === 'draft') return 'draft';
+  if (normalized.includes('configur')) return 'draft';
+  if (normalized.includes('archive')) return 'archived';
+  if (normalized.includes('review')) return 'in_review';
+  if (normalized.includes('sent') || normalized.includes('shared')) return 'shared';
+  if (normalized.includes('export')) return 'ready';
+  if (normalized.includes('approved') || normalized.includes('final')) return 'ready';
+  if (normalized.includes('ready')) return 'ready';
+  if (normalized.includes('generat')) return 'generated';
+  if (normalized.includes('generate')) return 'generated';
+  return 'editing';
+}
+
+export function mapPresentationStatusToDeliveryState(status: string | null | undefined): string {
+  const normalized = String(status || 'draft').trim().toLowerCase();
+  if (!normalized || normalized === 'draft') return 'draft';
+  if (normalized === 'generated') return 'generated';
+  if (normalized === 'failed') return 'editing';
+  if (normalized === 'editing') return 'editing';
+  if (normalized === 'ready') return 'ready';
+  if (normalized === 'shared') return 'shared';
+  if (normalized === 'archived') return 'archived';
+  if (normalized.includes('review')) return 'in_review';
+  return 'editing';
+}
+
+export function deriveArtifactVisibilityScope(params: {
+  outputType: 'report' | 'presentation' | 'sheet';
+  projectId?: string | null;
+  ownerUserId?: string | null;
+  isBackfill?: boolean;
+}): ArtifactVisibilityScope {
+  if (params.projectId) return 'project';
+  if (params.ownerUserId) return 'private';
+  if (params.isBackfill) return 'private';
+  if (params.outputType === 'presentation') return 'private';
+  if (params.outputType === 'sheet') return 'organization';
+  return 'organization';
+}
+
+/**
+ * Registers (or refreshes) a canonical sheet artifact for a governed table-platform table.
+ * Origin runtime is `sheet`; origin record id is the `tp_tables.id`.
+ */
+export async function registerGovernedTableSheetArtifact(params: {
+  organizationId: string;
+  userId: string;
+  tableId: string;
+  tableName: string;
+}): Promise<ArtifactRecord> {
+  return registerArtifactOrigin({
+    organizationId: params.organizationId,
+    outputType: 'sheet',
+    artifactFamily: 'sheet',
+    originRuntime: 'sheet',
+    originRecordId: params.tableId,
+    titleSnapshot: params.tableName || 'Untitled table',
+    ownerUserId: params.userId,
+    createdBy: params.userId,
+    deliveryState: 'ready',
+    visibilityScope: 'organization',
+    originSummary: {
+      sourceTable: 'tp_tables',
+      exportFormat: 'xlsx',
+      governanceMode: 'governed',
+    },
+  });
+}
+
+async function getOriginLinkByOrigin(
+  organizationId: string,
+  originRuntime: string,
+  originRecordId: string,
+): Promise<ArtifactOriginLink | null> {
+  const row = await dbGet<OriginLinkRow>(
+    `SELECT * FROM v8_artifact_origin_links
+     WHERE organization_id = ? AND origin_runtime = ? AND origin_record_id = ?`,
+    [organizationId, originRuntime, originRecordId],
+    { fallback: true },
+  );
+  return row ? mapOriginLinkRow(row) : null;
+}
+
+async function getArtifactRow(
+  artifactId: string,
+  organizationId: string,
+): Promise<ArtifactRow | null> {
+  return dbGet<ArtifactRow>(
+    `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
+    [artifactId, organizationId],
+    { fallback: true },
+  );
+}
+
+async function getArtifactRunRow(
+  runId: string,
+  organizationId: string,
+): Promise<ArtifactRunRow | null> {
+  return dbGet<ArtifactRunRow>(
+    `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
+    [runId, organizationId],
+    { fallback: true },
+  );
+}
+
+async function updateArtifactMetadata(
+  artifactId: string,
+  organizationId: string,
+  patch: Partial<RegisterArtifactOriginParams>,
+): Promise<void> {
+  const now = new Date().toISOString();
+  await dbRun(
+    `UPDATE v8_output_artifacts
+     SET artifact_family = COALESCE(?, artifact_family),
+         title_snapshot = COALESCE(?, title_snapshot),
+         owner_user_id = COALESCE(?, owner_user_id),
+         visibility_scope = COALESCE(?, visibility_scope),
+         project_id = COALESCE(?, project_id),
+         context_snapshot_id = COALESCE(?, context_snapshot_id),
+         execution_run_id = COALESCE(?, execution_run_id),
+         template_family_ref = COALESCE(?, template_family_ref),
+         source_initiative_id = COALESCE(?, source_initiative_id),
+         ai_governance_preset_ref = COALESCE(?, ai_governance_preset_ref),
+         origin_summary_json = COALESCE(?, origin_summary_json),
+         last_transition_at = COALESCE(?, last_transition_at)
+     WHERE artifact_id = ? AND organization_id = ?`,
+    [
+      patch.artifactFamily ?? null,
+      patch.titleSnapshot ?? null,
+      patch.ownerUserId ?? null,
+      patch.visibilityScope ?? null,
+      patch.projectId ?? null,
+      patch.contextSnapshotId ?? null,
+      patch.executionRunId ?? null,
+      patch.templateFamilyRef ?? null,
+      patch.sourceInitiativeId ?? null,
+      patch.aiGovernancePresetRef ?? null,
+      patch.originSummary ? JSON.stringify(patch.originSummary) : null,
+      now,
+      artifactId,
+      organizationId,
+    ],
+  );
+}
+
+export async function registerArtifactOrigin(
+  params: RegisterArtifactOriginParams,
+): Promise<ArtifactRecord> {
+  const validated = RegisterArtifactOriginParamsSchema.parse(params);
+
+  const existingLink = await getOriginLinkByOrigin(
+    validated.organizationId,
+    validated.originRuntime,
+    validated.originRecordId,
+  );
+
+  if (existingLink) {
+    await updateArtifactMetadata(existingLink.artifactId, validated.organizationId, validated);
+    const row = await getArtifactRow(existingLink.artifactId, validated.organizationId);
+    if (!row) {
+      throw new Error(`Artifact ${existingLink.artifactId} disappeared during origin registration`);
+    }
+    return mapArtifactRow(row);
+  }
+
+  const artifactId = uuidv4();
+  const linkId = uuidv4();
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `INSERT INTO v8_output_artifacts (
+      artifact_id, organization_id, output_type, artifact_family, delivery_state,
+      title_snapshot, owner_user_id, canonical_home, visibility_scope, project_id,
+      context_snapshot_id, execution_run_id, template_family_ref, source_initiative_id,
+      ai_governance_preset_ref, origin_summary_json, created_by, created_at, last_transition_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      artifactId,
+      validated.organizationId,
+      validated.outputType,
+      validated.artifactFamily,
+      validated.deliveryState,
+      validated.titleSnapshot,
+      validated.ownerUserId,
+      'outputs_library',
+      validated.visibilityScope,
+      validated.projectId,
+      validated.contextSnapshotId,
+      validated.executionRunId,
+      validated.templateFamilyRef,
+      validated.sourceInitiativeId,
+      validated.aiGovernancePresetRef,
+      validated.originSummary ? JSON.stringify(validated.originSummary) : null,
+      validated.createdBy,
+      now,
+      now,
+    ],
+  );
+
+  await dbRun(
+    `INSERT INTO v8_artifact_origin_links (
+      link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [linkId, artifactId, validated.organizationId, validated.originRuntime, validated.originRecordId, 1, now],
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Registered ${validated.originRuntime}:${validated.originRecordId} as artifact ${artifactId}`,
+  );
+
+  const row = await getArtifactRow(artifactId, validated.organizationId);
+  if (!row) {
+    throw new Error(`Artifact ${artifactId} was not found after registration`);
+  }
+  return mapArtifactRow(row);
+}
+
+export async function createArtifactAccessGrant(
+  params: CreateArtifactAccessGrantParams,
+): Promise<ArtifactAccessGrant> {
+  const validated = CreateArtifactAccessGrantParamsSchema.parse(params);
+  const grantId = uuidv4();
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `INSERT INTO v8_artifact_access_grants (
+      grant_id, artifact_id, organization_id, grant_kind, user_id, role_key, created_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      grantId,
+      validated.artifactId,
+      validated.organizationId,
+      validated.grantKind,
+      validated.userId,
+      validated.roleKey,
+      validated.createdBy,
+      now,
+    ],
+  );
+
+  const row = await dbGet<AccessGrantRow>(
+    `SELECT * FROM v8_artifact_access_grants WHERE grant_id = ?`,
+    [grantId],
+    { fallback: true },
+  );
+  if (!row) throw new Error(`Access grant ${grantId} not found after creation`);
+  return mapAccessGrantRow(row);
+}
+
+export async function startArtifactReview(params: {
+  artifactId: string;
+  organizationId: string;
+  actorUserId: string;
+  reviewers?: string[];
+}): Promise<{
+  artifactId: string;
+  visibilityScope: ArtifactVisibilityScope;
+  publishState: string;
+  reviewers: string[];
+}> {
+  const artifact = await getArtifactRow(params.artifactId, params.organizationId);
+  if (!artifact) {
+    throw new Error(`Artifact ${params.artifactId} not found in organization ${params.organizationId}`);
+  }
+
+  let record = await publishReviewService.getPublishRecord(params.artifactId, params.organizationId);
+  if (!record) {
+    record = await publishReviewService.createPublishRecord({
+      artifactId: params.artifactId,
+      artifactType: artifact.output_type,
+      organizationId: params.organizationId,
+      publishedBy: params.actorUserId,
+      reviewers: params.reviewers || [],
+    });
+  }
+
+  if (record.currentState === 'private_draft') {
+    record = await publishReviewService.transitionPublishState({
+      recordId: record.recordId,
+      organizationId: params.organizationId,
+      newState: 'reviewable_share',
+      actor: params.actorUserId,
+    });
+  }
+
+  await updateArtifactMetadata(params.artifactId, params.organizationId, {
+    visibilityScope: 'review_shared',
+  });
+
+  logger.info(
+    `${LOG_PREFIX} Started review for artifact ${params.artifactId} (state=${record.currentState})`,
+  );
+
+  return {
+    artifactId: params.artifactId,
+    visibilityScope: 'review_shared',
+    publishState: record.currentState,
+    reviewers: record.reviewers,
+  };
+}
+
+export async function getArtifactOriginLinks(
+  artifactId: string,
+  organizationId: string,
+): Promise<ArtifactOriginLink[]> {
+  const rows = await dbAll<OriginLinkRow>(
+    `SELECT * FROM v8_artifact_origin_links
+     WHERE artifact_id = ? AND organization_id = ?
+     ORDER BY created_at ASC`,
+    [artifactId, organizationId],
+    { fallback: true },
+  );
+  return (rows || []).map(mapOriginLinkRow);
+}
+
+export async function getArtifactAccessGrantsForArtifact(
+  artifactId: string,
+  organizationId: string,
+): Promise<ArtifactAccessGrant[]> {
+  const rows = await dbAll<AccessGrantRow>(
+    `SELECT * FROM v8_artifact_access_grants
+     WHERE artifact_id = ? AND organization_id = ?
+     ORDER BY created_at ASC`,
+    [artifactId, organizationId],
+    { fallback: true },
+  );
+  return (rows || []).map(mapAccessGrantRow);
+}
+
+async function backfillReportsForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<ReportBackfillRow>(
+    `SELECT r.id, r.title, r.status, r.report_type, r.project_id, r.created_by, r.created_at, r.updated_at,
+            r.source_id, r.source_refs_json
+     FROM report_builder_reports r
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.organization_id = r.organization_id
+      AND l.origin_runtime = 'report'
+      AND l.origin_record_id = r.id
+     WHERE r.organization_id = ?
+       AND l.link_id IS NULL`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    await registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'report',
+      originRecordId: row.id,
+      titleSnapshot: row.title || 'Untitled report',
+      ownerUserId: row.created_by || null,
+      createdBy: row.created_by || FALLBACK_ACTOR,
+      deliveryState: mapReportStatusToDeliveryState(row.status),
+      visibilityScope: deriveArtifactVisibilityScope({
+        outputType: 'report',
+        projectId: row.project_id,
+        ownerUserId: row.created_by || null,
+        isBackfill: true,
+      }),
+      projectId: row.project_id || null,
+      originSummary: {
+        reportType: row.report_type,
+        sourceId: row.source_id,
+        sourceRefs: safeJsonParse(row.source_refs_json, [] as unknown[]),
+        nativeStatus: row.status,
+        sourceTable: 'report_builder_reports',
+      },
+    });
+    inserted++;
+  }
+  return inserted;
+}
+
+async function backfillPresentationsForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<PresentationBackfillRow>(
+    `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
+            d.export_format, d.created_at, d.updated_at, d.source_id, d.source_refs_json
+     FROM presentation_decks d
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.organization_id = d.organization_id
+      AND l.origin_runtime = 'presentation'
+      AND l.origin_record_id = d.id
+     WHERE d.organization_id = ?
+       AND l.link_id IS NULL`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    await registerArtifactOrigin({
+      organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: row.id,
+      titleSnapshot: row.title || 'Untitled presentation',
+      ownerUserId: null,
+      createdBy: FALLBACK_ACTOR,
+      deliveryState: mapPresentationStatusToDeliveryState(row.status),
+      visibilityScope: deriveArtifactVisibilityScope({
+        outputType: 'presentation',
+        isBackfill: true,
+      }),
+      originSummary: {
+        deckType: row.deck_type,
+        presentationMode: row.presentation_mode,
+        slideCount: row.slide_count,
+        exportFormat: row.export_format,
+        sourceId: row.source_id,
+        sourceRefs: safeJsonParse(row.source_refs_json, [] as unknown[]),
+        nativeStatus: row.status,
+        sourceTable: 'presentation_decks',
+      },
+    });
+    inserted++;
+  }
+  return inserted;
+}
+
+export async function ensureBackfilledOutputsForOrg(organizationId: string): Promise<void> {
+  const last = backfillWatermark.get(organizationId) || 0;
+  const now = Date.now();
+  if (now - last < BACKFILL_TTL_MS) return;
+
+  const [reportsInserted, presentationsInserted] = await Promise.all([
+    backfillReportsForOrg(organizationId),
+    backfillPresentationsForOrg(organizationId),
+  ]);
+
+  backfillWatermark.set(organizationId, now);
+  if (reportsInserted || presentationsInserted) {
+    logger.info(
+      `${LOG_PREFIX} Backfilled ${reportsInserted} reports and ${presentationsInserted} presentations for org ${organizationId}`,
+    );
+  }
+}
+
+async function getProjectMembershipSet(
+  organizationId: string,
+  userId: string,
+): Promise<Set<string>> {
+  const rows = await dbAll<{ project_id: string }>(
+    `SELECT pm.project_id
+     FROM project_members pm
+     INNER JOIN projects p
+       ON p.id = pm.project_id
+     WHERE pm.user_id = ?
+       AND pm.project_id IS NOT NULL
+       AND p.organization_id = ?`,
+    [userId, organizationId],
+    { fallback: true },
+  );
+  return new Set((rows || []).map((row) => String(row.project_id)));
+}
+
+async function getArtifactAccessGrants(
+  organizationId: string,
+  artifactIds: string[],
+): Promise<Map<string, ArtifactAccessGrant[]>> {
+  if (artifactIds.length === 0) return new Map();
+  const placeholders = artifactIds.map(() => '?').join(', ');
+  const rows = await dbAll<AccessGrantRow>(
+    `SELECT *
+     FROM v8_artifact_access_grants
+     WHERE organization_id = ?
+       AND artifact_id IN (${placeholders})`,
+    [organizationId, ...artifactIds],
+    { fallback: true },
+  );
+
+  const map = new Map<string, ArtifactAccessGrant[]>();
+  for (const row of rows || []) {
+    const item = mapAccessGrantRow(row);
+    const arr = map.get(item.artifactId) || [];
+    arr.push(item);
+    map.set(item.artifactId, arr);
+  }
+  return map;
+}
+
+function sourceRefsFromOriginSummary(summary: Record<string, unknown> | null): unknown[] {
+  if (!summary || !Array.isArray(summary.sourceRefs)) return [];
+  return summary.sourceRefs as unknown[];
+}
+
+function rowToListItem(row: ArtifactListRow): ArtifactListItem {
+  const base = mapArtifactRow(row);
+  const sourceRefs =
+    row.origin_runtime === 'report'
+      ? safeJsonParse(row.report_source_refs_json, [] as unknown[])
+      : row.origin_runtime === 'presentation'
+        ? safeJsonParse(row.presentation_source_refs_json, [] as unknown[])
+        : row.origin_runtime === 'sheet'
+          ? sourceRefsFromOriginSummary(base.originSummary)
+          : [];
+
+  const originTitle =
+    row.origin_runtime === 'report'
+      ? row.report_title
+      : row.origin_runtime === 'presentation'
+        ? row.presentation_title
+        : row.origin_runtime === 'sheet'
+          ? base.titleSnapshot
+          : null;
+
+  const originStatus =
+    row.origin_runtime === 'report'
+      ? row.report_status
+      : row.origin_runtime === 'presentation'
+        ? row.presentation_status
+        : row.origin_runtime === 'sheet'
+          ? typeof base.originSummary?.nativeStatus === 'string'
+            ? (base.originSummary.nativeStatus as string)
+            : null
+          : null;
+
+  return {
+    ...base,
+    originRuntime: row.origin_runtime,
+    originRecordId: row.origin_record_id,
+    resolvedTitle: originTitle || base.titleSnapshot || 'Untitled artifact',
+    originTitle,
+    originStatus,
+    reportType: row.report_type,
+    presentationMode: row.presentation_mode,
+    slideCount: row.presentation_slide_count,
+    exportFormat: row.origin_runtime === 'sheet' ? 'xlsx' : row.presentation_export_format,
+    sourceRefs,
+    publishState: row.publish_state,
+    publishReviewers: safeJsonParse(row.publish_reviewers, [] as string[]),
+    reviewGateCount: Number(row.review_gate_count || 0),
+  };
+}
+
+function matchesSearch(item: ArtifactListItem, search?: string): boolean {
+  if (!search) return true;
+  const q = search.trim().toLowerCase();
+  if (!q) return true;
+  return [
+    item.resolvedTitle,
+    item.originTitle,
+    item.reportType,
+    item.presentationMode,
+    item.originRuntime,
+    item.originStatus,
+    item.exportFormat,
+  ]
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(q));
+}
+
+function matchesViewFilters(item: ArtifactListItem, filters: ArtifactListFilters, currentUserId: string): boolean {
+  if (filters.outputType && item.outputType !== filters.outputType) return false;
+  if (filters.artifactFamily && item.artifactFamily !== filters.artifactFamily) return false;
+  if (filters.visibilityScope && item.visibilityScope !== filters.visibilityScope) return false;
+  if (filters.ownerUserId && item.ownerUserId !== filters.ownerUserId) return false;
+  if (filters.onlyMine && item.ownerUserId !== currentUserId) return false;
+  if (filters.reviewSharedForUserId) {
+    const isReviewer = item.publishReviewers.includes(filters.reviewSharedForUserId);
+    if (!isReviewer && item.visibilityScope !== 'review_shared') return false;
+  }
+  return matchesSearch(item, filters.search);
+}
+
+function hasArtifactAccess(
+  item: ArtifactListItem,
+  grants: ArtifactAccessGrant[],
+  projectMemberships: Set<string>,
+  userId: string,
+  roleKey: string | null,
+  allowDemo: boolean,
+): boolean {
+  if (item.ownerUserId && item.ownerUserId === userId) return true;
+
+  switch (item.visibilityScope) {
+    case 'organization':
+      return true;
+    case 'private':
+      return item.ownerUserId === userId;
+    case 'project':
+      return !!item.projectId && projectMemberships.has(item.projectId);
+    case 'review_shared':
+      return (
+        item.publishReviewers.includes(userId) ||
+        grants.some((grant) => grant.userId === userId) ||
+        (roleKey ? grants.some((grant) => grant.roleKey === roleKey) : false)
+      );
+    case 'demo':
+      return allowDemo;
+    default:
+      return false;
+  }
+}
+
+async function getArtifactListItemRow(
+  artifactId: string,
+  organizationId: string,
+): Promise<ArtifactListRow | null> {
+  return dbGet<ArtifactListRow>(
+    `SELECT a.*,
+            l.origin_runtime,
+            l.origin_record_id,
+            r.title AS report_title,
+            r.status AS report_status,
+            r.report_type AS report_type,
+            r.source_refs_json AS report_source_refs_json,
+            d.title AS presentation_title,
+            d.status AS presentation_status,
+            d.presentation_mode AS presentation_mode,
+            d.slide_count AS presentation_slide_count,
+            d.export_format AS presentation_export_format,
+            d.source_refs_json AS presentation_source_refs_json,
+            p.current_state AS publish_state,
+            p.reviewers AS publish_reviewers,
+            (
+              SELECT COUNT(*) FROM v8_review_gates g
+              WHERE g.artifact_id = a.artifact_id AND g.organization_id = a.organization_id
+            ) AS review_gate_count
+     FROM v8_output_artifacts a
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.artifact_id = a.artifact_id
+      AND l.organization_id = a.organization_id
+      AND l.is_primary_origin = 1
+     LEFT JOIN report_builder_reports r
+       ON l.origin_runtime = 'report'
+      AND r.id = l.origin_record_id
+      AND r.organization_id = a.organization_id
+     LEFT JOIN presentation_decks d
+       ON l.origin_runtime = 'presentation'
+      AND d.id = l.origin_record_id
+      AND d.organization_id = a.organization_id
+     LEFT JOIN v8_publish_records p
+       ON p.artifact_id = a.artifact_id
+      AND p.organization_id = a.organization_id
+     WHERE a.organization_id = ?
+       AND a.artifact_id = ?`,
+    [organizationId, artifactId],
+    { fallback: true },
+  );
+}
+
+export async function listArtifactsForUser(params: {
+  organizationId: string;
+  userId: string;
+  roleKey?: string | null;
+  allowDemo?: boolean;
+  filters?: ArtifactListFilters;
+}): Promise<ArtifactListItem[]> {
+  const { organizationId, userId, roleKey = null, allowDemo = false, filters = {} } = params;
+  await ensureBackfilledOutputsForOrg(organizationId);
+
+  const rows = await dbAll<ArtifactListRow>(
+    `SELECT a.*,
+            l.origin_runtime,
+            l.origin_record_id,
+            r.title AS report_title,
+            r.status AS report_status,
+            r.report_type AS report_type,
+            r.source_refs_json AS report_source_refs_json,
+            d.title AS presentation_title,
+            d.status AS presentation_status,
+            d.presentation_mode AS presentation_mode,
+            d.slide_count AS presentation_slide_count,
+            d.export_format AS presentation_export_format,
+            d.source_refs_json AS presentation_source_refs_json,
+            p.current_state AS publish_state,
+            p.reviewers AS publish_reviewers,
+            (
+              SELECT COUNT(*) FROM v8_review_gates g
+              WHERE g.artifact_id = a.artifact_id AND g.organization_id = a.organization_id
+            ) AS review_gate_count
+     FROM v8_output_artifacts a
+     LEFT JOIN v8_artifact_origin_links l
+       ON l.artifact_id = a.artifact_id
+      AND l.organization_id = a.organization_id
+      AND l.is_primary_origin = 1
+     LEFT JOIN report_builder_reports r
+       ON l.origin_runtime = 'report'
+      AND r.id = l.origin_record_id
+      AND r.organization_id = a.organization_id
+     LEFT JOIN presentation_decks d
+       ON l.origin_runtime = 'presentation'
+      AND d.id = l.origin_record_id
+      AND d.organization_id = a.organization_id
+     LEFT JOIN v8_publish_records p
+       ON p.artifact_id = a.artifact_id
+      AND p.organization_id = a.organization_id
+     WHERE a.organization_id = ?
+     ORDER BY COALESCE(a.last_transition_at, a.created_at) DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const items = (rows || []).map(rowToListItem);
+  const accessMap = await getArtifactAccessGrants(
+    organizationId,
+    items.map((item) => item.artifactId),
+  );
+  const projectMemberships = await getProjectMembershipSet(organizationId, userId);
+
+  return items
+    .filter((item) =>
+      hasArtifactAccess(
+        item,
+        accessMap.get(item.artifactId) || [],
+        projectMemberships,
+        userId,
+        roleKey,
+        allowDemo,
+      ),
+    )
+    .filter((item) => matchesViewFilters(item, filters, userId))
+    .slice(0, Math.max(1, Math.min(filters.limit || 100, 200)));
+}
+
+export async function getArtifactForUser(params: {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  roleKey?: string | null;
+  allowDemo?: boolean;
+}): Promise<ArtifactListItem | null> {
+  await ensureBackfilledOutputsForOrg(params.organizationId);
+  const row = await getArtifactListItemRow(params.artifactId, params.organizationId);
+  if (!row) return null;
+
+  const item = rowToListItem(row);
+  const [grants, projectMemberships] = await Promise.all([
+    getArtifactAccessGrants(params.organizationId, [item.artifactId]),
+    getProjectMembershipSet(params.organizationId, params.userId),
+  ]);
+
+  return hasArtifactAccess(
+    item,
+    grants.get(item.artifactId) || [],
+    projectMemberships,
+    params.userId,
+    params.roleKey || null,
+    params.allowDemo || false,
+  )
+    ? item
+    : null;
+}
+
+export async function getArtifactByOrigin(params: {
+  organizationId: string;
+  originRuntime: 'report' | 'presentation' | 'sheet' | 'native_artifact';
+  originRecordId: string;
+  userId: string;
+  roleKey?: string | null;
+  allowDemo?: boolean;
+}): Promise<ArtifactListItem | null> {
+  await ensureBackfilledOutputsForOrg(params.organizationId);
+  const link = await getOriginLinkByOrigin(
+    params.organizationId,
+    params.originRuntime,
+    params.originRecordId,
+  );
+  if (!link) return null;
+  return getArtifactForUser({
+    organizationId: params.organizationId,
+    artifactId: link.artifactId,
+    userId: params.userId,
+    roleKey: params.roleKey,
+    allowDemo: params.allowDemo,
+  });
+}
+
+export async function listMyWorkArtifacts(params: {
+  organizationId: string;
+  userId: string;
+  roleKey?: string | null;
+  allowDemo?: boolean;
+  limit?: number;
+}): Promise<{
+  mine: ArtifactListItem[];
+  review: ArtifactListItem[];
+  recent: ArtifactListItem[];
+}> {
+  const items = await listArtifactsForUser({
+    organizationId: params.organizationId,
+    userId: params.userId,
+    roleKey: params.roleKey,
+    allowDemo: params.allowDemo,
+    filters: { limit: params.limit || 50 },
+  });
+
+  const mine = items.filter((item) => item.ownerUserId === params.userId).slice(0, 8);
+  const review = items
+    .filter(
+      (item) =>
+        item.publishReviewers.includes(params.userId) ||
+        item.visibilityScope === 'review_shared',
+    )
+    .slice(0, 8);
+  const recent = items.slice(0, 8);
+
+  return { mine, review, recent };
+}
+
+function inferArtifactPlan(
+  request: ArtifactPlanningRequest,
+): ArtifactPlanningResult['artifactPlan'] {
+  const goal = request.goal.toLowerCase();
+  const explicitFamily = request.requestedArtifactFamily;
+  if (
+    explicitFamily === 'sheet' ||
+    request.requestedOutputType === 'sheet' ||
+    goal.includes('sheet') ||
+    goal.includes('spreadsheet') ||
+    goal.includes('excel')
+  ) {
+    return {
+      artifactFamily: 'sheet',
+      outputType: 'sheet',
+      titleHint: 'Structured sheet draft',
+      governancePath: 'execution_spine',
+      visibilityScope: 'private',
+    };
+  }
+
+  if (explicitFamily === 'presentation' || goal.includes('deck') || goal.includes('presentation')) {
+    return {
+      artifactFamily: 'presentation',
+      outputType: 'presentation',
+      titleHint: 'Executive presentation draft',
+      governancePath: 'execution_spine',
+      visibilityScope: 'private',
+    };
+  }
+
+  return {
+    artifactFamily: explicitFamily || 'document',
+    outputType: request.requestedOutputType || 'report',
+    titleHint: goal.includes('brief') ? 'Working brief draft' : 'Output draft',
+    governancePath: 'execution_spine',
+    visibilityScope: 'private',
+  };
+}
+
+async function createArtifactRunRecord(params: {
+  organizationId: string;
+  executionRunId: string;
+  contextSnapshotId: string;
+  requestedByUserId: string;
+  plan: ArtifactPlanningResult['artifactPlan'];
+  retryOfRunId?: string | null;
+  sourceContextType?: string | null;
+  sourceContextId?: string | null;
+}): Promise<ArtifactRunRecord> {
+  const runId = uuidv4();
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO v8_artifact_runs (
+      run_id, artifact_id, organization_id, execution_run_id, context_snapshot_id,
+      trigger_type, source_context_type, source_context_id, requested_by_user_id,
+      plan_json, run_status, proposal_id, retry_of_run_id, failure_reason,
+      started_at, completed_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      runId,
+      null,
+      params.organizationId,
+      params.executionRunId,
+      params.contextSnapshotId,
+      'chat',
+      params.sourceContextType || 'conversation',
+      params.sourceContextId || null,
+      params.requestedByUserId,
+      JSON.stringify(params.plan),
+      'planned',
+      null,
+      params.retryOfRunId || null,
+      null,
+      now,
+      null,
+      now,
+      now,
+    ],
+  );
+  const row = await getArtifactRunRow(runId, params.organizationId);
+  if (!row) throw new Error(`ArtifactRun ${runId} was not persisted`);
+  return mapArtifactRunRow(row);
+}
+
+export async function createArtifactRunFromChat(
+  request: ArtifactPlanningRequest,
+): Promise<ArtifactPlanningResult & { run: ArtifactRunRecord }> {
+  const validated = ArtifactPlanningRequestSchema.parse(request);
+  const artifactPlan = inferArtifactPlan(validated);
+  const handoff = await chatExecutionService.initiateHandoff({
+    conversationId: validated.conversationId,
+    contextSnapshotId: validated.contextSnapshotId,
+    organizationId: validated.organizationId,
+    userId: validated.userId,
+    goal: validated.goal,
+  });
+
+  await executionSpineService.transitionRunState(
+    handoff.executionRunId,
+    validated.organizationId,
+    'planning',
+    validated.userId,
+    'ArtifactRun planning started from chat',
+  );
+
+  const run = await createArtifactRunRecord({
+    organizationId: validated.organizationId,
+    executionRunId: handoff.executionRunId,
+    contextSnapshotId: validated.contextSnapshotId,
+    requestedByUserId: validated.userId,
+    plan: artifactPlan,
+    sourceContextType: 'conversation',
+    sourceContextId: validated.conversationId,
+  });
+
+  return {
+    artifactRunId: run.runId,
+    executionRunId: handoff.executionRunId,
+    artifactPlan,
+    run,
+  };
+}
+
+export async function planArtifactFromChat(
+  request: ArtifactPlanningRequest,
+): Promise<ArtifactPlanningResult> {
+  const planned = await createArtifactRunFromChat(request);
+  return {
+    artifactRunId: planned.artifactRunId,
+    executionRunId: planned.executionRunId,
+    artifactPlan: planned.artifactPlan,
+  };
+}
+
+export async function getArtifactRun(
+  runId: string,
+  organizationId: string,
+): Promise<ArtifactRunRecord | null> {
+  const row = await getArtifactRunRow(runId, organizationId);
+  return row ? mapArtifactRunRow(row) : null;
+}
+
+export async function acceptArtifactRunPlan(params: {
+  runId: string;
+  organizationId: string;
+  actorUserId: string;
+}): Promise<ArtifactRunRecord> {
+  const current = await getArtifactRun(params.runId, params.organizationId);
+  if (!current) {
+    throw new Error(`ArtifactRun ${params.runId} not found`);
+  }
+  if (current.runStatus !== 'planned' && current.runStatus !== 'retry_requested') {
+    return current;
+  }
+
+  const proposal = await executionSpineService.createProposal({
+    executionRunId: current.executionRunId,
+    contextSnapshotRef: current.contextSnapshotId,
+    proposalType: current.artifactId ? 'update_artifact' : 'create_artifact',
+    targetRef: {
+      artifactId: current.artifactId || current.runId,
+      artifactType: current.plan.outputType,
+      artifactModule: 'outputs_library',
+      relationship: 'target',
+    },
+    summary: `Generate ${current.plan.outputType}: ${current.plan.titleHint}`,
+    reason: 'ArtifactRun plan accepted from governed chat flow',
+    mutationDescription: {
+      operation: current.artifactId ? 'update' : 'create',
+      targetFields: ['artifact', 'output'],
+      payloadSummary: {
+        artifactFamily: current.plan.artifactFamily,
+        outputType: current.plan.outputType,
+        visibilityScope: current.plan.visibilityScope,
+      },
+      reversibility: 'reversible',
+      estimatedImpact: 'Creates or refreshes a governed output artifact',
+    },
+    riskClass: current.artifactId ? 'safe_update' : 'safe_additive',
+    approvalClass: 'requires_human_approval',
+    previewPayload: {
+      diff: null,
+      beforeState: null,
+      afterState: {
+        artifactFamily: current.plan.artifactFamily,
+        outputType: current.plan.outputType,
+        titleHint: current.plan.titleHint,
+      },
+      createdObjects: current.artifactId ? [] : ['artifact'],
+      updatedFields: ['output'],
+      destructiveImpact: null,
+      followupEffects: ['execution_spine_review'],
+    },
+    dependsOn: [],
+  });
+
+  await executionSpineService.transitionRunState(
+    current.executionRunId,
+    params.organizationId,
+    'proposals_ready',
+    params.actorUserId,
+    'ArtifactRun proposal created',
+  );
+
+  const now = new Date().toISOString();
+  await dbRun(
+    `UPDATE v8_artifact_runs
+     SET proposal_id = ?, run_status = ?, updated_at = ?
+     WHERE run_id = ? AND organization_id = ?`,
+    [proposal.proposalId, 'proposal_created', now, params.runId, params.organizationId],
+  );
+
+  const updated = await getArtifactRun(params.runId, params.organizationId);
+  if (!updated) throw new Error(`ArtifactRun ${params.runId} not found after accept-plan`);
+  return updated;
+}
+
+export async function retryArtifactRun(params: {
+  runId: string;
+  organizationId: string;
+  actorUserId: string;
+}): Promise<ArtifactRunRecord> {
+  const current = await getArtifactRun(params.runId, params.organizationId);
+  if (!current) {
+    throw new Error(`ArtifactRun ${params.runId} not found`);
+  }
+
+  await dbRun(
+    `UPDATE v8_artifact_runs
+     SET run_status = ?, updated_at = ?
+     WHERE run_id = ? AND organization_id = ?`,
+    ['retry_requested', new Date().toISOString(), params.runId, params.organizationId],
+  );
+
+  const handoff = await chatExecutionService.initiateHandoff({
+    conversationId: current.sourceContextId || current.runId,
+    contextSnapshotId: current.contextSnapshotId,
+    organizationId: params.organizationId,
+    userId: params.actorUserId,
+    goal: current.plan.titleHint,
+  });
+
+  await executionSpineService.transitionRunState(
+    handoff.executionRunId,
+    params.organizationId,
+    'planning',
+    params.actorUserId,
+    'ArtifactRun retry requested',
+  );
+
+  return createArtifactRunRecord({
+    organizationId: params.organizationId,
+    executionRunId: handoff.executionRunId,
+    contextSnapshotId: current.contextSnapshotId,
+    requestedByUserId: params.actorUserId,
+    plan: current.plan,
+    retryOfRunId: current.runId,
+    sourceContextType: current.sourceContextType,
+    sourceContextId: current.sourceContextId,
+  });
+}

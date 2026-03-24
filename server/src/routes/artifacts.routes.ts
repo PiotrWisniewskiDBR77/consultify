@@ -1,0 +1,243 @@
+import { type Request, type Response, Router } from 'express';
+
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+
+const router = Router();
+
+router.use(verifyToken);
+
+function getAuthContext(req: any): { userId: string; organizationId: string; roleKey: string | null } {
+  return {
+    userId: String(req?.user?.id || req?.userId || ''),
+    organizationId: String(req?.user?.organizationId || req?.organizationId || ''),
+    roleKey: req?.user?.role ? String(req.user.role) : null,
+  };
+}
+
+function canManageArtifactAccess(params: {
+  userId: string;
+  roleKey: string | null;
+  ownerUserId?: string | null;
+}): boolean {
+  if (params.ownerUserId && params.ownerUserId === params.userId) return true;
+  const normalizedRole = String(params.roleKey || '').toUpperCase();
+  return normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER';
+}
+
+router.get(
+  '/',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const items = await artifactRegistryService.listArtifactsForUser({
+      organizationId,
+      userId,
+      roleKey,
+      filters: {
+        outputType:
+          req.query.outputType === 'report' ||
+          req.query.outputType === 'presentation' ||
+          req.query.outputType === 'sheet'
+            ? req.query.outputType
+            : undefined,
+        artifactFamily:
+          req.query.artifactFamily === 'document' ||
+          req.query.artifactFamily === 'presentation' ||
+          req.query.artifactFamily === 'sheet'
+            ? req.query.artifactFamily
+            : undefined,
+        visibilityScope:
+          req.query.visibilityScope === 'private' ||
+          req.query.visibilityScope === 'project' ||
+          req.query.visibilityScope === 'organization' ||
+          req.query.visibilityScope === 'review_shared' ||
+          req.query.visibilityScope === 'demo'
+            ? req.query.visibilityScope
+            : undefined,
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        onlyMine: req.query.view === 'mine',
+        reviewSharedForUserId: req.query.view === 'review' ? userId : undefined,
+        limit: typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined,
+      },
+    });
+
+    res.json({ data: items, total: items.length, canonicalHome: 'outputs_library' });
+  }),
+);
+
+router.get(
+  '/my-work',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const result = await artifactRegistryService.listMyWorkArtifacts({
+      organizationId,
+      userId,
+      roleKey,
+      limit: typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined,
+    });
+    res.json(result);
+  }),
+);
+
+router.get(
+  '/origin/:originRuntime/:originRecordId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const originRuntime = String(req.params.originRuntime || '');
+    const originRecordId = String(req.params.originRecordId || '');
+    if (
+      originRuntime !== 'report' &&
+      originRuntime !== 'presentation' &&
+      originRuntime !== 'sheet' &&
+      originRuntime !== 'native_artifact'
+    ) {
+      return res.status(400).json({ error: 'Invalid originRuntime' });
+    }
+
+    const artifact = await artifactRegistryService.getArtifactByOrigin({
+      organizationId,
+      originRuntime,
+      originRecordId,
+      userId,
+      roleKey,
+    });
+
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+    res.json({ data: artifact });
+  }),
+);
+
+// Legacy compatibility alias. Canonical ArtifactRun contract lives under /api/artifact-runs/*.
+router.post(
+  '/runs/from-chat',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req);
+    const result = await artifactRegistryService.planArtifactFromChat({
+      organizationId,
+      userId,
+      conversationId: String(req.body?.conversationId || ''),
+      contextSnapshotId: String(req.body?.contextSnapshotId || ''),
+      goal: String(req.body?.goal || ''),
+      requestedArtifactFamily: req.body?.requestedArtifactFamily,
+      requestedOutputType: req.body?.requestedOutputType,
+    });
+    res.status(201).json(result);
+  }),
+);
+
+router.get(
+  '/:id/access',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: String(req.params.id || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    const [links, grants] = await Promise.all([
+      artifactRegistryService.getArtifactOriginLinks(artifact.artifactId, organizationId),
+      artifactRegistryService.getArtifactAccessGrantsForArtifact(artifact.artifactId, organizationId),
+    ]);
+    res.json({
+      artifactId: artifact.artifactId,
+      visibilityScope: artifact.visibilityScope,
+      projectId: artifact.projectId,
+      publishState: artifact.publishState,
+      reviewers: artifact.publishReviewers,
+      originLinks: links,
+      accessGrants: grants,
+    });
+  }),
+);
+
+router.post(
+  '/:id/access',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: String(req.params.id || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+    if (!canManageArtifactAccess({ userId, roleKey, ownerUserId: artifact.ownerUserId })) {
+      return res.status(403).json({ error: 'Insufficient permissions to change artifact access' });
+    }
+
+    const grant = await artifactRegistryService.createArtifactAccessGrant({
+      organizationId,
+      artifactId: artifact.artifactId,
+      grantKind: req.body?.grantKind,
+      userId: req.body?.userId ?? null,
+      roleKey: req.body?.roleKey ?? null,
+      createdBy: userId,
+    });
+    res.status(201).json({ data: grant });
+  }),
+);
+
+router.post(
+  '/:id/start-review',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: String(req.params.id || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    const started = await artifactRegistryService.startArtifactReview({
+      artifactId: artifact.artifactId,
+      organizationId,
+      actorUserId: userId,
+      reviewers: Array.isArray(req.body?.reviewers)
+        ? req.body.reviewers.map((value: unknown) => String(value))
+        : [],
+    });
+
+    res.status(200).json({ data: started });
+  }),
+);
+
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: String(req.params.id || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    const originLinks = await artifactRegistryService.getArtifactOriginLinks(
+      artifact.artifactId,
+      organizationId,
+    );
+    res.json({ data: artifact, originLinks });
+  }),
+);
+
+export default router;

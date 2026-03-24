@@ -7,6 +7,8 @@ import { Router, Request as ExpressRequest, Response } from 'express';
 import multer from 'multer';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import MetadataService from '../services/tablePlatform/MetadataService.js';
 import RecordsService from '../services/tablePlatform/RecordsService.js';
@@ -1461,6 +1463,7 @@ router.get('/tables/:tableId/export/csv', requireTableAccess, async (req: Reques
 
 router.get('/tables/:tableId/export/xlsx', requireTableAccess, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const { tableId } = req.params;
     if (!tableId) return res.status(400).json({ error: 'tableId is required' });
 
@@ -1468,6 +1471,33 @@ router.get('/tables/:tableId/export/xlsx', requireTableAccess, async (req: Reque
     const fieldIds = typeof req.query.fields === 'string'
       ? req.query.fields.split(',').map((f) => f.trim()).filter(Boolean)
       : undefined;
+
+    const wantRegister =
+      req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
+
+    let registeredArtifactId: string | null = null;
+    if (wantRegister) {
+      const organizationId = authReq.organizationId;
+      const userId = authReq.userId;
+      if (!organizationId || !userId) {
+        return res.status(403).json({ error: 'Authentication and organization context required' });
+      }
+      const db = (await import('../database/Database.js')).getDatabase();
+      const gr = await db.query('SELECT name, governance_mode FROM tp_tables WHERE id = $1', [tableId]);
+      const trow = gr.rows[0] as { name?: string; governance_mode?: string } | undefined;
+      if (!trow || trow.governance_mode !== 'governed') {
+        return res.status(400).json({
+          error: 'registerArtifact requires a governed table (governance_mode=governed)',
+        });
+      }
+      const reg = await artifactRegistryService.registerGovernedTableSheetArtifact({
+        organizationId,
+        userId,
+        tableId,
+        tableName: String(trow.name || 'Untitled table'),
+      });
+      registeredArtifactId = reg.artifactId;
+    }
 
     const ExportService = (await import('../services/tablePlatform/ExportService.js')).default;
     const tableName = await ExportService.getTableName(tableId);
@@ -1478,6 +1508,9 @@ router.get('/tables/:tableId/export/xlsx', requireTableAccess, async (req: Reque
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${safeName}.xlsx"`);
     res.setHeader('Content-Length', buffer.length);
+    if (registeredArtifactId) {
+      res.setHeader('X-Artifact-Id', registeredArtifactId);
+    }
     res.end(buffer);
   } catch (e) {
     logger.error('[TablePlatform] XLSX export failed', { error: (e as Error).message });
@@ -1486,6 +1519,46 @@ router.get('/tables/:tableId/export/xlsx', requireTableAccess, async (req: Reque
     }
   }
 });
+
+router.post(
+  '/tables/:tableId/register-sheet-artifact',
+  requireTableAccess,
+  requireAudit,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { tableId } = req.params;
+      if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+
+      const db = (await import('../database/Database.js')).getDatabase();
+      const gr = await db.query('SELECT name, governance_mode FROM tp_tables WHERE id = $1', [tableId]);
+      const trow = gr.rows[0] as { name?: string; governance_mode?: string } | undefined;
+      if (!trow) return res.status(404).json({ error: 'Table not found' });
+      if (trow.governance_mode !== 'governed') {
+        return res.status(400).json({
+          error: 'Table must be in governed mode to register a canonical sheet artifact',
+        });
+      }
+
+      const organizationId = authReq.organizationId;
+      const userId = authReq.userId;
+      if (!organizationId || !userId) {
+        return res.status(403).json({ error: 'Authentication and organization context required' });
+      }
+
+      const artifact = await artifactRegistryService.registerGovernedTableSheetArtifact({
+        organizationId,
+        userId,
+        tableId,
+        tableName: String(trow.name || 'Untitled table'),
+      });
+      return res.status(201).json({ data: artifact });
+    } catch (e) {
+      logger.error('[TablePlatform] register-sheet-artifact failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Failed to register sheet artifact', details: (e as Error).message });
+    }
+  },
+);
 
 // ==========================================
 // GOVERNANCE

@@ -32,6 +32,7 @@ export type PublishLifecycleState = (typeof PublishLifecycleStateValues)[number]
 export const ArtifactTypeValues = [
   'report',
   'presentation',
+  'sheet',
   'finance_output',
   'results_artifact',
 ] as const;

@@ -36,6 +36,8 @@ export { default as adminAlertsRoutes } from './adminAlerts.routes.js';
 export { default as agentsRoutes } from './agents.routes.js';
 export { default as analyticsRoutes } from './analytics.routes.js';
 export { default as advancedAnalyticsRoutes } from './analyticsAdvanced.routes.js';
+export { default as artifactRunsRoutes } from './artifact-runs.routes.js';
+export { default as artifactsRoutes } from './artifacts.routes.js';
 export { default as apiKeysRoutes } from './apiKeys.routes.js';
 export { default as auditRoutes } from './audit.routes.js';
 export { default as auditLogRoutes } from './auditLog.routes.js';

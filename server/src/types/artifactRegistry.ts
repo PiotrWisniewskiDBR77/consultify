@@ -1,0 +1,242 @@
+import { z } from 'zod';
+
+export const ArtifactFamilyValues = ['document', 'presentation', 'sheet'] as const;
+export type ArtifactFamily = (typeof ArtifactFamilyValues)[number];
+
+export const ArtifactVisibilityScopeValues = [
+  'private',
+  'project',
+  'organization',
+  'review_shared',
+  'demo',
+] as const;
+export type ArtifactVisibilityScope = (typeof ArtifactVisibilityScopeValues)[number];
+
+export const ArtifactOriginRuntimeValues = [
+  'report',
+  'presentation',
+  'sheet',
+  'native_artifact',
+] as const;
+export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
+
+export const ArtifactCanonicalHomeValues = ['outputs_library'] as const;
+export type ArtifactCanonicalHome = (typeof ArtifactCanonicalHomeValues)[number];
+
+export const ArtifactPlanOutputTypeValues = ['report', 'presentation', 'sheet'] as const;
+export type ArtifactPlanOutputType = (typeof ArtifactPlanOutputTypeValues)[number];
+
+export const ArtifactRunTriggerTypeValues = ['chat', 'module_action', 'template', 'refresh'] as const;
+export type ArtifactRunTriggerType = (typeof ArtifactRunTriggerTypeValues)[number];
+
+export const ArtifactRunStatusValues = [
+  'planned',
+  'proposal_created',
+  'retry_requested',
+  'completed',
+  'failed',
+] as const;
+export type ArtifactRunStatus = (typeof ArtifactRunStatusValues)[number];
+
+export interface ArtifactRecord {
+  artifactId: string;
+  organizationId: string;
+  outputType: 'report' | 'presentation' | 'sheet';
+  artifactFamily: ArtifactFamily;
+  deliveryState: string;
+  titleSnapshot: string | null;
+  ownerUserId: string | null;
+  canonicalHome: ArtifactCanonicalHome;
+  visibilityScope: ArtifactVisibilityScope;
+  projectId: string | null;
+  contextSnapshotId: string | null;
+  executionRunId: string | null;
+  templateFamilyRef: string | null;
+  sourceInitiativeId: string | null;
+  aiGovernancePresetRef: string | null;
+  originSummary: Record<string, unknown> | null;
+  createdBy: string;
+  createdAt: string;
+  lastTransitionAt: string;
+}
+
+export interface ArtifactOriginLink {
+  linkId: string;
+  artifactId: string;
+  organizationId: string;
+  originRuntime: ArtifactOriginRuntime;
+  originRecordId: string;
+  isPrimaryOrigin: boolean;
+  createdAt: string;
+}
+
+export interface ArtifactAccessGrant {
+  grantId: string;
+  artifactId: string;
+  organizationId: string;
+  grantKind: 'user' | 'role';
+  userId: string | null;
+  roleKey: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ArtifactListItem extends ArtifactRecord {
+  originRuntime: ArtifactOriginRuntime | null;
+  originRecordId: string | null;
+  resolvedTitle: string;
+  originTitle: string | null;
+  originStatus: string | null;
+  reportType: string | null;
+  presentationMode: string | null;
+  slideCount: number | null;
+  exportFormat: string | null;
+  sourceRefs: unknown[];
+  publishState: string | null;
+  publishReviewers: string[];
+  reviewGateCount: number;
+}
+
+export interface ArtifactListFilters {
+  outputType?: 'report' | 'presentation' | 'sheet';
+  artifactFamily?: ArtifactFamily;
+  visibilityScope?: ArtifactVisibilityScope;
+  ownerUserId?: string;
+  search?: string;
+  limit?: number;
+  onlyMine?: boolean;
+  reviewSharedForUserId?: string;
+}
+
+export interface RegisterArtifactOriginParams {
+  organizationId: string;
+  outputType: 'report' | 'presentation' | 'sheet';
+  artifactFamily: ArtifactFamily;
+  originRuntime: ArtifactOriginRuntime;
+  originRecordId: string;
+  titleSnapshot?: string | null;
+  ownerUserId?: string | null;
+  createdBy: string;
+  deliveryState?: string;
+  visibilityScope?: ArtifactVisibilityScope;
+  projectId?: string | null;
+  contextSnapshotId?: string | null;
+  executionRunId?: string | null;
+  templateFamilyRef?: string | null;
+  sourceInitiativeId?: string | null;
+  aiGovernancePresetRef?: string | null;
+  originSummary?: Record<string, unknown> | null;
+}
+
+export interface CreateArtifactAccessGrantParams {
+  organizationId: string;
+  artifactId: string;
+  grantKind: 'user' | 'role';
+  userId?: string | null;
+  roleKey?: string | null;
+  createdBy: string;
+}
+
+export interface ArtifactPlanningRequest {
+  organizationId: string;
+  userId: string;
+  conversationId: string;
+  contextSnapshotId: string;
+  goal: string;
+  requestedArtifactFamily?: ArtifactFamily;
+  requestedOutputType?: ArtifactPlanOutputType;
+}
+
+export interface ArtifactPlanningResult {
+  artifactRunId: string;
+  executionRunId: string;
+  artifactPlan: {
+    artifactFamily: ArtifactFamily;
+    outputType: ArtifactPlanOutputType;
+    titleHint: string;
+    governancePath: 'execution_spine';
+    visibilityScope: ArtifactVisibilityScope;
+  };
+}
+
+export interface ArtifactRunRecord {
+  runId: string;
+  artifactId: string | null;
+  organizationId: string;
+  executionRunId: string;
+  contextSnapshotId: string;
+  triggerType: ArtifactRunTriggerType;
+  sourceContextType: string | null;
+  sourceContextId: string | null;
+  requestedByUserId: string;
+  plan: ArtifactPlanningResult['artifactPlan'];
+  runStatus: ArtifactRunStatus;
+  proposalId: string | null;
+  retryOfRunId: string | null;
+  failureReason: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const ArtifactRecordSchema = z.object({
+  artifactId: z.string().min(1),
+  organizationId: z.string().min(1),
+  outputType: z.enum(['report', 'presentation', 'sheet']),
+  artifactFamily: z.enum(ArtifactFamilyValues),
+  deliveryState: z.string().min(1),
+  titleSnapshot: z.string().nullable(),
+  ownerUserId: z.string().nullable(),
+  canonicalHome: z.enum(ArtifactCanonicalHomeValues),
+  visibilityScope: z.enum(ArtifactVisibilityScopeValues),
+  projectId: z.string().nullable(),
+  contextSnapshotId: z.string().nullable(),
+  executionRunId: z.string().nullable(),
+  templateFamilyRef: z.string().nullable(),
+  sourceInitiativeId: z.string().nullable(),
+  aiGovernancePresetRef: z.string().nullable(),
+  originSummary: z.record(z.string(), z.unknown()).nullable(),
+  createdBy: z.string().min(1),
+  createdAt: z.string().min(1),
+  lastTransitionAt: z.string().min(1),
+});
+
+export const RegisterArtifactOriginParamsSchema = z.object({
+  organizationId: z.string().min(1),
+  outputType: z.enum(['report', 'presentation', 'sheet']),
+  artifactFamily: z.enum(ArtifactFamilyValues),
+  originRuntime: z.enum(ArtifactOriginRuntimeValues),
+  originRecordId: z.string().min(1),
+  titleSnapshot: z.string().nullable().optional().default(null),
+  ownerUserId: z.string().nullable().optional().default(null),
+  createdBy: z.string().min(1),
+  deliveryState: z.string().optional().default('draft'),
+  visibilityScope: z.enum(ArtifactVisibilityScopeValues).optional().default('organization'),
+  projectId: z.string().nullable().optional().default(null),
+  contextSnapshotId: z.string().nullable().optional().default(null),
+  executionRunId: z.string().nullable().optional().default(null),
+  templateFamilyRef: z.string().nullable().optional().default(null),
+  sourceInitiativeId: z.string().nullable().optional().default(null),
+  aiGovernancePresetRef: z.string().nullable().optional().default(null),
+  originSummary: z.record(z.string(), z.unknown()).nullable().optional().default(null),
+});
+
+export const CreateArtifactAccessGrantParamsSchema = z.object({
+  organizationId: z.string().min(1),
+  artifactId: z.string().min(1),
+  grantKind: z.enum(['user', 'role']),
+  userId: z.string().nullable().optional().default(null),
+  roleKey: z.string().nullable().optional().default(null),
+  createdBy: z.string().min(1),
+});
+
+export const ArtifactPlanningRequestSchema = z.object({
+  organizationId: z.string().min(1),
+  userId: z.string().min(1),
+  conversationId: z.string().min(1),
+  contextSnapshotId: z.string().min(1),
+  goal: z.string().min(1),
+  requestedArtifactFamily: z.enum(ArtifactFamilyValues).optional(),
+  requestedOutputType: z.enum(ArtifactPlanOutputTypeValues).optional(),
+});

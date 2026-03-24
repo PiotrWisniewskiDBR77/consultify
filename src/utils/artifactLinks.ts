@@ -280,7 +280,7 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'notebook':
       return '/my-work';
     case 'presentation':
-      return '/presentations';
+      return `/presentations/builder/${id}`;
     case 'meeting':
       return '/meeting';
     // V5-IDEA-34: Finance artifact parity
@@ -296,6 +296,14 @@ function getBasePath(type: ArtifactType, id: string): string {
     default:
       return '/my-work';
   }
+}
+
+/**
+ * Relative API path to download the current XLSX snapshot of a canonical sheet artifact.
+ * `tableId` is the table-platform `tp_tables.id` (same as `originRecordId` when `originRuntime === 'sheet'`).
+ */
+export function getV8SheetArtifactXlsxExportPath(tableId: string): string {
+  return `/api/table-platform/tables/${encodeURIComponent(tableId)}/export/xlsx`;
 }
 
 export function getArtifactPath(type: ArtifactType, id: string): string {

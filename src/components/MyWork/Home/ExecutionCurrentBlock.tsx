@@ -1,4 +1,4 @@
-import { ArrowRight, Gauge, Lock, Zap } from 'lucide-react';
+import { ArrowRight, FileSpreadsheet, Gauge, Lock, Zap } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -58,6 +58,61 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({ bl
             );
           })}
         </div>
+        {Array.isArray(payload.artifactOutputs) && payload.artifactOutputs.length > 0 ? (
+          <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
+              {isPolish ? 'Output flow' : 'Output flow'}
+            </div>
+            {payload.artifactOutputs.map((artifact) => {
+              const openTarget =
+                artifact.originRuntime === 'presentation'
+                  ? ('presentation' as const)
+                  : artifact.originRuntime === 'sheet'
+                    ? ('sheet' as const)
+                    : ('report' as const);
+              return (
+                <button
+                  key={artifact.artifactId}
+                  onClick={() =>
+                    onAction({
+                      type: 'open',
+                      target: openTarget,
+                      id: artifact.id,
+                    })
+                  }
+                  className="flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+                >
+                  <div className="rounded-xl bg-violet-500/15 p-2 text-violet-200">
+                    {artifact.originRuntime === 'presentation' ? (
+                      <Zap size={14} />
+                    ) : artifact.originRuntime === 'sheet' ? (
+                      <FileSpreadsheet size={14} />
+                    ) : (
+                      <Gauge size={14} />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-white">{artifact.title}</div>
+                    <div className="mt-1 text-xs text-slate-300/70">
+                      {artifact.originRuntime === 'presentation'
+                        ? isPolish
+                          ? `Prezentacja · ${artifact.deliveryState}`
+                          : `Presentation · ${artifact.deliveryState}`
+                        : artifact.originRuntime === 'sheet'
+                          ? isPolish
+                            ? `Arkusz · ${artifact.deliveryState}`
+                            : `Sheet · ${artifact.deliveryState}`
+                          : isPolish
+                            ? `Raport · ${artifact.deliveryState}`
+                            : `Report · ${artifact.deliveryState}`}
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-white/30" />
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
         <button
           onClick={() =>
             onAction({

@@ -49,7 +49,11 @@ export interface HomeChatContextPacket {
 export type HomeScreenAction =
   | { type: 'chat'; packet: HomeChatContextPacket }
   | { type: 'navigate'; target: 'ideas' | 'notebook' | 'calendar' | 'tasks' | 'decisions' | 'manager' }
-  | { type: 'open'; target: 'idea' | 'note' | 'task' | 'decision'; id: string }
+  | {
+      type: 'open';
+      target: 'idea' | 'note' | 'task' | 'decision' | 'report' | 'presentation' | 'sheet';
+      id: string;
+    }
   | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' };
 
 export interface HomeFocusItem {
@@ -183,6 +187,15 @@ export interface ExecutionCurrentPayload {
     entityId?: string;
   }>;
   nextUp?: UpcomingEventItem[];
+  artifactOutputs?: Array<{
+    id: string;
+    artifactId: string;
+    title: string;
+    outputType: 'report' | 'presentation' | 'sheet';
+    originRuntime: 'report' | 'presentation' | 'sheet';
+    deliveryState: string;
+    visibilityScope: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
+  }>;
 }
 
 export interface TeamSignalPayload {

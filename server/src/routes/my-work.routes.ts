@@ -31,6 +31,7 @@ import organizationContextService from '../services/organizationContext/Organiza
 import { radarActionService } from '../services/radar/radarActionService.js';
 import { radarService } from '../services/radar/radarService.js';
 import { radarRankingService } from '../services/radar/radarRankingService.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -11939,7 +11940,7 @@ router.get(
         return [];
       };
 
-      const [tasks, decisions, ideas, notes, orgIdeas, peerTipEvents, initiatives, aiNews] =
+      const [tasks, decisions, ideas, notes, orgIdeas, peerTipEvents, initiatives, aiNews, outputs] =
         await Promise.all([
         safeHomeV2Query('tasks', [
           {
@@ -12081,6 +12082,14 @@ router.get(
           },
         ]),
         getAiNews(now, 6).catch(() => []),
+        artifactRegistryService
+          .listMyWorkArtifacts({
+            organizationId: orgId,
+            userId,
+            roleKey: req.user?.role ? String(req.user.role) : null,
+            limit: 8,
+          })
+          .catch(() => ({ mine: [], review: [], recent: [] })),
       ]);
 
       const { appTip, aiPlaybookTip } = pickTipOfDay(now);
@@ -12115,6 +12124,16 @@ router.get(
         updatedAt: String(i.updated_at || now.toISOString()),
         nodeCount: 0,
         taskCount: typeof i.task_count === 'number' ? i.task_count : 0,
+      }));
+
+      const outputFlow = (outputs?.recent || []).slice(0, 3).map((artifact: any) => ({
+        id: String(artifact.originRecordId || artifact.artifactId),
+        artifactId: String(artifact.artifactId),
+        title: String(artifact.resolvedTitle || artifact.titleSnapshot || 'Untitled artifact'),
+        outputType: String(artifact.outputType || 'report'),
+        originRuntime: String(artifact.originRuntime || artifact.outputType || 'report'),
+        deliveryState: String(artifact.deliveryState || 'draft'),
+        visibilityScope: String(artifact.visibilityScope || 'private'),
       }));
 
       const nextUpCutoff = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -12632,6 +12651,7 @@ router.get(
                 : null,
             ].filter(Boolean),
             nextUp,
+            artifactOutputs: outputFlow,
           },
         },
         {
@@ -12949,6 +12969,24 @@ router.get(
       logger.error('[home-nudge]', err);
       res.status(500).json({ error: 'Failed to load nudge data' });
     }
+  })
+);
+
+router.get(
+  '/outputs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = String(req.userId || req.user?.id || '');
+    const organizationId = String(req.organizationId || req.user?.organizationId || '');
+    const roleKey = req.user?.role ? String(req.user.role) : null;
+
+    const outputs = await artifactRegistryService.listMyWorkArtifacts({
+      organizationId,
+      userId,
+      roleKey,
+      limit: typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined,
+    });
+
+    res.json(outputs);
   })
 );
 

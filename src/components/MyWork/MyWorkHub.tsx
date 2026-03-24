@@ -1674,6 +1674,39 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           }
           if (action.target === 'decision') {
             handleDecisionClick(action.id);
+            return;
+          }
+          if (action.target === 'report' || action.target === 'presentation') {
+            navigate(getArtifactPath(action.target, action.id));
+            return;
+          }
+          if (action.target === 'sheet') {
+            void (async () => {
+              try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(
+                  `/api/table-platform/tables/${encodeURIComponent(action.id)}/export/xlsx`,
+                  {
+                    headers: {
+                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                  },
+                );
+                if (!res.ok) return;
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sheet-${action.id}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+              } catch {
+                /* noop */
+              }
+            })();
+            return;
           }
           return;
         case 'chat': {

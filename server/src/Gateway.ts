@@ -34,6 +34,8 @@ import aiSuggestionsRoutes from './routes/ai-suggestions.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
+import artifactRunsRoutes from './routes/artifact-runs.routes.js';
+import artifactsRoutes from './routes/artifacts.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
 import assessmentAIRoutes from './routes/assessment/assessment-ai.routes.js';
@@ -548,6 +550,8 @@ export class ApiGateway {
       // My Work is a production-critical module (not a stub).
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
       app.use('/api/my-work', myWorkRoutes);
+      app.use('/api/artifact-runs', artifactRunsRoutes);
+      app.use('/api/artifacts', artifactsRoutes);
       app.use('/api/preview-ai', previewAiRoutes);
       app.use('/api/notebook', notebookV4Routes);
 
