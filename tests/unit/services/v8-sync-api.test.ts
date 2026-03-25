@@ -30,4 +30,23 @@ describe('V8SyncApi', () => {
     expect(data.summary.total).toBe(12);
     expect(data.summary.escalated).toBe(1);
   });
+
+  it('requests per-connector health from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      connectorId: 'salesforce',
+      health: {
+        healthy: true,
+        syncStatus: 'synced',
+        conflictCount: 0,
+        lastSyncAt: '2026-03-25T10:00:00.000Z',
+        authState: 'healthy',
+      },
+    });
+
+    const data = await V8SyncApi.getConnectorHealth('salesforce');
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/connectors/salesforce/health');
+    expect(data.health.syncStatus).toBe('synced');
+    expect(data.health.authState).toBe('healthy');
+  });
 });

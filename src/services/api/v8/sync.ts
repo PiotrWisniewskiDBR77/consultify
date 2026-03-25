@@ -30,10 +30,22 @@ export interface V8SyncConflictRecord {
   createdAt: string;
 }
 
+export interface V8SyncConnectorHealthSummary {
+  healthy: boolean;
+  syncStatus: string;
+  conflictCount: number;
+  lastSyncAt: string | null;
+  authState: string;
+}
+
 export const V8SyncApi = {
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),
+  getConnectorHealth: (connectorId: string) =>
+    v8Get<{ connectorId: string; health: V8SyncConnectorHealthSummary }>(
+      `/sync/connectors/${encodeURIComponent(connectorId)}/health`,
+    ),
   getConflicts: (limit = 10) =>
     v8Get<{ conflicts: V8SyncConflictRecord[]; count: number }>('/sync/conflicts', {
       limit: String(limit),

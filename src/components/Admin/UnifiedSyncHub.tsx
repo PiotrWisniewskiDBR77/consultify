@@ -47,6 +47,7 @@ import {
 import {
   V8SyncApi,
   type V8SyncAuthEscalation,
+  type V8SyncConnectorHealthSummary,
   type V8SyncConflictRecord,
   type V8SyncCredentialHealthSummary,
 } from '@/services/api/v8/sync';
@@ -124,6 +125,12 @@ interface HealthSummary {
   healthy: number;
   degraded: number;
   unhealthy: number;
+}
+
+interface V8ConnectorHealthTarget {
+  connectorId: string;
+  name: string;
+  category: string;
 }
 
 // ── Constants ──────────────────────────────────────────────────
@@ -238,6 +245,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [v8AuthHealthSummary, setV8AuthHealthSummary] =
     useState<V8SyncCredentialHealthSummary | null>(null);
   const [v8AuthEscalations, setV8AuthEscalations] = useState<V8SyncAuthEscalation[]>([]);
+  const [v8ConnectorHealth, setV8ConnectorHealth] = useState<
+    Record<string, V8SyncConnectorHealthSummary>
+  >({});
+  const [v8ConnectorHealthLoading, setV8ConnectorHealthLoading] = useState(false);
   const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -245,6 +256,37 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const v8ConnectorHealthTargets = useMemo<V8ConnectorHealthTarget[]>(() => {
+    const byConnectorId = new Map<string, V8ConnectorHealthTarget>();
+
+    integrations.forEach((integration) => {
+      const connectorId = integration.connectorId?.trim();
+      if (!connectorId || byConnectorId.has(connectorId)) return;
+      byConnectorId.set(connectorId, {
+        connectorId,
+        name: integration.name,
+        category: integration.category,
+      });
+    });
+
+    if (byConnectorId.size === 0) {
+      catalog
+        .filter((connector) => connector.isV2Ready && !connector.comingSoon)
+        .slice(0, 5)
+        .forEach((connector) => {
+          const connectorId = connector.id?.trim();
+          if (!connectorId || byConnectorId.has(connectorId)) return;
+          byConnectorId.set(connectorId, {
+            connectorId,
+            name: connector.name,
+            category: connector.category,
+          });
+        });
+    }
+
+    return Array.from(byConnectorId.values()).slice(0, 5);
+  }, [catalog, integrations]);
 
   // ── Data loading ─────────────────────────────────────────────
 
@@ -322,6 +364,35 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       setV8Conflicts([]);
     }
   }, []);
+
+  const fetchV8ConnectorHealth = useCallback(async () => {
+    if (v8ConnectorHealthTargets.length === 0) {
+      setV8ConnectorHealth({});
+      return;
+    }
+
+    setV8ConnectorHealthLoading(true);
+    try {
+      const results = await Promise.all(
+        v8ConnectorHealthTargets.map(async (target) => {
+          try {
+            const data = await V8SyncApi.getConnectorHealth(target.connectorId);
+            return [target.connectorId, data.health] as const;
+          } catch {
+            return [target.connectorId, null] as const;
+          }
+        }),
+      );
+
+      setV8ConnectorHealth(
+        Object.fromEntries(
+          results.filter((entry): entry is [string, V8SyncConnectorHealthSummary] => entry[1] !== null),
+        ),
+      );
+    } finally {
+      setV8ConnectorHealthLoading(false);
+    }
+  }, [v8ConnectorHealthTargets]);
 
   const fetchV8WorkspaceMapping = useCallback(async () => {
     try {
@@ -421,6 +492,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     loadAll();
     trackFunnelEvent('integration_sync_hub_viewed');
   }, [loadAll]);
+
+  useEffect(() => {
+    if (activeTab !== 'health') return;
+    void fetchV8ConnectorHealth();
+  }, [activeTab, fetchV8ConnectorHealth]);
 
   // ── Actions ──────────────────────────────────────────────────
 
@@ -1010,6 +1086,112 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <Zap size={14} className="text-blue-400" />
+          {t('integrations.syncHub.v8ConnectorHealth', 'V8 Connector Health')}
+          {Object.keys(v8ConnectorHealth).length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-blue-500/10 text-blue-400 rounded">
+              {Object.keys(v8ConnectorHealth).length}
+            </span>
+          )}
+        </h3>
+        {v8ConnectorHealthLoading ? (
+          <div className="flex items-center justify-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+            <Loader2 size={14} className="animate-spin mr-2" />
+            {t('integrations.syncHub.v8ConnectorHealthLoading', 'Loading governed connector health...')}
+          </div>
+        ) : v8ConnectorHealthTargets.length === 0 ? (
+          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+            {t(
+              'integrations.syncHub.v8NoConnectorTargets',
+              'No governed connector targets are available for this workspace yet.',
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {v8ConnectorHealthTargets.map((target) => {
+              const health = v8ConnectorHealth[target.connectorId];
+              const tone = !health
+                ? 'border-navy-700/40 bg-navy-900/30'
+                : health.healthy
+                  ? 'border-emerald-500/20 bg-emerald-500/5'
+                  : ['error', 'dead_letter', 'conflict'].includes(health.syncStatus)
+                    ? 'border-red-500/20 bg-red-500/5'
+                    : 'border-amber-500/20 bg-amber-500/5';
+
+              return (
+                <div key={target.connectorId} className={`rounded-lg border p-3 ${tone}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-200">{target.name}</span>
+                        <span className="px-1.5 py-0.5 text-[11px] bg-navy-800 text-slate-400 rounded">
+                          {target.connectorId}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {CATEGORY_LABELS[target.category] || target.category}
+                      </div>
+                    </div>
+                    <span
+                      className={`px-1.5 py-0.5 text-[11px] rounded ${
+                        !health
+                          ? 'bg-slate-500/10 text-slate-400'
+                          : health.healthy
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : 'bg-amber-500/10 text-amber-400'
+                      }`}
+                    >
+                      {!health
+                        ? t('integrations.syncHub.v8Unavailable', 'unavailable')
+                        : health.healthy
+                          ? t('integrations.syncHub.v8Healthy', 'healthy')
+                          : t('integrations.syncHub.v8NeedsAttention', 'needs attention')}
+                    </span>
+                  </div>
+                  {health ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
+                      <div>
+                        <div className="text-slate-500">
+                          {t('integrations.syncHub.v8AuthState', 'Auth state')}
+                        </div>
+                        <div className="text-slate-300 mt-1">{health.authState}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">
+                          {t('integrations.syncHub.v8SyncStatus', 'Sync status')}
+                        </div>
+                        <div className="text-slate-300 mt-1">{health.syncStatus}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">
+                          {t('integrations.syncHub.v8OpenConflicts', 'Open conflicts')}
+                        </div>
+                        <div className="text-slate-300 mt-1">{health.conflictCount}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">
+                          {t('integrations.syncHub.v8LastGovernedSync', 'Last governed sync')}
+                        </div>
+                        <div className="text-slate-300 mt-1">{timeAgo(health.lastSyncAt)}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-500 mt-3">
+                      {t(
+                        'integrations.syncHub.v8ConnectorHealthUnavailable',
+                        'Governed connector health is not available for this connector yet.',
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
