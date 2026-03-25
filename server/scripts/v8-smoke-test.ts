@@ -3,6 +3,7 @@
  * V8 Smoke Test Runner
  * CP-17: Verifies V8 endpoints are healthy after deployment.
  * Includes Prompt OS runtime summary (B-03b staging proof: contract in response body).
+ * Includes Planning continuity read bridge (B-07: snapshot + pending-decisions contracts).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -168,6 +169,25 @@ async function main(): Promise<void> {
   tests.push(
     await runSmokeTest('Interview sessions list', baseUrl, token, '/interview/sessions', 'GET', 200, {
       expectMetaContract: 'interview_runtime_read_v1',
+    }),
+  );
+
+  // Initiatives / PM — B-07 planning continuity read bridge (valid UUID; may return empty trees)
+  const smokeInitiativeId = '00000000-0000-4000-8000-000000000010';
+  tests.push(
+    await runSmokeTest(
+      'Planning initiative snapshot',
+      baseUrl,
+      token,
+      `/planning/initiatives/${smokeInitiativeId}/snapshot`,
+      'GET',
+      200,
+      { expectMetaContract: 'planning_continuity_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest('Planning pending decisions', baseUrl, token, '/planning/pending-decisions', 'GET', 200, {
+      expectMetaContract: 'planning_continuity_read_v1',
     }),
   );
 

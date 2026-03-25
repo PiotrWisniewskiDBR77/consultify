@@ -15,6 +15,7 @@ import healthRoutes from './health.routes.js';
 import interviewRoutes from './interview.routes.js';
 import knowledgeBaseRoutes from './knowledge-base.routes.js';
 import myWorkRoutes from './my-work.routes.js';
+import planningRoutes from './planning.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
 import retrievalRoutes from './retrieval.routes.js';
 
@@ -44,5 +45,6 @@ v8Router.use('/my-work', myWorkRoutes);
 v8Router.use('/prompt-os', promptOsRoutes);
 v8Router.use('/kb', knowledgeBaseRoutes);
 v8Router.use('/interview', interviewRoutes);
+v8Router.use('/planning', planningRoutes);
 
 export default v8Router;
