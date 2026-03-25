@@ -31,6 +31,7 @@ import {
   submitSalesExam,
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
+import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -92,19 +93,6 @@ function resourceTypeLabel(mimeType?: string | null, fileType?: string | null): 
   if (v.includes('zip')) return 'ZIP';
   if (v.includes('text')) return 'TXT';
   return 'FILE';
-}
-
-async function getActivePartnerOrgIdForUser(userId: string): Promise<string | null> {
-  const db = getDatabase();
-  const row = await DbPromise.get<{ partner_org_id: string }>(
-    db,
-    `SELECT partner_org_id
-     FROM partner_users
-     WHERE user_id = ? AND status = 'active'
-     LIMIT 1`,
-    [userId]
-  );
-  return row?.partner_org_id || null;
 }
 
 async function requirePartnerOrgId(req: Request, res: Response): Promise<string | null> {
@@ -1047,14 +1035,33 @@ function parseTimeAgo(timeStr: string): number {
 
 /**
  * GET /api/partners/metrics
- * Get partner performance metrics
- * GAP-PARTNER-005: Connected to real database
+ * Referral funnel + earnings summary (same runtime services as V8 partner read bridge).
  */
 router.get('/metrics', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner metrics unavailable (no real implementation)');
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const days = parseInt(req.query.days as string) || 30;
+    const [referralAnalytics, earningsSummary] = await Promise.all([
+      PartnerReferralService.getReferralAnalytics(partnerOrgId, days),
+      PartnerCommissionService.getEarningsSummary(partnerOrgId),
+    ]);
+
+    return res.json({
+      success: true,
+      data: { partnerOrgId, days, referralAnalytics, earningsSummary },
+    });
   } catch (error: any) {
     logger.error('Error fetching metrics:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner metrics unavailable (database schema missing)');
+    }
     next(error);
   }
 });
@@ -1533,13 +1540,38 @@ router.post('/licenses/order', async (req: Request, res: Response, next: NextFun
 
 /**
  * GET /api/partners/commissions
- * Get partner commissions
+ * Commission transactions for the authenticated partner org (read-only).
  */
 router.get('/commissions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner commissions unavailable (no real implementation)');
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const status = req.query.status as string | undefined;
+    const startDate = req.query.startDate as string | undefined;
+    const endDate = req.query.endDate as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const commissions = await PartnerCommissionService.getCommissions(partnerOrgId, {
+      status: status as any,
+      startDate,
+      endDate,
+      limit,
+      offset,
+    });
+
+    return res.json({ success: true, data: commissions });
   } catch (error: any) {
     logger.error('Error fetching commissions:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner commissions unavailable (database schema missing)');
+    }
     next(error);
   }
 });

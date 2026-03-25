@@ -17,6 +17,7 @@ import healthRoutes from './health.routes.js';
 import interviewRoutes from './interview.routes.js';
 import knowledgeBaseRoutes from './knowledge-base.routes.js';
 import myWorkRoutes from './my-work.routes.js';
+import partnerRoutes from './partner.routes.js';
 import planningRoutes from './planning.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
 import resultsRoutes from './results.routes.js';
@@ -52,5 +53,6 @@ v8Router.use('/kb', knowledgeBaseRoutes);
 v8Router.use('/interview', interviewRoutes);
 v8Router.use('/planning', planningRoutes);
 v8Router.use('/results', resultsRoutes);
+v8Router.use('/partner', partnerRoutes);
 
 export default v8Router;
