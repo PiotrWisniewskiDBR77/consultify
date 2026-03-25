@@ -37,6 +37,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  V8MultiplayerApi,
+  type V8MultiplayerResourceMapping,
+} from '@/services/api/v8/multiplayer';
 import { V8SyncApi, type V8SyncCredentialHealthSummary } from '@/services/api/v8/sync';
 
 import { API_URL, getHeaders } from '../../services/api';
@@ -218,6 +222,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [errors, setErrors] = useState<SyncErrorItem[]>([]);
   const [healthSummary, setHealthSummary] = useState<HealthSummary | null>(null);
+  const [v8WorkspaceMapping, setV8WorkspaceMapping] =
+    useState<V8MultiplayerResourceMapping | null>(null);
   const [v8AuthHealthSummary, setV8AuthHealthSummary] =
     useState<V8SyncCredentialHealthSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -286,6 +292,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
+  const fetchV8WorkspaceMapping = useCallback(async () => {
+    try {
+      const data = await V8MultiplayerApi.getWorkspaceMapping();
+      setV8WorkspaceMapping(data.mapping);
+    } catch {
+      setV8WorkspaceMapping(null);
+    }
+  }, []);
+
   const fetchAuditLog = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/sync-hub/audit-log`, { headers: getHeaders() });
@@ -307,9 +322,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       fetchErrors(),
       fetchAuditLog(),
       fetchV8AuthHealth(),
+      fetchV8WorkspaceMapping(),
     ]);
     setLoading(false);
-  }, [fetchIntegrations, fetchCatalog, fetchHealth, fetchErrors, fetchAuditLog, fetchV8AuthHealth]);
+  }, [
+    fetchIntegrations,
+    fetchCatalog,
+    fetchHealth,
+    fetchErrors,
+    fetchAuditLog,
+    fetchV8AuthHealth,
+    fetchV8WorkspaceMapping,
+  ]);
 
   useEffect(() => {
     loadAll();
@@ -861,6 +885,47 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 className="p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20"
               >
                 <div className={`text-2xl font-semibold ${card.color}`}>{card.value}</div>
+                <div className="text-xs text-slate-500 mt-1">{card.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {v8WorkspaceMapping && (
+        <div>
+          <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <Layers size={14} className="text-fuchsia-400" />
+            {t('integrations.syncHub.v8CollaborationSubstrate', 'V8 Collaboration Substrate')}
+          </h3>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              {
+                label: t('integrations.syncHub.v8ResourceType', 'Resource type'),
+                value: v8WorkspaceMapping.resourceType,
+                color: 'text-fuchsia-300',
+              },
+              {
+                label: t('integrations.syncHub.v8RoomGranularity', 'Room granularity'),
+                value: v8WorkspaceMapping.roomGranularity,
+                color: 'text-sky-300',
+              },
+              {
+                label: t('integrations.syncHub.v8SurfaceAware', 'Surface-aware'),
+                value: v8WorkspaceMapping.surfaceAware ? 'yes' : 'no',
+                color: v8WorkspaceMapping.surfaceAware ? 'text-emerald-400' : 'text-slate-300',
+              },
+              {
+                label: t('integrations.syncHub.v8EmbeddedIn', 'Embedded in'),
+                value: v8WorkspaceMapping.embeddedIn ?? 'standalone',
+                color: 'text-slate-200',
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="p-3 rounded-lg bg-fuchsia-500/5 border border-fuchsia-500/20"
+              >
+                <div className={`text-base font-semibold ${card.color}`}>{card.value}</div>
                 <div className="text-xs text-slate-500 mt-1">{card.label}</div>
               </div>
             ))}

@@ -20,6 +20,8 @@ export {
   V8_KB_SEARCH_PATH,
   V8KnowledgeBaseApi,
 } from './kb';
+export type { V8MultiplayerResourceMapping } from './multiplayer';
+export { V8MultiplayerApi } from './multiplayer';
 export { V8MyWorkApi } from './my-work';
 export type { V8PlanningDecisionChain, V8PlanningDecisionEntry } from './planning';
 export { V8PlanningApi } from './planning';
