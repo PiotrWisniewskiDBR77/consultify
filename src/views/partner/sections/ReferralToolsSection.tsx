@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8PartnerApi, type V8PartnerReferralAnalytics } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
 interface CampaignLink {
@@ -55,6 +56,7 @@ interface ReferralTools {
 export const ReferralToolsSection: React.FC = () => {
   const { t } = useTranslation();
   const [tools, setTools] = useState<ReferralTools | null>(null);
+  const [v8Analytics, setV8Analytics] = useState<V8PartnerReferralAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showNewCampaign, setShowNewCampaign] = useState(false);
@@ -92,9 +94,19 @@ export const ReferralToolsSection: React.FC = () => {
     }
   }, [t]);
 
+  const fetchV8Analytics = useCallback(async () => {
+    try {
+      const response = await V8PartnerApi.getReferralAnalytics();
+      setV8Analytics(response.analytics);
+    } catch {
+      setV8Analytics(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTools();
-  }, [fetchTools]);
+    void fetchV8Analytics();
+  }, [fetchTools, fetchV8Analytics]);
 
   // Copy to clipboard
   const copyToClipboard = useCallback(
@@ -223,6 +235,62 @@ export const ReferralToolsSection: React.FC = () => {
           {t('partner.referrals.subtitle', 'Share your unique links and codes to earn commissions')}
         </p>
       </div>
+
+      {v8Analytics && (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-violet-500" />
+                {t('partner.referrals.v8RuntimeTitle', 'V8 Referral Summary')}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {t(
+                  'partner.referrals.v8RuntimeSubtitle',
+                  'Governed click and conversion analytics from the V8 namespace.'
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                label: t('partner.referrals.v8TotalClicks', 'Governed total clicks'),
+                value: String(v8Analytics.totalClicks ?? 0),
+                detail: `${v8Analytics.uniqueClicks ?? 0} unique`,
+              },
+              {
+                label: t('partner.referrals.v8Signups', 'Governed signups'),
+                value: String(v8Analytics.signups ?? 0),
+                detail: `${v8Analytics.trials ?? 0} trials`,
+              },
+              {
+                label: t('partner.referrals.v8PaidCustomers', 'Governed paid customers'),
+                value: String(v8Analytics.paidCustomers ?? 0),
+                detail: `${v8Analytics.clicksBySource?.length ?? 0} sources`,
+              },
+              {
+                label: t('partner.referrals.v8ConversionRate', 'Governed conversion rate'),
+                value: `${v8Analytics.conversionRate ?? 0}%`,
+                detail: `${v8Analytics.clicksByDay?.length ?? 0} tracked days`,
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+              >
+                <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {card.label}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                  {card.value}
+                </div>
+                <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Referral Code & Link */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
