@@ -6,6 +6,11 @@
 /data/
 /_quarantine/
 /secure_backups/
+/_backup/
+/.tmp/
+/.claude/
+/.codex-worktrees/
+/_analysis/
 
 # Large knowledge/doc corpora (not required at runtime)
 /knowledge/
@@ -13,12 +18,18 @@
 /wdrozenia/
 /Plast-met/
 /Consulitinity przegląd/
+/App_for_ideas/
+/Softs/
 
 # Tests & artifacts (not required at runtime)
 /tests/
 /playwright-report/
 /test-results/
 /coverage/
+/screenshots/
+/evidence/
+/exports/
+/odpowiedzi/
 
 # Local uploads / exports (not required for build)
 /uploads/
@@ -39,3 +50,15 @@ server/node_modules/
 # IDE / agent artifacts
 .cursor/
 agent-transcripts/
+
+# Root-level local debug artifacts
+/debug-*.png
+/debug-*.txt
+/final-*.txt
+/test-*.html
+/test-*.png
+/test-*.txt
+/test-*.md
+/test-*.mjs
+/test-rec-map-*.txt
+/validation-output*.txt
