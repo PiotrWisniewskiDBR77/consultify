@@ -1,0 +1,54 @@
+{
+  "capturedAt": "2026-03-25T03:27:30.000Z",
+  "base": "https://stage.consultinity.ai",
+  "path": "/my-work",
+  "summary": {
+    "liveBundleContainsCanonicalLabels": true,
+    "freshAuthenticatedLoadBlockedBy429": true,
+    "homeRadarSurfaceProofRecovered": false,
+    "stagingDeployAttemptInProgress": true
+  },
+  "bundleChecks": {
+    "asset": "https://stage.consultinity.ai/assets/HomeView-DEWCCw7g.js",
+    "contains": {
+      "AI Pulse Core": true,
+      "Industry Lens": true,
+      "Execution Current": true,
+      "Command Dock": true
+    }
+  },
+  "browserLoad": {
+    "snapshotHeading": "My Work Dashboard",
+    "snapshotError": "Too many requests, please try again later.",
+    "network429": [
+      "/api/v8/admin/flags",
+      "/api/v8/my-work/roof/summary",
+      "/api/my-work/radar",
+      "/api/my-work/context-summary",
+      "/api/my-work/session-context",
+      "/api/tasks",
+      "/api/notifications",
+      "/api/notifications/unread-count",
+      "/api/llm/providers/health"
+    ],
+    "network200": [
+      "/api/auth/me",
+      "/api/health"
+    ]
+  },
+  "runtimeLogs": {
+    "window": "last 10m at capture time",
+    "note": "Staging logs show repeated 429 responses for My Work polling endpoints with userId null in performance metrics."
+  },
+  "deployAttempt": {
+    "service": "consultify",
+    "environment": "staging",
+    "deploymentId": "3d731c33-be8e-41b9-861a-e2250506dd4e",
+    "statusAtCapture": "BUILDING"
+  },
+  "notes": [
+    "The explicit Home/Radar canonical labels are present in the live staging bundle, so the earlier label-visibility mismatch is not explained by stale frontend code.",
+    "Fresh browser proof remains blocked because My Work falls into 429 responses before the authenticated roof/radar surface can settle.",
+    "A backend mitigation was prepared locally to stabilize rate-limit keying via decoded user identifiers, but the staging redeploy was still BUILDING at capture time."
+  ]
+}

@@ -26,13 +26,26 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
   const token = extractToken(req);
   const secret = process.env.JWT_SECRET;
 
-  if (!token || !secret) return next();
+  if (!token) return next();
+
+  const assignUserId = (decoded: unknown) => {
+    const payload = decoded as { id?: string; userId?: string; sub?: string } | null;
+    const candidate = payload?.id || payload?.userId || payload?.sub;
+    if (typeof candidate === 'string' && candidate.length > 0) {
+      req._rateLimitUserId = candidate;
+    }
+  };
 
   try {
-    const decoded = jwt.verify(token, secret) as { id?: string };
-    if (decoded?.id) req._rateLimitUserId = decoded.id;
+    if (secret) {
+      assignUserId(jwt.verify(token, secret));
+    } else {
+      assignUserId(jwt.decode(token));
+    }
   } catch {
-    // Invalid/expired token - continue without user (will fall back to IP)
+    // Rate-limit partitioning should remain stable even for tokens that are no longer verifiable.
+    // This fallback is only used to derive a per-user throttle key, not for authorization.
+    assignUserId(jwt.decode(token));
   }
   next();
 }

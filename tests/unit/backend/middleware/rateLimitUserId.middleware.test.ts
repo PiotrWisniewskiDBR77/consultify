@@ -3,15 +3,18 @@ import type { NextFunction, Request, Response } from 'express';
 
 describe('rateLimitUserIdMiddleware', () => {
   let verifyMock: ReturnType<typeof vi.fn>;
+  let decodeMock: ReturnType<typeof vi.fn>;
   let rateLimitUserIdMiddleware: (req: Request, res: Response, next: NextFunction) => void;
 
   beforeEach(async () => {
     vi.resetModules();
     verifyMock = vi.fn();
+    decodeMock = vi.fn();
 
     vi.doMock('jsonwebtoken', () => ({
-      default: { verify: verifyMock },
+      default: { verify: verifyMock, decode: decodeMock },
       verify: verifyMock,
+      decode: decodeMock,
     }));
 
     const mod = await import('../../../../server/src/middleware/rateLimitUserId.middleware.js');
@@ -56,6 +59,7 @@ describe('rateLimitUserIdMiddleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(req._rateLimitUserId).toBeUndefined();
     expect(verifyMock).not.toHaveBeenCalled();
+    expect(decodeMock).toHaveBeenCalledWith('token');
   });
 
   it('extracts Bearer token and sets _rateLimitUserId when decoded contains id', () => {
@@ -101,9 +105,21 @@ describe('rateLimitUserIdMiddleware', () => {
     expect(req2._rateLimitUserId).toBe('u-cookie');
   });
 
-  it('does not set user id when decoded payload has no id', () => {
+  it('uses sub as a fallback identifier', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ sub: 'u-1' });
+    const req = makeReq({ authorization: 'Bearer jwt-token' });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(req._rateLimitUserId).toBe('u-1');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not set user id when decoded payload has no supported identifier', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    verifyMock.mockReturnValue({ email: 'user@example.com' });
     const req = makeReq({ authorization: 'Bearer jwt-token' });
     const next = vi.fn();
 
@@ -124,6 +140,36 @@ describe('rateLimitUserIdMiddleware', () => {
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(req._rateLimitUserId).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to decoded id when verify throws', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    verifyMock.mockImplementation(() => {
+      throw new Error('invalid token');
+    });
+    decodeMock.mockReturnValue({ id: 'u-decoded' });
+    const req = makeReq({ authorization: 'Bearer expired-jwt' });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(req._rateLimitUserId).toBe('u-decoded');
+    expect(decodeMock).toHaveBeenCalledWith('expired-jwt');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses decoded userId when secret is unavailable', () => {
+    vi.stubEnv('JWT_SECRET', '');
+    decodeMock.mockReturnValue({ userId: 'u-fallback' });
+    const req = makeReq({ authorization: 'Bearer token' });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(req._rateLimitUserId).toBe('u-fallback');
+    expect(verifyMock).not.toHaveBeenCalled();
+    expect(decodeMock).toHaveBeenCalledWith('token');
     expect(next).toHaveBeenCalledTimes(1);
   });
 
