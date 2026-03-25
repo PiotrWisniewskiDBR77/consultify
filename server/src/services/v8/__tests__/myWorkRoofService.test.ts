@@ -71,8 +71,8 @@ import {
 // FIXTURES
 // ==========================================
 
-const ORG_ID = '00000000-0000-4000-8000-000000000001';
-const OTHER_ORG_ID = '00000000-0000-4000-8000-000000000099';
+const ORG_ID = 'dbr77';
+const OTHER_ORG_ID = 'atelier';
 const USER_ID = '00000000-0000-4000-8000-000000000010';
 const OTHER_USER_ID = '00000000-0000-4000-8000-000000000020';
 const OBJECT_ID = '00000000-0000-4000-8000-aaaaaaaaaaaa';
@@ -348,10 +348,12 @@ describe('MyWork Roof — Cross-Surface State (Decision W7-1)', () => {
     ).rejects.toThrow(ZodError);
   });
 
-  it('T19: setCanonicalObjectState rejects invalid organizationId', async () => {
-    await expect(
-      setCanonicalObjectState(makeSetStateParams({ organizationId: 'not-a-uuid' })),
-    ).rejects.toThrow(ZodError);
+  it('T19: setCanonicalObjectState accepts non-UUID tenant organizationId', async () => {
+    const result = await setCanonicalObjectState(
+      makeSetStateParams({ organizationId: 'tenant-dbr77' }),
+    );
+
+    expect(result.organizationId).toBe('tenant-dbr77');
   });
 
   it('T20: getCanonicalObjectState returns mapped object when found', async () => {

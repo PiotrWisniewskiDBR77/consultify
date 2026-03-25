@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Api from '@/services/api';
 
@@ -675,10 +675,14 @@ export function useHomeData(refreshTrigger?: number): HomeData {
   const [layout, setLayout] = useState<HomeLayoutConfig>(getDefaultLayout);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    const isInitialLoad = !hasLoadedRef.current;
+    if (isInitialLoad) {
+      setLoading(true);
+      setError(null);
+    }
     const [screenRes, prefsRes] = await Promise.allSettled([
       Api.get('/my-work/home/v2'),
       Api.get('/preferences').catch(() => null),
@@ -693,10 +697,19 @@ export function useHomeData(refreshTrigger?: number): HomeData {
         ? sanitizeLayout(prefsRes.value.data.home_layout)
         : getDefaultLayout();
 
-    setScreen(screenData);
-    setLayout(savedLayout);
-    if (screenRes.status === 'rejected') {
-      setError(screenRes.reason instanceof Error ? screenRes.reason.message : 'Failed to load home data');
+    if (screenRes.status === 'fulfilled') {
+      setScreen(screenData);
+      setLayout(savedLayout);
+      setError(null);
+      hasLoadedRef.current = true;
+    } else {
+      if (isInitialLoad) {
+        setScreen(screenData);
+        setLayout(savedLayout);
+      }
+      setError(
+        screenRes.reason instanceof Error ? screenRes.reason.message : 'Failed to load home data'
+      );
     }
     setLoading(false);
   }, []);

@@ -1,14 +1,11 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HomeView } from '../../../src/components/MyWork/Home/HomeView';
-import type { RadarViewPayload } from '../../../src/components/MyWork/Home/homeV2Types';
-import type { UnifiedOutputRow } from '../../../src/components/ReportsAndPresentations/types';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || '',
     i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
@@ -19,14 +16,9 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
-const useRadarDataMock = vi.fn();
-vi.mock('../../../src/components/MyWork/Home/useRadarData', () => ({
-  useRadarData: (...args: unknown[]) => useRadarDataMock(...args),
-}));
-
-const useMyWorkArtifactOutputsMock = vi.fn();
-vi.mock('../../../src/components/ReportsAndPresentations/useRapData', () => ({
-  useMyWorkArtifactOutputs: (...args: unknown[]) => useMyWorkArtifactOutputsMock(...args),
+const useHomeDataMock = vi.fn();
+vi.mock('../../../src/components/MyWork/Home/useHomeData', () => ({
+  useHomeData: (...args: unknown[]) => useHomeDataMock(...args),
 }));
 
 const useV8MyWorkRoofSummaryMock = vi.fn();
@@ -34,126 +26,107 @@ vi.mock('../../../src/hooks/useV8MyWorkRoof', () => ({
   useV8MyWorkRoofSummary: (...args: unknown[]) => useV8MyWorkRoofSummaryMock(...args),
 }));
 
-const apiPostMock = vi.fn();
-vi.mock('../../../src/services/api', () => ({
-  default: {
-    post: (...args: unknown[]) => apiPostMock(...args),
-  },
+vi.mock('../../../src/components/MyWork/Home/AIPulseCore', () => ({
+  AIPulseCore: ({ block, onAction }: any) => (
+    <button
+      type="button"
+      onClick={() =>
+        onAction({
+          type: 'chat',
+          packet: {
+            sourceBlock: block.id,
+            intent: 'prioritize_transformation',
+            title: block.title,
+            starterPrompt: 'Test prompt',
+          },
+        })
+      }
+    >
+      open {block.title}
+    </button>
+  ),
 }));
 
-const radarPayload: RadarViewPayload = {
-  generatedAt: '2026-03-24T10:00:00.000Z',
-  profile: {
-    trackedTopics: ['AI'],
-    trackedCompanies: ['Consultify'],
-    mutedTopics: [],
-    mutedSources: [],
-  },
-  dailyBriefing: {
-    mainInsight: 'One strong signal needs executive attention.',
-    keySignals: [
-      {
-        id: 'sig-1',
-        signalId: 'sig-1',
-        title: 'Board deck pressure is rising',
-        summary: 'Leaders need a fresh presentation.',
-        insightSummary: 'The board needs an updated narrative backed by evidence.',
-        whyItMatters: 'A decision window is opening.',
-        whyYouSeeThis: 'You own the linked initiative.',
-        suggestedNextStep: 'Prepare a concise board deck.',
-        source: { id: 'src-1', name: 'Radar', category: 'news', trustScore: 0.9 },
-        tags: { domains: ['strategy'], topics: ['board'], entities: ['initiative'] },
-        contentType: 'news',
-        relevanceScope: 'project_specific',
-        businessImpact: 'high',
-        actionability: 'high',
-        durability: 'current',
-        impactType: 'strategic',
-        confidenceScore: 0.91,
-        freshnessScore: 0.88,
-        finalScore: 0.89,
-      },
-    ],
-    recommendedMove: null,
-  },
-  whatChanged: [],
-  whyItMattersToMe: [],
-  whatToDoNext: [],
-  learnImprove: [],
-  watchlist: [],
-  metrics: {
-    totalSignalsConsidered: 12,
-    duplicateRate: 5,
-    actionedSignalsLast30d: 3,
-    savedSignalsLast30d: 2,
-  },
-  localization: {
-    requestedLanguage: 'en',
-    pendingCount: 0,
-  },
-};
+vi.mock('../../../src/components/MyWork/Home/MomentumBlock', () => ({
+  MomentumBlock: ({ block }: any) => <div>{block.title}</div>,
+}));
 
-const reviewRows: UnifiedOutputRow[] = [
-  {
-    kind: 'presentation',
-    originRecordId: 'deck-1',
-    artifactId: 'artifact-deck-1',
-    title: 'Board deck Q1',
-    statusKey: 'shared',
-    owner: 'user-1',
-    updatedAt: '2026-03-24T09:00:00.000Z',
-    exportFormats: ['pptx'],
-  },
-];
+vi.mock('../../../src/components/MyWork/Home/SparkField', () => ({
+  SparkField: ({ block }: any) => <div>{block.title}</div>,
+}));
 
-const mineRows: UnifiedOutputRow[] = [
-  {
-    kind: 'document',
-    originRecordId: 'report-1',
-    artifactId: 'artifact-report-1',
-    title: 'Weekly execution review',
-    statusKey: 'draft',
-    owner: 'user-1',
-    updatedAt: '2026-03-24T08:00:00.000Z',
-    exportFormats: ['pdf'],
-  },
-];
+vi.mock('../../../src/components/MyWork/Home/DecisionTemperatureBlock', () => ({
+  DecisionTemperatureBlock: ({ block }: any) => <div>{block.title}</div>,
+}));
 
-const recentRows: UnifiedOutputRow[] = [
-  {
-    kind: 'sheet',
-    originRecordId: 'sheet-1',
-    artifactId: 'artifact-sheet-1',
-    title: 'Transformation tracker',
-    statusKey: 'draft',
-    owner: 'user-2',
-    updatedAt: '2026-03-24T07:00:00.000Z',
-    exportFormats: ['xlsx'],
-  },
-];
+vi.mock('../../../src/components/MyWork/Home/IndustryLensBlock', () => ({
+  IndustryLensBlock: ({ block }: any) => <div>{block.title}</div>,
+}));
 
-describe('HomeView outputs integration', () => {
+vi.mock('../../../src/components/MyWork/Home/ExecutionCurrentBlock', () => ({
+  ExecutionCurrentBlock: ({ block, onAction }: any) => (
+    <button type="button" onClick={() => onAction({ type: 'navigate', target: 'outputs_review' })}>
+      open {block.title}
+    </button>
+  ),
+}));
+
+vi.mock('../../../src/components/MyWork/Home/TeamSignalBlock', () => ({
+  TeamSignalBlock: ({ block }: any) => <div>{block.title}</div>,
+}));
+
+vi.mock('../../../src/components/MyWork/Home/CommandDock', () => ({
+  CommandDock: ({ block, onAction }: any) => (
+    <button type="button" onClick={() => onAction({ type: 'create', target: 'idea' })}>
+      open {block.title}
+    </button>
+  ),
+}));
+
+const homeBlocks = [
+  { id: 'aiPulseCore', title: 'AI Pulse Core' },
+  { id: 'momentum', title: 'Momentum' },
+  { id: 'sparkField', title: 'Spark Field' },
+  { id: 'decisionTemperature', title: 'Decision Temperature' },
+  { id: 'industryLens', title: 'Industry Lens' },
+  { id: 'executionCurrent', title: 'Execution Current' },
+  { id: 'teamSignal', title: 'Team Signal' },
+  { id: 'commandDock', title: 'Command Dock' },
+].map((block) => ({
+  ...block,
+  accent: 'neutral' as const,
+  size: 'lg' as const,
+  priorityWeight: 80,
+  relevanceScore: 80,
+  freshnessScore: 80,
+  ctaIntents: [],
+  payload: {},
+}));
+
+describe('HomeView aggregated contract', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    apiPostMock.mockResolvedValue({ ok: true });
-    useRadarDataMock.mockReturnValue({
-      data: radarPayload,
+    useHomeDataMock.mockReturnValue({
+      screen: {
+        timeMode: 'liveDay',
+        updatedAt: '2026-03-25T05:00:00.000Z',
+        pulseLabel: 'Transformation pulse is rising',
+        blocks: homeBlocks,
+      },
+      blocks: homeBlocks,
+      layout: {
+        ambientMotion: 'full',
+        blockLayouts: homeBlocks.map((block) => ({ blockId: block.id, visible: true })),
+      },
       loading: false,
       error: null,
-      refresh: vi.fn(),
+      updateLayout: vi.fn(),
     });
-    useMyWorkArtifactOutputsMock.mockReturnValue({
-      mine: mineRows,
-      review: reviewRows,
-      recent: recentRows,
-      loading: false,
-      error: null,
-      refetch: vi.fn(),
-    });
+
     useV8MyWorkRoofSummaryMock.mockReturnValue({
       data: {
         overallStatus: 'mixed_truth',
-        surfaceMode: 'radar_overlay_with_outputs_bridge',
+        surfaceMode: 'home_v2_aggregated_with_outputs_bridge',
         counts: {
           backed_by_real_service: 2,
           partial_stitched: 2,
@@ -171,53 +144,47 @@ describe('HomeView outputs integration', () => {
     });
   });
 
-  it('renders personal outputs lanes from the canonical artifact registry', () => {
+  it('renders the aggregated home contract with roof truth and block orchestration', () => {
     render(<HomeView onAction={vi.fn()} />);
 
+    expect(screen.getByText('Transformation pulse is rising')).toBeInTheDocument();
     expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
-    expect(screen.getByText(/Radar overlay \+ outputs bridge/)).toBeInTheDocument();
+    expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();
     expect(screen.getAllByText('AI Pulse Core').length).toBeGreaterThan(0);
-    expect(screen.getByText('Industry Lens')).toBeInTheDocument();
-    expect(screen.getByText('Execution Current')).toBeInTheDocument();
-    expect(screen.getByText('Command Dock')).toBeInTheDocument();
-    expect(screen.getByText('Industry Lens · What changed')).toBeInTheDocument();
-    expect(screen.getByText('Command Dock · what to do next')).toBeInTheDocument();
-    expect(screen.getByText('Execution Current · my outputs')).toBeInTheDocument();
-    expect(screen.getByText('Needs review')).toBeInTheDocument();
-    expect(screen.getByText('Recent mine')).toBeInTheDocument();
-    expect(screen.getByText('Recent outputs')).toBeInTheDocument();
-    expect(screen.getByText('Board deck Q1')).toBeInTheDocument();
-    expect(screen.getByText('Weekly execution review')).toBeInTheDocument();
-    expect(screen.getByText('Transformation tracker')).toBeInTheDocument();
+    expect(screen.getAllByText('Industry Lens').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Execution Current').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Command Dock').length).toBeGreaterThan(0);
+    expect(screen.getByText('Momentum')).toBeInTheDocument();
+    expect(screen.getByText('Spark Field')).toBeInTheDocument();
+    expect(screen.getByText('Decision Temperature')).toBeInTheDocument();
+    expect(screen.getByText('Team Signal')).toBeInTheDocument();
   });
 
-  it('routes output actions through the My Work home action contract', () => {
+  it('passes home actions through to the My Work hub contract', () => {
     const onAction = vi.fn();
     render(<HomeView onAction={onAction} />);
 
-    fireEvent.click(screen.getByText('Board deck Q1'));
+    fireEvent.click(screen.getByRole('button', { name: 'open AI Pulse Core' }));
     expect(onAction).toHaveBeenCalledWith({
-      type: 'open',
-      target: 'presentation',
-      id: 'deck-1',
+      type: 'chat',
+      packet: {
+        sourceBlock: 'aiPulseCore',
+        intent: 'prioritize_transformation',
+        title: 'AI Pulse Core',
+        starterPrompt: 'Test prompt',
+      },
     });
 
-    fireEvent.click(screen.getByText('Open review queue'));
+    fireEvent.click(screen.getByRole('button', { name: 'open Execution Current' }));
     expect(onAction).toHaveBeenCalledWith({
       type: 'navigate',
       target: 'outputs_review',
     });
 
-    fireEvent.click(screen.getByText('Open my outputs'));
+    fireEvent.click(screen.getByRole('button', { name: 'open Command Dock' }));
     expect(onAction).toHaveBeenCalledWith({
-      type: 'navigate',
-      target: 'outputs_mine',
-    });
-
-    fireEvent.click(screen.getByText('Open library'));
-    expect(onAction).toHaveBeenCalledWith({
-      type: 'navigate',
-      target: 'outputs_all',
+      type: 'create',
+      target: 'idea',
     });
   });
 });

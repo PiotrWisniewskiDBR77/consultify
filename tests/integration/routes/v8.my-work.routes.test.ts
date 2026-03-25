@@ -27,7 +27,7 @@ vi.mock('../../../server/src/services/v8/myWorkRoofService.js', () => ({
 
 import myWorkRoutes from '../../../server/src/routes/v8/my-work.routes.js';
 
-const ORG = '11111111-1111-4111-8111-111111111111';
+const ORG = 'dbr77';
 const USER_ID = '22222222-2222-4222-8222-222222222222';
 const OBJECT_ID = '33333333-3333-4333-8333-333333333333';
 
@@ -263,8 +263,8 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
     expect(mockGetCalendarPhases).toHaveBeenCalledWith(ORG);
 
     expect(res.body.data.overallStatus).toBe('mixed_truth');
-    expect(res.body.data.surfaceMode).toBe('radar_overlay_with_outputs_bridge');
-    expect(res.body.data.contracts.homeViewUsesAggregatedContract).toBe(false);
+    expect(res.body.data.surfaceMode).toBe('home_v2_aggregated_with_outputs_bridge');
+    expect(res.body.data.contracts.homeViewUsesAggregatedContract).toBe(true);
     expect(res.body.data.counts).toEqual({
       backed_by_real_service: 2,
       partial_stitched: 2,

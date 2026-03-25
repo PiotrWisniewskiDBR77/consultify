@@ -332,11 +332,11 @@ router.get(
       data: {
         generatedAt,
         overallStatus,
-        surfaceMode: 'radar_overlay_with_outputs_bridge',
+        surfaceMode: 'home_v2_aggregated_with_outputs_bridge',
         contracts: {
           homeV2Endpoint: true,
           radarEndpoint: true,
-          homeViewUsesAggregatedContract: false,
+          homeViewUsesAggregatedContract: true,
           outputsBridgeVisible: true,
         },
         homeBlocks,

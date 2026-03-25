@@ -12,6 +12,8 @@
 
 import { z } from 'zod';
 
+const ContextIdSchema = z.string().min(1);
+
 // ==========================================
 // ENUMS / LITERALS
 // ==========================================
@@ -141,7 +143,7 @@ export const SurfaceProjectionSchema = z.object({
 export const CanonicalObjectStateSchema = z.object({
   objectId: z.string().uuid(),
   objectType: z.enum(CanonicalObjectTypeValues),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   canonicalState: z.string().min(1),
   lastUpdatedAt: z.string().min(1),
   surfaceProjections: z.record(z.string(), SurfaceProjectionSchema),
@@ -150,7 +152,7 @@ export const CanonicalObjectStateSchema = z.object({
 export const HomeBlockMaturitySchema = z.object({
   blockId: z.string().uuid(),
   blockName: z.enum(HomeBlockNameValues),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   maturityLevel: z.enum(MaturityLevelValues),
   serviceRef: z.string().nullable(),
   lastAuditedAt: z.string().min(1),
@@ -160,8 +162,8 @@ export const InboxMaterializationSchema = z.object({
   materializationId: z.string().uuid(),
   eventSourceRef: z.string().min(1),
   inboxItemId: z.string().min(1),
-  userId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  userId: ContextIdSchema,
+  organizationId: ContextIdSchema,
   materializedAt: z.string().min(1),
   latencyMs: z.number().nonnegative(),
   latencyBand: z.enum(LatencyBandValues),
@@ -170,7 +172,7 @@ export const InboxMaterializationSchema = z.object({
 export const CalendarPhaseSchema = z.object({
   phaseId: z.string().uuid(),
   phaseName: z.enum(CalendarPhaseNameValues),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   status: z.enum(CalendarPhaseStatusValues),
   blockedBy: z.string().nullable(),
 });
@@ -190,7 +192,7 @@ export interface SetCanonicalObjectStateParams {
 export const SetCanonicalObjectStateParamsSchema = z.object({
   objectId: z.string().uuid(),
   objectType: z.enum(CanonicalObjectTypeValues),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   canonicalState: z.string().min(1),
   surfaceProjections: z.record(z.string(), SurfaceProjectionSchema).optional().default({}),
 });
@@ -204,7 +206,7 @@ export interface ClassifyHomeBlockParams {
 
 export const ClassifyHomeBlockParamsSchema = z.object({
   blockName: z.enum(HomeBlockNameValues),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   maturityLevel: z.enum(MaturityLevelValues),
   serviceRef: z.string().nullable().optional().default(null),
 });
@@ -220,8 +222,8 @@ export interface RecordInboxMaterializationParams {
 export const RecordInboxMaterializationParamsSchema = z.object({
   eventSourceRef: z.string().min(1),
   inboxItemId: z.string().min(1),
-  userId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  userId: ContextIdSchema,
+  organizationId: ContextIdSchema,
   latencyMs: z.number().nonnegative(),
 });
 
@@ -234,7 +236,7 @@ export interface SetCalendarPhaseParams {
 
 export const SetCalendarPhaseParamsSchema = z.object({
   phaseName: z.enum(CalendarPhaseNameValues),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   status: z.enum(CalendarPhaseStatusValues),
   blockedBy: z.string().nullable().optional().default(null),
 });
@@ -249,7 +251,7 @@ export interface UpdateSurfaceProjectionParams {
 
 export const UpdateSurfaceProjectionParamsSchema = z.object({
   objectId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: ContextIdSchema,
   surface: z.enum(MyWorkSurfaceValues),
   displayState: z.string().min(1),
   isStale: z.boolean(),

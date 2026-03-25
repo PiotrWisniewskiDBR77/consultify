@@ -15,18 +15,26 @@ export function useRadarData(refreshTrigger?: number): RadarDataState {
   const [data, setData] = useState<RadarViewPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
   const followUpAttemptsRef = useRef(0);
   const followUpTimerRef = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    const isInitialLoad = !hasLoadedRef.current;
+    if (isInitialLoad) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const response = await Api.get('/my-work/radar');
       setData(response?.data as RadarViewPayload);
+      setError(null);
+      hasLoadedRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load Radar');
-      setData(null);
+      if (isInitialLoad) {
+        setData(null);
+      }
     } finally {
       setLoading(false);
     }
