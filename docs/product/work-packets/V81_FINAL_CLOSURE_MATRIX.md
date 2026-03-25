@@ -37,8 +37,8 @@ The matrix is intentionally narrower than the package-wide `V8.0 + V8.1` closure
 | `Object-linked outputs` | linked outputs are visible on required major surfaces | `partial` | initiatives, finance analyses, and notebooks are now wired; interview and some source-object surfaces are still not consistently covered | component proof + local surface wiring in `InitiativeCompactPanel`, `FinancialAnalysisPanel`, `NotebookContextPanel` |
 | `Traceability + review` | review state, visibility, source context, provenance remain visible | `fulfilled` | aggregate library semantics and preview now expose review, visibility, artifact identity, and source summary | `tests/components/ReportsAndPresentations/ReportsAndPresentationsHub.canonicalDataPath.test.tsx` |
 | `Broad smoke` | artifact surfaces survive browser runtime | `fulfilled` | local L4 smoke passes for Outputs Library canonical path | `tests/e2e/smoke/outputs-library-canonical-artifacts.spec.ts` via `npm run test:l4:local:outputs-library` |
-| `Staging summary` | live staging verification exists | `blocked` | no live staging verification summary has been collected in this slice | none |
-| `Known-failure ledger` | zero or explicit waivers | `fulfilled` | no local known failures remain in the executed `V8.1` targeted suite; remaining blocker is explicit staging absence | targeted suite + browser smoke run on 2026-03-24 |
+| `Staging summary` | live staging verification exists | `fulfilled` | live staging verification now covers the governed execution/retrieval support chain and the direct artifact runtime path through `snapshot -> from-chat -> accept-plan -> materialize(report)` | `evidence/09-v81-execution-proof.json`, `evidence/10-v81-retrieval-proof.json`, `evidence/17-v81-artifact-run-proof-after-final-fixes.json` |
+| `Known-failure ledger` | zero or explicit waivers | `fulfilled` | no local known failures remain in the executed `V8.1` targeted suite; remaining blockers are explicit package-level and sign-off-boundary items | targeted suite + browser smoke run on 2026-03-24, plus staging evidence listed below |
 
 ---
 
@@ -56,7 +56,7 @@ These do not invalidate the current `V8.1` closure claim when stated explicitly:
 
 ### Local `V8.1` verdict
 
-`closed locally with explicit sheet deferral`
+`closed locally and staging-closed with explicit sheet deferral`
 
 Reason:
 
@@ -71,8 +71,8 @@ Reason:
 
 Reason:
 
-- live staging verification is still missing,
-- the frozen package ledger still contains package-level reds outside the narrow `V8.1` slice.
+- the frozen package ledger still contains package-level reds outside the narrow `V8.1` slice,
+- and direct Outputs-facing browser proof on live staging is still not part of the final evidence set.
 
 ---
 
@@ -80,6 +80,6 @@ Reason:
 
 To call the slice `100% V8.1 Final` without qualification, the manager still needs:
 
-1. a live staging verification summary for the artifact-runtime scope,
+1. direct Outputs-facing browser proof on live staging or an explicit written waiver,
 2. explicit acceptance of the remaining `sheet` parity deferral in the final sign-off context,
 3. package-level sign-off alignment with `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`.
