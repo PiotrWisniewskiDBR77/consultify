@@ -58,6 +58,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 
 // Helper function to safely display error messages
@@ -1446,7 +1447,11 @@ export const InterviewHub: React.FC = () => {
   const openSessionById = useCallback(
     async (sessionId: string) => {
       try {
-        const s = (await Api.get(`/interview/sessions/${sessionId}`)) as any;
+        const s = (
+          await V8InterviewApi.getSession(sessionId)
+            .then((res) => res.session)
+            .catch(() => Api.get(`/interview/sessions/${sessionId}`))
+        ) as any;
         if (!s?.id) throw new Error('Session not found');
         handleViewSession(s as InterviewSession);
       } catch (error: any) {
@@ -3514,7 +3519,10 @@ export const InterviewHub: React.FC = () => {
           const demoSession = interviewDemoData.sessionDetailsById[sid]?.session;
           const session = isInterviewDemoId(sid)
             ? demoSession
-            : await Api.get(`/interview/sessions/${sid}`).catch(() => demoSession || null);
+            : await V8InterviewApi.getSession(sid)
+                .then((res) => res.session)
+                .catch(() => Api.get(`/interview/sessions/${sid}`))
+                .catch(() => demoSession || null);
           if (!session) {
             throw new Error('Failed to load session');
           }
@@ -3852,7 +3860,9 @@ Return ONLY the answer text (no markdown fences).`;
         // If assignment has a session, open it (read-only will be handled by workspace based on assignment status)
         const sid = assignment.sessionId || assignment.session?.id;
         if (sid) {
-          const session = await Api.get(`/interview/sessions/${sid}`);
+          const session = await V8InterviewApi.getSession(sid)
+            .then((res) => res.session)
+            .catch(() => Api.get(`/interview/sessions/${sid}`));
           handleOpenDocument({
             id: (session as InterviewSession).id,
             type: 'session',

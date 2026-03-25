@@ -59,6 +59,7 @@ import {
   NModeShell,
 } from '@/components/shared/NModeLayout';
 import { Api } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -446,11 +447,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         }
 
         if (initialSessionId) {
-          const sessionRes = await Api.get(`/interview/sessions/${initialSessionId}`).catch(() => null);
+          const sessionRes = await V8InterviewApi.getSession(initialSessionId)
+            .then((res) => res.session)
+            .catch(() => Api.get(`/interview/sessions/${initialSessionId}`))
+            .catch(() => null);
           if (!sessionRes && useDemoSession(initialSessionId)) return;
           currentSession = sessionRes as InterviewSession | null;
         } else {
-          const sessionsRes = await Api.get('/interview/sessions?status=active').catch(() => []);
+          const sessionsRes = await V8InterviewApi.getSessions('active')
+            .then((res) => res.sessions)
+            .catch(() => Api.get('/interview/sessions?status=active'))
+            .catch(() => []);
           const sessions = Array.isArray(sessionsRes) ? sessionsRes : [];
 
           if (sessions.length > 0) {
