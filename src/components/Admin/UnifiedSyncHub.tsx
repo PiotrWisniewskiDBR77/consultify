@@ -41,7 +41,12 @@ import {
   V8MultiplayerApi,
   type V8MultiplayerResourceMapping,
 } from '@/services/api/v8/multiplayer';
-import { V8SyncApi, type V8SyncCredentialHealthSummary } from '@/services/api/v8/sync';
+import {
+  V8SyncApi,
+  type V8SyncAuthEscalation,
+  type V8SyncConflictRecord,
+  type V8SyncCredentialHealthSummary,
+} from '@/services/api/v8/sync';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -226,6 +231,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     useState<V8MultiplayerResourceMapping | null>(null);
   const [v8AuthHealthSummary, setV8AuthHealthSummary] =
     useState<V8SyncCredentialHealthSummary | null>(null);
+  const [v8AuthEscalations, setV8AuthEscalations] = useState<V8SyncAuthEscalation[]>([]);
+  const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -292,6 +299,24 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
+  const fetchV8AuthEscalations = useCallback(async () => {
+    try {
+      const data = await V8SyncApi.getAuthEscalations();
+      setV8AuthEscalations(data.escalations || []);
+    } catch {
+      setV8AuthEscalations([]);
+    }
+  }, []);
+
+  const fetchV8Conflicts = useCallback(async () => {
+    try {
+      const data = await V8SyncApi.getConflicts(10);
+      setV8Conflicts(data.conflicts || []);
+    } catch {
+      setV8Conflicts([]);
+    }
+  }, []);
+
   const fetchV8WorkspaceMapping = useCallback(async () => {
     try {
       const data = await V8MultiplayerApi.getWorkspaceMapping();
@@ -322,6 +347,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       fetchErrors(),
       fetchAuditLog(),
       fetchV8AuthHealth(),
+      fetchV8AuthEscalations(),
+      fetchV8Conflicts(),
       fetchV8WorkspaceMapping(),
     ]);
     setLoading(false);
@@ -332,6 +359,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     fetchErrors,
     fetchAuditLog,
     fetchV8AuthHealth,
+    fetchV8AuthEscalations,
+    fetchV8Conflicts,
     fetchV8WorkspaceMapping,
   ]);
 
@@ -891,6 +920,86 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
         </div>
       )}
+
+      <div>
+        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <ShieldAlert size={14} className="text-orange-400" />
+          {t('integrations.syncHub.v8AuthEscalations', 'V8 Active Auth Escalations')}
+          {v8AuthEscalations.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 rounded">
+              {v8AuthEscalations.length}
+            </span>
+          )}
+        </h3>
+        {v8AuthEscalations.length === 0 ? (
+          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+            {t('integrations.syncHub.v8NoEscalations', 'No governed auth escalations are open.')}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {v8AuthEscalations.slice(0, 5).map((escalation) => (
+              <div
+                key={escalation.escalationId}
+                className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20"
+              >
+                <ShieldAlert size={14} className="text-orange-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-200">{escalation.connectorId}</span>
+                    <span className="px-1.5 py-0.5 text-[11px] bg-orange-500/10 text-orange-300 rounded">
+                      {t('integrations.syncHub.v8Escalated', 'escalated')}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {escalation.reason || t('integrations.syncHub.v8NoEscalationReason', 'Auth health degraded')}
+                  </div>
+                  <div className="text-xs text-slate-600 mt-1">{timeAgo(escalation.escalatedAt)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <AlertTriangle size={14} className="text-rose-400" />
+          {t('integrations.syncHub.v8Conflicts', 'V8 Unresolved Sync Conflicts')}
+          {v8Conflicts.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-rose-500/10 text-rose-400 rounded">
+              {v8Conflicts.length}
+            </span>
+          )}
+        </h3>
+        {v8Conflicts.length === 0 ? (
+          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+            {t('integrations.syncHub.v8NoConflicts', 'No governed sync conflicts are open.')}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {v8Conflicts.slice(0, 5).map((conflict) => (
+              <div
+                key={conflict.conflictId}
+                className="flex items-start gap-3 p-3 rounded-lg bg-rose-500/5 border border-rose-500/20"
+              >
+                <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-200">{conflict.conflictClass}</span>
+                    <span className="px-1.5 py-0.5 text-[11px] bg-rose-500/10 text-rose-300 rounded uppercase">
+                      {conflict.severity}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {conflict.resolutionPath || t('integrations.syncHub.v8ResolutionPending', 'Resolution pending')}
+                  </div>
+                  <div className="text-xs text-slate-600 mt-1">{timeAgo(conflict.createdAt)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {v8WorkspaceMapping && (
         <div>
