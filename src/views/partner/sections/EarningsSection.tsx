@@ -183,6 +183,66 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     void fetchV8Summary();
   }, [fetchEarnings, fetchV8Summary]);
 
+  const renderV8SummaryBlock = () => {
+    if (!v8Summary) return null;
+
+    return (
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-violet-500" />
+              {t('partner.earnings.v8RuntimeTitle', 'V8 Earnings Summary')}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t(
+                'partner.earnings.v8RuntimeSubtitle',
+                'Governed partner payout readiness and earnings totals from the V8 namespace.'
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              label: t('partner.earnings.v8TotalEarned', 'Governed total earned'),
+              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalEarned ?? 0).toLocaleString()}`,
+              detail: `${v8Summary.totalPaid ?? 0} paid`,
+            },
+            {
+              label: t('partner.earnings.v8ThisMonth', 'Governed this month'),
+              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.thisMonth ?? 0).toLocaleString()}`,
+              detail: `${v8Summary.thisMonthCount ?? 0} items`,
+            },
+            {
+              label: t('partner.earnings.v8Pending', 'Governed pending'),
+              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPending ?? 0).toLocaleString()}`,
+              detail: `${v8Summary.totalApproved ?? 0} approved`,
+            },
+            {
+              label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
+              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.readyForPayout ?? 0).toLocaleString()}`,
+              detail: `${v8Summary.lastMonth ?? 0} last month`,
+            },
+          ].map((card) => (
+            <div
+              key={card.label}
+              className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+            >
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {card.label}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {card.value}
+              </div>
+              <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.detail}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // Request payout via API
   const handleRequestPayout = async () => {
     if (!summary || summary.readyForPayout < 100) {
@@ -251,63 +311,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   if (subsection === 'earnings') {
     return (
       <div className="space-y-6">
-        {v8Summary && (
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-violet-500" />
-                  {t('partner.earnings.v8RuntimeTitle', 'V8 Earnings Summary')}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {t(
-                    'partner.earnings.v8RuntimeSubtitle',
-                    'Governed partner payout readiness and earnings totals from the V8 namespace.'
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  label: t('partner.earnings.v8TotalEarned', 'Governed total earned'),
-                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalEarned ?? 0).toLocaleString()}`,
-                  detail: `${v8Summary.totalPaid ?? 0} paid`,
-                },
-                {
-                  label: t('partner.earnings.v8ThisMonth', 'Governed this month'),
-                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.thisMonth ?? 0).toLocaleString()}`,
-                  detail: `${v8Summary.thisMonthCount ?? 0} items`,
-                },
-                {
-                  label: t('partner.earnings.v8Pending', 'Governed pending'),
-                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPending ?? 0).toLocaleString()}`,
-                  detail: `${v8Summary.totalApproved ?? 0} approved`,
-                },
-                {
-                  label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
-                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.readyForPayout ?? 0).toLocaleString()}`,
-                  detail: `${v8Summary.lastMonth ?? 0} last month`,
-                },
-              ].map((card) => (
-                <div
-                  key={card.label}
-                  className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
-                >
-                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    {card.label}
-                  </div>
-                  <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                    {card.value}
-                  </div>
-                  <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {card.detail}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {renderV8SummaryBlock()}
 
         {/* Bank/Tax Info Alert - HubSpot style */}
         {!bankInfoComplete && (
@@ -665,6 +669,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   if (subsection === 'payouts') {
     return (
       <div className="space-y-6">
+        {renderV8SummaryBlock()}
+
         {/* Header */}
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
@@ -741,6 +747,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   // Payout Settings subsection
   return (
     <div className="space-y-6">
+      {renderV8SummaryBlock()}
+
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
