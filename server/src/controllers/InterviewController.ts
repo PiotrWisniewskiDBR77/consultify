@@ -1118,17 +1118,14 @@ async function logInterviewInsightActivity(params: {
   }
 }
 
-export const InterviewController = {
-  // ==========================================
-  // SESSIONS
-  // ==========================================
-
-  getSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = requireUser(req);
-    const { status } = req.query;
-
-    // Filter sessions by organization (project-scoped OR org-scoped)
-    let query = `
+/**
+ * Org-scoped interview session reads — shared by legacy GET /interview/sessions|sessions/:id and the V8 read bridge.
+ */
+export async function loadInterviewSessionsForOrganization(
+  organizationId: string,
+  status?: unknown,
+): Promise<NonNullable<ReturnType<typeof buildSessionResponse>>[]> {
+  let query = `
       SELECT s.*
       FROM interview_sessions s
       LEFT JOIN projects p ON p.id = s.project_id
@@ -1137,19 +1134,51 @@ export const InterviewController = {
         OR (s.project_id IS NULL AND s.organization_id = ?)
       )
     `;
-    const params: unknown[] = [user.organizationId, user.organizationId];
+  const params: unknown[] = [organizationId, organizationId];
 
-    if (status) {
-      const normalized =
-        String(status).toLowerCase() === 'in_progress' ? 'active' : String(status).toLowerCase();
-      query += ` AND s.status = ?`;
-      params.push(normalized);
-    }
+  if (status) {
+    const normalized =
+      String(status).toLowerCase() === 'in_progress' ? 'active' : String(status).toLowerCase();
+    query += ` AND s.status = ?`;
+    params.push(normalized);
+  }
 
-    query += ` ORDER BY s.started_at DESC`;
+  query += ` ORDER BY s.started_at DESC`;
 
-    const rows = await queryHelpers.queryAll(query, params);
-    res.json(rows.map(buildSessionResponse));
+  const rows = await queryHelpers.queryAll(query, params);
+  return rows.map((row: any) => buildSessionResponse(row)).filter(Boolean) as NonNullable<
+    ReturnType<typeof buildSessionResponse>
+  >[];
+}
+
+export async function loadInterviewSessionForOrganization(
+  organizationId: string,
+  sessionId: string,
+): Promise<NonNullable<ReturnType<typeof buildSessionResponse>> | null> {
+  const row = await queryHelpers.queryOne(
+    `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+    [sessionId, organizationId, organizationId]
+  );
+  if (!row) return null;
+  return buildSessionResponse(row);
+}
+
+export const InterviewController = {
+  // ==========================================
+  // SESSIONS
+  // ==========================================
+
+  getSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const sessions = await loadInterviewSessionsForOrganization(user.organizationId, req.query.status);
+    res.json(sessions);
   }),
 
   /**
@@ -1209,25 +1238,13 @@ export const InterviewController = {
     const user = requireUser(req);
     const { id } = req.params;
 
-    // Join with projects to filter by organization
-    const row = await queryHelpers.queryOne(
-      `SELECT s.*
-       FROM interview_sessions s
-       LEFT JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ?
-         AND (
-           p.organization_id = ?
-           OR (s.project_id IS NULL AND s.organization_id = ?)
-         )`,
-      [id, user.organizationId, user.organizationId]
-    );
-
-    if (!row) {
+    const session = await loadInterviewSessionForOrganization(user.organizationId, id);
+    if (!session) {
       res.status(404).json({ error: 'Session not found' });
       return;
     }
 
-    res.json(buildSessionResponse(row));
+    res.json(session);
   }),
 
   createSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

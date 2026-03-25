@@ -54,7 +54,7 @@ async function runSmokeTest(
   endpoint: string,
   method: string = 'GET',
   expectedStatus: number = 200,
-  options?: { expectJsonContract?: string },
+  options?: { expectJsonContract?: string; expectMetaContract?: string },
 ): Promise<SmokeTestResult> {
   const url = `${baseUrl}/api/v8${endpoint}`;
   const start = Date.now();
@@ -79,6 +79,20 @@ async function runSmokeTest(
         if (contract !== options.expectJsonContract) {
           passed = false;
           error = `Expected data.contract "${options.expectJsonContract}", got ${JSON.stringify(contract)}`;
+        }
+      } catch (e: unknown) {
+        passed = false;
+        error = e instanceof Error ? e.message : 'Invalid JSON body';
+      }
+    }
+
+    if (passed && options?.expectMetaContract) {
+      try {
+        const body = (await res.clone().json()) as { meta?: { contract?: string } };
+        const contract = body?.meta?.contract;
+        if (contract !== options.expectMetaContract) {
+          passed = false;
+          error = `Expected meta.contract "${options.expectMetaContract}", got ${JSON.stringify(contract)}`;
         }
       } catch (e: unknown) {
         passed = false;
@@ -149,6 +163,13 @@ async function main(): Promise<void> {
   // Help / Knowledge Base (B-11 read-only bridge; global KB, V8 auth + org gate)
   tests.push(await runSmokeTest('KB search', baseUrl, token, '/kb/search?q=ab'));
   tests.push(await runSmokeTest('KB context by module', baseUrl, token, '/kb/context/chat'));
+
+  // Interview (B-06 read-only bridge; org-scoped sessions)
+  tests.push(
+    await runSmokeTest('Interview sessions list', baseUrl, token, '/interview/sessions', 'GET', 200, {
+      expectMetaContract: 'interview_runtime_read_v1',
+    }),
+  );
 
   // Print results
   let passed = 0;

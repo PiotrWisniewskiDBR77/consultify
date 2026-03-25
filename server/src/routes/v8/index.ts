@@ -12,6 +12,7 @@ import aiCoreRoutes from './ai-core.routes.js';
 import chatRoutes from './chat.routes.js';
 import executionRoutes from './execution.routes.js';
 import healthRoutes from './health.routes.js';
+import interviewRoutes from './interview.routes.js';
 import knowledgeBaseRoutes from './knowledge-base.routes.js';
 import myWorkRoutes from './my-work.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
@@ -42,5 +43,6 @@ v8Router.use('/retrieval', retrievalRoutes);
 v8Router.use('/my-work', myWorkRoutes);
 v8Router.use('/prompt-os', promptOsRoutes);
 v8Router.use('/kb', knowledgeBaseRoutes);
+v8Router.use('/interview', interviewRoutes);
 
 export default v8Router;
