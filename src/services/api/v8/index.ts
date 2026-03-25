@@ -21,6 +21,8 @@ export {
   V8KnowledgeBaseApi,
 } from './kb';
 export { V8MyWorkApi } from './my-work';
+export type { V8PlanningDecisionChain, V8PlanningDecisionEntry } from './planning';
+export { V8PlanningApi } from './planning';
 export type { V8PromptOsRuntimeSummary } from './prompt-os';
 export { V8_PROMPT_OS_RUNTIME_SUMMARY_PATH, V8PromptOsApi } from './prompt-os';
 export type { V8ResultsDashboardSnapshot } from './results';

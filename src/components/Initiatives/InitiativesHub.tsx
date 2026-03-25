@@ -24,6 +24,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
+import { V8PlanningApi, type V8PlanningDecisionChain } from '@/services/api/v8/planning';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
@@ -58,8 +59,8 @@ import {
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
-import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
+import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const MIN_SHOWCASE_INITIATIVES = 10;
@@ -156,6 +157,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
+    []
+  );
   const [showNewModal, setShowNewModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -195,12 +199,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     });
   }, [currentUser]);
 
-  const mergeShowcaseInitiatives = useCallback(
-    (items: PortfolioInitiative[]) => {
-      return items;
-    },
-    []
-  );
+  const mergeShowcaseInitiatives = useCallback((items: PortfolioInitiative[]) => {
+    return items;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPendingDecisionChains = async () => {
+      try {
+        const response = await V8PlanningApi.getPendingDecisions();
+        if (!cancelled) setV8PendingDecisionChains(response.pendingDecisionChains || []);
+      } catch {
+        if (!cancelled) setV8PendingDecisionChains([]);
+      }
+    };
+    void loadPendingDecisionChains();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ============================================
   // DATA FETCHING - Real API
@@ -932,7 +949,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               selectedItem={selectedItem}
               onSelect={setPreviewInitiativeId}
               itemIds={itemIds}
-              getItemById={(id) => { const x = searchedInitiatives.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
+              getItemById={(id) => {
+                const x = searchedInitiatives.find((i) => i.id === id);
+                return x ? ({ ...x, title: x.name || x.id } as any) : null;
+              }}
               onOpenFull={(id) => {
                 const init = searchedInitiatives.find((x) => x.id === id);
                 if (init) handleOpenFullScreen(init);
@@ -1097,6 +1117,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
+    (sum, chain) =>
+      sum + chain.decisions.filter((decision) => decision.status === 'pending').length,
+    0
+  );
+
   const commandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
       <button
@@ -1139,6 +1165,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </button>
         );
       })}
+      {v8PendingDecisionChains.length > 0 && (
+        <>
+          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+            <span className="w-2 h-2 rounded-full bg-violet-400" />
+            <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
+            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+              {v8PendingDecisionChains.length}
+            </span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span>{t('initiatives.v8.pendingDecisions', 'V8 pending decisions')}</span>
+            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+              {totalPendingDecisionEntries}
+            </span>
+          </div>
+        </>
+      )}
     </div>
   );
 
