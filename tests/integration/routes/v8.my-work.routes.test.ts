@@ -254,7 +254,7 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
     expect(getRes.body.data[0].phaseName).toBe('phase_a_internal');
   });
 
-  it('returns an explicit mixed-truth roof summary even when no persisted audit rows exist', async () => {
+  it('returns a partially coherent roof summary when derived defaults have no placeholder blocks', async () => {
     const res = await request(createApp()).get('/api/v8/my-work/roof/summary');
 
     expect(res.status).toBe(200);
@@ -262,13 +262,13 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
     expect(mockGetInboxMaterializationStats).toHaveBeenCalledWith(USER_ID, ORG);
     expect(mockGetCalendarPhases).toHaveBeenCalledWith(ORG);
 
-    expect(res.body.data.overallStatus).toBe('mixed_truth');
+    expect(res.body.data.overallStatus).toBe('partially_coherent');
     expect(res.body.data.surfaceMode).toBe('home_v2_aggregated_with_outputs_bridge');
     expect(res.body.data.contracts.homeViewUsesAggregatedContract).toBe(true);
     expect(res.body.data.counts).toEqual({
       backed_by_real_service: 2,
-      partial_stitched: 2,
-      placeholder_non_canonical: 4,
+      partial_stitched: 6,
+      placeholder_non_canonical: 0,
     });
     expect(res.body.data.homeBlocks).toHaveLength(8);
     expect(res.body.data.inboxMaterialization.status).toBe('not_proven_yet');

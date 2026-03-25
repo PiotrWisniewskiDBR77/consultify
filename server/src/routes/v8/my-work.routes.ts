@@ -57,21 +57,24 @@ const DERIVED_HOME_BLOCKS: DerivedHomeBlockTruth[] = [
   },
   {
     blockName: 'momentum',
-    maturityLevel: 'placeholder_non_canonical',
-    serviceRef: '/api/my-work/home/v2',
-    rationale: 'Declared in Home V2, but the current Home surface does not render this canonical block contract.',
+    maturityLevel: 'partial_stitched',
+    serviceRef: 'GET /api/my-work/home/v2 · tasks, decisions, ideas',
+    rationale:
+      'Momentum narrative and stats are stitched in the home/v2 handler from live tasks, decisions, and ideas queries — canonical on the aggregated Home V2 surface, thinner than a dedicated Radar-class domain service.',
   },
   {
     blockName: 'sparkField',
-    maturityLevel: 'placeholder_non_canonical',
-    serviceRef: '/api/my-work/home/v2',
-    rationale: 'Ideas and notes exist in runtime, but the current Home surface does not expose the block as a canonical roof contract.',
+    maturityLevel: 'partial_stitched',
+    serviceRef: 'GET /api/my-work/home/v2 · ideas, notebook_pages, org ideas',
+    rationale:
+      'Spark Field payloads are assembled from home/v2 reads of user ideas, notebook pages, and org-wide ideas; real aggregated contract, not a standalone spark microservice.',
   },
   {
     blockName: 'decisionTemperature',
-    maturityLevel: 'placeholder_non_canonical',
-    serviceRef: '/api/my-work/home/v2',
-    rationale: 'Decision signals are aggregated in Home V2, but not surfaced as a live canonical block in the current roof.',
+    maturityLevel: 'partial_stitched',
+    serviceRef: 'GET /api/my-work/home/v2 · decisions, overdue tasks',
+    rationale:
+      'Heat and pending-decision framing come from live decisions rows plus overdue-task pressure in home/v2; deeper execution-signal closure remains a separate WP-W7 gap.',
   },
   {
     blockName: 'industryLens',
@@ -87,9 +90,10 @@ const DERIVED_HOME_BLOCKS: DerivedHomeBlockTruth[] = [
   },
   {
     blockName: 'teamSignal',
-    maturityLevel: 'placeholder_non_canonical',
-    serviceRef: '/api/my-work/home/v2',
-    rationale: 'The block is specified canonically, but the current Home surface does not present a dedicated team-signal truth layer.',
+    maturityLevel: 'partial_stitched',
+    serviceRef: 'GET /api/my-work/home/v2 · organizationContextService, organization_events',
+    rationale:
+      'Team alignment copy stitches organizationContext priorities, decision backlog, peer tips from organization_events, and narrative scaffolding in home/v2; multiplayer/collaboration event wiring called out in WP-W7 remains thin.',
   },
   {
     blockName: 'commandDock',

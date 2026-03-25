@@ -125,17 +125,21 @@ describe('HomeView aggregated contract', () => {
 
     useV8MyWorkRoofSummaryMock.mockReturnValue({
       data: {
-        overallStatus: 'mixed_truth',
+        overallStatus: 'partially_coherent',
         surfaceMode: 'home_v2_aggregated_with_outputs_bridge',
         counts: {
           backed_by_real_service: 2,
-          partial_stitched: 2,
-          placeholder_non_canonical: 4,
+          partial_stitched: 6,
+          placeholder_non_canonical: 0,
         },
         homeBlocks: [
           { blockName: 'aiPulseCore', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'momentum', maturityLevel: 'partial_stitched' },
+          { blockName: 'sparkField', maturityLevel: 'partial_stitched' },
+          { blockName: 'decisionTemperature', maturityLevel: 'partial_stitched' },
           { blockName: 'industryLens', maturityLevel: 'backed_by_real_service' },
           { blockName: 'executionCurrent', maturityLevel: 'partial_stitched' },
+          { blockName: 'teamSignal', maturityLevel: 'partial_stitched' },
           { blockName: 'commandDock', maturityLevel: 'partial_stitched' },
         ],
       },
@@ -154,10 +158,10 @@ describe('HomeView aggregated contract', () => {
     expect(screen.getAllByText('Industry Lens').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Execution Current').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Command Dock').length).toBeGreaterThan(0);
-    expect(screen.getByText('Momentum')).toBeInTheDocument();
-    expect(screen.getByText('Spark Field')).toBeInTheDocument();
-    expect(screen.getByText('Decision Temperature')).toBeInTheDocument();
-    expect(screen.getByText('Team Signal')).toBeInTheDocument();
+    expect(screen.getAllByText('Momentum').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Spark Field').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Decision Temperature').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Team Signal').length).toBeGreaterThan(0);
   });
 
   it('passes home actions through to the My Work hub contract', () => {
