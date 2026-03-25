@@ -49,6 +49,8 @@ vi.mock('../../../utils/Logger.js', () => ({
 import {
   createPreset,
   getPreset,
+  listPresetsByOrganization,
+  listBundlesByOrganization,
   createReleaseBundle,
   activateBundle,
   rollbackBundle,
@@ -247,6 +249,36 @@ describe('getPreset', () => {
     mockDbGet.mockResolvedValueOnce(null);
     const result = await getPreset(PRESET_ID, OTHER_ORG_ID);
     expect(result).toBeNull();
+  });
+});
+
+describe('listPresetsByOrganization', () => {
+  it('lists presets scoped to organization', async () => {
+    mockDbAll.mockResolvedValueOnce([makeFakePresetRow()]);
+    const rows = await listPresetsByOrganization(ORG_ID);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.presetId).toBe(PRESET_ID);
+    expect(mockDbAll.mock.calls[0][0] as string).toContain('v8_prompt_presets');
+    expect(mockDbAll.mock.calls[0][1]).toEqual([ORG_ID]);
+  });
+});
+
+describe('listBundlesByOrganization', () => {
+  it('lists bundles scoped to organization with limit', async () => {
+    mockDbAll.mockResolvedValueOnce([makeFakeBundleRow()]);
+    const rows = await listBundlesByOrganization(ORG_ID, 50);
+    expect(rows).toHaveLength(1);
+    expect(mockDbAll.mock.calls[0][0] as string).toContain('v8_release_bundles');
+    expect(mockDbAll.mock.calls[0][1]).toEqual([ORG_ID, 50]);
+  });
+
+  it('clamps limit to safe bounds', async () => {
+    mockDbAll.mockResolvedValueOnce([]);
+    await listBundlesByOrganization(ORG_ID, 99999);
+    expect(mockDbAll.mock.calls[0][1]).toEqual([ORG_ID, 500]);
+    mockDbAll.mockResolvedValueOnce([]);
+    await listBundlesByOrganization(ORG_ID, 0);
+    expect(mockDbAll.mock.calls[1][1]).toEqual([ORG_ID, 1]);
   });
 });
 

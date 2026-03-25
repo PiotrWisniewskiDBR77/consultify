@@ -268,6 +268,20 @@ export async function getPreset(
   return rowToPreset(row);
 }
 
+/**
+ * List presets for an organization (newest first).
+ */
+export async function listPresetsByOrganization(orgId: string): Promise<PromptPreset[]> {
+  const rows = await dbAll<PresetRow>(
+    `SELECT * FROM v8_prompt_presets
+     WHERE organization_id = ?
+     ORDER BY created_at DESC`,
+    [orgId],
+    { fallback: true },
+  );
+  return (rows || []).map(rowToPreset);
+}
+
 // ==========================================
 // PUBLIC API — RELEASE BUNDLES
 // ==========================================
@@ -337,6 +351,25 @@ export async function getBundle(bundleId: string): Promise<ReleaseBundle | null>
 
   if (!row) return null;
   return rowToBundle(row);
+}
+
+/**
+ * List release bundles for an organization (newest first), capped for safety.
+ */
+export async function listBundlesByOrganization(
+  orgId: string,
+  limit: number = 100,
+): Promise<ReleaseBundle[]> {
+  const safeLimit = Math.min(Math.max(1, limit), 500);
+  const rows = await dbAll<BundleRow>(
+    `SELECT * FROM v8_release_bundles
+     WHERE organization_id = ?
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [orgId, safeLimit],
+    { fallback: true },
+  );
+  return (rows || []).map(rowToBundle);
 }
 
 /**

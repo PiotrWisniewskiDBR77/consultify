@@ -350,6 +350,14 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
     });
   });
 
+  describe('Prompt OS endpoints', () => {
+    it('GET /api/v8/prompt-os/runtime/summary → 200', async () => {
+      const res = await request(app).get('/api/v8/prompt-os/runtime/summary');
+      expect(res.status).toBe(200);
+      expect(res.body.data?.contract).toBe('prompt-os-runtime-v8');
+    });
+  });
+
   describe('Endpoint inventory', () => {
     it('should cover all known V8 HTTP routes', () => {
       const knownEndpoints = [
@@ -377,8 +385,21 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
         'GET /ai-core/trust/provenance',
         'GET /ai-core/tools',
         'GET /ai-core/tools/:toolId/policy',
+        'GET /prompt-os/runtime/summary',
+        'GET /prompt-os/presets',
+        'GET /prompt-os/presets/:presetId',
+        'POST /prompt-os/presets',
+        'GET /prompt-os/bundles',
+        'GET /prompt-os/bundles/:bundleId',
+        'POST /prompt-os/bundles',
+        'POST /prompt-os/bundles/:bundleId/activate',
+        'POST /prompt-os/bundles/:bundleId/rollback',
+        'GET /prompt-os/bundles/:bundleId/eval-gates',
+        'POST /prompt-os/bundles/:bundleId/eval-gates',
+        'GET /prompt-os/bundles/:bundleId/canary',
+        'POST /prompt-os/bundles/:bundleId/canary',
       ];
-      expect(knownEndpoints).toHaveLength(24);
+      expect(knownEndpoints).toHaveLength(37);
     });
   });
 });

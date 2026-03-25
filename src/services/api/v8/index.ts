@@ -9,3 +9,5 @@ export { V8AICoreApi } from './ai-core';
 export { V8AdminApi } from './admin';
 export { V8RetrievalApi } from './retrieval';
 export { V8MyWorkApi } from './my-work';
+export { V8PromptOsApi, V8_PROMPT_OS_RUNTIME_SUMMARY_PATH } from './prompt-os';
+export type { V8PromptOsRuntimeSummary } from './prompt-os';

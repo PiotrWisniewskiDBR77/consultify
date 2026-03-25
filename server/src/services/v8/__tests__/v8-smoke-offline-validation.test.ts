@@ -85,11 +85,18 @@ vi.mock('../../../middleware/auth.middleware.js', () => {
   return { verifyToken, requireSuperAdmin, default: verifyToken };
 });
 
+const mockDbAllOffline = vi.fn().mockResolvedValue([]);
+const mockDbGetOffline = vi.fn().mockResolvedValue(null);
+const mockDbRunOffline = vi.fn().mockResolvedValue({ changes: 0 });
+
 vi.mock('../../../utils/DbPromise.js', () => ({
+  all: (...args: unknown[]) => mockDbAllOffline(...args),
+  get: (...args: unknown[]) => mockDbGetOffline(...args),
+  run: (...args: unknown[]) => mockDbRunOffline(...args),
   default: {
-    all: vi.fn().mockResolvedValue([]),
-    get: vi.fn().mockResolvedValue(null),
-    run: vi.fn().mockResolvedValue({ changes: 0 }),
+    all: (...args: unknown[]) => mockDbAllOffline(...args),
+    get: (...args: unknown[]) => mockDbGetOffline(...args),
+    run: (...args: unknown[]) => mockDbRunOffline(...args),
   },
 }));
 
@@ -130,6 +137,7 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     { name: 'Chat snapshots (with conversationId)', method: 'get', path: '/api/v8/chat/snapshots?conversationId=test-conv', expectedStatus: 200 },
     { name: 'Chat handoffs (no params)', method: 'get', path: '/api/v8/chat/handoffs', expectedStatus: 400 },
     { name: 'Chat handoffs (with conversationId)', method: 'get', path: '/api/v8/chat/handoffs?conversationId=test-conv', expectedStatus: 200 },
+    { name: 'Prompt OS runtime summary', method: 'get', path: '/api/v8/prompt-os/runtime/summary', expectedStatus: 200 },
   ];
 
   for (const test of smokeTests) {
