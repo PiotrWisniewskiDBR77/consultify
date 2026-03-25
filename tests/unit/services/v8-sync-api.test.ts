@@ -65,6 +65,30 @@ describe('V8SyncApi', () => {
     expect(data.integrations[0].connectorId).toBe('jira');
   });
 
+  it('posts connector auth state mutation to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      record: {
+        recordId: 'record-1',
+        connectorId: 'jira',
+        organizationId: 'org-1',
+        authState: 'healthy',
+        previousState: null,
+        transitionedAt: '2026-03-25T13:00:00.000Z',
+        transitionedBy: 'user-1',
+        reason: null,
+      },
+    });
+
+    const data = await V8SyncApi.setConnectorAuthState('jira', 'healthy');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/connectors/jira/auth-state', {
+      targetState: 'healthy',
+      reason: null,
+    });
+    expect(data.record.authState).toBe('healthy');
+    expect(data.record.connectorId).toBe('jira');
+  });
+
   it('posts conflict resolution to the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       conflict: {

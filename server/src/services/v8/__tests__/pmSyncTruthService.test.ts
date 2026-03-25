@@ -308,6 +308,21 @@ describe('setConnectorAuthState', () => {
       }),
     ).rejects.toThrow(ZodError);
   });
+
+  it('accepts non-uuid organization ids used by staging tenants', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+
+    const result = await setConnectorAuthState({
+      connectorId: 'jira',
+      organizationId: 'dbr77',
+      targetState: 'healthy',
+      transitionedBy: USER_ID,
+    });
+
+    expect(result.organizationId).toBe('dbr77');
+    expect(result.authState).toBe('healthy');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
 });
 
 describe('getConnectorAuthState', () => {

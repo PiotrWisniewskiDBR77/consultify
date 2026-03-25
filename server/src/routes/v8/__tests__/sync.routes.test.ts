@@ -7,6 +7,7 @@ import { V8_SYNC_RUNTIME_MUTATION_CONTRACT, V8_SYNC_RUNTIME_READ_CONTRACT } from
 const mockGetCredentialHealth = vi.fn();
 const mockGetActiveEscalations = vi.fn();
 const mockGetConnectorHealth = vi.fn();
+const mockSetConnectorAuthState = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
 const mockListGovernedIntegrations = vi.fn();
 const mockResolveConflict = vi.fn();
@@ -18,6 +19,7 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
 
 vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
   getConnectorHealth: (...args: unknown[]) => mockGetConnectorHealth(...args),
+  setConnectorAuthState: (...args: unknown[]) => mockSetConnectorAuthState(...args),
   getUnresolvedConflicts: (...args: unknown[]) => mockGetUnresolvedConflicts(...args),
   resolveConflict: (...args: unknown[]) => mockResolveConflict(...args),
 }));
@@ -117,6 +119,16 @@ describe('V8 sync read-only routes', () => {
       conflictCount: 0,
       lastSyncAt: '2025-01-01T00:00:00.000Z',
       authState: 'healthy',
+    });
+    mockSetConnectorAuthState.mockResolvedValue({
+      recordId: 'record-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      authState: 'healthy',
+      previousState: null,
+      transitionedAt: '2025-01-03T00:00:00.000Z',
+      transitionedBy: UID,
+      reason: null,
     });
     mockGetUnresolvedConflicts.mockResolvedValue([]);
     mockListGovernedIntegrations.mockResolvedValue([]);
@@ -223,6 +235,35 @@ describe('V8 sync read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_PARAM');
     expect(mockGetConnectorHealth).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/sync/connectors/:id/auth-state updates governed auth state', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/sync/connectors/jira/auth-state')
+      .send({ targetState: 'healthy' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.record?.authState).toBe('healthy');
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      targetState: 'healthy',
+      transitionedBy: UID,
+      reason: null,
+    });
+  });
+
+  it('POST /api/v8/sync/connectors/:id/auth-state rejects invalid target state', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/sync/connectors/jira/auth-state')
+      .send({ targetState: 'not-real' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/sync/conflicts passes limit to service', async () => {

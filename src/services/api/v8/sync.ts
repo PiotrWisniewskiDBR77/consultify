@@ -7,6 +7,16 @@ export interface V8SyncCredentialHealthSummary {
   escalated: number;
 }
 
+export type V8SyncConnectorAuthState =
+  | 'not_connected'
+  | 'connecting'
+  | 'connected_pending_verification'
+  | 'healthy'
+  | 'degraded_reauth_needed'
+  | 'degraded_scope_limited'
+  | 'suspended'
+  | 'disconnected';
+
 export interface V8SyncAuthEscalation {
   escalationId: string;
   organizationId: string;
@@ -36,6 +46,17 @@ export interface V8SyncConnectorHealthSummary {
   conflictCount: number;
   lastSyncAt: string | null;
   authState: string;
+}
+
+export interface V8SyncConnectorAuthRecord {
+  recordId: string;
+  connectorId: string;
+  organizationId: string;
+  authState: V8SyncConnectorAuthState;
+  previousState: V8SyncConnectorAuthState | null;
+  transitionedAt: string;
+  transitionedBy: string;
+  reason: string | null;
 }
 
 export type V8SyncConflictResolutionPath =
@@ -83,6 +104,15 @@ export const V8SyncApi = {
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),
+  setConnectorAuthState: (
+    connectorId: string,
+    targetState: V8SyncConnectorAuthState,
+    reason?: string | null,
+  ) =>
+    v8Post<{ record: V8SyncConnectorAuthRecord }>(
+      `/sync/connectors/${encodeURIComponent(connectorId)}/auth-state`,
+      { targetState, reason: reason ?? null },
+    ),
   resolveConflict: (conflictId: string, resolutionPath: V8SyncConflictResolutionPath = 'dismiss') =>
     v8Post<{ conflict: V8SyncConflictRecord }>(
       `/sync/conflicts/${encodeURIComponent(conflictId)}/resolve`,

@@ -46,6 +46,7 @@ import {
 } from '@/services/api/v8/multiplayer';
 import {
   V8SyncApi,
+  type V8SyncConnectorAuthState,
   type V8SyncAuthEscalation,
   type V8SyncConnectorHealthSummary,
   type V8SyncConflictRecord,
@@ -251,6 +252,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   >({});
   const [v8ConnectorHealthLoading, setV8ConnectorHealthLoading] = useState(false);
   const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
+  const [mutatingConnectorAuthId, setMutatingConnectorAuthId] = useState<string | null>(null);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -647,6 +649,34 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       );
     } finally {
       setResolvingConflictId(null);
+    }
+  };
+
+  const handleSetV8ConnectorAuthState = async (
+    connectorId: string,
+    targetState: V8SyncConnectorAuthState,
+  ) => {
+    setMutatingConnectorAuthId(`${connectorId}:${targetState}`);
+    try {
+      await V8SyncApi.setConnectorAuthState(connectorId, targetState);
+      toast.success(
+        targetState === 'healthy'
+          ? t('integrations.syncHub.v8AuthMarkedHealthy', 'Governed auth state marked healthy')
+          : t(
+              'integrations.syncHub.v8AuthMarkedNeedsReauth',
+              'Governed auth state marked reauth needed',
+            ),
+      );
+      await Promise.all([fetchV8ConnectorHealth(), fetchV8AuthHealth(), fetchV8AuthEscalations()]);
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.v8AuthStateUpdateFailed',
+          'Failed to update governed auth state',
+        ),
+      );
+    } finally {
+      setMutatingConnectorAuthId(null);
     }
   };
 
@@ -1142,6 +1172,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <div className="space-y-2">
             {v8ConnectorHealthTargets.map((target) => {
               const health = v8ConnectorHealth[target.connectorId];
+              const showMarkHealthy =
+                !health ||
+                ['unknown', 'connecting', 'connected_pending_verification', 'degraded_reauth_needed', 'degraded_scope_limited', 'suspended'].includes(
+                  health.authState,
+                );
+              const showMarkReauthNeeded =
+                health && ['healthy', 'connected_pending_verification'].includes(health.authState);
               const tone = !health
                 ? 'border-navy-700/40 bg-navy-900/30'
                 : health.healthy
@@ -1181,39 +1218,98 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     </span>
                   </div>
                   {health ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
-                      <div>
-                        <div className="text-slate-500">
-                          {t('integrations.syncHub.v8AuthState', 'Auth state')}
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
+                        <div>
+                          <div className="text-slate-500">
+                            {t('integrations.syncHub.v8AuthState', 'Auth state')}
+                          </div>
+                          <div className="text-slate-300 mt-1">{health.authState}</div>
                         </div>
-                        <div className="text-slate-300 mt-1">{health.authState}</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-500">
-                          {t('integrations.syncHub.v8SyncStatus', 'Sync status')}
+                        <div>
+                          <div className="text-slate-500">
+                            {t('integrations.syncHub.v8SyncStatus', 'Sync status')}
+                          </div>
+                          <div className="text-slate-300 mt-1">{health.syncStatus}</div>
                         </div>
-                        <div className="text-slate-300 mt-1">{health.syncStatus}</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-500">
-                          {t('integrations.syncHub.v8OpenConflicts', 'Open conflicts')}
+                        <div>
+                          <div className="text-slate-500">
+                            {t('integrations.syncHub.v8OpenConflicts', 'Open conflicts')}
+                          </div>
+                          <div className="text-slate-300 mt-1">{health.conflictCount}</div>
                         </div>
-                        <div className="text-slate-300 mt-1">{health.conflictCount}</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-500">
-                          {t('integrations.syncHub.v8LastGovernedSync', 'Last governed sync')}
+                        <div>
+                          <div className="text-slate-500">
+                            {t('integrations.syncHub.v8LastGovernedSync', 'Last governed sync')}
+                          </div>
+                          <div className="text-slate-300 mt-1">{timeAgo(health.lastSyncAt)}</div>
                         </div>
-                        <div className="text-slate-300 mt-1">{timeAgo(health.lastSyncAt)}</div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-slate-500 mt-3">
-                      {t(
-                        'integrations.syncHub.v8ConnectorHealthUnavailable',
-                        'Governed connector health is not available for this connector yet.',
+                      {(showMarkHealthy || showMarkReauthNeeded) && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {showMarkHealthy && (
+                            <button
+                              type="button"
+                              onClick={() => void handleSetV8ConnectorAuthState(target.connectorId, 'healthy')}
+                              disabled={mutatingConnectorAuthId === `${target.connectorId}:healthy`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+                            >
+                              {mutatingConnectorAuthId === `${target.connectorId}:healthy` ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={12} />
+                              )}
+                              {t('integrations.syncHub.v8MarkHealthy', 'Mark healthy')}
+                            </button>
+                          )}
+                          {showMarkReauthNeeded && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleSetV8ConnectorAuthState(target.connectorId, 'degraded_reauth_needed')
+                              }
+                              disabled={
+                                mutatingConnectorAuthId === `${target.connectorId}:degraded_reauth_needed`
+                              }
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 text-[11px] font-medium text-amber-300 hover:bg-amber-500/15 disabled:opacity-60 transition-colors"
+                            >
+                              {mutatingConnectorAuthId === `${target.connectorId}:degraded_reauth_needed` ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <ShieldAlert size={12} />
+                              )}
+                              {t('integrations.syncHub.v8MarkNeedsReauth', 'Mark reauth needed')}
+                            </button>
+                          )}
+                        </div>
                       )}
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs text-slate-500 mt-3">
+                        {t(
+                          'integrations.syncHub.v8ConnectorHealthUnavailable',
+                          'Governed connector health is not available for this connector yet.',
+                        )}
+                      </div>
+                      {showMarkHealthy && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <button
+                            type="button"
+                            onClick={() => void handleSetV8ConnectorAuthState(target.connectorId, 'healthy')}
+                            disabled={mutatingConnectorAuthId === `${target.connectorId}:healthy`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+                          >
+                            {mutatingConnectorAuthId === `${target.connectorId}:healthy` ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={12} />
+                            )}
+                            {t('integrations.syncHub.v8MarkHealthy', 'Mark healthy')}
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               );

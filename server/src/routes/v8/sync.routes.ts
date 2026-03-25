@@ -15,10 +15,11 @@ import {
 } from '../../services/v8/pmSyncAuthService.js';
 import {
   getConnectorHealth,
+  setConnectorAuthState,
   getUnresolvedConflicts,
   resolveConflict,
 } from '../../services/v8/pmSyncTruthService.js';
-import { ConflictResolutionPathValues } from '../../types/pmSyncTruth.js';
+import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -52,6 +53,11 @@ function parseConflictLimit(raw: unknown): number | undefined {
 
 const ResolveConflictBodySchema = z.object({
   resolutionPath: z.enum(ConflictResolutionPathValues).default('dismiss'),
+});
+
+const SetConnectorAuthStateBodySchema = z.object({
+  targetState: z.enum(ConnectorAuthStateValues),
+  reason: z.string().trim().nullable().optional(),
 });
 
 router.get(
@@ -106,6 +112,62 @@ router.get(
       data: { connectorId, health },
       meta: syncReadMeta(),
     });
+  }),
+);
+
+router.post(
+  '/connectors/:connectorId/auth-state',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const connectorId = typeof req.params.connectorId === 'string' ? req.params.connectorId.trim() : '';
+    const transitionedBy =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!connectorId) {
+      return res.status(400).json({
+        error: 'connectorId is required',
+        code: 'INVALID_PARAM',
+      });
+    }
+
+    if (!transitionedBy) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    const parsed = SetConnectorAuthStateBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: parsed.error.issues[0]?.message ?? 'Invalid auth state payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    try {
+      const record = await setConnectorAuthState({
+        connectorId,
+        organizationId,
+        targetState: parsed.data.targetState,
+        transitionedBy,
+        reason: parsed.data.reason ?? null,
+      });
+      return res.json({
+        data: { record },
+        meta: syncMutationMeta(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update auth state';
+      if (message.includes('Invalid auth state transition')) {
+        return res.status(409).json({ error: message, code: 'INVALID_AUTH_TRANSITION' });
+      }
+      throw error;
+    }
   }),
 );
 

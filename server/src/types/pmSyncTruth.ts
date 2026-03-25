@@ -236,7 +236,7 @@ export interface SetConnectorAuthStateParams {
 
 export const SetConnectorAuthStateParamsSchema = z.object({
   connectorId: z.string().min(1),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().trim().min(1),
   targetState: z.enum(ConnectorAuthStateValues),
   transitionedBy: z.string().min(1),
   reason: z.string().nullable().optional(),
