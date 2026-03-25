@@ -16,7 +16,9 @@ export {
   V8_KB_CONTEXT_PATH,
   V8_KB_SEARCH_PATH,
 } from './kb';
+export { V8ExecutionControlApi } from './execution-control';
 export { V8InterviewApi } from './interview';
 export type { V8PromptOsRuntimeSummary } from './prompt-os';
 export type { V8KbArticle, V8KbArticleListItem } from './kb';
+export type { V8ExecutionDelaySignal, V8ExecutionRiskSignal } from './execution-control';
 export type { V8InterviewSession } from './interview';

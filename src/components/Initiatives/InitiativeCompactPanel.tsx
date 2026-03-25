@@ -26,6 +26,7 @@ import {
   ExternalLink,
   FileText,
   Flag,
+  FolderOpen,
   Loader2,
   Maximize2,
   MessageSquare,

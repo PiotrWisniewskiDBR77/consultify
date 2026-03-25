@@ -61,6 +61,7 @@ import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayo
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
+import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import {
   getStatusActions,
@@ -808,34 +809,42 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     const loadRiskSignals = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const params = new URLSearchParams();
-        if (currentProjectId) params.set('projectId', currentProjectId);
-        const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setRiskSignals(data.signals || []);
-        }
+        const data = await V8ExecutionControlApi.getRiskSignals(currentProjectId).catch(() =>
+          (async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return { signals: [] };
+            const params = new URLSearchParams();
+            if (currentProjectId) params.set('projectId', currentProjectId);
+            const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) return { signals: [] };
+            return res.json();
+          })()
+        );
+        setRiskSignals(data.signals || []);
       } catch {
         // risk signals are non-blocking
       }
     };
     const loadDelaySignals = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const params = new URLSearchParams();
-        if (currentProjectId) params.set('projectId', currentProjectId);
-        const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setDelaySignals(data.signals || []);
-        }
+        const data = await V8ExecutionControlApi.getDelaySignals(
+          currentProjectId ? { projectId: currentProjectId } : undefined
+        ).catch(() =>
+          (async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return { signals: [] };
+            const params = new URLSearchParams();
+            if (currentProjectId) params.set('projectId', currentProjectId);
+            const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) return { signals: [] };
+            return res.json();
+          })()
+        );
+        setDelaySignals(data.signals || []);
       } catch {
         // delay signals are non-blocking
       }
