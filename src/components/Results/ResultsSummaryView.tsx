@@ -16,18 +16,18 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  type ActionRow,
+  type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
-  type ActionRow,
-  type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import type { RowAction } from '@/components/shared/RowActionsMenu';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
+import { V8ResultsApi, type V8ResultsDashboardSnapshot } from '@/services/api/v8/results';
 import { useConversationStore } from '@/store/useConversationStore';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -74,6 +74,13 @@ export interface ResultsSummaryViewProps {
   onFilterChange: (filters: FilterChip[]) => void;
 }
 
+interface SnapshotStatCardProps {
+  label: string;
+  value: string;
+  helper: string;
+  icon: React.ReactNode;
+}
+
 interface SummaryInitiativeItem extends PreviewableItem {
   title: string;
   status: string;
@@ -88,11 +95,76 @@ interface SummaryInitiativeItem extends PreviewableItem {
 }
 
 const DEMO_SUMMARY_ITEMS: SummaryInitiativeItem[] = [
-  { id: 'demo-si1', title: 'Digital Transformation Program', status: 'DONE', priority: 'HIGH', ownerName: 'Anna Kowalska', updatedAt: '2026-03-10T14:00:00Z', description: 'End-to-end digitization of core business processes including CRM, ERP integration, and customer portal launch.', kpiCount: 3, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: true },
-  { id: 'demo-si2', title: 'Cloud Migration – Phase 1', status: 'DONE', priority: 'HIGH', ownerName: 'Piotr Zieliński', updatedAt: '2026-02-28T10:00:00Z', description: 'Migration of 12 production workloads to AWS including database, compute, and storage tiers.', kpiCount: 2, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: false },
-  { id: 'demo-si3', title: 'RPA Implementation – Finance', status: 'DONE', priority: 'MEDIUM', ownerName: 'Marek Nowak', updatedAt: '2026-03-05T09:00:00Z', description: 'Automated 8 key finance processes including invoice processing, reconciliation, and reporting.', kpiCount: 1, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: true },
-  { id: 'demo-si4', title: 'Customer Experience Redesign', status: 'DONE', priority: 'HIGH', ownerName: 'Katarzyna Wiśniewska', updatedAt: '2026-01-20T16:00:00Z', description: 'Complete UX overhaul of customer-facing applications with NPS improvement target of +15 points.', kpiCount: 2, hasKpiMonitoring: true, hasRoiPlan: false, hasRoiRealized: false },
-  { id: 'demo-si5', title: 'Data Governance Framework', status: 'DONE', priority: 'MEDIUM', ownerName: 'Tomasz Lewandowski', updatedAt: '2026-02-15T11:00:00Z', description: 'Established data quality standards, ownership model, and automated monitoring for critical data assets.', kpiCount: 1, hasKpiMonitoring: true, hasRoiPlan: false, hasRoiRealized: false },
+  {
+    id: 'demo-si1',
+    title: 'Digital Transformation Program',
+    status: 'DONE',
+    priority: 'HIGH',
+    ownerName: 'Anna Kowalska',
+    updatedAt: '2026-03-10T14:00:00Z',
+    description:
+      'End-to-end digitization of core business processes including CRM, ERP integration, and customer portal launch.',
+    kpiCount: 3,
+    hasKpiMonitoring: true,
+    hasRoiPlan: true,
+    hasRoiRealized: true,
+  },
+  {
+    id: 'demo-si2',
+    title: 'Cloud Migration – Phase 1',
+    status: 'DONE',
+    priority: 'HIGH',
+    ownerName: 'Piotr Zieliński',
+    updatedAt: '2026-02-28T10:00:00Z',
+    description:
+      'Migration of 12 production workloads to AWS including database, compute, and storage tiers.',
+    kpiCount: 2,
+    hasKpiMonitoring: true,
+    hasRoiPlan: true,
+    hasRoiRealized: false,
+  },
+  {
+    id: 'demo-si3',
+    title: 'RPA Implementation – Finance',
+    status: 'DONE',
+    priority: 'MEDIUM',
+    ownerName: 'Marek Nowak',
+    updatedAt: '2026-03-05T09:00:00Z',
+    description:
+      'Automated 8 key finance processes including invoice processing, reconciliation, and reporting.',
+    kpiCount: 1,
+    hasKpiMonitoring: true,
+    hasRoiPlan: true,
+    hasRoiRealized: true,
+  },
+  {
+    id: 'demo-si4',
+    title: 'Customer Experience Redesign',
+    status: 'DONE',
+    priority: 'HIGH',
+    ownerName: 'Katarzyna Wiśniewska',
+    updatedAt: '2026-01-20T16:00:00Z',
+    description:
+      'Complete UX overhaul of customer-facing applications with NPS improvement target of +15 points.',
+    kpiCount: 2,
+    hasKpiMonitoring: true,
+    hasRoiPlan: false,
+    hasRoiRealized: false,
+  },
+  {
+    id: 'demo-si5',
+    title: 'Data Governance Framework',
+    status: 'DONE',
+    priority: 'MEDIUM',
+    ownerName: 'Tomasz Lewandowski',
+    updatedAt: '2026-02-15T11:00:00Z',
+    description:
+      'Established data quality standards, ownership model, and automated monitoring for critical data assets.',
+    kpiCount: 1,
+    hasKpiMonitoring: true,
+    hasRoiPlan: false,
+    hasRoiRealized: false,
+  },
 ];
 
 const formatDate = (value: unknown): string => {
@@ -101,6 +173,21 @@ const formatDate = (value: unknown): string => {
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
+
+const SnapshotStatCard: React.FC<SnapshotStatCardProps> = ({ label, value, helper, icon }) => (
+  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {label}
+        </div>
+        <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{value}</div>
+      </div>
+      <div className="text-slate-400 dark:text-slate-300">{icon}</div>
+    </div>
+    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{helper}</div>
+  </div>
+);
 
 const MonitoringPills: React.FC<{
   hasKpi: boolean;
@@ -164,14 +251,16 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
   const [createKpiInitiativeId, setCreateKpiInitiativeId] = useState<string | null>(null);
   const [roiDrawerInitiativeId, setRoiDrawerInitiativeId] = useState<string | null>(null);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [initiativesRes, kpiRes, roiRes] = await Promise.allSettled([
+      const [initiativesRes, kpiRes, roiRes, v8SnapshotRes] = await Promise.allSettled([
         Api.getInitiativesByStatus('DONE'),
         Api.get('/benefits/kpi-mappings'),
         Api.get('/benefits/roi/portfolio/summary'),
+        V8ResultsApi.getDashboard(),
       ]);
 
       const initiativesRaw: InitiativeLike[] =
@@ -190,6 +279,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
       const roiItems: RoiSummaryItemLike[] = Array.isArray((roiData as any)?.items)
         ? (roiData as any).items
         : [];
+
+      const v8Payload = v8SnapshotRes.status === 'fulfilled' ? (v8SnapshotRes.value as any) : null;
+      setV8Snapshot(v8Payload?.snapshot ?? null);
 
       const kpiCountByInitiative = new Map<string, number>();
       for (const r of kpiRows) {
@@ -238,6 +330,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
       setItems(mapped.length > 0 ? mapped : DEMO_SUMMARY_ITEMS);
     } catch {
       setItems(DEMO_SUMMARY_ITEMS);
+      setV8Snapshot(null);
     } finally {
       setLoading(false);
     }
@@ -377,251 +470,296 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 
   return (
     <>
-      <TableWithPreviewLayout<SummaryInitiativeItem>
-        selectedId={selectedId}
-        selectedItem={selectedItem}
-        onSelect={setSelectedId}
-        onOpenFull={(id) => openInitiative(id)}
-        itemIds={itemIds}
-        getItemById={(id) => filtered.find((x) => x.id === id) ?? null}
-        renderPreview={(i) => {
-          const desc = i.description?.trim() || t('common.noDescription', 'No description');
-          const detailsText = [
-            `${t('common.status', 'Status')}: ${i.status || '—'}`,
-            `${t('common.priority', 'Priority')}: ${i.priority || '—'}`,
-            `${t('common.owner', 'Owner')}: ${i.ownerName || '—'}`,
-            '',
-            i.description?.trim() || t('common.noDescription', 'No description'),
-          ].join('\n');
-          const metaPills: MetaPill[] = [
-            {
-              label: t('results.summary.preview.type', 'Initiative'),
-              className:
-                'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
-            },
-            {
-              label: String(i.status || '—').toUpperCase(),
-              className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
-            },
-            {
-              label: `${t('common.priority', 'Priority')}: ${i.priority || '—'}`,
-              className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
-            },
-          ];
-          return (
-            <div className="space-y-4">
-              <PreviewMetaCard
-                pills={metaPills}
-                trailing={
-                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    {formatDate(i.updatedAt)}
-                  </span>
-                }
-              >
-                <div className="mt-2 space-y-1">
-                  <p className="text-slate-500 dark:text-slate-400">
-                    {t(
-                      'results.summary.preview.subtitle',
-                      'Completion summary and monitoring coverage'
-                    )}
-                  </p>
-                  <MonitoringPills
-                    hasKpi={i.hasKpiMonitoring}
-                    kpiCount={i.kpiCount}
-                    hasRoiPlan={i.hasRoiPlan}
-                    hasRoiRealized={i.hasRoiRealized}
+      <div className="space-y-4">
+        {v8Snapshot && (
+          <div className="grid grid-cols-1 gap-3 px-4 pt-4 md:grid-cols-2 xl:grid-cols-4">
+            <SnapshotStatCard
+              label={t('results.summary.snapshot.totalKpis', 'Governed KPIs')}
+              value={String(v8Snapshot.kpiScorecard.totalKpis || 0)}
+              helper={t(
+                'results.summary.snapshot.totalKpisHelper',
+                'Total KPIs tracked by the V8 results dashboard'
+              )}
+              icon={<Target size={18} />}
+            />
+            <SnapshotStatCard
+              label={t('results.summary.snapshot.activeDeviations', 'Active deviations')}
+              value={String(v8Snapshot.activeDeviationsCount || 0)}
+              helper={t(
+                'results.summary.snapshot.activeDeviationsHelper',
+                'Open deviation records requiring monitoring attention'
+              )}
+              icon={<BarChart3 size={18} />}
+            />
+            <SnapshotStatCard
+              label={t('results.summary.snapshot.realizedRoi', 'Realized ROI')}
+              value={v8Snapshot.roiDashboard.totalRealized.toLocaleString()}
+              helper={t(
+                'results.summary.snapshot.realizedRoiHelper',
+                'Aggregated realized value from governed ROI entries'
+              )}
+              icon={<DollarSign size={18} />}
+            />
+            <SnapshotStatCard
+              label={t(
+                'results.summary.snapshot.unresolvedReconciliations',
+                'Unresolved reconciliations'
+              )}
+              value={String(v8Snapshot.reconciliationHealth.unresolvedCount || 0)}
+              helper={t(
+                'results.summary.snapshot.unresolvedReconciliationsHelper',
+                'KPI-finance mismatches still waiting for reconciliation'
+              )}
+              icon={<TrendingUp size={18} />}
+            />
+          </div>
+        )}
+
+        <TableWithPreviewLayout<SummaryInitiativeItem>
+          selectedId={selectedId}
+          selectedItem={selectedItem}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => openInitiative(id)}
+          itemIds={itemIds}
+          getItemById={(id) => filtered.find((x) => x.id === id) ?? null}
+          renderPreview={(i) => {
+            const detailsText = [
+              `${t('common.status', 'Status')}: ${i.status || '—'}`,
+              `${t('common.priority', 'Priority')}: ${i.priority || '—'}`,
+              `${t('common.owner', 'Owner')}: ${i.ownerName || '—'}`,
+              '',
+              i.description?.trim() || t('common.noDescription', 'No description'),
+            ].join('\n');
+            const metaPills: MetaPill[] = [
+              {
+                label: t('results.summary.preview.type', 'Initiative'),
+                className:
+                  'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
+              },
+              {
+                label: String(i.status || '—').toUpperCase(),
+                className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+              },
+              {
+                label: `${t('common.priority', 'Priority')}: ${i.priority || '—'}`,
+                className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+              },
+            ];
+            return (
+              <div className="space-y-4">
+                <PreviewMetaCard
+                  pills={metaPills}
+                  trailing={
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      {formatDate(i.updatedAt)}
+                    </span>
+                  }
+                >
+                  <div className="mt-2 space-y-1">
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {t(
+                        'results.summary.preview.subtitle',
+                        'Completion summary and monitoring coverage'
+                      )}
+                    </p>
+                    <MonitoringPills
+                      hasKpi={i.hasKpiMonitoring}
+                      kpiCount={i.kpiCount}
+                      hasRoiPlan={i.hasRoiPlan}
+                      hasRoiRealized={i.hasRoiRealized}
+                    />
+                  </div>
+                </PreviewMetaCard>
+
+                <PreviewDetailsSection
+                  text={detailsText}
+                  expanded={detailsExpanded}
+                  onToggleExpanded={() => setDetailsExpanded((v) => !v)}
+                  customActions={[
+                    {
+                      id: 'toggle',
+                      label: detailsExpanded
+                        ? t('common.collapse', 'Collapse')
+                        : t('common.expand', 'Expand'),
+                      onClick: () => setDetailsExpanded((v) => !v),
+                    },
+                    {
+                      id: 'summarize',
+                      label: t('common.summarize', 'Summarize'),
+                      icon: Sparkles,
+                      onClick: () =>
+                        void openAiChat(
+                          i,
+                          t(
+                            'results.summary.ai.summarizePrompt',
+                            'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                          )
+                        ),
+                    },
+                    {
+                      id: 'copy',
+                      label: t('common.copy', 'Copy'),
+                      icon: Copy,
+                      onClick: async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            [i.title, '', i.description || ''].filter(Boolean).join('\n')
+                          );
+                          toast.success(t('common.copied', 'Copied'));
+                        } catch {
+                          toast.error(t('common.copyFailed', 'Copy failed'));
+                        }
+                      },
+                    },
+                  ]}
+                />
+              </div>
+            );
+          }}
+          renderPreviewFooter={(i) => {
+            const aiHints = [
+              {
+                label: t('common.summarize', 'Summarize'),
+                prompt: t(
+                  'results.summary.ai.summarizePrompt',
+                  'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                ),
+              },
+              {
+                label: t('common.risks', 'Risks'),
+                prompt: t(
+                  'results.summary.ai.risksPrompt',
+                  'List 5 risks for this initiative (delivery + benefit realization) and propose mitigations.'
+                ),
+              },
+              {
+                label: t('common.nextSteps', 'Next steps'),
+                prompt: t(
+                  'results.summary.ai.nextStepsPrompt',
+                  'Propose 3 next steps to improve KPI/ROI monitoring for this initiative.'
+                ),
+              },
+            ];
+            const kpiTone = i.hasKpiMonitoring
+              ? 'text-emerald-700 dark:text-emerald-300'
+              : 'text-slate-500 dark:text-slate-400';
+            const roiPlanTone = i.hasRoiPlan
+              ? 'text-emerald-700 dark:text-emerald-300'
+              : 'text-slate-500 dark:text-slate-400';
+            const roiActualTone = i.hasRoiRealized
+              ? 'text-emerald-700 dark:text-emerald-300'
+              : 'text-slate-500 dark:text-slate-400';
+            const relationItems: RelationItem[] = [
+              {
+                label: `KPI: ${i.hasKpiMonitoring ? i.kpiCount : '—'}`,
+                tone: kpiTone,
+              },
+              {
+                label: `ROI plan: ${i.hasRoiPlan ? '✓' : '—'}`,
+                tone: roiPlanTone,
+              },
+              {
+                label: `ROI actual: ${i.hasRoiRealized ? '✓' : '—'}`,
+                tone: roiActualTone,
+              },
+            ];
+            const actionRows: ActionRow[] = [
+              {
+                buttons: [
+                  {
+                    label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    onClick: () => openInitiative(i.id),
+                    colorScheme: 'primary',
+                    shortcut: 'O',
+                  },
+                  {
+                    label: t('results.summary.actions.connectKpi', 'Connect KPI'),
+                    icon: Target,
+                    onClick: () => {
+                      setCreateKpiInitiativeId(i.id);
+                      setShowCreateKpi(true);
+                    },
+                    colorScheme: 'neutral',
+                    shortcut: 'K',
+                  },
+                  {
+                    label: t('results.summary.actions.connectRoi', 'Connect ROI'),
+                    icon: DollarSign,
+                    onClick: () => setRoiDrawerInitiativeId(i.id),
+                    colorScheme: 'neutral',
+                  },
+                  {
+                    label: t('results.summary.actions.economics', 'Finanse'),
+                    icon: TrendingUp,
+                    onClick: () => navigate('/economics?tab=valuation'),
+                    colorScheme: 'neutral',
+                  },
+                ],
+              },
+            ];
+            return (
+              <div className="space-y-0">
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+                  <PreviewAIHintStrip
+                    hints={aiHints.map((h) => h.label)}
+                    onRunHint={(hint) => {
+                      const match = aiHints.find((h) => h.label === hint);
+                      if (match) void openAiChat(i, match.prompt);
+                    }}
                   />
                 </div>
-              </PreviewMetaCard>
-
-              <PreviewDetailsSection
-                text={detailsText}
-                expanded={detailsExpanded}
-                onToggleExpanded={() => setDetailsExpanded((v) => !v)}
-                customActions={[
-                  {
-                    id: 'toggle',
-                    label: detailsExpanded
-                      ? t('common.collapse', 'Collapse')
-                      : t('common.expand', 'Expand'),
-                    onClick: () => setDetailsExpanded((v) => !v),
-                  },
-                  {
-                    id: 'summarize',
-                    label: t('common.summarize', 'Summarize'),
-                    icon: Sparkles,
-                    onClick: () =>
-                      void openAiChat(
-                        i,
-                        t(
-                          'results.summary.ai.summarizePrompt',
-                          'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                        )
-                      ),
-                  },
-                  {
-                    id: 'copy',
-                    label: t('common.copy', 'Copy'),
-                    icon: Copy,
-                    onClick: async () => {
-                      try {
-                        await navigator.clipboard.writeText(
-                          [i.title, '', i.description || ''].filter(Boolean).join('\n')
-                        );
-                        toast.success(t('common.copied', 'Copied'));
-                      } catch {
-                        toast.error(t('common.copyFailed', 'Copy failed'));
-                      }
-                    },
-                  },
-                ]}
-              />
-            </div>
-          );
-        }}
-        renderPreviewFooter={(i) => {
-          const aiHints = [
-            {
-              label: t('common.summarize', 'Summarize'),
-              prompt: t(
-                'results.summary.ai.summarizePrompt',
-                'Summarize this initiative in 5 bullets and propose 3 next steps.'
-              ),
-            },
-            {
-              label: t('common.risks', 'Risks'),
-              prompt: t(
-                'results.summary.ai.risksPrompt',
-                'List 5 risks for this initiative (delivery + benefit realization) and propose mitigations.'
-              ),
-            },
-            {
-              label: t('common.nextSteps', 'Next steps'),
-              prompt: t(
-                'results.summary.ai.nextStepsPrompt',
-                'Propose 3 next steps to improve KPI/ROI monitoring for this initiative.'
-              ),
-            },
-          ];
-          const kpiTone = i.hasKpiMonitoring
-            ? 'text-emerald-700 dark:text-emerald-300'
-            : 'text-slate-500 dark:text-slate-400';
-          const roiPlanTone = i.hasRoiPlan
-            ? 'text-emerald-700 dark:text-emerald-300'
-            : 'text-slate-500 dark:text-slate-400';
-          const roiActualTone = i.hasRoiRealized
-            ? 'text-emerald-700 dark:text-emerald-300'
-            : 'text-slate-500 dark:text-slate-400';
-          const relationItems: RelationItem[] = [
-            {
-              label: `KPI: ${i.hasKpiMonitoring ? i.kpiCount : '—'}`,
-              tone: kpiTone,
-            },
-            {
-              label: `ROI plan: ${i.hasRoiPlan ? '✓' : '—'}`,
-              tone: roiPlanTone,
-            },
-            {
-              label: `ROI actual: ${i.hasRoiRealized ? '✓' : '—'}`,
-              tone: roiActualTone,
-            },
-          ];
-          const actionRows: ActionRow[] = [
-            {
-              buttons: [
+                <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+                <PreviewRelations items={relationItems} />
+                <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+                <PreviewActionBar rows={actionRows} />
+              </div>
+            );
+          }}
+        >
+          <FilterableTable
+            columns={columns}
+            data={tableRows}
+            activeFilters={activeFilters}
+            onFilterChange={onFilterChange}
+            density="compact"
+            canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+            emptyMessage={t(
+              'results.summary.empty',
+              'No completed initiatives. Finish an initiative to review results monitoring.'
+            )}
+            onRowClick={(row) => setSelectedId(row.id)}
+            onRowDoubleClick={(row) => openInitiative(row.id)}
+            getRowActions={(row) => {
+              const i = row._raw as SummaryInitiativeItem;
+              return [
                 {
+                  id: 'open',
                   label: t('common.open', 'Open'),
                   icon: ExternalLink,
+                  variant: 'primary',
                   onClick: () => openInitiative(i.id),
-                  colorScheme: 'primary',
-                  shortcut: 'O',
                 },
                 {
+                  id: 'connect_kpi',
                   label: t('results.summary.actions.connectKpi', 'Connect KPI'),
                   icon: Target,
                   onClick: () => {
                     setCreateKpiInitiativeId(i.id);
                     setShowCreateKpi(true);
                   },
-                  colorScheme: 'neutral',
-                  shortcut: 'K',
                 },
                 {
+                  id: 'connect_roi',
                   label: t('results.summary.actions.connectRoi', 'Connect ROI'),
                   icon: DollarSign,
                   onClick: () => setRoiDrawerInitiativeId(i.id),
-                  colorScheme: 'neutral',
                 },
-                {
-                  label: t('results.summary.actions.economics', 'Finanse'),
-                  icon: TrendingUp,
-                  onClick: () => navigate('/economics?tab=valuation'),
-                  colorScheme: 'neutral',
-                },
-              ],
-            },
-          ];
-          return (
-            <div className="space-y-0">
-              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-                <PreviewAIHintStrip
-                  hints={aiHints.map((h) => h.label)}
-                  onRunHint={(hint) => {
-                    const match = aiHints.find((h) => h.label === hint);
-                    if (match) void openAiChat(i, match.prompt);
-                  }}
-                />
-              </div>
-              <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-              <PreviewRelations items={relationItems} />
-              <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-              <PreviewActionBar rows={actionRows} />
-            </div>
-          );
-        }}
-      >
-        <FilterableTable
-          columns={columns}
-          data={tableRows}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          density="compact"
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-          emptyMessage={t(
-            'results.summary.empty',
-            'No completed initiatives. Finish an initiative to review results monitoring.'
-          )}
-          onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => openInitiative(row.id)}
-          getRowActions={(row) => {
-            const i = row._raw as SummaryInitiativeItem;
-            return [
-              {
-                id: 'open',
-                label: t('common.open', 'Open'),
-                icon: ExternalLink,
-                variant: 'primary',
-                onClick: () => openInitiative(i.id),
-              },
-              {
-                id: 'connect_kpi',
-                label: t('results.summary.actions.connectKpi', 'Connect KPI'),
-                icon: Target,
-                onClick: () => {
-                  setCreateKpiInitiativeId(i.id);
-                  setShowCreateKpi(true);
-                },
-              },
-              {
-                id: 'connect_roi',
-                label: t('results.summary.actions.connectRoi', 'Connect ROI'),
-                icon: DollarSign,
-                onClick: () => setRoiDrawerInitiativeId(i.id),
-              },
-            ];
-          }}
-        />
-      </TableWithPreviewLayout>
+              ];
+            }}
+          />
+        </TableWithPreviewLayout>
+      </div>
 
       {showCreateKpi && (
         <KPICreateModal
