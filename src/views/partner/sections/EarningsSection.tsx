@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8PartnerApi, type V8PartnerEarningsSummary } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
 interface EarningsSummary {
@@ -82,9 +83,27 @@ interface EarningsSectionProps {
   subsection?: 'earnings' | 'payouts' | 'payout-settings';
 }
 
+const normalizeEarningsSummary = (payload: any): EarningsSummary | null => {
+  const data = payload?.data && payload?.data !== payload ? payload.data : payload;
+  if (!data) return null;
+
+  return {
+    totalEarned: data.totalEarned ?? data.totalEarnedYTD ?? 0,
+    totalPending: data.totalPending ?? data.pendingApproval ?? 0,
+    totalApproved: data.totalApproved ?? 0,
+    totalPaid: data.totalPaid ?? data.totalPaidOut ?? 0,
+    thisMonth: data.thisMonth ?? 0,
+    thisMonthCount: data.thisMonthCount ?? 0,
+    lastMonth: data.lastMonth ?? 0,
+    readyForPayout: data.readyForPayout ?? 0,
+    currency: data.currency ?? 'EUR',
+  };
+};
+
 export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = 'earnings' }) => {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<EarningsSummary | null>(null);
+  const [v8Summary, setV8Summary] = useState<V8PartnerEarningsSummary | null>(null);
   const [transactions, setTransactions] = useState<CommissionTransaction[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,25 +118,45 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     try {
       setLoading(true);
       setError(null);
+      const [summaryResponse, txResponse, payoutsResponse] = await Promise.allSettled([
+        Api.get('/api/partners/earnings'),
+        Api.get('/api/partners/commission-transactions'),
+        Api.get('/api/partners/payouts'),
+      ]);
 
-      // Fetch earnings summary
-      const summaryResponse = await Api.get('/api/partners/earnings');
-      if (summaryResponse?.success && summaryResponse?.data) {
-        setSummary(summaryResponse.data);
-        setBankInfoComplete(summaryResponse.data.bankInfoComplete !== false);
-        setNextPaymentDate(summaryResponse.data.nextPaymentDate || null);
+      if (summaryResponse.status === 'fulfilled' && summaryResponse.value?.success) {
+        const normalizedSummary = normalizeEarningsSummary(summaryResponse.value.data);
+        if (normalizedSummary) {
+          const rawSummary =
+            summaryResponse.value.data?.data &&
+            summaryResponse.value.data?.data !== summaryResponse.value.data
+              ? summaryResponse.value.data.data
+              : summaryResponse.value.data;
+
+          setSummary(normalizedSummary);
+          setBankInfoComplete(rawSummary?.bankInfoComplete !== false);
+          setNextPaymentDate(rawSummary?.nextPaymentDate || null);
+        }
       }
 
-      // Fetch commission transactions
-      const txResponse = await Api.get('/api/partners/commission-transactions');
-      if (txResponse?.success && txResponse?.data) {
-        setTransactions(txResponse.data);
+      if (txResponse.status === 'fulfilled' && txResponse.value?.success) {
+        setTransactions(Array.isArray(txResponse.value.data) ? txResponse.value.data : []);
+      } else {
+        setTransactions([]);
       }
 
-      // Fetch payouts
-      const payoutsResponse = await Api.get('/api/partners/payouts');
-      if (payoutsResponse?.success && payoutsResponse?.data) {
-        setPayouts(payoutsResponse.data);
+      if (payoutsResponse.status === 'fulfilled' && payoutsResponse.value?.success) {
+        setPayouts(Array.isArray(payoutsResponse.value.data) ? payoutsResponse.value.data : []);
+      } else {
+        setPayouts([]);
+      }
+
+      if (
+        summaryResponse.status !== 'fulfilled' ||
+        !summaryResponse.value?.success ||
+        !normalizeEarningsSummary(summaryResponse.value.data)
+      ) {
+        throw new Error(t('partner.earnings.loadError', 'Failed to load earnings data'));
       }
     } catch (err: any) {
       console.error('Error fetching earnings:', err);
@@ -130,9 +169,19 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     }
   }, [t]);
 
+  const fetchV8Summary = useCallback(async () => {
+    try {
+      const response = await V8PartnerApi.getEarningsSummary();
+      setV8Summary(response.earnings);
+    } catch {
+      setV8Summary(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchEarnings();
-  }, [fetchEarnings]);
+    void fetchV8Summary();
+  }, [fetchEarnings, fetchV8Summary]);
 
   // Request payout via API
   const handleRequestPayout = async () => {
@@ -202,6 +251,64 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   if (subsection === 'earnings') {
     return (
       <div className="space-y-6">
+        {v8Summary && (
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-violet-500" />
+                  {t('partner.earnings.v8RuntimeTitle', 'V8 Earnings Summary')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  {t(
+                    'partner.earnings.v8RuntimeSubtitle',
+                    'Governed partner payout readiness and earnings totals from the V8 namespace.'
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  label: t('partner.earnings.v8TotalEarned', 'Governed total earned'),
+                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalEarned ?? 0).toLocaleString()}`,
+                  detail: `${v8Summary.totalPaid ?? 0} paid`,
+                },
+                {
+                  label: t('partner.earnings.v8ThisMonth', 'Governed this month'),
+                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.thisMonth ?? 0).toLocaleString()}`,
+                  detail: `${v8Summary.thisMonthCount ?? 0} items`,
+                },
+                {
+                  label: t('partner.earnings.v8Pending', 'Governed pending'),
+                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPending ?? 0).toLocaleString()}`,
+                  detail: `${v8Summary.totalApproved ?? 0} approved`,
+                },
+                {
+                  label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
+                  value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.readyForPayout ?? 0).toLocaleString()}`,
+                  detail: `${v8Summary.lastMonth ?? 0} last month`,
+                },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+                >
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {card.label}
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                    {card.value}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {card.detail}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Bank/Tax Info Alert - HubSpot style */}
         {!bankInfoComplete && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
@@ -304,7 +411,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <span className="text-sm text-slate-400 dark:text-slate-500">Total Earned (YTD)</span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{summary?.totalEarned.toLocaleString()}
+              €{(summary?.totalEarned ?? 0).toLocaleString()}
             </p>
             <div className="flex items-center gap-1 mt-1 text-sm text-emerald-400">
               <ArrowUpRight className="w-4 h-4" />
@@ -320,7 +427,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <span className="text-sm text-slate-400 dark:text-slate-500">This Month</span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{summary?.thisMonth.toLocaleString()}
+              €{(summary?.thisMonth ?? 0).toLocaleString()}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               From {summary?.thisMonthCount} referrals
@@ -335,7 +442,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <span className="text-sm text-slate-400 dark:text-slate-500">Pending Approval</span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{summary?.totalPending.toLocaleString()}
+              €{(summary?.totalPending ?? 0).toLocaleString()}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Processing...</p>
           </div>
@@ -348,7 +455,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <span className="text-sm text-slate-400 dark:text-slate-500">Ready for Payout</span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{summary?.readyForPayout.toLocaleString()}
+              €{(summary?.readyForPayout ?? 0).toLocaleString()}
             </p>
             <button
               onClick={handleRequestPayout}
@@ -419,12 +526,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="text-slate-600 dark:text-slate-300">
-                            €{tx.grossAmount.toLocaleString()}
+                            €{(tx.grossAmount ?? 0).toLocaleString()}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-medium text-emerald-400">
-                            €{tx.commissionAmount.toLocaleString()}
+                            €{(tx.commissionAmount ?? 0).toLocaleString()}
                           </span>
                           <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
                             ({tx.commissionRate}%)
@@ -506,7 +613,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-white">
-                          €{payout.netAmount.toLocaleString()}
+                          €{(payout.netAmount ?? 0).toLocaleString()}
                         </p>
                         <p className="text-sm text-slate-400 dark:text-slate-500">
                           {payout.transactionCount} transactions • {payout.periodStart} to{' '}
@@ -593,7 +700,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   </div>
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">
-                      €{payout.netAmount.toLocaleString()}
+                      €{(payout.netAmount ?? 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-slate-400 dark:text-slate-500">
                       {payout.transactionCount} transactions • {payout.periodStart} to{' '}
