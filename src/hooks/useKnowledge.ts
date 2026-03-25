@@ -7,6 +7,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
 
 // ============================================
 // TYPES
@@ -86,10 +87,15 @@ async function fetchArticles(params: {
 }
 
 async function fetchArticle(slug: string, lang: string): Promise<KbArticle> {
-  const res = await fetch(`${API_BASE}/articles/${slug}?lang=${lang}`);
-  if (!res.ok) throw new Error('Failed to fetch article');
-  const data = await res.json();
-  return data.article;
+  try {
+    const data = await V8KnowledgeBaseApi.getArticleBySlug(slug, lang);
+    return data.article as KbArticle;
+  } catch {
+    const res = await fetch(`${API_BASE}/articles/${slug}?lang=${lang}`);
+    if (!res.ok) throw new Error('Failed to fetch article');
+    const data = await res.json();
+    return data.article;
+  }
 }
 
 async function fetchPublicPreview(lang: string, limit = 3): Promise<KbArticleListItem[]> {
@@ -112,12 +118,17 @@ async function searchArticles(
   limit = 10
 ): Promise<KbArticleListItem[]> {
   if (!query || query.length < 2) return [];
-  const res = await fetch(
-    `${API_BASE}/search?q=${encodeURIComponent(query)}&lang=${lang}&limit=${limit}`
-  );
-  if (!res.ok) throw new Error('Failed to search articles');
-  const data = await res.json();
-  return data.articles;
+  try {
+    const data = await V8KnowledgeBaseApi.searchArticles(query, lang, limit);
+    return data.articles as KbArticleListItem[];
+  } catch {
+    const res = await fetch(
+      `${API_BASE}/search?q=${encodeURIComponent(query)}&lang=${lang}&limit=${limit}`
+    );
+    if (!res.ok) throw new Error('Failed to search articles');
+    const data = await res.json();
+    return data.articles;
+  }
 }
 
 async function fetchContextual(
@@ -125,13 +136,18 @@ async function fetchContextual(
   lang: string,
   token?: string
 ): Promise<KbArticleListItem[]> {
-  const headers: HeadersInit = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  try {
+    const data = await V8KnowledgeBaseApi.getContextualArticles(moduleId, lang);
+    return data.articles as KbArticleListItem[];
+  } catch {
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}/context/${moduleId}?lang=${lang}`, { headers });
-  if (!res.ok) throw new Error('Failed to fetch contextual articles');
-  const data = await res.json();
-  return data.articles;
+    const res = await fetch(`${API_BASE}/context/${moduleId}?lang=${lang}`, { headers });
+    if (!res.ok) throw new Error('Failed to fetch contextual articles');
+    const data = await res.json();
+    return data.articles;
+  }
 }
 
 async function trackView(articleId: string, source = 'in_app'): Promise<void> {

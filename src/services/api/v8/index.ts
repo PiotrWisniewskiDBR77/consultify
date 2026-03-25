@@ -10,4 +10,11 @@ export { V8AdminApi } from './admin';
 export { V8RetrievalApi } from './retrieval';
 export { V8MyWorkApi } from './my-work';
 export { V8PromptOsApi, V8_PROMPT_OS_RUNTIME_SUMMARY_PATH } from './prompt-os';
+export {
+  V8KnowledgeBaseApi,
+  V8_KB_ARTICLE_PATH,
+  V8_KB_CONTEXT_PATH,
+  V8_KB_SEARCH_PATH,
+} from './kb';
 export type { V8PromptOsRuntimeSummary } from './prompt-os';
+export type { V8KbArticle, V8KbArticleListItem } from './kb';
