@@ -80,7 +80,7 @@ interface Payout {
 }
 
 interface EarningsSectionProps {
-  subsection?: 'earnings' | 'payouts' | 'payout-settings';
+  subsection?: 'earnings' | 'statements' | 'payouts' | 'payout-settings';
 }
 
 const normalizeEarningsSummary = (payload: any): EarningsSummary | null => {
@@ -182,6 +182,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     fetchEarnings();
     void fetchV8Summary();
   }, [fetchEarnings, fetchV8Summary]);
+
+  useEffect(() => {
+    if (subsection === 'statements') {
+      setActiveTab('statements');
+    }
+  }, [subsection]);
 
   const renderV8SummaryBlock = () => {
     if (!v8Summary) return null;
@@ -308,7 +314,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   }
 
   // Earnings Overview (main subsection)
-  if (subsection === 'earnings') {
+  if (subsection === 'earnings' || subsection === 'statements') {
     return (
       <div className="space-y-6">
         {renderV8SummaryBlock()}
