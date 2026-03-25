@@ -1,0 +1,56 @@
+{
+  "capturedAt": "2026-03-25T03:52:30.000Z",
+  "base": "https://stage.consultinity.ai",
+  "path": "/my-work",
+  "summary": {
+    "globalLimiterCutoverSucceeded": true,
+    "freshAuthenticatedMyWorkLoadBlockedBy429": false,
+    "roofSummaryStatus": 200,
+    "radarStatus": 200,
+    "contextSummaryStatus": 200,
+    "canonicalContractLabelsVisibleInLiveDom": false
+  },
+  "deployment": {
+    "deploymentId": "c8ff8bd1-4fc3-4f7e-afbc-0fe5b37bcc37",
+    "status": "SUCCESS"
+  },
+  "network": {
+    "status200": [
+      "/api/auth/me",
+      "/api/organization/policy-snapshot",
+      "/api/health",
+      "/api/help/micro-video/dismissed",
+      "/api/notifications?limit=20",
+      "/api/notifications/unread-count",
+      "/api/my-work/context-summary",
+      "/api/tasks?status=todo,in_progress,review,blocked,pending_approval",
+      "/api/v8/my-work/roof/summary",
+      "/api/artifacts/my-work?limit=8",
+      "/api/my-work/session-context",
+      "/api/my-work/radar",
+      "/api/my-work/radar/actions",
+      "/api/llm/providers/health?timeoutMs=1200"
+    ],
+    "nonBlockingNoise": [
+      {
+        "path": "/api/v8/admin/flags",
+        "status": 500
+      }
+    ]
+  },
+  "surfaceChecks": {
+    "genericTooManyRequestsBannerVisible": false,
+    "radarSignalsVisible": true,
+    "reviewQueueCtaVisible": true,
+    "outputsEntryCtaVisible": true,
+    "aiPulseCoreTextVisible": false,
+    "industryLensTextVisible": false,
+    "executionCurrentTextVisible": false,
+    "commandDockTextVisible": false
+  },
+  "notes": [
+    "The global Redis-backed 429 wall is no longer blocking authenticated My Work after deployment c8ff8bd1.",
+    "Live browser proof now settles with real Radar content and adjacent My Work polling endpoints returning 200.",
+    "The remaining closure gap is surface-level: the explicit canonical Home/Radar contract labels still do not appear in the live DOM."
+  ]
+}
