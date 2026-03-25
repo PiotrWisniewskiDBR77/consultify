@@ -53,3 +53,48 @@ Direct API proof:
 Scope note:
 - this wave proves persisted sync/auth truth on live staging
 - provider round-trip, OAuth continuity, and operator UI proof are still not captured
+
+## Inbox
+
+Direct API proof:
+- `GET /api/v8/my-work/inbox/canonical/stats` -> `200`
+
+Scope note:
+- this wave proves the canonical inbox stats read path on live staging
+- dedicated inbox UI and end-to-end triage continuity are still not captured
+
+## Interview
+
+Direct API proof:
+- `GET /api/v8/interview/sessions` -> `200`
+
+Scope note:
+- this wave proves the org-scoped interview sessions read path on live staging
+- dedicated interview UI continuity is still not captured
+
+## Planning
+
+Direct API proof:
+- `GET /api/v8/planning/pending-decisions` -> `200`
+
+Scope note:
+- this wave proves the org-level planning continuity read path on live staging
+- dedicated planning UI continuity is still not captured
+
+## Execution Control
+
+Direct API proof:
+- `GET /api/v8/execution-control/timeline-warnings` -> `200`
+
+Scope note:
+- this wave proves a representative execution-control read surface on live staging
+- broader execution-control UI continuity is still not captured
+
+## Knowledge Base
+
+Direct API proof:
+- `GET /api/v8/kb/search?q=ai` -> `200`
+
+Scope note:
+- this wave proves the V8 KB search read path on live staging
+- dedicated KB UI continuity is still not captured
