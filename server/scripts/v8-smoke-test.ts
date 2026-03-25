@@ -7,6 +7,7 @@
  * Includes Execution control read bridge (B-08: risk-signals + timeline-warnings contracts).
  * Includes Results read bridge (B-09: dashboard contract under /results).
  * Includes Finance read bridge (B-10: dashboard contract under /finance).
+ * Includes PM sync read bridge (B-13: persisted auth/connector/conflict truth under /sync).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -229,6 +230,35 @@ async function main(): Promise<void> {
   tests.push(
     await runSmokeTest('Finance dashboard', baseUrl, token, '/finance/dashboard', 'GET', 200, {
       expectMetaContract: 'finance_runtime_read_v1',
+    }),
+  );
+
+  // PM sync — B-13 read-only persisted truth (no live provider round-trips)
+  const smokeConnectorId = '00000000-0000-4000-8000-000000000030';
+  tests.push(
+    await runSmokeTest('Sync auth health', baseUrl, token, '/sync/auth/health', 'GET', 200, {
+      expectMetaContract: 'sync_runtime_read_v1',
+    }),
+  );
+  tests.push(
+    await runSmokeTest('Sync auth escalations', baseUrl, token, '/sync/auth/escalations', 'GET', 200, {
+      expectMetaContract: 'sync_runtime_read_v1',
+    }),
+  );
+  tests.push(
+    await runSmokeTest(
+      'Sync connector health',
+      baseUrl,
+      token,
+      `/sync/connectors/${smokeConnectorId}/health`,
+      'GET',
+      200,
+      { expectMetaContract: 'sync_runtime_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest('Sync conflicts', baseUrl, token, '/sync/conflicts?limit=50', 'GET', 200, {
+      expectMetaContract: 'sync_runtime_read_v1',
     }),
   );
 

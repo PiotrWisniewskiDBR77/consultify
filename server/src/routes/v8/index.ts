@@ -22,6 +22,7 @@ import planningRoutes from './planning.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
 import resultsRoutes from './results.routes.js';
 import retrievalRoutes from './retrieval.routes.js';
+import syncRoutes from './sync.routes.js';
 
 const v8Router = Router();
 
@@ -54,5 +55,6 @@ v8Router.use('/interview', interviewRoutes);
 v8Router.use('/planning', planningRoutes);
 v8Router.use('/results', resultsRoutes);
 v8Router.use('/partner', partnerRoutes);
+v8Router.use('/sync', syncRoutes);
 
 export default v8Router;

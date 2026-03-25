@@ -159,6 +159,15 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     { name: 'KB search', method: 'get', path: '/api/v8/kb/search?q=ab', expectedStatus: 200 },
     { name: 'KB context', method: 'get', path: '/api/v8/kb/context/chat', expectedStatus: 200 },
     { name: 'Results dashboard', method: 'get', path: '/api/v8/results/dashboard', expectedStatus: 200 },
+    { name: 'Sync auth health', method: 'get', path: '/api/v8/sync/auth/health', expectedStatus: 200 },
+    { name: 'Sync auth escalations', method: 'get', path: '/api/v8/sync/auth/escalations', expectedStatus: 200 },
+    {
+      name: 'Sync connector health',
+      method: 'get',
+      path: '/api/v8/sync/connectors/00000000-0000-4000-8000-000000000030/health',
+      expectedStatus: 200,
+    },
+    { name: 'Sync conflicts', method: 'get', path: '/api/v8/sync/conflicts?limit=50', expectedStatus: 200 },
   ];
 
   for (const test of smokeTests) {

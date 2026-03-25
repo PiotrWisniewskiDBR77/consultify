@@ -122,6 +122,27 @@ vi.mock('../../../utils/v8MetricsStore.js', () => ({
   }),
 }));
 
+vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
+  getCredentialHealth: vi.fn().mockResolvedValue({
+    total: 0,
+    healthy: 0,
+    failing: 0,
+    escalated: 0,
+  }),
+  getActiveEscalations: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
+  getConnectorHealth: vi.fn().mockResolvedValue({
+    healthy: true,
+    syncStatus: 'unknown',
+    conflictCount: 0,
+    lastSyncAt: null,
+    authState: 'unknown',
+  }),
+  getUnresolvedConflicts: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock('../../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
@@ -358,6 +379,34 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
     });
   });
 
+  describe('Sync read bridge (B-13)', () => {
+    const smokeConnectorId = '00000000-0000-4000-8000-000000000030';
+
+    it('GET /api/v8/sync/auth/health → 200', async () => {
+      const res = await request(app).get('/api/v8/sync/auth/health');
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('sync_runtime_read_v1');
+    });
+
+    it('GET /api/v8/sync/auth/escalations → 200', async () => {
+      const res = await request(app).get('/api/v8/sync/auth/escalations');
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('sync_runtime_read_v1');
+    });
+
+    it('GET /api/v8/sync/connectors/:id/health → 200', async () => {
+      const res = await request(app).get(`/api/v8/sync/connectors/${smokeConnectorId}/health`);
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('sync_runtime_read_v1');
+    });
+
+    it('GET /api/v8/sync/conflicts?limit=50 → 200', async () => {
+      const res = await request(app).get('/api/v8/sync/conflicts?limit=50');
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('sync_runtime_read_v1');
+    });
+  });
+
   describe('Endpoint inventory', () => {
     it('should cover all known V8 HTTP routes', () => {
       const knownEndpoints = [
@@ -398,8 +447,12 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
         'POST /prompt-os/bundles/:bundleId/eval-gates',
         'GET /prompt-os/bundles/:bundleId/canary',
         'POST /prompt-os/bundles/:bundleId/canary',
+        'GET /sync/auth/health',
+        'GET /sync/auth/escalations',
+        'GET /sync/connectors/:connectorId/health',
+        'GET /sync/conflicts',
       ];
-      expect(knownEndpoints).toHaveLength(37);
+      expect(knownEndpoints).toHaveLength(41);
     });
   });
 });
