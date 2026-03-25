@@ -5,6 +5,7 @@
  * Includes Prompt OS runtime summary (B-03b staging proof: contract in response body).
  * Includes Planning continuity read bridge (B-07: snapshot + pending-decisions contracts).
  * Includes Execution control read bridge (B-08: risk-signals + timeline-warnings contracts).
+ * Includes Results read bridge (B-09: dashboard contract under /results).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -214,6 +215,13 @@ async function main(): Promise<void> {
       200,
       { expectMetaContract: 'execution_control_read_v1' },
     ),
+  );
+
+  // Results / KPI / ROI — B-09 read-only bridge
+  tests.push(
+    await runSmokeTest('Results dashboard', baseUrl, token, '/results/dashboard', 'GET', 200, {
+      expectMetaContract: 'results_runtime_read_v1',
+    }),
   );
 
   // Print results

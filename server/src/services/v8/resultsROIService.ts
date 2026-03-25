@@ -666,11 +666,17 @@ export async function getKPIScorecard(organizationId: string): Promise<KPIScorec
     { fallback: true },
   );
 
+  // Cap achievement ratio at 1.0 without scalar MIN(): Postgres MIN() is aggregate-only
+  // (MIN(numeric, real) is invalid); nested CASE matches SQLite multi-arg MIN semantics.
   const avgRow = await dbGet<{ avg_rate: number | null }>(
     `SELECT AVG(
        CASE
          WHEN target_value IS NOT NULL AND target_value != 0 AND current_value IS NOT NULL
-         THEN MIN(1.0, current_value / target_value)
+         THEN
+           CASE
+             WHEN (current_value * 1.0 / target_value) > 1 THEN 1.0
+             ELSE (current_value * 1.0 / target_value)
+           END
          ELSE NULL
        END
      ) AS avg_rate

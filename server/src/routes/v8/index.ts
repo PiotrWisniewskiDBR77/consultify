@@ -18,6 +18,7 @@ import knowledgeBaseRoutes from './knowledge-base.routes.js';
 import myWorkRoutes from './my-work.routes.js';
 import planningRoutes from './planning.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
+import resultsRoutes from './results.routes.js';
 import retrievalRoutes from './retrieval.routes.js';
 
 const v8Router = Router();
@@ -48,5 +49,6 @@ v8Router.use('/prompt-os', promptOsRoutes);
 v8Router.use('/kb', knowledgeBaseRoutes);
 v8Router.use('/interview', interviewRoutes);
 v8Router.use('/planning', planningRoutes);
+v8Router.use('/results', resultsRoutes);
 
 export default v8Router;

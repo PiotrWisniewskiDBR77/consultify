@@ -76,6 +76,20 @@ describe('getKPIScorecard', () => {
     expect(card.totalKpis).toBe(0);
     expect(card.averageTargetAchievementRate).toBeNull();
   });
+
+  it('avg achievement SQL caps ratio without scalar MIN (Postgres-safe)', async () => {
+    mockDbGet.mockResolvedValueOnce({ total: 1 }).mockResolvedValueOnce({ avg_rate: 0.5 });
+    mockDbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+    await getKPIScorecard(ORG_ID);
+
+    const avgSqlCall = mockDbGet.mock.calls.find((c) => String(c[0]).includes('AS avg_rate'));
+    expect(avgSqlCall).toBeDefined();
+    const sql = avgSqlCall![0] as string;
+    expect(sql).not.toMatch(/MIN\s*\(\s*1\.0/i);
+    expect(sql).toContain('THEN 1.0');
+    expect(sql).toContain('current_value * 1.0 / target_value');
+  });
 });
 
 describe('getKPITrend', () => {

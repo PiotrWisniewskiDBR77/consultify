@@ -158,6 +158,7 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     },
     { name: 'KB search', method: 'get', path: '/api/v8/kb/search?q=ab', expectedStatus: 200 },
     { name: 'KB context', method: 'get', path: '/api/v8/kb/context/chat', expectedStatus: 200 },
+    { name: 'Results dashboard', method: 'get', path: '/api/v8/results/dashboard', expectedStatus: 200 },
   ];
 
   for (const test of smokeTests) {
