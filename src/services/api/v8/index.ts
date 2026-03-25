@@ -9,6 +9,8 @@ export { V8ChatApi } from './chat';
 export { v8Get, v8Post, v8Put } from './client';
 export type { V8ExecutionDelaySignal, V8ExecutionRiskSignal } from './execution-control';
 export { V8ExecutionControlApi } from './execution-control';
+export type { V8FinanceDashboard } from './finance';
+export { V8FinanceApi } from './finance';
 export type { V8InterviewSession } from './interview';
 export { V8InterviewApi } from './interview';
 export type { V8KbArticle, V8KbArticleListItem } from './kb';
