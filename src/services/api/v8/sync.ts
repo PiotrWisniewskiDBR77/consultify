@@ -38,7 +38,40 @@ export interface V8SyncConnectorHealthSummary {
   authState: string;
 }
 
+export interface V8SyncRunSummary {
+  id: string;
+  status: string;
+  items_processed: number;
+  duration_ms: number;
+  started_at: string;
+  completed_at: string | null;
+  error_summary: string | null;
+}
+
+export interface V8SyncIntegrationInventoryRow {
+  id: string;
+  connectorId: string;
+  name: string;
+  category: string;
+  status: string;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  health: 'healthy' | 'degraded' | 'unhealthy';
+  errorRate: number;
+  unresolvedErrors: number;
+  lastRun: V8SyncRunSummary | null;
+  connector: {
+    id: string;
+    name: string;
+    category: string;
+    capabilities: string[];
+    authType: string;
+  } | null;
+}
+
 export const V8SyncApi = {
+  getIntegrations: () =>
+    v8Get<{ integrations: V8SyncIntegrationInventoryRow[]; count: number }>('/sync/integrations'),
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),

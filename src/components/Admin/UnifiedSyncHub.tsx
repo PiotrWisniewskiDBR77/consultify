@@ -50,6 +50,7 @@ import {
   type V8SyncConnectorHealthSummary,
   type V8SyncConflictRecord,
   type V8SyncCredentialHealthSummary,
+  type V8SyncIntegrationInventoryRow,
 } from '@/services/api/v8/sync';
 
 import { API_URL, getHeaders } from '../../services/api';
@@ -292,13 +293,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const fetchIntegrations = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/sync-hub/integrations`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setIntegrations(data.integrations || []);
-      }
+      const data = await V8SyncApi.getIntegrations();
+      setIntegrations((data.integrations || []) as IntegrationItem[]);
+      return;
     } catch {
-      /* handled below */
+      try {
+        const res = await fetch(`${API_URL}/sync-hub/integrations`, { headers: getHeaders() });
+        if (res.ok) {
+          const data = (await res.json()) as { integrations?: V8SyncIntegrationInventoryRow[] };
+          setIntegrations((data.integrations || []) as IntegrationItem[]);
+        }
+      } catch {
+        /* handled below */
+      }
     }
   }, []);
 

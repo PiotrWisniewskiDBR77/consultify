@@ -31,6 +31,40 @@ describe('V8SyncApi', () => {
     expect(data.summary.escalated).toBe(1);
   });
 
+  it('requests governed sync integrations from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+          },
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8SyncApi.getIntegrations();
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/integrations');
+    expect(data.count).toBe(1);
+    expect(data.integrations[0].connectorId).toBe('jira');
+  });
+
   it('requests per-connector health from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       connectorId: 'salesforce',

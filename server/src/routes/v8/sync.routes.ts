@@ -16,6 +16,7 @@ import {
   getConnectorHealth,
   getUnresolvedConflicts,
 } from '../../services/v8/pmSyncTruthService.js';
+import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -40,6 +41,18 @@ function parseConflictLimit(raw: unknown): number | undefined {
   if (!Number.isFinite(n)) return undefined;
   return n;
 }
+
+router.get(
+  '/integrations',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrations = await listGovernedIntegrations(organizationId);
+    return res.json({
+      data: { integrations, count: integrations.length },
+      meta: syncReadMeta(),
+    });
+  }),
+);
 
 router.get(
   '/auth/health',

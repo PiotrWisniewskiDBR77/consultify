@@ -8,6 +8,7 @@ const mockGetCredentialHealth = vi.fn();
 const mockGetActiveEscalations = vi.fn();
 const mockGetConnectorHealth = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
+const mockListGovernedIntegrations = vi.fn();
 
 vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getCredentialHealth: (...args: unknown[]) => mockGetCredentialHealth(...args),
@@ -17,6 +18,10 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
 vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
   getConnectorHealth: (...args: unknown[]) => mockGetConnectorHealth(...args),
   getUnresolvedConflicts: (...args: unknown[]) => mockGetUnresolvedConflicts(...args),
+}));
+
+vi.mock('../../../services/v8/pmSyncInventoryService.js', () => ({
+  listGovernedIntegrations: (...args: unknown[]) => mockListGovernedIntegrations(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -112,6 +117,41 @@ describe('V8 sync read-only routes', () => {
       authState: 'healthy',
     });
     mockGetUnresolvedConflicts.mockResolvedValue([]);
+    mockListGovernedIntegrations.mockResolvedValue([]);
+  });
+
+  it('GET /api/v8/sync/integrations returns governed inventory envelope', async () => {
+    mockListGovernedIntegrations.mockResolvedValue([
+      {
+        id: 'int-1',
+        connectorId: 'jira',
+        name: 'Jira',
+        category: 'project_management',
+        status: 'connected',
+        lastSyncAt: '2025-01-02T00:00:00.000Z',
+        lastError: null,
+        health: 'healthy',
+        errorRate: 0,
+        unresolvedErrors: 0,
+        lastRun: null,
+        connector: {
+          id: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          capabilities: ['issues'],
+          authType: 'oauth2',
+        },
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/sync/integrations');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.integrations?.[0]?.connectorId).toBe('jira');
+    expect(mockListGovernedIntegrations).toHaveBeenCalledWith(ORG);
   });
 
   it('GET /api/v8/sync/auth/health returns credential rollup', async () => {
