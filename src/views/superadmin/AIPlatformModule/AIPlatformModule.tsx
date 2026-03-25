@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { PromptOsRuntimeSummaryPanel } from '../../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
 import { Api } from '../../../services/api';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
@@ -134,6 +135,7 @@ const AI_PLATFORM_TABS: MainTab[] = [
       { id: 'health-monitoring', label: 'Health Monitoring', icon: <HeartPulse size={16} /> },
       { id: 'performance-dashboard', label: 'Performance', icon: <Activity size={16} /> },
       { id: 'sla-management', label: 'SLA Management', icon: <Shield size={16} /> },
+      { id: 'prompt-os-runtime', label: 'Prompt OS runtime', icon: <Code size={16} /> },
       { id: 'market-inbox', label: 'Market Inbox', icon: <Database size={16} /> },
     ],
   },
@@ -229,6 +231,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'operations/health-monitoring': 'superadmin_ai_operations_health',
       'operations/performance-dashboard': 'superadmin_ai_operations_performance',
       'operations/sla-management': 'superadmin_ai_operations_sla',
+      'operations/prompt-os-runtime': 'superadmin_ai_operations',
       'operations/market-inbox': 'superadmin_ai_operations_market_inbox',
       'analytics/llm-observatory': 'superadmin_ai_analytics_llm_observatory',
       'analytics/usage-analytics': 'superadmin_ai_analytics_usage',
@@ -306,6 +309,8 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <PerformanceDashboardTab />;
       case 'operations/sla-management':
         return <SLAManagementTab />;
+      case 'operations/prompt-os-runtime':
+        return <PromptOsRuntimeSummaryPanel />;
       case 'operations/market-inbox':
         return <MarketInboxTab />;
 
@@ -369,6 +374,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'development/prompt-builder': 'superadmin-ai-intelligence',
       'development/experiments': 'superadmin-ai-ab-testing',
       'development/model-registry': 'superadmin-ai-model-registry',
+      'operations/prompt-os-runtime': 'superadmin-ai-operations',
       'analytics/llm-observatory': 'superadmin-ai-operations',
 
       // Security (reuse existing Settings docs where applicable)
