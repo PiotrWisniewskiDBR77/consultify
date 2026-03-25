@@ -7,6 +7,15 @@ export interface V8SyncCredentialHealthSummary {
   escalated: number;
 }
 
+export type V8SyncProviderFamily =
+  | 'google_workspace'
+  | 'microsoft_365'
+  | 'atlassian'
+  | 'asana'
+  | 'monday'
+  | 'clickup'
+  | 'linear';
+
 export type V8SyncConnectorAuthState =
   | 'not_connected'
   | 'connecting'
@@ -59,6 +68,17 @@ export interface V8SyncConnectorAuthRecord {
   reason: string | null;
 }
 
+export interface V8SyncRefreshTimingPolicy {
+  policyId: string;
+  providerFamily: V8SyncProviderFamily;
+  organizationId: string;
+  typicalTokenLifetimeMinutes: number;
+  refreshWindowMinutes: number;
+  maxRetryAttempts: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type V8SyncConflictResolutionPath =
   | 'auto_resolve_by_authority'
   | 'manual_review'
@@ -104,6 +124,21 @@ export const V8SyncApi = {
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),
+  getRefreshTimingPolicy: (providerFamily: V8SyncProviderFamily) =>
+    v8Get<{ policy: V8SyncRefreshTimingPolicy | null }>(
+      `/sync/auth/policies/${encodeURIComponent(providerFamily)}`,
+    ),
+  setRefreshTimingPolicy: (
+    providerFamily: V8SyncProviderFamily,
+    payload: Pick<
+      V8SyncRefreshTimingPolicy,
+      'typicalTokenLifetimeMinutes' | 'refreshWindowMinutes' | 'maxRetryAttempts'
+    >,
+  ) =>
+    v8Post<{ policy: V8SyncRefreshTimingPolicy }>(
+      `/sync/auth/policies/${encodeURIComponent(providerFamily)}`,
+      payload,
+    ),
   resolveAuthEscalation: (escalationId: string) =>
     v8Post<{ escalation: V8SyncAuthEscalation }>(
       `/sync/auth/escalations/${encodeURIComponent(escalationId)}/resolve`,

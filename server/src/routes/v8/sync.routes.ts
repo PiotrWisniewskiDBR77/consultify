@@ -12,7 +12,9 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getActiveEscalations,
   getCredentialHealth,
+  getRefreshTimingPolicy,
   resolveAuthEscalation,
+  setRefreshTimingPolicy,
 } from '../../services/v8/pmSyncAuthService.js';
 import {
   getConnectorHealth,
@@ -21,6 +23,7 @@ import {
   resolveConflict,
 } from '../../services/v8/pmSyncTruthService.js';
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
+import { ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -59,6 +62,12 @@ const ResolveConflictBodySchema = z.object({
 const SetConnectorAuthStateBodySchema = z.object({
   targetState: z.enum(ConnectorAuthStateValues),
   reason: z.string().trim().nullable().optional(),
+});
+
+const RefreshTimingPolicyBodySchema = z.object({
+  typicalTokenLifetimeMinutes: z.number().int().positive(),
+  refreshWindowMinutes: z.number().int().positive(),
+  maxRetryAttempts: z.number().int().min(1),
 });
 
 router.get(
@@ -139,6 +148,61 @@ router.post(
       }
       throw error;
     }
+  }),
+);
+
+router.get(
+  '/auth/policies/:providerFamily',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const parsed = z.enum(ProviderFamilyValues).safeParse(req.params.providerFamily);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: parsed.error.issues[0]?.message ?? 'Invalid provider family',
+        code: 'INVALID_PARAM',
+      });
+    }
+
+    const policy = await getRefreshTimingPolicy(parsed.data, organizationId);
+    return res.json({
+      data: { policy },
+      meta: syncReadMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/auth/policies/:providerFamily',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const parsedFamily = z.enum(ProviderFamilyValues).safeParse(req.params.providerFamily);
+    if (!parsedFamily.success) {
+      return res.status(400).json({
+        error: parsedFamily.error.issues[0]?.message ?? 'Invalid provider family',
+        code: 'INVALID_PARAM',
+      });
+    }
+
+    const parsedBody = RefreshTimingPolicyBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        error: parsedBody.error.issues[0]?.message ?? 'Invalid refresh timing payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    const policy = await setRefreshTimingPolicy({
+      providerFamily: parsedFamily.data,
+      organizationId,
+      typicalTokenLifetimeMinutes: parsedBody.data.typicalTokenLifetimeMinutes,
+      refreshWindowMinutes: parsedBody.data.refreshWindowMinutes,
+      maxRetryAttempts: parsedBody.data.maxRetryAttempts,
+    });
+
+    return res.json({
+      data: { policy },
+      meta: syncMutationMeta(),
+    });
   }),
 );
 

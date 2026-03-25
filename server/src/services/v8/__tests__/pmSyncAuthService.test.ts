@@ -616,6 +616,21 @@ describe('setRefreshTimingPolicy', () => {
       }),
     ).rejects.toThrow(ZodError);
   });
+
+  it('accepts non-UUID organizationId values for staging tenants', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+
+    const result = await setRefreshTimingPolicy({
+      providerFamily: 'atlassian',
+      organizationId: 'dbr77',
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+    });
+
+    expect(result.organizationId).toBe('dbr77');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
 });
 
 describe('getRefreshTimingPolicy', () => {

@@ -258,7 +258,7 @@ export interface SetRefreshTimingPolicyParams {
 
 export const SetRefreshTimingPolicyParamsSchema = z.object({
   providerFamily: z.enum(ProviderFamilyValues),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().trim().min(1),
   typicalTokenLifetimeMinutes: z.number().int().positive(),
   refreshWindowMinutes: z.number().int().positive(),
   maxRetryAttempts: z.number().int().min(1),

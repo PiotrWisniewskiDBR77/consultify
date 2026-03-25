@@ -109,6 +109,54 @@ describe('V8SyncApi', () => {
     expect(data.escalation.connectorId).toBe('jira');
   });
 
+  it('requests refresh timing policy from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      policy: {
+        policyId: 'policy-1',
+        providerFamily: 'atlassian',
+        organizationId: 'org-1',
+        typicalTokenLifetimeMinutes: 120,
+        refreshWindowMinutes: 15,
+        maxRetryAttempts: 5,
+        createdAt: '2026-03-25T13:00:00.000Z',
+        updatedAt: '2026-03-25T13:05:00.000Z',
+      },
+    });
+
+    const data = await V8SyncApi.getRefreshTimingPolicy('atlassian');
+
+    expect(v8Get).toHaveBeenCalledWith('/sync/auth/policies/atlassian');
+    expect(data.policy?.refreshWindowMinutes).toBe(15);
+  });
+
+  it('posts refresh timing policy mutation to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      policy: {
+        policyId: 'policy-1',
+        providerFamily: 'atlassian',
+        organizationId: 'org-1',
+        typicalTokenLifetimeMinutes: 120,
+        refreshWindowMinutes: 15,
+        maxRetryAttempts: 5,
+        createdAt: '2026-03-25T13:00:00.000Z',
+        updatedAt: '2026-03-25T13:05:00.000Z',
+      },
+    });
+
+    const data = await V8SyncApi.setRefreshTimingPolicy('atlassian', {
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/auth/policies/atlassian', {
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+    });
+    expect(data.policy.maxRetryAttempts).toBe(5);
+  });
+
   it('posts conflict resolution to the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       conflict: {

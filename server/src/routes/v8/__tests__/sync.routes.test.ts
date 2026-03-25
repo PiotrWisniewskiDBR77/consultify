@@ -7,6 +7,8 @@ import { V8_SYNC_RUNTIME_MUTATION_CONTRACT, V8_SYNC_RUNTIME_READ_CONTRACT } from
 const mockGetCredentialHealth = vi.fn();
 const mockGetActiveEscalations = vi.fn();
 const mockResolveAuthEscalation = vi.fn();
+const mockGetRefreshTimingPolicy = vi.fn();
+const mockSetRefreshTimingPolicy = vi.fn();
 const mockGetConnectorHealth = vi.fn();
 const mockSetConnectorAuthState = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
@@ -17,6 +19,8 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getCredentialHealth: (...args: unknown[]) => mockGetCredentialHealth(...args),
   getActiveEscalations: (...args: unknown[]) => mockGetActiveEscalations(...args),
   resolveAuthEscalation: (...args: unknown[]) => mockResolveAuthEscalation(...args),
+  getRefreshTimingPolicy: (...args: unknown[]) => mockGetRefreshTimingPolicy(...args),
+  setRefreshTimingPolicy: (...args: unknown[]) => mockSetRefreshTimingPolicy(...args),
 }));
 
 vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
@@ -123,6 +127,26 @@ describe('V8 sync read-only routes', () => {
       escalatedAt: '2025-01-02T00:00:00.000Z',
       resolvedAt: '2025-01-03T00:00:00.000Z',
       resolvedBy: UID,
+    });
+    mockGetRefreshTimingPolicy.mockResolvedValue({
+      policyId: 'policy-1',
+      providerFamily: 'atlassian',
+      organizationId: ORG,
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+      createdAt: '2025-01-02T00:00:00.000Z',
+      updatedAt: '2025-01-03T00:00:00.000Z',
+    });
+    mockSetRefreshTimingPolicy.mockResolvedValue({
+      policyId: 'policy-1',
+      providerFamily: 'atlassian',
+      organizationId: ORG,
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+      createdAt: '2025-01-02T00:00:00.000Z',
+      updatedAt: '2025-01-03T00:00:00.000Z',
     });
     mockGetConnectorHealth.mockResolvedValue({
       healthy: true,
@@ -236,6 +260,36 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.escalation?.resolvedBy).toBe(UID);
     expect(mockResolveAuthEscalation).toHaveBeenCalledWith('esc-1', UID, ORG);
+  });
+
+  it('GET /api/v8/sync/auth/policies/:providerFamily returns provider refresh policy', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/sync/auth/policies/atlassian');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
+    expect(res.body.data?.policy?.providerFamily).toBe('atlassian');
+    expect(mockGetRefreshTimingPolicy).toHaveBeenCalledWith('atlassian', ORG);
+  });
+
+  it('POST /api/v8/sync/auth/policies/:providerFamily upserts provider refresh policy', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/auth/policies/atlassian').send({
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.policy?.maxRetryAttempts).toBe(5);
+    expect(mockSetRefreshTimingPolicy).toHaveBeenCalledWith({
+      providerFamily: 'atlassian',
+      organizationId: ORG,
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+    });
   });
 
   it('GET /api/v8/sync/connectors/:id/health delegates to pmSyncTruthService', async () => {

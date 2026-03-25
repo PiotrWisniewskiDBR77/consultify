@@ -52,6 +52,8 @@ import {
   type V8SyncConflictRecord,
   type V8SyncCredentialHealthSummary,
   type V8SyncIntegrationInventoryRow,
+  type V8SyncProviderFamily,
+  type V8SyncRefreshTimingPolicy,
 } from '@/services/api/v8/sync';
 
 import { API_URL, getHeaders } from '../../services/api';
@@ -135,6 +137,13 @@ interface V8ConnectorHealthTarget {
   category: string;
 }
 
+interface V8RefreshPolicyTarget {
+  providerFamily: V8SyncProviderFamily;
+  providerLabel: string;
+  connectorId: string;
+  integrationName: string;
+}
+
 // ── Constants ──────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<
@@ -178,6 +187,43 @@ const HEALTH_CONFIG: Record<HealthStatus, { label: string; color: string; dot: s
   degraded: { label: 'Degraded', color: 'text-amber-400', dot: 'bg-amber-400' },
   unhealthy: { label: 'Unhealthy', color: 'text-red-400', dot: 'bg-red-400' },
 };
+
+const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<Record<string, V8SyncProviderFamily>> = {
+  jira: 'atlassian',
+  gmail: 'google_workspace',
+  teams: 'microsoft_365',
+  asana: 'asana',
+  linear: 'linear',
+  clickup: 'clickup',
+  monday: 'monday',
+};
+
+const PROVIDER_FAMILY_LABELS: Record<V8SyncProviderFamily, string> = {
+  google_workspace: 'Google Workspace',
+  microsoft_365: 'Microsoft 365',
+  atlassian: 'Atlassian',
+  asana: 'Asana',
+  monday: 'Monday',
+  clickup: 'ClickUp',
+  linear: 'Linear',
+};
+
+const GOVERNED_REFRESH_POLICY_PRESETS: Record<
+  V8SyncProviderFamily,
+  { typicalTokenLifetimeMinutes: number; refreshWindowMinutes: number; maxRetryAttempts: number }
+> = {
+  google_workspace: { typicalTokenLifetimeMinutes: 60, refreshWindowMinutes: 10, maxRetryAttempts: 3 },
+  microsoft_365: { typicalTokenLifetimeMinutes: 60, refreshWindowMinutes: 10, maxRetryAttempts: 3 },
+  atlassian: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 5 },
+  asana: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 4 },
+  monday: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 4 },
+  clickup: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 4 },
+  linear: { typicalTokenLifetimeMinutes: 120, refreshWindowMinutes: 15, maxRetryAttempts: 4 },
+};
+
+function getProviderFamily(connectorId: string): V8SyncProviderFamily | null {
+  return CONNECTOR_PROVIDER_FAMILY_MAP[connectorId.trim().toLowerCase()] ?? null;
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   communication: 'Communication',
@@ -252,9 +298,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   >({});
   const [v8ConnectorHealthLoading, setV8ConnectorHealthLoading] = useState(false);
   const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
+  const [v8RefreshPolicies, setV8RefreshPolicies] = useState<
+    Partial<Record<V8SyncProviderFamily, V8SyncRefreshTimingPolicy | null>>
+  >({});
   const [mutatingConnectorAuthId, setMutatingConnectorAuthId] = useState<string | null>(null);
   const [resolvingAuthEscalationId, setResolvingAuthEscalationId] = useState<string | null>(null);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
+  const [mutatingRefreshPolicyFamily, setMutatingRefreshPolicyFamily] =
+    useState<V8SyncProviderFamily | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -292,6 +343,23 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
     return Array.from(byConnectorId.values()).slice(0, 5);
   }, [catalog, integrations]);
+
+  const v8RefreshPolicyTargets = useMemo<V8RefreshPolicyTarget[]>(() => {
+    const byFamily = new Map<V8SyncProviderFamily, V8RefreshPolicyTarget>();
+
+    integrations.forEach((integration) => {
+      const providerFamily = getProviderFamily(integration.connectorId);
+      if (!providerFamily || byFamily.has(providerFamily)) return;
+      byFamily.set(providerFamily, {
+        providerFamily,
+        providerLabel: PROVIDER_FAMILY_LABELS[providerFamily],
+        connectorId: integration.connectorId,
+        integrationName: integration.name,
+      });
+    });
+
+    return Array.from(byFamily.values());
+  }, [integrations]);
 
   // ── Data loading ─────────────────────────────────────────────
 
@@ -375,6 +443,26 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       setV8Conflicts([]);
     }
   }, []);
+
+  const fetchV8RefreshPolicies = useCallback(async () => {
+    if (v8RefreshPolicyTargets.length === 0) {
+      setV8RefreshPolicies({});
+      return;
+    }
+
+    const results = await Promise.all(
+      v8RefreshPolicyTargets.map(async (target) => {
+        try {
+          const data = await V8SyncApi.getRefreshTimingPolicy(target.providerFamily);
+          return [target.providerFamily, data.policy ?? null] as const;
+        } catch {
+          return [target.providerFamily, null] as const;
+        }
+      }),
+    );
+
+    setV8RefreshPolicies(Object.fromEntries(results));
+  }, [v8RefreshPolicyTargets]);
 
   const fetchV8ConnectorHealth = useCallback(async () => {
     if (v8ConnectorHealthTargets.length === 0) {
@@ -479,10 +567,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       fetchV8AuthHealth(),
       fetchV8AuthEscalations(),
       fetchV8Conflicts(),
+      fetchV8RefreshPolicies(),
       fetchV8WorkspaceMapping(),
       fetchV8WorkspaceBinding(),
     ]);
-    const workspaceBinding = results[9] as V8MultiplayerRoomBinding | null;
+    const workspaceBinding = results[10] as V8MultiplayerRoomBinding | null;
     await fetchV8WorkspacePresenceAndLocks(workspaceBinding);
     setLoading(false);
   }, [
@@ -494,6 +583,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     fetchV8AuthHealth,
     fetchV8AuthEscalations,
     fetchV8Conflicts,
+    fetchV8RefreshPolicies,
     fetchV8WorkspaceMapping,
     fetchV8WorkspaceBinding,
     fetchV8WorkspacePresenceAndLocks,
@@ -508,6 +598,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     if (activeTab !== 'health') return;
     void fetchV8ConnectorHealth();
   }, [activeTab, fetchV8ConnectorHealth]);
+
+  useEffect(() => {
+    if (activeTab !== 'webhooks') return;
+    void fetchV8RefreshPolicies();
+  }, [activeTab, fetchV8RefreshPolicies]);
 
   // ── Actions ──────────────────────────────────────────────────
 
@@ -698,6 +793,32 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       );
     } finally {
       setResolvingAuthEscalationId(null);
+    }
+  };
+
+  const handleApplyGovernedRefreshPolicy = async (providerFamily: V8SyncProviderFamily) => {
+    setMutatingRefreshPolicyFamily(providerFamily);
+    try {
+      await V8SyncApi.setRefreshTimingPolicy(
+        providerFamily,
+        GOVERNED_REFRESH_POLICY_PRESETS[providerFamily],
+      );
+      toast.success(
+        t(
+          'integrations.syncHub.v8RefreshPolicyApplied',
+          'Governed refresh timing policy applied',
+        ),
+      );
+      await fetchV8RefreshPolicies();
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.v8RefreshPolicyApplyFailed',
+          'Failed to apply governed refresh timing policy',
+        ),
+      );
+    } finally {
+      setMutatingRefreshPolicyFamily(null);
     }
   };
 
@@ -1592,6 +1713,75 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           'Review what each integration can read and write in your workspace.'
         )}
       </p>
+      {v8RefreshPolicyTargets.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+              <Zap size={14} className="text-violet-400" />
+              {t(
+                'integrations.syncHub.v8RefreshPolicies',
+                'Governed Refresh Timing Policies',
+              )}
+            </h3>
+            <div className="space-y-2">
+              {v8RefreshPolicyTargets.map((target) => {
+                const policy = v8RefreshPolicies[target.providerFamily] ?? null;
+                const preset = GOVERNED_REFRESH_POLICY_PRESETS[target.providerFamily];
+                return (
+                  <div
+                    key={target.providerFamily}
+                    className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-100">
+                            {target.providerLabel}
+                          </span>
+                          <span className="px-1.5 py-0.5 text-[11px] bg-violet-500/10 text-violet-300 rounded">
+                            {target.connectorId}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {target.integrationName}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
+                          <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
+                            lifetime {policy?.typicalTokenLifetimeMinutes ?? 'none'}m
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
+                            refresh window {policy?.refreshWindowMinutes ?? 'none'}m
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-navy-800 border border-navy-700">
+                            retries {policy?.maxRetryAttempts ?? 'none'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleApplyGovernedRefreshPolicy(target.providerFamily)}
+                        disabled={mutatingRefreshPolicyFamily === target.providerFamily}
+                        className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-300 hover:bg-violet-500/15 disabled:opacity-60 transition-colors"
+                        title={`lifetime ${preset.typicalTokenLifetimeMinutes}m, window ${preset.refreshWindowMinutes}m, retries ${preset.maxRetryAttempts}`}
+                      >
+                        {mutatingRefreshPolicyFamily === target.providerFamily ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={12} />
+                        )}
+                        {t(
+                          'integrations.syncHub.v8ApplyGovernedPolicy',
+                          'Apply governed policy',
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       {integrations.length === 0 ? (
         <div className="text-center py-8 text-slate-500 text-sm">
           {t('integrations.syncHub.noScopesData', 'No integrations connected yet.')}
