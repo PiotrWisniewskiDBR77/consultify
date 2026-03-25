@@ -8,6 +8,7 @@
  * Includes Results read bridge (B-09: dashboard contract under /results).
  * Includes Finance read bridge (B-10: dashboard contract under /finance).
  * Includes PM sync read bridge (B-13: persisted auth/connector/conflict truth under /sync).
+ * Includes Multiplayer read bridge (B-14: persisted mappings/presence/locks under /multiplayer; not WS proof).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -260,6 +261,64 @@ async function main(): Promise<void> {
     await runSmokeTest('Sync conflicts', baseUrl, token, '/sync/conflicts?limit=50', 'GET', 200, {
       expectMetaContract: 'sync_runtime_read_v1',
     }),
+  );
+
+  // Multiplayer — B-14 persisted read bridge (no websocket transport proof)
+  const smokeMultiplayerRoomId = '00000000-0000-4000-8000-000000000040';
+  tests.push(
+    await runSmokeTest(
+      'Multiplayer resource mapping',
+      baseUrl,
+      token,
+      '/multiplayer/resource-mappings/whiteboard',
+      'GET',
+      200,
+      { expectMetaContract: 'multiplayer_persisted_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest(
+      'Multiplayer room binding',
+      baseUrl,
+      token,
+      `/multiplayer/room-binding?resourceType=whiteboard&resourceId=${smokeMultiplayerRoomId}`,
+      'GET',
+      200,
+      { expectMetaContract: 'multiplayer_persisted_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest(
+      'Multiplayer room presence',
+      baseUrl,
+      token,
+      `/multiplayer/rooms/${smokeMultiplayerRoomId}/presence`,
+      'GET',
+      200,
+      { expectMetaContract: 'multiplayer_persisted_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest(
+      'Multiplayer presence by surface',
+      baseUrl,
+      token,
+      `/multiplayer/rooms/${smokeMultiplayerRoomId}/presence/by-surface?surface=whiteboard`,
+      'GET',
+      200,
+      { expectMetaContract: 'multiplayer_persisted_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest(
+      'Multiplayer room locks',
+      baseUrl,
+      token,
+      `/multiplayer/rooms/${smokeMultiplayerRoomId}/locks`,
+      'GET',
+      200,
+      { expectMetaContract: 'multiplayer_persisted_read_v1' },
+    ),
   );
 
   // Print results

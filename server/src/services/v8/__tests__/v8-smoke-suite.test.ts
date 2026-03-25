@@ -407,6 +407,46 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
     });
   });
 
+  describe('Multiplayer read bridge (B-14)', () => {
+    const smokeRoomId = '00000000-0000-4000-8000-000000000040';
+
+    it('GET /api/v8/multiplayer/resource-mappings/whiteboard → 200', async () => {
+      const res = await request(app).get('/api/v8/multiplayer/resource-mappings/whiteboard');
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');
+      expect(res.body.meta?.readScope).toBe('persisted_database');
+    });
+
+    it('GET /api/v8/multiplayer/room-binding → 200', async () => {
+      const res = await request(app).get(
+        `/api/v8/multiplayer/room-binding?resourceType=whiteboard&resourceId=${smokeRoomId}`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');
+      expect(res.body.data?.binding).toBeDefined();
+    });
+
+    it(`GET /api/v8/multiplayer/rooms/:roomId/presence → 200`, async () => {
+      const res = await request(app).get(`/api/v8/multiplayer/rooms/${smokeRoomId}/presence`);
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');
+    });
+
+    it('GET /api/v8/multiplayer/rooms/:roomId/presence/by-surface → 200', async () => {
+      const res = await request(app).get(
+        `/api/v8/multiplayer/rooms/${smokeRoomId}/presence/by-surface?surface=whiteboard`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');
+    });
+
+    it('GET /api/v8/multiplayer/rooms/:roomId/locks → 200', async () => {
+      const res = await request(app).get(`/api/v8/multiplayer/rooms/${smokeRoomId}/locks`);
+      expect(res.status).toBe(200);
+      expect(res.body.meta?.contract).toBe('multiplayer_persisted_read_v1');
+    });
+  });
+
   describe('Endpoint inventory', () => {
     it('should cover all known V8 HTTP routes', () => {
       const knownEndpoints = [
@@ -451,8 +491,13 @@ describe('V8 Smoke Test Suite — All Endpoints', () => {
         'GET /sync/auth/escalations',
         'GET /sync/connectors/:connectorId/health',
         'GET /sync/conflicts',
+        'GET /multiplayer/resource-mappings/:resourceType',
+        'GET /multiplayer/room-binding',
+        'GET /multiplayer/rooms/:roomId/presence',
+        'GET /multiplayer/rooms/:roomId/presence/by-surface',
+        'GET /multiplayer/rooms/:roomId/locks',
       ];
-      expect(knownEndpoints).toHaveLength(41);
+      expect(knownEndpoints).toHaveLength(46);
     });
   });
 });
