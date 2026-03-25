@@ -85,6 +85,11 @@ import {
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
+import {
+  V8MyWorkApi,
+  type V8CanonicalInboxItem,
+  type V8CanonicalInboxStats,
+} from '@/services/api/v8/my-work';
 import { useAppStore } from '@/store/useAppStore';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
@@ -248,6 +253,171 @@ interface InboxSummary {
 interface InboxResponse {
   summary: InboxSummary;
   items: InboxItem[];
+}
+
+const ACTIONABLE_SECTIONS = new Set<InboxSection>([
+  'approvals_gates',
+  'decisions_required',
+  'assigned_tasks',
+  'blocked_escalations',
+]);
+
+const CANONICAL_SECTION_SET = new Set<InboxSection>([
+  'decisions_required',
+  'approvals_gates',
+  'assigned_tasks',
+  'blocked_escalations',
+  'overdue_sla_breach',
+  'fyi_system',
+  'fyi_mentions',
+  'ai_insights',
+  'other',
+]);
+
+function mapInboxStatusToV8(status: InboxStatusTab): 'pending' | 'resolved' | 'snoozed' | undefined {
+  switch (status) {
+    case 'done':
+      return 'resolved';
+    case 'saved':
+      return 'snoozed';
+    case 'open':
+      return 'pending';
+    default:
+      return undefined;
+  }
+}
+
+function mapCanonicalSection(section?: string): InboxSection {
+  return section && CANONICAL_SECTION_SET.has(section as InboxSection)
+    ? (section as InboxSection)
+    : 'other';
+}
+
+function mapCanonicalItemType(itemType: V8CanonicalInboxItem['itemType']): InboxItemType {
+  switch (itemType) {
+    case 'task':
+      return 'new_assignment';
+    case 'decision':
+      return 'decision_request';
+    case 'approval':
+      return 'review_request';
+    case 'mention':
+      return 'mention';
+    case 'escalation':
+      return 'escalation';
+    case 'signal':
+    default:
+      return 'system_alert';
+  }
+}
+
+function mapCanonicalItemStatus(
+  status: V8CanonicalInboxItem['status']
+): InboxItem['itemStatus'] {
+  switch (status) {
+    case 'resolved':
+      return 'done';
+    case 'snoozed':
+      return 'saved';
+    default:
+      return 'open';
+  }
+}
+
+function buildCanonicalReason(section: InboxSection): string {
+  switch (section) {
+    case 'assigned_tasks':
+      return 'Assigned work requires review or triage.';
+    case 'decisions_required':
+      return 'A decision is waiting for your input.';
+    case 'approvals_gates':
+      return 'An approval gate is waiting for action.';
+    case 'blocked_escalations':
+      return 'A blocker or escalation needs attention.';
+    case 'overdue_sla_breach':
+      return 'This item is overdue or at SLA risk.';
+    case 'fyi_mentions':
+      return 'You were mentioned or notified.';
+    case 'ai_insights':
+      return 'AI surfaced this item for awareness.';
+    case 'fyi_system':
+    case 'other':
+    default:
+      return 'This item appears in your inbox based on current workflow state.';
+  }
+}
+
+function mapCanonicalItem(item: V8CanonicalInboxItem): InboxItem {
+  const section = mapCanonicalSection(item.section);
+  const sourceType =
+    item.sourceEntityType === 'ai'
+      ? 'ai'
+      : item.sourceEntityType === 'user'
+        ? 'user'
+        : 'system';
+  const itemStatus = mapCanonicalItemStatus(item.status);
+  const dueAt = item.slaDeadline ? new Date(item.slaDeadline).toISOString() : undefined;
+
+  return {
+    id: item.id,
+    type: mapCanonicalItemType(item.itemType),
+    itemType: item.itemType === 'mention' || item.itemType === 'escalation' ? 'signal' : item.itemType,
+    section,
+    title: item.title,
+    description: item.description,
+    source: { type: sourceType },
+    receivedAt: new Date(item.createdAt).toISOString(),
+    dueDate: dueAt,
+    urgency: item.priority,
+    severity: item.priority === 'critical' ? 'CRITICAL' : item.priority === 'high' ? 'WARNING' : 'INFO',
+    sla: dueAt
+      ? {
+          dueAt,
+          remainingMs: new Date(dueAt).getTime() - Date.now(),
+          isBreached: item.slaStatus === 'breached',
+          level: item.slaStatus === 'breached' ? 'L3' : item.slaStatus === 'at_risk' ? 'L2' : 'L1',
+        }
+      : undefined,
+    linkedTaskId: item.sourceEntityType === 'task' ? item.sourceEntityId : undefined,
+    linkedDecisionId:
+      item.sourceEntityType === 'decision' ? item.sourceEntityId : undefined,
+    triaged: item.status !== 'pending',
+    itemStatus,
+    reason: buildCanonicalReason(section),
+    isActionable: ACTIONABLE_SECTIONS.has(section),
+    _key: `${item.sourceEntityType}:${item.sourceEntityId}` as InboxItemKey,
+  };
+}
+
+function buildInboxResponseFromCanonical(
+  items: V8CanonicalInboxItem[],
+  stats: V8CanonicalInboxStats | null
+): InboxResponse {
+  const mappedItems = items.map(mapCanonicalItem);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const actionableCount =
+    (stats?.bySection?.approvals_gates || 0) +
+    (stats?.bySection?.decisions_required || 0) +
+    (stats?.bySection?.assigned_tasks || 0) +
+    (stats?.bySection?.blocked_escalations || 0);
+
+  return {
+    summary: {
+      total: stats?.total ?? mappedItems.length,
+      critical: stats?.byPriority?.critical ?? mappedItems.filter((item) => item.urgency === 'critical').length,
+      newToday: mappedItems.filter((item) => new Date(item.receivedAt) >= todayStart).length,
+      actionRequired:
+        stats != null ? actionableCount : mappedItems.filter((item) => item.isActionable).length,
+      counts: {
+        open: stats?.byStatus?.pending ?? mappedItems.filter((item) => item.itemStatus === 'open').length,
+        done: stats?.byStatus?.resolved ?? mappedItems.filter((item) => item.itemStatus === 'done').length,
+        saved: stats?.byStatus?.snoozed ?? mappedItems.filter((item) => item.itemStatus === 'saved').length,
+        dismissed: 0,
+      },
+    },
+    items: mappedItems,
+  };
 }
 
 export interface InboxCounts {
@@ -1415,11 +1585,22 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             : statusTab === 'saved'
               ? 'saved'
               : 'open';
+      const v8Status = mapInboxStatusToV8(statusTab);
       const [res] = await Promise.all([
-        Api.inboxGetTable({ status, limit: 200 }).catch(
-          () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
-        ) as Promise<InboxResponse>,
-        Api.materializeInbox().catch(() => null),
+        (async () => {
+          try {
+            const [tableRes, statsRes] = await Promise.all([
+              V8MyWorkApi.getCanonicalInboxTable({ status: v8Status, limit: 200 }),
+              V8MyWorkApi.getCanonicalInboxStats().catch(() => null),
+            ]);
+            return buildInboxResponseFromCanonical(tableRes.items, statsRes);
+          } catch {
+            return (Api.inboxGetTable({ status, limit: 200 }).catch(
+              () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
+            ) as Promise<InboxResponse>);
+          }
+        })(),
+        V8MyWorkApi.materializeCanonicalInbox().catch(() => Api.materializeInbox().catch(() => null)),
       ]);
       setData(res);
       const now = new Date();
