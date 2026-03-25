@@ -138,6 +138,24 @@ describe('CP-29: Smoke Test Offline Validation — all V8 endpoints', () => {
     { name: 'Chat handoffs (no params)', method: 'get', path: '/api/v8/chat/handoffs', expectedStatus: 400 },
     { name: 'Chat handoffs (with conversationId)', method: 'get', path: '/api/v8/chat/handoffs?conversationId=test-conv', expectedStatus: 200 },
     { name: 'Prompt OS runtime summary', method: 'get', path: '/api/v8/prompt-os/runtime/summary', expectedStatus: 200 },
+    {
+      name: 'My Work inbox canonical list',
+      method: 'get',
+      path: '/api/v8/my-work/inbox/canonical',
+      expectedStatus: 200,
+    },
+    {
+      name: 'My Work inbox canonical stats',
+      method: 'get',
+      path: '/api/v8/my-work/inbox/canonical/stats',
+      expectedStatus: 200,
+    },
+    {
+      name: 'My Work inbox canonical materialize',
+      method: 'post',
+      path: '/api/v8/my-work/inbox/canonical/materialize',
+      expectedStatus: 201,
+    },
   ];
 
   for (const test of smokeTests) {

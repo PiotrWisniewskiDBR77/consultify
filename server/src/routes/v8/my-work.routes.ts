@@ -4,7 +4,9 @@ import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import inboxService from '../../services/inboxService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import type {
   CalendarPhaseName,
   CalendarPhaseStatus,
@@ -14,6 +16,37 @@ import type {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
+
+/** B-05: V8 envelope for governed canonical inbox (V4-INBX-01) intake surface. */
+const V8_INBOX_CANONICAL_CONTRACT = 'my_work_inbox_canonical_v1';
+
+async function requireCanonicalInboxTable(res: Response): Promise<boolean> {
+  const isTestGateway =
+    process.env.NODE_ENV === 'test' ||
+    process.env.E2E_MODE === 'true' ||
+    process.env.ENABLE_TEST_GATEWAY === 'true';
+  const mockDbEnabled =
+    process.env.MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false');
+
+  if (isTestGateway && mockDbEnabled) {
+    return true;
+  }
+
+  const cols = await getTableColumns('canonical_inbox_items');
+  if (!cols || cols.size === 0) {
+    res.status(503).json({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
+    });
+    return false;
+  }
+  return true;
+}
 
 function handleMyWorkRoofError(err: unknown, res: Response, fallbackMessage: string): Response | null {
   if (err instanceof ZodError) {
@@ -218,6 +251,69 @@ router.get(
     }
 
     return res.json({ data, meta: { version: 'v8' } });
+  }),
+);
+
+/**
+ * GET /api/v8/my-work/inbox/canonical
+ * Canonical inbox rows (persistent materialization table) for the V8 org + user.
+ */
+router.get(
+  '/inbox/canonical',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireCanonicalInboxTable(res))) return;
+
+    const filters = {
+      section: req.query.section ? String(req.query.section) : undefined,
+      status: req.query.status ? String(req.query.status) : undefined,
+      priority: req.query.priority ? String(req.query.priority) : undefined,
+      slaStatus: req.query.slaStatus ? String(req.query.slaStatus) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      offset: req.query.offset ? Number(req.query.offset) : undefined,
+    };
+
+    const items = await inboxService.getInboxItems(userId, organizationId, filters);
+    return res.json({
+      data: { items },
+      meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
+    });
+  }),
+);
+
+/**
+ * GET /api/v8/my-work/inbox/canonical/stats
+ * Aggregate counts for canonical inbox items (section / SLA / priority / status).
+ */
+router.get(
+  '/inbox/canonical/stats',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireCanonicalInboxTable(res))) return;
+
+    const stats = await inboxService.getInboxStats(userId, organizationId);
+    return res.json({
+      data: stats,
+      meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
+    });
+  }),
+);
+
+/**
+ * POST /api/v8/my-work/inbox/canonical/materialize
+ * Re-materialize canonical_inbox_items from tasks, decisions, and notifications (intake).
+ */
+router.post(
+  '/inbox/canonical/materialize',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireCanonicalInboxTable(res))) return;
+
+    const result = await inboxService.materializeInboxItems(userId, organizationId);
+    return res.status(201).json({
+      data: { success: true, ...result },
+      meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
+    });
   }),
 );
 
