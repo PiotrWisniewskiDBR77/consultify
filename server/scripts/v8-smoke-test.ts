@@ -6,6 +6,7 @@
  * Includes Planning continuity read bridge (B-07: snapshot + pending-decisions contracts).
  * Includes Execution control read bridge (B-08: risk-signals + timeline-warnings contracts).
  * Includes Results read bridge (B-09: dashboard contract under /results).
+ * Includes Finance read bridge (B-10: dashboard contract under /finance).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -221,6 +222,13 @@ async function main(): Promise<void> {
   tests.push(
     await runSmokeTest('Results dashboard', baseUrl, token, '/results/dashboard', 'GET', 200, {
       expectMetaContract: 'results_runtime_read_v1',
+    }),
+  );
+
+  // Finance — B-10 read-only bridge (V8 finance integration runtime dashboard)
+  tests.push(
+    await runSmokeTest('Finance dashboard', baseUrl, token, '/finance/dashboard', 'GET', 200, {
+      expectMetaContract: 'finance_runtime_read_v1',
     }),
   );
 
