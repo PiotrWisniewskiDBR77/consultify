@@ -34,6 +34,7 @@ import {
   getInitiativeBudgetSummary,
   getPortfolioBudgetSummary,
 } from '../services/executionBudgetService.js';
+import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
 import {
@@ -244,60 +245,11 @@ router.get(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { projectId } = req.query;
-
-    let query = `
-      SELECT id, name, status, priority, planned_end_date, sla_deadline,
-             blocked_reason, blocked_at, progress, owner_business_id
-      FROM initiatives
-      WHERE organization_id = ?
-        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
-    `;
-    const params: unknown[] = [orgId];
-    if (projectId) {
-      query += ' AND project_id = ?';
-      params.push(projectId);
-    }
-
-    const rows = ((await dbAll(query, params)) || []) as InitiativeWarningRow[];
-    const now = new Date();
-    const warnings: TimelineWarning[] = [];
-
-    for (const row of rows) {
-      if (row.planned_end_date && new Date(row.planned_end_date) < now && row.status !== 'DONE') {
-        const days = Math.floor(
-          (now.getTime() - new Date(row.planned_end_date).getTime()) / 86400000
-        );
-        warnings.push({
-          initiativeId: row.id,
-          initiativeName: row.name,
-          type: 'overdue',
-          severity: days > 14 ? 'critical' : days > 7 ? 'high' : 'medium',
-          message: `Overdue by ${days} days`,
-          daysOverdue: days,
-        });
-      }
-
-      if (row.status === 'BLOCKED') {
-        const blockedDays = row.blocked_at
-          ? Math.floor((now.getTime() - new Date(row.blocked_at).getTime()) / 86400000)
-          : 0;
-        warnings.push({
-          initiativeId: row.id,
-          initiativeName: row.name,
-          type: 'blocked',
-          severity: blockedDays > 10 ? 'high' : 'medium',
-          message:
-            row.blocked_reason || `Blocked${blockedDays > 0 ? ` for ${blockedDays} days` : ''}`,
-        });
-      }
-    }
-
-    warnings.sort((a, b) => {
-      const sevOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-      return (sevOrder[b.severity] || 0) - (sevOrder[a.severity] || 0);
-    });
-
-    return res.json({ warnings: warnings.slice(0, 10), total: warnings.length });
+    const { warnings, total } = await getTimelineWarningsSnapshot(
+      orgId,
+      typeof projectId === 'string' ? projectId : undefined,
+    );
+    return res.json({ warnings, total });
   })
 );
 
@@ -931,28 +883,6 @@ export default router;
 // ================================================================
 // Helper types
 // ================================================================
-
-interface InitiativeWarningRow {
-  id: string;
-  name: string;
-  status: string;
-  priority: string;
-  planned_end_date: string | null;
-  sla_deadline: string | null;
-  blocked_reason: string | null;
-  blocked_at: string | null;
-  progress: number | null;
-  owner_business_id: string | null;
-}
-
-interface TimelineWarning {
-  initiativeId: string;
-  initiativeName: string;
-  type: 'overdue' | 'blocked' | 'dependency_conflict' | 'sla_approaching';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  message: string;
-  daysOverdue?: number;
-}
 
 interface ClosedLoopWorkaroundRow {
   id: string;

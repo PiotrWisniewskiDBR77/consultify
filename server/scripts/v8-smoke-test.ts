@@ -4,6 +4,7 @@
  * CP-17: Verifies V8 endpoints are healthy after deployment.
  * Includes Prompt OS runtime summary (B-03b staging proof: contract in response body).
  * Includes Planning continuity read bridge (B-07: snapshot + pending-decisions contracts).
+ * Includes Execution control read bridge (B-08: risk-signals + timeline-warnings contracts).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -189,6 +190,30 @@ async function main(): Promise<void> {
     await runSmokeTest('Planning pending decisions', baseUrl, token, '/planning/pending-decisions', 'GET', 200, {
       expectMetaContract: 'planning_continuity_read_v1',
     }),
+  );
+
+  // Execution / delivery control — B-08 read-only bridge
+  tests.push(
+    await runSmokeTest(
+      'Execution control risk signals',
+      baseUrl,
+      token,
+      '/execution-control/risk-signals',
+      'GET',
+      200,
+      { expectMetaContract: 'execution_control_read_v1' },
+    ),
+  );
+  tests.push(
+    await runSmokeTest(
+      'Execution control timeline warnings',
+      baseUrl,
+      token,
+      '/execution-control/timeline-warnings',
+      'GET',
+      200,
+      { expectMetaContract: 'execution_control_read_v1' },
+    ),
   );
 
   // Print results
