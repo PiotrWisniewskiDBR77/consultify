@@ -28,3 +28,5 @@ export { V8_PROMPT_OS_RUNTIME_SUMMARY_PATH, V8PromptOsApi } from './prompt-os';
 export type { V8ResultsDashboardSnapshot } from './results';
 export { V8ResultsApi } from './results';
 export { V8RetrievalApi } from './retrieval';
+export type { V8SyncCredentialHealthSummary } from './sync';
+export { V8SyncApi } from './sync';

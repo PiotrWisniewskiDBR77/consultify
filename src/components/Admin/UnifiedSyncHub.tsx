@@ -37,6 +37,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { V8SyncApi, type V8SyncCredentialHealthSummary } from '@/services/api/v8/sync';
+
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
@@ -216,6 +218,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [errors, setErrors] = useState<SyncErrorItem[]>([]);
   const [healthSummary, setHealthSummary] = useState<HealthSummary | null>(null);
+  const [v8AuthHealthSummary, setV8AuthHealthSummary] =
+    useState<V8SyncCredentialHealthSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -273,6 +277,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
+  const fetchV8AuthHealth = useCallback(async () => {
+    try {
+      const data = await V8SyncApi.getAuthHealth();
+      setV8AuthHealthSummary(data.summary);
+    } catch {
+      setV8AuthHealthSummary(null);
+    }
+  }, []);
+
   const fetchAuditLog = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/sync-hub/audit-log`, { headers: getHeaders() });
@@ -293,9 +306,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       fetchHealth(),
       fetchErrors(),
       fetchAuditLog(),
+      fetchV8AuthHealth(),
     ]);
     setLoading(false);
-  }, [fetchIntegrations, fetchCatalog, fetchHealth, fetchErrors, fetchAuditLog]);
+  }, [fetchIntegrations, fetchCatalog, fetchHealth, fetchErrors, fetchAuditLog, fetchV8AuthHealth]);
 
   useEffect(() => {
     loadAll();
@@ -810,6 +824,47 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               <div className="text-xs text-slate-500 mt-1">{card.label}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {v8AuthHealthSummary && (
+        <div>
+          <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <Shield size={14} className="text-cyan-400" />
+            {t('integrations.syncHub.v8AuthHealth', 'V8 Auth Health')}
+          </h3>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              {
+                label: t('integrations.syncHub.v8TotalCredentials', 'Governed credentials'),
+                value: v8AuthHealthSummary.total,
+                color: 'text-cyan-300',
+              },
+              {
+                label: t('integrations.syncHub.v8HealthyCredentials', 'Healthy'),
+                value: v8AuthHealthSummary.healthy,
+                color: 'text-emerald-400',
+              },
+              {
+                label: t('integrations.syncHub.v8FailingCredentials', 'Failing'),
+                value: v8AuthHealthSummary.failing,
+                color: 'text-amber-400',
+              },
+              {
+                label: t('integrations.syncHub.v8EscalatedCredentials', 'Escalated'),
+                value: v8AuthHealthSummary.escalated,
+                color: 'text-red-400',
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20"
+              >
+                <div className={`text-2xl font-semibold ${card.color}`}>{card.value}</div>
+                <div className="text-xs text-slate-500 mt-1">{card.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
