@@ -12,6 +12,7 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getActiveEscalations,
   getCredentialHealth,
+  resolveAuthEscalation,
 } from '../../services/v8/pmSyncAuthService.js';
 import {
   getConnectorHealth,
@@ -93,6 +94,51 @@ router.get(
       data: { escalations, count: escalations.length },
       meta: syncReadMeta(),
     });
+  }),
+);
+
+router.post(
+  '/auth/escalations/:escalationId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const escalationId = typeof req.params.escalationId === 'string' ? req.params.escalationId.trim() : '';
+    const resolvedBy =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!escalationId) {
+      return res.status(400).json({
+        error: 'escalationId is required',
+        code: 'INVALID_PARAM',
+      });
+    }
+
+    if (!resolvedBy) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    try {
+      const escalation = await resolveAuthEscalation(escalationId, resolvedBy, organizationId);
+      return res.json({
+        data: { escalation },
+        meta: syncMutationMeta(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to resolve auth escalation';
+      if (message.includes('not found')) {
+        return res.status(404).json({ error: message, code: 'AUTH_ESCALATION_NOT_FOUND' });
+      }
+      if (message.includes('already resolved')) {
+        return res.status(409).json({ error: message, code: 'AUTH_ESCALATION_ALREADY_RESOLVED' });
+      }
+      throw error;
+    }
   }),
 );
 

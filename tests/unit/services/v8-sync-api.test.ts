@@ -89,6 +89,26 @@ describe('V8SyncApi', () => {
     expect(data.record.connectorId).toBe('jira');
   });
 
+  it('posts auth escalation resolution to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      escalation: {
+        escalationId: 'esc-1',
+        organizationId: 'org-1',
+        connectorId: 'jira',
+        reason: 'token expired',
+        escalatedAt: '2026-03-25T13:00:00.000Z',
+        resolvedAt: '2026-03-25T13:05:00.000Z',
+        resolvedBy: 'user-1',
+      },
+    });
+
+    const data = await V8SyncApi.resolveAuthEscalation('esc-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/auth/escalations/esc-1/resolve', {});
+    expect(data.escalation.resolvedBy).toBe('user-1');
+    expect(data.escalation.connectorId).toBe('jira');
+  });
+
   it('posts conflict resolution to the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       conflict: {

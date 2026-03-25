@@ -253,6 +253,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [v8ConnectorHealthLoading, setV8ConnectorHealthLoading] = useState(false);
   const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
   const [mutatingConnectorAuthId, setMutatingConnectorAuthId] = useState<string | null>(null);
+  const [resolvingAuthEscalationId, setResolvingAuthEscalationId] = useState<string | null>(null);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -677,6 +678,26 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       );
     } finally {
       setMutatingConnectorAuthId(null);
+    }
+  };
+
+  const handleResolveV8AuthEscalation = async (escalationId: string) => {
+    setResolvingAuthEscalationId(escalationId);
+    try {
+      await V8SyncApi.resolveAuthEscalation(escalationId);
+      toast.success(
+        t('integrations.syncHub.v8AuthEscalationResolved', 'Governed auth escalation resolved'),
+      );
+      await Promise.all([fetchV8AuthEscalations(), fetchV8AuthHealth()]);
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.v8AuthEscalationResolveFailed',
+          'Failed to resolve governed auth escalation',
+        ),
+      );
+    } finally {
+      setResolvingAuthEscalationId(null);
     }
   };
 
@@ -1140,6 +1161,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   </div>
                   <div className="text-xs text-slate-600 mt-1">{timeAgo(escalation.escalatedAt)}</div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void handleResolveV8AuthEscalation(escalation.escalationId)}
+                  disabled={resolvingAuthEscalationId === escalation.escalationId}
+                  className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+                >
+                  {resolvingAuthEscalationId === escalation.escalationId ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={12} />
+                  )}
+                  {t('integrations.syncHub.v8ResolveEscalation', 'Resolve')}
+                </button>
               </div>
             ))}
           </div>

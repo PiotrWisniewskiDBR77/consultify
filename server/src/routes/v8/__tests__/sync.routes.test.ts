@@ -6,6 +6,7 @@ import { V8_SYNC_RUNTIME_MUTATION_CONTRACT, V8_SYNC_RUNTIME_READ_CONTRACT } from
 
 const mockGetCredentialHealth = vi.fn();
 const mockGetActiveEscalations = vi.fn();
+const mockResolveAuthEscalation = vi.fn();
 const mockGetConnectorHealth = vi.fn();
 const mockSetConnectorAuthState = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
@@ -15,6 +16,7 @@ const mockResolveConflict = vi.fn();
 vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getCredentialHealth: (...args: unknown[]) => mockGetCredentialHealth(...args),
   getActiveEscalations: (...args: unknown[]) => mockGetActiveEscalations(...args),
+  resolveAuthEscalation: (...args: unknown[]) => mockResolveAuthEscalation(...args),
 }));
 
 vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
@@ -113,6 +115,15 @@ describe('V8 sync read-only routes', () => {
       escalated: 0,
     });
     mockGetActiveEscalations.mockResolvedValue([]);
+    mockResolveAuthEscalation.mockResolvedValue({
+      escalationId: 'esc-1',
+      organizationId: ORG,
+      connectorId: CONNECTOR,
+      reason: 'token expired',
+      escalatedAt: '2025-01-02T00:00:00.000Z',
+      resolvedAt: '2025-01-03T00:00:00.000Z',
+      resolvedBy: UID,
+    });
     mockGetConnectorHealth.mockResolvedValue({
       healthy: true,
       syncStatus: 'synced',
@@ -215,6 +226,16 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
     expect(res.body.data?.count).toBe(1);
     expect(mockGetActiveEscalations).toHaveBeenCalledWith(ORG);
+  });
+
+  it('POST /api/v8/sync/auth/escalations/:id/resolve resolves a governed auth escalation', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/auth/escalations/esc-1/resolve').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.escalation?.resolvedBy).toBe(UID);
+    expect(mockResolveAuthEscalation).toHaveBeenCalledWith('esc-1', UID, ORG);
   });
 
   it('GET /api/v8/sync/connectors/:id/health delegates to pmSyncTruthService', async () => {

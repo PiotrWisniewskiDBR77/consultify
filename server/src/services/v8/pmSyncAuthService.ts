@@ -636,3 +636,58 @@ export async function getActiveEscalations(organizationId: string): Promise<Auth
 
   return (rows || []).map(rowToAuthEscalation);
 }
+
+/**
+ * Resolve an existing auth escalation for operator recovery.
+ */
+export async function resolveAuthEscalation(
+  escalationId: string,
+  resolvedBy: string,
+  organizationId: string,
+): Promise<AuthEscalationRecord> {
+  const trimmedEscalationId = escalationId.trim();
+  const trimmedResolvedBy = resolvedBy.trim();
+  const trimmedOrganizationId = organizationId.trim();
+
+  if (!trimmedEscalationId) {
+    throw new Error('Escalation id is required');
+  }
+  if (!trimmedResolvedBy) {
+    throw new Error('Resolved by is required');
+  }
+  if (!trimmedOrganizationId) {
+    throw new Error('Organization id is required');
+  }
+
+  const row = await dbGet<EscalationRow>(
+    `SELECT * FROM v8_auth_escalations
+     WHERE escalation_id = ? AND organization_id = ?`,
+    [trimmedEscalationId, trimmedOrganizationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    throw new Error(`Auth escalation ${trimmedEscalationId} not found`);
+  }
+
+  if (row.resolved_at) {
+    throw new Error(`Auth escalation ${trimmedEscalationId} is already resolved`);
+  }
+
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_auth_escalations
+     SET resolved_at = ?, resolved_by = ?
+     WHERE escalation_id = ? AND organization_id = ?`,
+    [now, trimmedResolvedBy, trimmedEscalationId, trimmedOrganizationId],
+  );
+
+  logger.info(`${LOG_PREFIX} Resolved auth escalation ${trimmedEscalationId}`);
+
+  return {
+    ...rowToAuthEscalation(row),
+    resolvedAt: now,
+    resolvedBy: trimmedResolvedBy,
+  };
+}

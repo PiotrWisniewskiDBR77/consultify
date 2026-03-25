@@ -104,6 +104,11 @@ export const V8SyncApi = {
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),
+  resolveAuthEscalation: (escalationId: string) =>
+    v8Post<{ escalation: V8SyncAuthEscalation }>(
+      `/sync/auth/escalations/${encodeURIComponent(escalationId)}/resolve`,
+      {},
+    ),
   setConnectorAuthState: (
     connectorId: string,
     targetState: V8SyncConnectorAuthState,

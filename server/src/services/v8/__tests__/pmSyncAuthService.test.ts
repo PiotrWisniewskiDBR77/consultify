@@ -59,6 +59,9 @@ import {
   getRefreshTimingPolicy,
   recordAdminReBind,
   getReBindHistory,
+  getActiveEscalations,
+  getCredentialHealth,
+  resolveAuthEscalation,
 } from '../pmSyncAuthService.js';
 
 // ==========================================
@@ -136,6 +139,19 @@ function makeAuthStateRow(overrides?: Partial<Record<string, unknown>>) {
   return {
     auth_state: 'degraded_reauth_needed',
     transitioned_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    ...overrides,
+  };
+}
+
+function makeEscalationRow(overrides?: Partial<Record<string, unknown>>) {
+  return {
+    escalation_id: '00000000-0000-4000-8000-eeeeeeeeeeee',
+    organization_id: ORG_ID,
+    connector_id: CONNECTOR_ID,
+    reason: 'token expired',
+    escalated_at: '2026-03-23T12:00:00.000Z',
+    resolved_at: null,
+    resolved_by: null,
     ...overrides,
   };
 }
@@ -728,6 +744,93 @@ describe('getReBindHistory', () => {
 
     const results = await getReBindHistory(CONNECTOR_ID, ORG_ID);
     expect(results).toEqual([]);
+  });
+});
+
+describe('credential and auth escalation health', () => {
+  it('getCredentialHealth counts credentials and unresolved auth escalations', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      makeCredentialRow({ last_refresh_result: 'success' }),
+      makeCredentialRow({
+        credential_id: CRED_ID_2,
+        last_refresh_result: 'credential_expired',
+      }),
+    ]);
+    mockDbGet.mockResolvedValueOnce({ n: 1 });
+
+    const result = await getCredentialHealth(ORG_ID);
+
+    expect(result).toEqual({
+      total: 2,
+      healthy: 1,
+      failing: 1,
+      escalated: 1,
+    });
+  });
+
+  it('getActiveEscalations returns unresolved auth escalations', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      makeEscalationRow(),
+      makeEscalationRow({
+        escalation_id: '00000000-0000-4000-8000-ffffffffffff',
+        connector_id: CONNECTOR_ID_2,
+      }),
+    ]);
+
+    const result = await getActiveEscalations(ORG_ID);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].escalationId).toBe('00000000-0000-4000-8000-eeeeeeeeeeee');
+    expect(result[1].connectorId).toBe(CONNECTOR_ID_2);
+  });
+
+  it('resolveAuthEscalation resolves an active auth escalation', async () => {
+    mockDbGet.mockResolvedValueOnce(makeEscalationRow());
+
+    const result = await resolveAuthEscalation(
+      '00000000-0000-4000-8000-eeeeeeeeeeee',
+      ACTOR_ID,
+      ORG_ID,
+    );
+
+    expect(result.resolvedBy).toBe(ACTOR_ID);
+    expect(result.resolvedAt).toBeDefined();
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
+
+  it('resolveAuthEscalation scopes queries by organization', async () => {
+    mockDbGet.mockResolvedValueOnce(makeEscalationRow());
+
+    await resolveAuthEscalation('00000000-0000-4000-8000-eeeeeeeeeeee', ACTOR_ID, ORG_ID);
+
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('organization_id = ?'),
+      ['00000000-0000-4000-8000-eeeeeeeeeeee', ORG_ID],
+      { fallback: true },
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('organization_id = ?'),
+      expect.arrayContaining([ACTOR_ID, '00000000-0000-4000-8000-eeeeeeeeeeee', ORG_ID]),
+    );
+  });
+
+  it('resolveAuthEscalation throws when escalation does not exist', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+
+    await expect(resolveAuthEscalation('missing-escalation', ACTOR_ID, ORG_ID)).rejects.toThrow('not found');
+  });
+
+  it('resolveAuthEscalation throws when escalation is already resolved', async () => {
+    mockDbGet.mockResolvedValueOnce(
+      makeEscalationRow({
+        resolved_at: '2026-03-23T13:00:00.000Z',
+        resolved_by: ACTOR_ID,
+      }),
+    );
+
+    await expect(
+      resolveAuthEscalation('00000000-0000-4000-8000-eeeeeeeeeeee', ACTOR_ID, ORG_ID),
+    ).rejects.toThrow('already resolved');
   });
 });
 
