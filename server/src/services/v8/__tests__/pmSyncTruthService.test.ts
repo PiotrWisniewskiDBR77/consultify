@@ -592,6 +592,21 @@ describe('resolveConflict', () => {
     expect(mockDbRun).toHaveBeenCalledOnce();
   });
 
+  it('scopes conflict resolution by organization when provided', async () => {
+    mockDbGet.mockResolvedValueOnce(makeConflictRow());
+
+    await resolveConflict('00000000-0000-4000-8000-cccccccccccc', 'dismiss', USER_ID, ORG_ID);
+
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('organization_id = ?'),
+      ['00000000-0000-4000-8000-cccccccccccc', ORG_ID],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('organization_id = ?'),
+      expect.arrayContaining(['dismiss', USER_ID, '00000000-0000-4000-8000-cccccccccccc', ORG_ID]),
+    );
+  });
+
   it('throws when conflict not found', async () => {
     mockDbGet.mockResolvedValueOnce(null);
 

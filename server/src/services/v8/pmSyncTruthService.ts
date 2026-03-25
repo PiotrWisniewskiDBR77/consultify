@@ -584,12 +584,17 @@ export async function resolveConflict(
   conflictId: string,
   resolution: ConflictResolutionPath,
   resolvedBy: string,
+  organizationId?: string,
 ): Promise<ConflictRecord> {
   const now = new Date().toISOString();
+  const whereClause = organizationId
+    ? 'conflict_id = ? AND organization_id = ?'
+    : 'conflict_id = ?';
+  const whereParams = organizationId ? [conflictId, organizationId] : [conflictId];
 
   const row = await dbGet<ConflictRow>(
-    `SELECT * FROM v8_conflict_records WHERE conflict_id = ?`,
-    [conflictId],
+    `SELECT * FROM v8_conflict_records WHERE ${whereClause}`,
+    whereParams,
   );
 
   if (!row) {
@@ -603,8 +608,8 @@ export async function resolveConflict(
   await dbRun(
     `UPDATE v8_conflict_records
      SET resolution_path = ?, resolution_strategy = ?, resolved_at = ?, resolved_by = ?
-     WHERE conflict_id = ?`,
-    [resolution, resolution, now, resolvedBy, conflictId],
+     WHERE ${whereClause}`,
+    [resolution, resolution, now, resolvedBy, ...whereParams],
   );
 
   logger.info(`${LOG_PREFIX} Resolved conflict ${conflictId} via ${resolution}`);

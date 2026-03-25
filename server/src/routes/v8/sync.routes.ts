@@ -1,10 +1,11 @@
 /**
- * V8 read-only PM sync bridge — persisted connector/auth/conflict truth (no live provider calls).
+ * V8 PM sync bridge — governed persisted inventory, auth, conflict truth, and bounded operator recovery.
  * Namespace: /api/v8/sync (mounted by v8/index).
  */
 
 import { Router } from 'express';
 import type { Response } from 'express';
+import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -15,7 +16,9 @@ import {
 import {
   getConnectorHealth,
   getUnresolvedConflicts,
+  resolveConflict,
 } from '../../services/v8/pmSyncTruthService.js';
+import { ConflictResolutionPathValues } from '../../types/pmSyncTruth.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -23,9 +26,14 @@ const router = Router();
 
 /** Stable contract id for V8 sync read responses. */
 export const V8_SYNC_RUNTIME_READ_CONTRACT = 'sync_runtime_read_v1';
+export const V8_SYNC_RUNTIME_MUTATION_CONTRACT = 'sync_runtime_mutation_v1';
 
 function syncReadMeta() {
   return { version: 'v8' as const, contract: V8_SYNC_RUNTIME_READ_CONTRACT };
+}
+
+function syncMutationMeta() {
+  return { version: 'v8' as const, contract: V8_SYNC_RUNTIME_MUTATION_CONTRACT };
 }
 
 const firstQueryString = (value: unknown): string | undefined => {
@@ -41,6 +49,10 @@ function parseConflictLimit(raw: unknown): number | undefined {
   if (!Number.isFinite(n)) return undefined;
   return n;
 }
+
+const ResolveConflictBodySchema = z.object({
+  resolutionPath: z.enum(ConflictResolutionPathValues).default('dismiss'),
+});
 
 router.get(
   '/integrations',
@@ -107,6 +119,64 @@ router.get(
       data: { conflicts, count: conflicts.length },
       meta: syncReadMeta(),
     });
+  }),
+);
+
+router.post(
+  '/conflicts/:conflictId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const conflictId = typeof req.params.conflictId === 'string' ? req.params.conflictId.trim() : '';
+    const resolvedBy =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!conflictId) {
+      return res.status(400).json({
+        error: 'conflictId is required',
+        code: 'INVALID_PARAM',
+      });
+    }
+
+    if (!resolvedBy) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    const parsed = ResolveConflictBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: parsed.error.issues[0]?.message ?? 'Invalid resolution payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    try {
+      const conflict = await resolveConflict(
+        conflictId,
+        parsed.data.resolutionPath,
+        resolvedBy,
+        organizationId,
+      );
+      return res.json({
+        data: { conflict },
+        meta: syncMutationMeta(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to resolve conflict';
+      if (message.includes('not found')) {
+        return res.status(404).json({ error: message, code: 'CONFLICT_NOT_FOUND' });
+      }
+      if (message.includes('already resolved')) {
+        return res.status(409).json({ error: message, code: 'CONFLICT_ALREADY_RESOLVED' });
+      }
+      throw error;
+    }
   }),
 );
 

@@ -1,4 +1,4 @@
-import { v8Get } from './client';
+import { v8Get, v8Post } from './client';
 
 export interface V8SyncCredentialHealthSummary {
   total: number;
@@ -38,6 +38,14 @@ export interface V8SyncConnectorHealthSummary {
   authState: string;
 }
 
+export type V8SyncConflictResolutionPath =
+  | 'auto_resolve_by_authority'
+  | 'manual_review'
+  | 'remap'
+  | 'replay_after_fix'
+  | 'dismiss'
+  | 'escalate';
+
 export interface V8SyncRunSummary {
   id: string;
   status: string;
@@ -75,6 +83,11 @@ export const V8SyncApi = {
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),
+  resolveConflict: (conflictId: string, resolutionPath: V8SyncConflictResolutionPath = 'dismiss') =>
+    v8Post<{ conflict: V8SyncConflictRecord }>(
+      `/sync/conflicts/${encodeURIComponent(conflictId)}/resolve`,
+      { resolutionPath },
+    ),
   getConnectorHealth: (connectorId: string) =>
     v8Get<{ connectorId: string; health: V8SyncConnectorHealthSummary }>(
       `/sync/connectors/${encodeURIComponent(connectorId)}/health`,

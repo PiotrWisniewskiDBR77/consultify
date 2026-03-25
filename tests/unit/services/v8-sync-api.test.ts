@@ -7,7 +7,7 @@ vi.mock('@/services/api/v8/client', () => ({
 }));
 
 import { V8SyncApi } from '@/services/api/v8/sync';
-import { v8Get } from '@/services/api/v8/client';
+import { v8Get, v8Post } from '@/services/api/v8/client';
 
 describe('V8SyncApi', () => {
   beforeEach(() => {
@@ -63,6 +63,31 @@ describe('V8SyncApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/sync/integrations');
     expect(data.count).toBe(1);
     expect(data.integrations[0].connectorId).toBe('jira');
+  });
+
+  it('posts conflict resolution to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      conflict: {
+        conflictId: 'conf-1',
+        objectSyncStateId: 'sync-state-1',
+        organizationId: 'org-1',
+        conflictClass: 'field_authority_conflict',
+        severity: 'degraded',
+        resolutionPath: 'dismiss',
+        resolutionStrategy: 'dismiss',
+        resolvedAt: '2026-03-25T12:34:00.000Z',
+        resolvedBy: 'user-1',
+        createdAt: '2026-03-25T12:00:00.000Z',
+      },
+    });
+
+    const data = await V8SyncApi.resolveConflict('conf-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/conflicts/conf-1/resolve', {
+      resolutionPath: 'dismiss',
+    });
+    expect(data.conflict.resolutionPath).toBe('dismiss');
+    expect(data.conflict.resolvedBy).toBe('user-1');
   });
 
   it('requests per-connector health from the V8 namespace', async () => {

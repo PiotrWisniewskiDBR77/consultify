@@ -251,6 +251,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   >({});
   const [v8ConnectorHealthLoading, setV8ConnectorHealthLoading] = useState(false);
   const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
+  const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -628,6 +629,24 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       await fetchErrors();
     } catch {
       /* */
+    }
+  };
+
+  const handleResolveV8Conflict = async (conflictId: string) => {
+    setResolvingConflictId(conflictId);
+    try {
+      await V8SyncApi.resolveConflict(conflictId, 'dismiss');
+      toast.success(t('integrations.syncHub.v8ConflictResolved', 'Governed conflict resolved'));
+      await Promise.all([fetchV8Conflicts(), fetchV8ConnectorHealth(), fetchIntegrations()]);
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.v8ConflictResolveFailed',
+          'Failed to resolve governed conflict',
+        ),
+      );
+    } finally {
+      setResolvingConflictId(null);
     }
   };
 
@@ -1237,6 +1256,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   </div>
                   <div className="text-xs text-slate-600 mt-1">{timeAgo(conflict.createdAt)}</div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void handleResolveV8Conflict(conflict.conflictId)}
+                  disabled={resolvingConflictId === conflict.conflictId}
+                  className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+                >
+                  {resolvingConflictId === conflict.conflictId ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={12} />
+                  )}
+                  {t('integrations.syncHub.v8DismissConflict', 'Dismiss')}
+                </button>
               </div>
             ))}
           </div>
