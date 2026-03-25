@@ -98,3 +98,21 @@ Direct API proof:
 Scope note:
 - this wave proves the V8 KB search read path on live staging
 - dedicated KB UI continuity is still not captured
+
+## Multiplayer
+
+Direct API proof:
+- `GET /api/v8/multiplayer/resource-mappings/workspace` -> `200`
+
+Scope note:
+- this wave proves the persisted multiplayer mapping substrate on live staging
+- websocket transport, room-level presence, and collaborative UI continuity are still not captured
+
+## Partner
+
+Direct blocker proof:
+- `GET /api/v8/partner/referral-analytics` -> `403`
+
+Scope note:
+- the authenticated superadmin staging session does not carry a `partnerOrgId`
+- the route is reachable on staging, but closure-grade partner proof requires a partner-authenticated session rather than a superadmin-only session
