@@ -39,7 +39,10 @@ import { useTranslation } from 'react-i18next';
 
 import {
   V8MultiplayerApi,
+  type V8MultiplayerLockRecord,
   type V8MultiplayerResourceMapping,
+  type V8MultiplayerRoomBinding,
+  type V8MultiplayerSurfacePresence,
 } from '@/services/api/v8/multiplayer';
 import {
   V8SyncApi,
@@ -229,6 +232,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [healthSummary, setHealthSummary] = useState<HealthSummary | null>(null);
   const [v8WorkspaceMapping, setV8WorkspaceMapping] =
     useState<V8MultiplayerResourceMapping | null>(null);
+  const [v8WorkspaceBinding, setV8WorkspaceBinding] = useState<V8MultiplayerRoomBinding | null>(null);
+  const [v8WorkspacePresence, setV8WorkspacePresence] = useState<V8MultiplayerSurfacePresence[]>([]);
+  const [v8WorkspaceLocks, setV8WorkspaceLocks] = useState<V8MultiplayerLockRecord[]>([]);
   const [v8AuthHealthSummary, setV8AuthHealthSummary] =
     useState<V8SyncCredentialHealthSummary | null>(null);
   const [v8AuthEscalations, setV8AuthEscalations] = useState<V8SyncAuthEscalation[]>([]);
@@ -326,6 +332,48 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
+  const fetchV8WorkspaceBinding = useCallback(async () => {
+    if (!currentOrganization?.id) {
+      setV8WorkspaceBinding(null);
+      return null;
+    }
+
+    try {
+      const data = await V8MultiplayerApi.getRoomBinding('workspace', currentOrganization.id);
+      setV8WorkspaceBinding(data.binding);
+      return data.binding;
+    } catch {
+      setV8WorkspaceBinding(null);
+      return null;
+    }
+  }, [currentOrganization?.id]);
+
+  const fetchV8WorkspacePresenceAndLocks = useCallback(
+    async (binding?: V8MultiplayerRoomBinding | null) => {
+      const resolvedBinding = binding ?? (await fetchV8WorkspaceBinding());
+      const roomId = resolvedBinding?.roomResourceId;
+
+      if (!roomId) {
+        setV8WorkspacePresence([]);
+        setV8WorkspaceLocks([]);
+        return;
+      }
+
+      try {
+        const [presenceData, locksData] = await Promise.all([
+          V8MultiplayerApi.getRoomPresence(roomId),
+          V8MultiplayerApi.getRoomLocks(roomId),
+        ]);
+        setV8WorkspacePresence(presenceData.presence || []);
+        setV8WorkspaceLocks(locksData.locks || []);
+      } catch {
+        setV8WorkspacePresence([]);
+        setV8WorkspaceLocks([]);
+      }
+    },
+    [fetchV8WorkspaceBinding]
+  );
+
   const fetchAuditLog = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/sync-hub/audit-log`, { headers: getHeaders() });
@@ -340,7 +388,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([
+    const results = await Promise.all([
       fetchIntegrations(),
       fetchCatalog(),
       fetchHealth(),
@@ -350,7 +398,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       fetchV8AuthEscalations(),
       fetchV8Conflicts(),
       fetchV8WorkspaceMapping(),
+      fetchV8WorkspaceBinding(),
     ]);
+    const workspaceBinding = results[9] as V8MultiplayerRoomBinding | null;
+    await fetchV8WorkspacePresenceAndLocks(workspaceBinding);
     setLoading(false);
   }, [
     fetchIntegrations,
@@ -362,6 +413,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     fetchV8AuthEscalations,
     fetchV8Conflicts,
     fetchV8WorkspaceMapping,
+    fetchV8WorkspaceBinding,
+    fetchV8WorkspacePresenceAndLocks,
   ]);
 
   useEffect(() => {
@@ -1041,6 +1094,89 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
         </div>
       )}
+
+      <div>
+        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <Activity size={14} className="text-sky-400" />
+          {t('integrations.syncHub.v8WorkspacePresence', 'V8 Workspace Presence')}
+          {v8WorkspacePresence.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-sky-500/10 text-sky-400 rounded">
+              {v8WorkspacePresence.length}
+            </span>
+          )}
+        </h3>
+        {v8WorkspaceBinding ? (
+          <div className="mb-3 text-xs text-slate-500">
+            {t('integrations.syncHub.v8WorkspaceRoom', 'Workspace room')}: {v8WorkspaceBinding.roomResourceId}
+          </div>
+        ) : null}
+        {v8WorkspacePresence.length === 0 ? (
+          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+            {v8WorkspaceBinding
+              ? t('integrations.syncHub.v8NoWorkspacePresence', 'No governed workspace presence is active.')
+              : t('integrations.syncHub.v8NoWorkspaceBinding', 'No governed workspace room binding is available.')}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {v8WorkspacePresence.slice(0, 5).map((presence) => (
+              <div
+                key={presence.surfacePresenceId}
+                className="flex items-start gap-3 p-3 rounded-lg bg-sky-500/5 border border-sky-500/20"
+              >
+                <Activity size={14} className="text-sky-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-200">{presence.userId}</span>
+                    <span className="px-1.5 py-0.5 text-[11px] bg-sky-500/10 text-sky-300 rounded">
+                      {presence.activeSurface}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">{presence.presenceType}</div>
+                  <div className="text-xs text-slate-600 mt-1">{timeAgo(presence.lastHeartbeat)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <Shield size={14} className="text-violet-400" />
+          {t('integrations.syncHub.v8ActiveLocks', 'V8 Active Locks')}
+          {v8WorkspaceLocks.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-violet-500/10 text-violet-400 rounded">
+              {v8WorkspaceLocks.length}
+            </span>
+          )}
+        </h3>
+        {v8WorkspaceLocks.length === 0 ? (
+          <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
+            {t('integrations.syncHub.v8NoLocks', 'No governed workspace locks are active.')}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {v8WorkspaceLocks.slice(0, 5).map((lock) => (
+              <div
+                key={lock.lockId}
+                className="flex items-start gap-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
+              >
+                <Shield size={14} className="text-violet-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-200">{lock.lockType}</span>
+                    <span className="px-1.5 py-0.5 text-[11px] bg-violet-500/10 text-violet-300 rounded">
+                      {lock.lockScope}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">{lock.holderId}</div>
+                  <div className="text-xs text-slate-600 mt-1">{timeAgo(lock.acquiredAt)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Errors list */}
       <div>

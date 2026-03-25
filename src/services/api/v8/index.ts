@@ -21,7 +21,12 @@ export {
   V8KnowledgeBaseApi,
 } from './kb';
 export type { V8KbArticle, V8KbArticleListItem, V8KbCategory } from './kb';
-export type { V8MultiplayerResourceMapping } from './multiplayer';
+export type {
+  V8MultiplayerLockRecord,
+  V8MultiplayerResourceMapping,
+  V8MultiplayerRoomBinding,
+  V8MultiplayerSurfacePresence,
+} from './multiplayer';
 export { V8MultiplayerApi } from './multiplayer';
 export { V8MyWorkApi } from './my-work';
 export type { V8PartnerEarningsSummary, V8PartnerReferralAnalytics } from './partner';
