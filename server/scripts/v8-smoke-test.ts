@@ -146,6 +146,10 @@ async function main(): Promise<void> {
     }),
   );
 
+  // Help / Knowledge Base (B-11 read-only bridge; global KB, V8 auth + org gate)
+  tests.push(await runSmokeTest('KB search', baseUrl, token, '/kb/search?q=ab'));
+  tests.push(await runSmokeTest('KB context by module', baseUrl, token, '/kb/context/chat'));
+
   // Print results
   let passed = 0;
   for (const t of tests) {
