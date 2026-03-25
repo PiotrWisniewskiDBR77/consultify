@@ -24,7 +24,9 @@ describe('V8PromptOsApi', () => {
   });
 
   it('requests runtime summary from the V8 prompt-os namespace', async () => {
-    await V8PromptOsApi.getRuntimeSummary();
+    const data = await V8PromptOsApi.getRuntimeSummary();
     expect(v8Get).toHaveBeenCalledWith(V8_PROMPT_OS_RUNTIME_SUMMARY_PATH);
+    expect(data.contract).toBe('prompt-os-runtime-v8');
+    expect(data.presetCount).toBe(0);
   });
 });

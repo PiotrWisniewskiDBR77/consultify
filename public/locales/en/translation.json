@@ -848,6 +848,21 @@
         }
       }
     },
+    "promptOsRuntime": {
+      "title": "Prompt OS runtime (V8)",
+      "subtitle": "Read-only summary from GET /api/v8/prompt-os/runtime/summary",
+      "refresh": "Refresh",
+      "loading": "Loading runtime summary…",
+      "loadError": "Could not load summary: {{message}}",
+      "none": "—",
+      "fields": {
+        "contract": "Contract",
+        "presetCount": "Presets",
+        "bundleCount": "Bundles",
+        "activeBundleCount": "Active bundles",
+        "purposeFamilies": "Purpose families supported"
+      }
+    },
     "playbookTemplates": {
       "title": "Playbook Templates",
       "subtitle": "Create and manage AI playbook templates",

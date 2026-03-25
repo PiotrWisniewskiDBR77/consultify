@@ -2,6 +2,7 @@
 /**
  * V8 Smoke Test Runner
  * CP-17: Verifies V8 endpoints are healthy after deployment.
+ * Includes Prompt OS runtime summary (B-03b staging proof: contract in response body).
  *
  * Usage:
  *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
@@ -53,6 +54,7 @@ async function runSmokeTest(
   endpoint: string,
   method: string = 'GET',
   expectedStatus: number = 200,
+  options?: { expectJsonContract?: string },
 ): Promise<SmokeTestResult> {
   const url = `${baseUrl}/api/v8${endpoint}`;
   const start = Date.now();
@@ -67,7 +69,22 @@ async function runSmokeTest(
     });
 
     const responseTime = Date.now() - start;
-    const passed = res.status === expectedStatus;
+    let passed = res.status === expectedStatus;
+    let error: string | undefined = passed ? undefined : `Expected ${expectedStatus}, got ${res.status}`;
+
+    if (passed && options?.expectJsonContract) {
+      try {
+        const body = (await res.clone().json()) as { data?: { contract?: string } };
+        const contract = body?.data?.contract;
+        if (contract !== options.expectJsonContract) {
+          passed = false;
+          error = `Expected data.contract "${options.expectJsonContract}", got ${JSON.stringify(contract)}`;
+        }
+      } catch (e: unknown) {
+        passed = false;
+        error = e instanceof Error ? e.message : 'Invalid JSON body';
+      }
+    }
 
     return {
       name,
@@ -76,7 +93,7 @@ async function runSmokeTest(
       passed,
       statusCode: res.status,
       responseTime,
-      error: passed ? undefined : `Expected ${expectedStatus}, got ${res.status}`,
+      error,
     };
   } catch (err: unknown) {
     return {
@@ -121,6 +138,13 @@ async function main(): Promise<void> {
   // AI Core endpoints
   tests.push(await runSmokeTest('AI Core environment', baseUrl, token, '/ai-core/environment'));
   tests.push(await runSmokeTest('AI Core tools', baseUrl, token, '/ai-core/tools'));
+
+  // Prompt OS — same payload shape the superadmin UI consumes (V8PromptOsApi.getRuntimeSummary)
+  tests.push(
+    await runSmokeTest('Prompt OS runtime summary', baseUrl, token, '/prompt-os/runtime/summary', 'GET', 200, {
+      expectJsonContract: 'prompt-os-runtime-v8',
+    }),
+  );
 
   // Print results
   let passed = 0;

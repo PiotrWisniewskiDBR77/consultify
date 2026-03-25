@@ -171,6 +171,21 @@
         }
       }
     },
+    "promptOsRuntime": {
+      "title": "Prompt OS — runtime (V8)",
+      "subtitle": "Podgląd tylko do odczytu z GET /api/v8/prompt-os/runtime/summary",
+      "refresh": "Odśwież",
+      "loading": "Wczytywanie podsumowania…",
+      "loadError": "Nie udało się wczytać podsumowania: {{message}}",
+      "none": "—",
+      "fields": {
+        "contract": "Kontrakt",
+        "presetCount": "Presety",
+        "bundleCount": "Pakiety",
+        "activeBundleCount": "Aktywne pakiety",
+        "purposeFamilies": "Obsługiwane rodziny celów"
+      }
+    },
     "playbookTemplates": {
       "title": "Szablony Playbooków",
       "subtitle": "Twórz i zarządzaj szablonami playbooków AI",

@@ -12,10 +12,11 @@
  * - Usage analytics and insights
  */
 
-import { Activity, BarChart2, DollarSign, List, Radar, Shield } from 'lucide-react';
+import { Activity, BarChart2, Braces, DollarSign, List, Radar, Shield } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { ChatTracesViewer } from '../../components/Admin/AI/ChatTracesViewer';
+import { PromptOsRuntimeSummaryPanel } from '../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
 import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
 import { AICostDashboard } from '../../components/Admin/AICostDashboard';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
@@ -68,6 +69,12 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
       icon: <List size={16} />,
       description: 'Per-run chat traces & basic evals',
     },
+    {
+      id: 'prompt-os-runtime',
+      label: 'Prompt OS runtime',
+      icon: <Braces size={16} />,
+      description: 'Read-only V8 Prompt OS runtime summary',
+    },
   ];
 
   const renderContent = () => {
@@ -108,6 +115,12 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
             <ChatTracesViewer />
           </div>
         );
+      case 'prompt-os-runtime':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <PromptOsRuntimeSummaryPanel />
+          </div>
+        );
       default:
         return null;
     }
@@ -128,6 +141,8 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
         return 'superadmin-ai-analytics';
       case 'traces':
         return 'superadmin-ai-traces';
+      case 'prompt-os-runtime':
+        return 'superadmin-ai-operations';
       default:
         return 'superadmin-ai-operations';
     }
