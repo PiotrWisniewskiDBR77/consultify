@@ -1,0 +1,91 @@
+{
+  "capturedAt": "2026-03-25T03:49:30.000Z",
+  "base": "https://stage.consultinity.ai",
+  "path": "/my-work",
+  "summary": {
+    "authenticatedLoginProducesValidJwt": true,
+    "authCookiesAreSet": true,
+    "authenticatedMyWorkStillBlockedByGlobal300Limiter": true,
+    "redisBackedLimiterConfirmed": true,
+    "redisStoreRefreshesTtlPerHitInCurrentRuntime": true,
+    "newMitigationPreparedLocally": true,
+    "stagingCutoverStillPending": true
+  },
+  "loginProbe": {
+    "status": 200,
+    "cookies": [
+      "csrf_token",
+      "access_token",
+      "refresh_token"
+    ],
+    "jwtPayloadFields": [
+      "id",
+      "email",
+      "role",
+      "organizationId",
+      "jti",
+      "iat",
+      "exp"
+    ]
+  },
+  "authenticatedEndpointProbe": {
+    "roofSummaryCookie": {
+      "status": 429,
+      "rateLimitLimit": 300,
+      "rateLimitRemaining": 0
+    },
+    "roofSummaryBearer": {
+      "status": 429,
+      "rateLimitLimit": 300,
+      "rateLimitRemaining": 0
+    },
+    "radarBearer": {
+      "status": 429,
+      "rateLimitLimit": 300,
+      "rateLimitRemaining": 0
+    },
+    "contextSummaryBearer": {
+      "status": 429,
+      "rateLimitLimit": 300,
+      "rateLimitRemaining": 0
+    }
+  },
+  "unauthenticatedControlProbe": {
+    "roofSummary": {
+      "status": 401,
+      "error": "No token provided"
+    },
+    "radar": {
+      "status": 401,
+      "error": "No token provided"
+    }
+  },
+  "runtimeFindings": {
+    "globalLimiterLocation": "server/src/index.ts apiLimiter",
+    "currentRuntimeSignature": "RateLimit-Limit: 300 on authenticated My Work endpoints",
+    "redisLogEvidence": [
+      "[Redis] Connecting to redis.railway.internal",
+      "[Redis] Connected and ready"
+    ],
+    "storePathology": "RedisRateLimitStore refreshes TTL on every hit, so hot buckets can remain effectively stuck under constant traffic."
+  },
+  "mitigationPrepared": {
+    "code": [
+      "server/src/utils/apiLimiterPolicy.ts",
+      "server/src/utils/RedisRateLimitStore.ts",
+      "server/src/index.ts"
+    ],
+    "intent": [
+      "raise global authenticated API cap to 1000 while keeping anonymous at 300",
+      "version global limiter keys to escape old hot Redis buckets",
+      "stop extending Redis TTL on every increment"
+    ],
+    "deploymentId": "c8ff8bd1-4fc3-4f7e-afbc-0fe5b37bcc37",
+    "deploymentStatusAtCapture": "BUILDING"
+  },
+  "notes": [
+    "This root-cause probe used controlled login plus cookie and bearer requests, not only browser snapshots.",
+    "The blocker is now clearly in the global Redis-backed API limiter rather than in missing auth cookies or stale frontend code.",
+    "Fresh live closure proof is still pending because the mitigation deployment had not yet cut over on staging at capture time."
+  ]
+}

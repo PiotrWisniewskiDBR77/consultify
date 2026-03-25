@@ -25,12 +25,15 @@ export class RedisRateLimitStore {
 
     try {
       const hits = await (redisClient as any).incr(key);
-      // Sliding window: refresh TTL on each hit (simple + safe).
-      await (redisClient as any).expire(key, windowSeconds);
+      let ttlSeconds = await (redisClient as any).ttl?.(key);
+      if (typeof ttlSeconds !== 'number' || ttlSeconds < 0) {
+        await (redisClient as any).expire(key, windowSeconds);
+        ttlSeconds = windowSeconds;
+      }
       const numHits = typeof hits === 'number' ? hits : Number(hits || 0);
       return {
         totalHits: Math.max(1, numHits),
-        resetTime: new Date(Date.now() + windowMs),
+        resetTime: new Date(Date.now() + Math.max(1, ttlSeconds) * 1000),
       };
     } catch {
       // Conservative fallback: count as 1 hit and set a reset time.

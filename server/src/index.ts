@@ -39,6 +39,7 @@ import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middlewa
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
+import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
@@ -605,8 +606,10 @@ const authRedisStore = new RedisRateLimitStore({ windowMs: 60 * 60 * 1000 });
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  // Dev SPA polls many endpoints; keep rate limiting meaningful in prod, but avoid breaking dev.
-  max: isProduction ? 300 : 20000,
+  // The authenticated SPA shell fans out across multiple modules and background polls.
+  // Keep a tighter bucket for anonymous traffic, but do not undercut authenticated
+  // route-level limiters with the global gateway cap.
+  limit: (req) => getApiLimiterLimit(req, isProduction),
   standardHeaders: true,
   legacyHeaders: false,
   store: redisStore,
@@ -618,26 +621,10 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
-      // Key by User ID when authenticated (rateLimitUserIdMiddleware sets req._rateLimitUserId)
-      // This solves the "Office IP" problem where all users share one IP
-      const userId = (req as any)._rateLimitUserId;
-      if (userId) {
-        return `api:user:${userId}`;
-      }
-
-      // Fall back to IP for unauthenticated requests
-      const ip =
-        req.ip ||
-        req.socket?.remoteAddress ||
-        req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
-        req.headers['x-real-ip']?.toString() ||
-        'unknown';
-      const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
-      const key = `api:ip:${safeIpKey}`;
-      return key && key !== 'api:ip:' ? key : 'api:ip:unknown';
+      return buildApiLimiterKey(req);
     } catch (error) {
       logger.warn('[RateLimit] keyGenerator error, using fallback:', error);
-      return 'api:ip:unknown';
+      return 'api:v2:ip:unknown';
     }
   },
 });
