@@ -1,4 +1,4 @@
-import { v8Get } from './client';
+import { v8Get, v8Post } from './client';
 
 export const V8_KB_SEARCH_PATH = '/kb/search' as const;
 export const V8_KB_ARTICLE_PATH = '/kb/articles' as const;
@@ -85,4 +85,10 @@ export const V8KnowledgeBaseApi = {
         limit: String(limit),
       }
     ),
+
+  trackArticleView: (articleId: string, source = 'in_app', sessionId?: string) =>
+    v8Post<{ success: boolean }>(`${V8_KB_ARTICLE_PATH}/${encodeURIComponent(articleId)}/view`, {
+      source,
+      ...(sessionId ? { sessionId } : {}),
+    }),
 };

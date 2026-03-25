@@ -26,6 +26,7 @@ const mockGetArticleBySlug = vi.fn();
 const mockGetContextualArticles = vi.fn();
 const mockGetCategories = vi.fn();
 const mockGetArticles = vi.fn();
+const mockTrackView = vi.fn();
 
 vi.mock('../../../services/KnowledgeBaseService.js', () => ({
   default: {
@@ -34,6 +35,7 @@ vi.mock('../../../services/KnowledgeBaseService.js', () => ({
     searchArticles: (...a: unknown[]) => mockSearchArticles(...a),
     getArticleBySlug: (...a: unknown[]) => mockGetArticleBySlug(...a),
     getContextualArticles: (...a: unknown[]) => mockGetContextualArticles(...a),
+    trackView: (...a: unknown[]) => mockTrackView(...a),
   },
 }));
 
@@ -196,5 +198,19 @@ describe('V8 Knowledge Base read-only routes', () => {
     expect(res.status).toBe(200);
     expect(mockGetContextualArticles).toHaveBeenCalledWith('chat', 'en', 7);
     expect(res.body.data.articles).toEqual([]);
+  });
+
+  it('POST /api/v8/kb/articles/:id/view delegates to trackView with authenticated user', async () => {
+    mockTrackView.mockResolvedValue(undefined);
+
+    const res = await request(createApp())
+      .post('/api/v8/kb/articles/article-1/view')
+      .set('Authorization', 'Bearer x')
+      .send({ sessionId: 'sess-1', source: 'help_panel' });
+
+    expect(res.status).toBe(200);
+    expect(mockTrackView).toHaveBeenCalledWith('article-1', UID, 'sess-1', 'help_panel');
+    expect(res.body.data.success).toBe(true);
+    expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
 });

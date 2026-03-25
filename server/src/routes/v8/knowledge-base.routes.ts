@@ -125,6 +125,32 @@ router.get(
 );
 
 /**
+ * POST /api/v8/kb/articles/:id/view
+ * Authenticated article view tracking from the Help Center surface.
+ */
+router.post(
+  '/articles/:id/view',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    getV8Context(req);
+    const articleId = firstParam((req.params as { id?: string }).id);
+    const source =
+      typeof req.body?.source === 'string' && req.body.source.trim() ? req.body.source.trim() : 'in_app';
+    const sessionId =
+      typeof req.body?.sessionId === 'string' && req.body.sessionId.trim()
+        ? req.body.sessionId.trim()
+        : undefined;
+    const userId = typeof req.userId === 'string' && req.userId.trim() ? req.userId.trim() : undefined;
+
+    if (!articleId) {
+      return res.status(400).json({ error: 'id is required', code: 'KB_ARTICLE_ID_REQUIRED' });
+    }
+
+    await KnowledgeBaseService.trackView(articleId, userId, sessionId, source);
+    return res.json({ data: { success: true }, meta: kbMeta() });
+  }),
+);
+
+/**
  * GET /api/v8/kb/context/:moduleId?lang=&limit=
  * Module-tagged articles (related_modules), same backing as GET /api/kb/context/:moduleId.
  */

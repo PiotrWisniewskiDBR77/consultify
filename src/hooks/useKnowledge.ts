@@ -169,11 +169,17 @@ async function fetchContextual(
 }
 
 async function trackView(articleId: string, source = 'in_app'): Promise<void> {
-  await fetch(`${API_BASE}/articles/${articleId}/view`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source, sessionId: getSessionId() }),
-  });
+  const sessionId = getSessionId();
+  try {
+    await V8KnowledgeBaseApi.trackArticleView(articleId, source, sessionId);
+    return;
+  } catch {
+    await fetch(`${API_BASE}/articles/${articleId}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source, sessionId }),
+    });
+  }
 }
 
 function getSessionId(): string {
