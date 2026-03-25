@@ -121,6 +121,68 @@ describe('rateLimiting.middleware (L1)', () => {
     }
   });
 
+  it('uses decoded bearer token user id for keying before auth middleware runs', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      vi.doMock('jsonwebtoken', () => ({
+        default: { decode: vi.fn(() => ({ id: 'u-token' })) },
+        decode: vi.fn(() => ({ id: 'u-token' })),
+      }));
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      const req: any = {
+        method: 'GET',
+        ip: '9.9.9.9',
+        headers: { authorization: 'Bearer jwt-token' },
+        socket: {},
+      };
+      const res1 = makeRes();
+      const next1 = vi.fn();
+      mod.apiAuthRateLimiter(req, res1 as any, next1 as any);
+      expect(next1).toHaveBeenCalledTimes(1);
+
+      const res2 = makeRes();
+      const next2 = vi.fn();
+      mod.apiAuthRateLimiter(req, res2 as any, next2 as any);
+      expect(next2).toHaveBeenCalledTimes(1);
+      expect(Number(res2.headers['x-ratelimit-remaining'])).toBeLessThan(
+        Number(res1.headers['x-ratelimit-remaining'])
+      );
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('uses decoded cookie token user id for keying before auth middleware runs', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      vi.doMock('jsonwebtoken', () => ({
+        default: { decode: vi.fn(() => ({ userId: 'u-cookie' })) },
+        decode: vi.fn(() => ({ userId: 'u-cookie' })),
+      }));
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      const req: any = {
+        method: 'GET',
+        ip: '9.9.9.9',
+        headers: {},
+        cookies: { access_token: 'cookie-jwt' },
+        socket: {},
+      };
+      const res = makeRes();
+      const next = vi.fn();
+      mod.apiAuthRateLimiter(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.headers['x-ratelimit-limit']).toBe('1000');
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
   it('returns 429 when exceeding auth limiter max (prod)', async () => {
     const prev = process.env.NODE_ENV;
     try {

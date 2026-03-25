@@ -7,6 +7,7 @@
  */
 
 import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 // ---------------------------------------------------------------------------
 // In-Memory Sliding Window Store
@@ -35,9 +36,35 @@ function increment(key: string, windowMs: number): { count: number; resetAt: num
   return { count: entry.count, resetAt: entry.resetAt };
 }
 
+function extractToken(req: Request): string | null {
+  const authHeader = req.headers['authorization'];
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) return authHeader.slice(7);
+  if (typeof authHeader === 'string' && authHeader.length > 0) return authHeader;
+
+  const cookieToken = (req as any).cookies?.access_token || (req as any).cookies?.token;
+  if (typeof cookieToken === 'string' && cookieToken.length > 0) return cookieToken;
+
+  return null;
+}
+
+function tryExtractUserIdFromToken(req: Request): string | null {
+  const token = extractToken(req);
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.decode(token) as { id?: string; userId?: string; sub?: string } | null;
+    const candidate = decoded?.id || decoded?.userId || decoded?.sub;
+    return typeof candidate === 'string' && candidate.length > 0 ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 function extractKey(req: Request): string {
   const uid = (req as any).userId || (req as any).user?.id;
   if (uid) return `u:${uid}`;
+  const tokenUid = tryExtractUserIdFromToken(req);
+  if (tokenUid) return `u:${tokenUid}`;
   const ip =
     req.ip ||
     req.socket?.remoteAddress ||

@@ -1,0 +1,47 @@
+{
+  "capturedAt": "2026-03-25T03:37:20.000Z",
+  "base": "https://stage.consultinity.ai",
+  "path": "/my-work",
+  "summary": {
+    "sharedRateLimitKeyingFixRetested": true,
+    "freshAuthenticatedLoadBlockedBy429": true,
+    "myWorkDashboardFallbackVisible": true,
+    "homeRadarSurfaceProofRecovered": false
+  },
+  "deploymentContext": {
+    "attemptedDeploymentId": "5a6a32f3-c014-471e-91d4-9a0aee2b6985",
+    "railwayBuildLogReachedHealthcheckSuccess": true,
+    "railwayReadbackStillReportedBuilding": true,
+    "railwayServiceStatusStopped": true
+  },
+  "browserSnapshot": {
+    "heading": "My Work Dashboard",
+    "message": "Too many requests, please try again later."
+  },
+  "network": {
+    "status200": [
+      "/my-work",
+      "/api/auth/me",
+      "/api/health"
+    ],
+    "status429": [
+      "/api/v8/admin/flags",
+      "/api/organization/policy-snapshot",
+      "/api/notifications/unread-count",
+      "/api/artifacts/my-work?limit=8",
+      "/api/help/micro-video/dismissed",
+      "/api/notifications?limit=20",
+      "/api/tasks?status=todo,in_progress,review,blocked,pending_approval",
+      "/api/llm/providers/health?timeoutMs=1200",
+      "/api/v8/my-work/roof/summary",
+      "/api/my-work/radar",
+      "/api/my-work/context-summary",
+      "/api/my-work/session-context"
+    ]
+  },
+  "notes": [
+    "This retest happened after deploying the shared token-aware keying fix for route-level rate limiting.",
+    "Despite that change, the user-visible My Work load remained blocked by the same 429 wall.",
+    "Closure proof for Home/Radar remains blocked at staging runtime level, not at local code or bundle level."
+  ]
+}
