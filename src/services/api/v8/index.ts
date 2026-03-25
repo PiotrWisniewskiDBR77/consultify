@@ -23,6 +23,8 @@ export {
 export type { V8MultiplayerResourceMapping } from './multiplayer';
 export { V8MultiplayerApi } from './multiplayer';
 export { V8MyWorkApi } from './my-work';
+export type { V8PartnerEarningsSummary, V8PartnerReferralAnalytics } from './partner';
+export { V8PartnerApi } from './partner';
 export type { V8PlanningDecisionChain, V8PlanningDecisionEntry } from './planning';
 export { V8PlanningApi } from './planning';
 export type { V8PromptOsRuntimeSummary } from './prompt-os';

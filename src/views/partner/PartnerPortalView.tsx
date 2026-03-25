@@ -46,6 +46,11 @@ import { type Breadcrumb, PartnerLayout } from '../../components/Partner/Partner
 import { PartnerSection } from '../../components/Partner/PartnerSidebar';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
+import {
+  V8PartnerApi,
+  type V8PartnerEarningsSummary,
+  type V8PartnerReferralAnalytics,
+} from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 
 // Lazy load new sections
@@ -424,9 +429,79 @@ interface MetricsData {
   };
 }
 
+interface V8PartnerRuntimeSummary {
+  analytics: V8PartnerReferralAnalytics;
+  earnings: V8PartnerEarningsSummary;
+}
+
+const buildFallbackMetricsData = (
+  referralAnalytics: V8PartnerReferralAnalytics,
+  earningsSummary: V8PartnerEarningsSummary
+): MetricsData => {
+  const revenueChange =
+    earningsSummary.lastMonth > 0
+      ? Math.round(((earningsSummary.thisMonth - earningsSummary.lastMonth) / earningsSummary.lastMonth) * 100)
+      : earningsSummary.thisMonth > 0
+        ? 100
+        : 0;
+
+  const clientAcquisition = Math.min(100, referralAnalytics.signups * 10);
+  const projectDelivery = Math.min(100, referralAnalytics.paidCustomers * 20);
+  const customerSatisfaction = Math.min(100, Math.round(referralAnalytics.conversionRate));
+  const certificationProgress = 0;
+  const performanceScore = Math.round(
+    (clientAcquisition + projectDelivery + customerSatisfaction + certificationProgress) / 4
+  );
+
+  return {
+    revenue: {
+      totalYTD: earningsSummary.totalEarned || 0,
+      change: revenueChange,
+      byMonth: [0, 0, 0, 0, earningsSummary.lastMonth || 0, earningsSummary.thisMonth || 0],
+    },
+    clients: {
+      retention:
+        referralAnalytics.signups > 0
+          ? Math.round((referralAnalytics.paidCustomers / referralAnalytics.signups) * 100)
+          : 0,
+      newThisQuarter: referralAnalytics.signups || 0,
+      churned: 0,
+      avgProjectDuration: 0,
+    },
+    performance: {
+      score: performanceScore,
+      breakdown: {
+        clientAcquisition,
+        projectDelivery,
+        customerSatisfaction,
+        certificationProgress,
+      },
+      ranking: 'Governed runtime snapshot',
+    },
+    satisfaction: {
+      score: Number((Math.min(5, referralAnalytics.conversionRate / 20 || 0)).toFixed(1)),
+      responses: referralAnalytics.paidCustomers || 0,
+      trend: 'governed runtime',
+    },
+  };
+};
+
+const normalizeMetricsPayload = (payload: any): MetricsData | null => {
+  const data = payload?.data && payload?.data !== payload ? payload.data : payload;
+  if (!data) return null;
+  if (data.revenue && data.clients && data.performance && data.satisfaction) {
+    return data as MetricsData;
+  }
+  if (data.referralAnalytics && data.earningsSummary) {
+    return buildFallbackMetricsData(data.referralAnalytics, data.earningsSummary);
+  }
+  return null;
+};
+
 const MetricsSection: React.FC = () => {
   const { t } = useTranslation();
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
+  const [v8RuntimeSummary, setV8RuntimeSummary] = useState<V8PartnerRuntimeSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -435,9 +510,9 @@ const MetricsSection: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/metrics');
-      const payload = response?.data;
-      if (response?.success && payload?.data) {
-        setMetricsData(payload.data);
+      const metrics = normalizeMetricsPayload(response?.data);
+      if (response?.success && metrics) {
+        setMetricsData(metrics);
       } else {
         throw new Error('Invalid response');
       }
@@ -450,9 +525,25 @@ const MetricsSection: React.FC = () => {
     }
   }, []);
 
+  const fetchV8RuntimeSummary = useCallback(async () => {
+    try {
+      const [analyticsResponse, earningsResponse] = await Promise.all([
+        V8PartnerApi.getReferralAnalytics(),
+        V8PartnerApi.getEarningsSummary(),
+      ]);
+      setV8RuntimeSummary({
+        analytics: analyticsResponse.analytics,
+        earnings: earningsResponse.earnings,
+      });
+    } catch {
+      setV8RuntimeSummary(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMetrics();
-  }, [fetchMetrics]);
+    void fetchV8RuntimeSummary();
+  }, [fetchMetrics, fetchV8RuntimeSummary]);
 
   // Loading skeleton
   if (loading) {
@@ -527,6 +618,64 @@ const MetricsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {v8RuntimeSummary && (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-violet-500" />
+                {t('partner.metrics.v8RuntimeTitle', 'V8 Runtime Summary')}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {t(
+                  'partner.metrics.v8RuntimeSubtitle',
+                  'Live partner-authenticated governed reads from the V8 namespace.'
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                label: t('partner.metrics.v8ReferralClicks', 'Referral clicks'),
+                value: String(v8RuntimeSummary.analytics.totalClicks ?? 0),
+                detail: `${v8RuntimeSummary.analytics.uniqueClicks ?? 0} unique`,
+              },
+              {
+                label: t('partner.metrics.v8PaidCustomers', 'Paid customers'),
+                value: String(v8RuntimeSummary.analytics.paidCustomers ?? 0),
+                detail: `${v8RuntimeSummary.analytics.signups ?? 0} signups`,
+              },
+              {
+                label: t('partner.metrics.v8ConversionRate', 'Conversion rate'),
+                value: `${v8RuntimeSummary.analytics.conversionRate ?? 0}%`,
+                detail: `${v8RuntimeSummary.analytics.trials ?? 0} trials`,
+              },
+              {
+                label: t('partner.metrics.v8ReadyForPayout', 'Ready for payout'),
+                value: `${v8RuntimeSummary.earnings.currency ?? 'EUR'} ${(
+                  v8RuntimeSummary.earnings.readyForPayout ?? 0
+                ).toLocaleString()}`,
+                detail: `${v8RuntimeSummary.earnings.totalPending ?? 0} pending`,
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+              >
+                <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {card.label}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                  {card.value}
+                </div>
+                <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
