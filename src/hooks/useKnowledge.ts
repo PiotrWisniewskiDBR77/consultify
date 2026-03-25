@@ -54,13 +54,18 @@ export interface KbArticle extends KbArticleListItem {
 const API_BASE = '/api/kb';
 
 async function fetchCategories(lang: string, includePrivate = false): Promise<KbCategory[]> {
-  const params = new URLSearchParams({ lang });
-  if (includePrivate) params.append('all', 'true');
+  try {
+    const data = await V8KnowledgeBaseApi.getCategories(lang, includePrivate);
+    return data.categories as KbCategory[];
+  } catch {
+    const params = new URLSearchParams({ lang });
+    if (includePrivate) params.append('all', 'true');
 
-  const res = await fetch(`${API_BASE}/categories?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch categories');
-  const data = await res.json();
-  return data.categories;
+    const res = await fetch(`${API_BASE}/categories?${params}`);
+    if (!res.ok) throw new Error('Failed to fetch categories');
+    const data = await res.json();
+    return data.categories;
+  }
 }
 
 async function fetchArticles(params: {
@@ -72,18 +77,31 @@ async function fetchArticles(params: {
   publicOnly?: boolean;
   moduleId?: string;
 }): Promise<{ articles: KbArticleListItem[]; total: number }> {
-  const searchParams = new URLSearchParams();
-  if (params.lang) searchParams.append('lang', params.lang);
-  if (params.category) searchParams.append('category', params.category);
-  if (params.search) searchParams.append('search', params.search);
-  if (params.limit) searchParams.append('limit', String(params.limit));
-  if (params.offset) searchParams.append('offset', String(params.offset));
-  if (params.publicOnly) searchParams.append('public', 'true');
-  if (params.moduleId) searchParams.append('module', params.moduleId);
+  try {
+    const data = await V8KnowledgeBaseApi.getArticles({
+      lang: params.lang || 'en',
+      category: params.category,
+      search: params.search,
+      limit: params.limit,
+      offset: params.offset,
+      publicOnly: params.publicOnly,
+      moduleId: params.moduleId,
+    });
+    return { articles: data.articles as KbArticleListItem[], total: data.total || 0 };
+  } catch {
+    const searchParams = new URLSearchParams();
+    if (params.lang) searchParams.append('lang', params.lang);
+    if (params.category) searchParams.append('category', params.category);
+    if (params.search) searchParams.append('search', params.search);
+    if (params.limit) searchParams.append('limit', String(params.limit));
+    if (params.offset) searchParams.append('offset', String(params.offset));
+    if (params.publicOnly) searchParams.append('public', 'true');
+    if (params.moduleId) searchParams.append('module', params.moduleId);
 
-  const res = await fetch(`${API_BASE}/articles?${searchParams}`);
-  if (!res.ok) throw new Error('Failed to fetch articles');
-  return res.json();
+    const res = await fetch(`${API_BASE}/articles?${searchParams}`);
+    if (!res.ok) throw new Error('Failed to fetch articles');
+    return res.json();
+  }
 }
 
 async function fetchArticle(slug: string, lang: string): Promise<KbArticle> {

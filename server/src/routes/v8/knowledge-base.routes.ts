@@ -35,6 +35,52 @@ function kbMeta() {
 }
 
 /**
+ * GET /api/v8/kb/categories?lang=&all=
+ * Same semantics as GET /api/kb/categories; returns translated category pills with counts.
+ */
+router.get(
+  '/categories',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    getV8Context(req);
+    const language = firstParam(req.query.lang) || 'en';
+    const includePrivate = firstParam(req.query.all) === 'true';
+
+    const categories = await KnowledgeBaseService.getCategories(language, includePrivate);
+    return res.json({ data: { categories }, meta: kbMeta() });
+  }),
+);
+
+/**
+ * GET /api/v8/kb/articles?lang=&category=&search=&limit=&offset=&public=&module=
+ * Same semantics as GET /api/kb/articles; returns paginated article cards plus total.
+ */
+router.get(
+  '/articles',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    getV8Context(req);
+    const language = firstParam(req.query.lang) || 'en';
+    const categorySlug = firstParam(req.query.category);
+    const search = firstParam(req.query.search);
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
+    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+    const publicOnly = firstParam(req.query.public) === 'true';
+    const moduleId = firstParam(req.query.module);
+
+    const result = await KnowledgeBaseService.getArticles({
+      language,
+      categorySlug,
+      search,
+      limit,
+      offset,
+      publicOnly,
+      moduleId,
+    });
+
+    return res.json({ data: result, meta: kbMeta() });
+  }),
+);
+
+/**
  * GET /api/v8/kb/search?q=&lang=&limit=
  * Same semantics as GET /api/kb/search; empty q or q.length < 2 → empty list.
  */

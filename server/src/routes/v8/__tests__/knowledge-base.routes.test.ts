@@ -24,9 +24,13 @@ vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
 const mockSearchArticles = vi.fn();
 const mockGetArticleBySlug = vi.fn();
 const mockGetContextualArticles = vi.fn();
+const mockGetCategories = vi.fn();
+const mockGetArticles = vi.fn();
 
 vi.mock('../../../services/KnowledgeBaseService.js', () => ({
   default: {
+    getCategories: (...a: unknown[]) => mockGetCategories(...a),
+    getArticles: (...a: unknown[]) => mockGetArticles(...a),
     searchArticles: (...a: unknown[]) => mockSearchArticles(...a),
     getArticleBySlug: (...a: unknown[]) => mockGetArticleBySlug(...a),
     getContextualArticles: (...a: unknown[]) => mockGetContextualArticles(...a),
@@ -93,6 +97,43 @@ describe('V8 Knowledge Base read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
+  });
+
+  it('GET /api/v8/kb/categories delegates to KnowledgeBaseService.getCategories', async () => {
+    mockGetCategories.mockResolvedValue([{ id: 'cat-1', slug: 'general', name: 'General' }]);
+
+    const res = await request(createApp())
+      .get('/api/v8/kb/categories?lang=pl&all=true')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(mockGetCategories).toHaveBeenCalledWith('pl', true);
+    expect(res.body.data.categories).toHaveLength(1);
+    expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
+  });
+
+  it('GET /api/v8/kb/articles delegates to KnowledgeBaseService.getArticles', async () => {
+    mockGetArticles.mockResolvedValue({
+      articles: [{ id: 'a-1', slug: 'intro', title: 'Intro' }],
+      total: 1,
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/kb/articles?lang=en&category=general&limit=7&offset=14')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(mockGetArticles).toHaveBeenCalledWith({
+      language: 'en',
+      categorySlug: 'general',
+      search: undefined,
+      limit: 7,
+      offset: 14,
+      publicOnly: false,
+      moduleId: undefined,
+    });
+    expect(res.body.data.total).toBe(1);
+    expect(res.body.meta.version).toBe('v8');
   });
 
   it('GET /api/v8/kb/search returns empty data without calling service when q is too short', async () => {

@@ -13,13 +13,14 @@ export type { V8FinanceDashboard } from './finance';
 export { V8FinanceApi } from './finance';
 export type { V8InterviewSession } from './interview';
 export { V8InterviewApi } from './interview';
-export type { V8KbArticle, V8KbArticleListItem } from './kb';
 export {
   V8_KB_ARTICLE_PATH,
+  V8_KB_CATEGORIES_PATH,
   V8_KB_CONTEXT_PATH,
   V8_KB_SEARCH_PATH,
   V8KnowledgeBaseApi,
 } from './kb';
+export type { V8KbArticle, V8KbArticleListItem, V8KbCategory } from './kb';
 export type { V8MultiplayerResourceMapping } from './multiplayer';
 export { V8MultiplayerApi } from './multiplayer';
 export { V8MyWorkApi } from './my-work';
