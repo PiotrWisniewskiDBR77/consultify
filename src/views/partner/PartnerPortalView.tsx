@@ -2983,7 +2983,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       case 'referral-tools':
       case 'referral-analytics':
       case 'referred-organizations':
-        return <ReferralToolsSection />;
+        return <ReferralToolsSection subsection={activeSection} />;
       // Earnings
       case 'earnings':
       case 'statements':

@@ -53,7 +53,13 @@ interface ReferralTools {
   campaignLinks: CampaignLink[];
 }
 
-export const ReferralToolsSection: React.FC = () => {
+interface ReferralToolsSectionProps {
+  subsection?: 'referral-tools' | 'referral-analytics' | 'referred-organizations';
+}
+
+export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
+  subsection = 'referral-tools',
+}) => {
   const { t } = useTranslation();
   const [tools, setTools] = useState<ReferralTools | null>(null);
   const [v8Analytics, setV8Analytics] = useState<V8PartnerReferralAnalytics | null>(null);
@@ -70,6 +76,48 @@ export const ReferralToolsSection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  const pageCopy = {
+    'referral-tools': {
+      title: t('partner.referrals.title', 'My Referral Links & Codes'),
+      subtitle: t(
+        'partner.referrals.subtitle',
+        'Share your unique links and codes to earn commissions'
+      ),
+      runtimeTitle: t('partner.referrals.v8RuntimeTitle', 'V8 Referral Summary'),
+      runtimeSubtitle: t(
+        'partner.referrals.v8RuntimeSubtitle',
+        'Governed click and conversion analytics from the V8 namespace.'
+      ),
+    },
+    'referral-analytics': {
+      title: t('partner.referrals.analyticsTitle', 'Click Analytics'),
+      subtitle: t(
+        'partner.referrals.analyticsSubtitle',
+        'Review governed referral funnel signals alongside your live campaign tools.'
+      ),
+      runtimeTitle: t('partner.referrals.v8AnalyticsRuntimeTitle', 'V8 Referral Analytics'),
+      runtimeSubtitle: t(
+        'partner.referrals.v8AnalyticsRuntimeSubtitle',
+        'Governed referral clicks, signups, and conversion health from the V8 namespace.'
+      ),
+    },
+    'referred-organizations': {
+      title: t('partner.referrals.referredOrganizationsTitle', 'Referred Customers'),
+      subtitle: t(
+        'partner.referrals.referredOrganizationsSubtitle',
+        'Review governed customer-acquisition summary alongside the existing referral tooling.'
+      ),
+      runtimeTitle: t(
+        'partner.referrals.v8ReferredOrganizationsRuntimeTitle',
+        'V8 Customer Acquisition Summary'
+      ),
+      runtimeSubtitle: t(
+        'partner.referrals.v8ReferredOrganizationsRuntimeSubtitle',
+        'Governed signups, trials, and paid-customer progression from the V8 namespace.'
+      ),
+    },
+  }[subsection];
 
   // Fetch referral tools from API
   const fetchTools = useCallback(async () => {
@@ -229,10 +277,10 @@ export const ReferralToolsSection: React.FC = () => {
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {t('partner.referrals.title', 'My Referral Links & Codes')}
+          {pageCopy.title}
         </h2>
         <p className="text-slate-400 dark:text-slate-500">
-          {t('partner.referrals.subtitle', 'Share your unique links and codes to earn commissions')}
+          {pageCopy.subtitle}
         </p>
       </div>
 
@@ -242,13 +290,10 @@ export const ReferralToolsSection: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-violet-500" />
-                {t('partner.referrals.v8RuntimeTitle', 'V8 Referral Summary')}
+                {pageCopy.runtimeTitle}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                {t(
-                  'partner.referrals.v8RuntimeSubtitle',
-                  'Governed click and conversion analytics from the V8 namespace.'
-                )}
+                {pageCopy.runtimeSubtitle}
               </p>
             </div>
           </div>
