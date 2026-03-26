@@ -19,6 +19,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 export interface RiskSignal {
@@ -103,11 +104,13 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
       const params = new URLSearchParams();
       if (projectId) params.set('projectId', projectId);
 
-      const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await V8ExecutionControlApi.getRiskSignals(projectId).catch(async () => {
+        const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return { signals: [], count: 0 };
+        return res.json();
       });
-      if (!res.ok) return;
-      const data = await res.json();
       setSignals(data.signals || []);
       trackFunnelEvent('execution_risk_signal_viewed', { count: data.count || 0 });
     } catch {
@@ -126,14 +129,16 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
       const token = getAuthToken();
       if (!token) return;
 
-      await fetch('/api/execution-control/risk-signals/dismiss', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ signalId }),
-      });
+      await V8ExecutionControlApi.dismissRiskSignal(signalId).catch(() =>
+        fetch('/api/execution-control/risk-signals/dismiss', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ signalId }),
+        })
+      );
 
       setDismissedIds((prev) => new Set([...prev, signalId]));
       trackFunnelEvent('execution_risk_signal_dismissed', { signalId });

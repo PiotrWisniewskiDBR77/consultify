@@ -2,16 +2,23 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_EXECUTION_CONTROL_READ_CONTRACT } from '../execution-control.routes.js';
+import {
+  V8_EXECUTION_CONTROL_MUTATION_CONTRACT,
+  V8_EXECUTION_CONTROL_READ_CONTRACT,
+} from '../execution-control.routes.js';
 
 const mockDetectRiskSignals = vi.fn();
 const mockGetTimelineWarningsSnapshot = vi.fn();
 const mockDetectDelaySignals = vi.fn();
 const mockGetPersistedDelaySignals = vi.fn();
+const mockPersistDelaySignals = vi.fn();
 const mockGetLevelingAlerts = vi.fn();
 const mockGetCapacityTimeline = vi.fn();
 const mockGetPortfolioBudgetSummary = vi.fn();
 const mockDetectOverspendSignals = vi.fn();
+const mockCreateBudgetEntry = vi.fn();
+const mockDbAll = vi.fn();
+const mockDbRun = vi.fn();
 
 vi.mock('../../../services/riskDetectionService.js', () => ({
   detectRiskSignals: (...args: unknown[]) => mockDetectRiskSignals(...args),
@@ -24,6 +31,7 @@ vi.mock('../../../services/executionControlReadService.js', () => ({
 vi.mock('../../../services/delayDetectionService.js', () => ({
   detectDelaySignals: (...args: unknown[]) => mockDetectDelaySignals(...args),
   getPersistedDelaySignals: (...args: unknown[]) => mockGetPersistedDelaySignals(...args),
+  persistDelaySignals: (...args: unknown[]) => mockPersistDelaySignals(...args),
 }));
 
 vi.mock('../../../services/workloadCapacityService.js', () => ({
@@ -32,8 +40,14 @@ vi.mock('../../../services/workloadCapacityService.js', () => ({
 }));
 
 vi.mock('../../../services/executionBudgetService.js', () => ({
+  createBudgetEntry: (...args: unknown[]) => mockCreateBudgetEntry(...args),
   getPortfolioBudgetSummary: (...args: unknown[]) => mockGetPortfolioBudgetSummary(...args),
   detectOverspendSignals: (...args: unknown[]) => mockDetectOverspendSignals(...args),
+}));
+
+vi.mock('../../../utils/DbPromise.js', () => ({
+  all: (...args: unknown[]) => mockDbAll(...args),
+  run: (...args: unknown[]) => mockDbRun(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -117,10 +131,14 @@ describe('V8 execution-control read-only routes', () => {
     mockGetTimelineWarningsSnapshot.mockResolvedValue({ warnings: [], total: 0 });
     mockDetectDelaySignals.mockResolvedValue([]);
     mockGetPersistedDelaySignals.mockResolvedValue([]);
+    mockPersistDelaySignals.mockResolvedValue({ persisted: 0, alertsSent: 0 });
     mockGetLevelingAlerts.mockResolvedValue([]);
     mockGetCapacityTimeline.mockResolvedValue([]);
     mockGetPortfolioBudgetSummary.mockResolvedValue({ totals: { planned: 0, actual: 0 } });
     mockDetectOverspendSignals.mockResolvedValue([]);
+    mockCreateBudgetEntry.mockResolvedValue('budget-entry-1');
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
   it('GET /api/v8/execution-control/risk-signals returns envelope and org-scoped detection', async () => {
@@ -241,5 +259,95 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
     expect(res.body.data?.weeks).toHaveLength(1);
     expect(mockGetCapacityTimeline).toHaveBeenCalledWith(ORG, 'init-1');
+  });
+
+  it('POST /api/v8/execution-control/risk-signals/dismiss persists org-scoped dismiss rows', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/execution-control/risk-signals/dismiss')
+      .send({ signalId: 'sig-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
+    expect(res.body.data?.signalId).toBe('sig-1');
+    expect(mockDbRun).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/execution-control/delay-signals/detect persists detected rows', async () => {
+    mockDetectDelaySignals.mockResolvedValue([{ id: 'delay-1' }]);
+    mockPersistDelaySignals.mockResolvedValue({ persisted: 1, alertsSent: 0 });
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/execution-control/delay-signals/detect')
+      .send({ projectId: 'proj-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
+    expect(res.body.data?.detected).toBe(1);
+    expect(mockDetectDelaySignals).toHaveBeenCalledWith(ORG, 'proj-1');
+    expect(mockPersistDelaySignals).toHaveBeenCalledWith(ORG, [{ id: 'delay-1' }]);
+  });
+
+  it('POST /api/v8/execution-control/delay-signals/dismiss updates org-scoped dismiss state', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/delay-signals/dismiss').send({
+      signalId: 'delay-1',
+      entityType: 'INITIATIVE',
+      entityId: 'init-1',
+      deviationType: 'OVERDUE',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
+    expect(res.body.data?.signalId).toBe('delay-1');
+    expect(mockDbRun).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/execution-control/timeline-update updates org-scoped initiative fields', async () => {
+    mockDbAll.mockResolvedValue([{ current_value: '2026-03-31' }]);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/timeline-update').send({
+      initiativeId: 'init-1',
+      field: 'planned_end_date',
+      value: '2026-04-15',
+      reason: 'Rebased',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
+    expect(res.body.data?.oldValue).toBe('2026-03-31');
+    expect(res.body.data?.newValue).toBe('2026-04-15');
+    expect(mockDbAll).toHaveBeenCalled();
+    expect(mockDbRun).toHaveBeenCalledTimes(2);
+  });
+
+  it('POST /api/v8/execution-control/budget/entries delegates to the budget service', async () => {
+    mockCreateBudgetEntry.mockResolvedValue('be-1');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/budget/entries').send({
+      initiativeId: 'init-1',
+      entryType: 'ACTUAL',
+      costType: 'CAPEX',
+      amount: 1200,
+      periodMonth: 3,
+      periodYear: 2026,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
+    expect(res.body.data?.id).toBe('be-1');
+    expect(mockCreateBudgetEntry).toHaveBeenCalledWith(
+      ORG,
+      expect.objectContaining({
+        initiativeId: 'init-1',
+        entryType: 'ACTUAL',
+        costType: 'CAPEX',
+        amount: 1200,
+        createdBy: UID,
+      })
+    );
   });
 });

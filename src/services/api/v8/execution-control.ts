@@ -1,4 +1,4 @@
-import { v8Get } from './client';
+import { v8Get, v8Post } from './client';
 
 export interface V8ExecutionRiskSignal {
   id: string;
@@ -86,6 +86,32 @@ export interface V8ExecutionCapacityWeek {
   availableHours: number;
 }
 
+export interface V8ExecutionTimelineUpdatePayload {
+  initiativeId: string;
+  field:
+    | 'status'
+    | 'planned_start_date'
+    | 'planned_end_date'
+    | 'start_date'
+    | 'actual_end_date'
+    | 'progress';
+  value: string;
+  reason?: string;
+}
+
+export interface V8ExecutionBudgetEntryPayload {
+  initiativeId: string;
+  entryType: 'ACTUAL' | 'FORECAST' | 'ADJUSTMENT';
+  costType: 'CAPEX' | 'OPEX';
+  category?: string;
+  amount: number;
+  currency?: string;
+  description?: string;
+  periodMonth?: number;
+  periodYear?: number;
+  source?: string;
+}
+
 export const V8ExecutionControlApi = {
   getRiskSignals: (projectId?: string) =>
     v8Get<{ signals: V8ExecutionRiskSignal[]; count: number }>(
@@ -136,4 +162,33 @@ export const V8ExecutionControlApi = {
       '/execution-control/capacity/timeline',
       initiativeId ? { initiativeId } : undefined
     ),
+
+  dismissRiskSignal: (signalId: string) =>
+    v8Post<{ success: boolean; signalId: string }>('/execution-control/risk-signals/dismiss', {
+      signalId,
+    }),
+
+  detectDelaySignals: (projectId?: string | null) =>
+    v8Post<{ success: boolean; detected: number; persisted: number; alertsSent: number }>(
+      '/execution-control/delay-signals/detect',
+      { projectId: projectId || null }
+    ),
+
+  dismissDelaySignal: (payload: {
+    signalId: string;
+    entityType: 'INITIATIVE' | 'TASK';
+    entityId: string;
+    deviationType: string;
+  }) => v8Post<{ success: boolean; signalId: string }>('/execution-control/delay-signals/dismiss', payload),
+
+  updateTimeline: (payload: V8ExecutionTimelineUpdatePayload) =>
+    v8Post<{
+      success: boolean;
+      field: string;
+      oldValue: string | null;
+      newValue: string;
+    }>('/execution-control/timeline-update', payload),
+
+  createBudgetEntry: (payload: V8ExecutionBudgetEntryPayload) =>
+    v8Post<{ success: boolean; id: string }>('/execution-control/budget/entries', payload),
 };

@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -100,36 +101,59 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
 
       // Try to persist detections (admin-only). Non-blocking: ignore 403/401.
       try {
-        await fetch('/api/execution-control/delay-signals/detect', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ projectId: projectId || null }),
-        });
+        await V8ExecutionControlApi.detectDelaySignals(projectId).catch(() =>
+          fetch('/api/execution-control/delay-signals/detect', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ projectId: projectId || null }),
+          })
+        );
       } catch {
         // non-blocking
       }
 
       // Prefer persisted signals (stable + respects dismiss rows).
-      const persistedRes = await fetch(
-        `/api/execution-control/delay-signals?${params.toString()}&persisted=true`,
-        { headers }
-      );
-      if (persistedRes.ok) {
-        const data = await persistedRes.json();
-        setSignals(data.signals || []);
-        return;
+      try {
+        const persistedData = await V8ExecutionControlApi.getDelaySignals({
+          projectId,
+          persisted: true,
+        }).catch(async () => {
+          const persistedRes = await fetch(
+            `/api/execution-control/delay-signals?${params.toString()}&persisted=true`,
+            { headers }
+          );
+          if (!persistedRes.ok) {
+            throw new Error('Persisted delay fetch failed');
+          }
+          return persistedRes.json();
+        });
+        if (persistedData) {
+          const data = persistedData as { signals?: DelaySignalItem[] };
+          setSignals(data.signals || []);
+          return;
+        }
+      } catch {
+        // Fall through to live detection if persisted reads are unavailable.
       }
 
       // Fallback to live detection (e.g., if persisted is restricted).
-      const liveRes = await fetch(`/api/execution-control/delay-signals?${params}`, { headers });
-      if (liveRes.ok) {
-        const data = await liveRes.json();
+      const data = await V8ExecutionControlApi.getDelaySignals(
+        projectId ? { projectId } : undefined
+      ).catch(async () => {
+        const liveRes = await fetch(`/api/execution-control/delay-signals?${params}`, { headers });
+        if (!liveRes.ok) {
+          const err = await liveRes.json().catch(() => ({}));
+          throw new Error((err as any)?.error || t('execution.delay.loadFailed', 'Failed to load'));
+        }
+        return liveRes.json();
+      });
+      if (data) {
         setSignals(data.signals || []);
-      } else {
-        const err = await liveRes.json().catch(() => ({}));
-        toast.error((err as any)?.error || t('execution.delay.loadFailed', 'Failed to load'));
       }
-    } catch {
+    } catch (error: any) {
+      if (error?.message) {
+        toast.error(error.message);
+      }
       // non-blocking
     } finally {
       setIsLoading(false);
@@ -153,16 +177,21 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await fetch('/api/execution-control/delay-signals/dismiss', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signalId: signal.id,
-          entityType: signal.entityType,
-          entityId: signal.entityId,
-          deviationType: signal.deviationType,
-        }),
-      });
+      const payload = {
+        signalId: signal.id,
+        entityType: signal.entityType,
+        entityId: signal.entityId,
+        deviationType: signal.deviationType,
+      };
+      const res = await V8ExecutionControlApi.dismissDelaySignal(payload)
+        .then(() => ({ ok: true, json: async () => ({}) }))
+        .catch(() =>
+          fetch('/api/execution-control/delay-signals/dismiss', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         toast.error((err as any)?.error || t('execution.delay.dismissFailed', 'Failed to dismiss'));

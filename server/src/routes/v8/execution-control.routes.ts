@@ -1,19 +1,21 @@
 /**
- * V8 read-only execution control bridge — org-scoped risk, timeline warnings,
- * delay signals, capacity reads, and portfolio budget/overspend views.
+ * V8 execution control bridge — org-scoped reads plus bounded operator mutations
+ * for dismiss, detect, timeline update, and budget entry creation.
  * Namespace: /api/v8/execution-control (mounted by v8/index).
  *
- * Delegates to the same services as legacy `/api/execution-control` GET handlers.
+ * Delegates to the same services and persistence paths as legacy `/api/execution-control`.
  *
  * @module routes/v8/execution-control.routes
  */
 
 import { Router } from 'express';
 import type { Response } from 'express';
+import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
+  createBudgetEntry,
   detectOverspendSignals,
   getPortfolioBudgetSummary,
 } from '../../services/executionBudgetService.js';
@@ -21,6 +23,7 @@ import { getTimelineWarningsSnapshot } from '../../services/executionControlRead
 import {
   detectDelaySignals,
   getPersistedDelaySignals,
+  persistDelaySignals,
 } from '../../services/delayDetectionService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
 import {
@@ -28,14 +31,21 @@ import {
   getLevelingAlerts,
 } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { validateBody } from '../../middleware/validation.middleware.js';
+import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
 /** Stable contract id for V8 execution-control read responses. */
 export const V8_EXECUTION_CONTROL_READ_CONTRACT = 'execution_control_read_v1';
+export const V8_EXECUTION_CONTROL_MUTATION_CONTRACT = 'execution_control_mutation_v1';
 
 function executionControlMeta() {
   return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_READ_CONTRACT };
+}
+
+function executionControlMutationMeta() {
+  return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_MUTATION_CONTRACT };
 }
 
 const firstQueryString = (value: unknown): string | undefined => {
@@ -43,6 +53,48 @@ const firstQueryString = (value: unknown): string | undefined => {
   if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
   return undefined;
 };
+
+const DismissAlertSchema = z.object({
+  signalId: z.string().min(1),
+});
+
+const TimelineUpdateSchema = z.object({
+  initiativeId: z.string().min(1),
+  field: z.enum([
+    'status',
+    'planned_start_date',
+    'planned_end_date',
+    'start_date',
+    'actual_end_date',
+    'progress',
+  ]),
+  value: z.string(),
+  reason: z.string().optional(),
+});
+
+const DismissDelaySchema = z.object({
+  signalId: z.string().min(1),
+  entityType: z.enum(['INITIATIVE', 'TASK']),
+  entityId: z.string().min(1),
+  deviationType: z.string().min(1),
+});
+
+const DetectDelaySchema = z.object({
+  projectId: z.string().nullable().optional(),
+});
+
+const CreateBudgetEntrySchema = z.object({
+  initiativeId: z.string().min(1),
+  entryType: z.enum(['ACTUAL', 'FORECAST', 'ADJUSTMENT']),
+  costType: z.enum(['CAPEX', 'OPEX']),
+  category: z.string().optional(),
+  amount: z.number(),
+  currency: z.string().optional(),
+  description: z.string().optional(),
+  periodMonth: z.number().min(1).max(12).optional(),
+  periodYear: z.number().optional(),
+  source: z.string().optional(),
+});
 
 /**
  * GET /api/v8/execution-control/risk-signals
@@ -59,6 +111,27 @@ router.get(
       meta: executionControlMeta(),
     });
   }),
+);
+
+router.post(
+  '/risk-signals/dismiss',
+  validateBody(DismissAlertSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { signalId } = req.body;
+
+    await dbRun(
+      `INSERT INTO risk_signal_alerts (id, organization_id, signal_type, severity, title, is_dismissed, dismissed_by, dismissed_at)
+       VALUES (?, ?, 'DISMISSED', 'LOW', ?, TRUE, ?, NOW())
+       ON CONFLICT (id) DO UPDATE SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()`,
+      [signalId, organizationId, `Dismissed: ${signalId}`, userId, userId]
+    );
+
+    return res.json({
+      data: { success: true, signalId },
+      meta: executionControlMutationMeta(),
+    });
+  })
 );
 
 /**
@@ -116,6 +189,88 @@ router.get(
   }),
 );
 
+router.post(
+  '/delay-signals/dismiss',
+  validateBody(DismissDelaySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { signalId, entityType, entityId, deviationType } = req.body;
+    const updateRes = await dbRun(
+      `UPDATE delay_signals
+       SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()
+       WHERE id = ? AND organization_id = ?`,
+      [userId, signalId, organizationId]
+    );
+
+    if ((updateRes?.changes || 0) === 0) {
+      let entityName = String(signalId);
+      try {
+        if (entityType === 'INITIATIVE') {
+          const rows = (await dbAll(
+            `SELECT COALESCE(name, title) as entity_name
+             FROM initiatives
+             WHERE id = ? AND organization_id = ?
+             LIMIT 1`,
+            [entityId, organizationId]
+          )) as Array<{ entity_name?: string | null }>;
+          const name = rows?.[0]?.entity_name;
+          if (name) entityName = String(name);
+        } else {
+          const rows = (await dbAll(
+            `SELECT title as entity_name
+             FROM tasks
+             WHERE id = ? AND organization_id = ?
+             LIMIT 1`,
+            [entityId, organizationId]
+          )) as Array<{ entity_name?: string | null }>;
+          const name = rows?.[0]?.entity_name;
+          if (name) entityName = String(name);
+        }
+      } catch {
+        // Non-blocking fallback to signal id if lookup fails.
+      }
+
+      await dbRun(
+        `INSERT INTO delay_signals
+           (id, organization_id, entity_type, entity_id, entity_name, deviation_type, severity, days_deviation,
+            is_dismissed, dismissed_by, dismissed_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'WARNING', 0, TRUE, ?, NOW(), NOW(), NOW())
+         ON CONFLICT (id)
+         DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()`,
+        [signalId, organizationId, entityType, entityId, entityName, deviationType, userId]
+      );
+    }
+
+    return res.json({
+      data: { success: true, signalId },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+router.post(
+  '/delay-signals/detect',
+  validateBody(DetectDelaySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const projectId =
+      typeof req.body?.projectId === 'string' && req.body.projectId.trim()
+        ? req.body.projectId.trim()
+        : undefined;
+    const signals = await detectDelaySignals(organizationId, projectId);
+    const result = await persistDelaySignals(organizationId, signals);
+    return res.json({
+      data: {
+        success: true,
+        detected: signals.length,
+        persisted: result.persisted,
+        alertsSent: result.alertsSent,
+      },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
 /**
  * GET /api/v8/execution-control/capacity/leveling-alerts
  */
@@ -163,6 +318,19 @@ router.get(
   }),
 );
 
+router.post(
+  '/budget/entries',
+  validateBody(CreateBudgetEntrySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const id = await createBudgetEntry(organizationId, { ...req.body, createdBy: userId });
+    return res.json({
+      data: { success: true, id },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
 /**
  * GET /api/v8/execution-control/budget/overspend-signals
  */
@@ -177,6 +345,42 @@ router.get(
       meta: executionControlMeta(),
     });
   }),
+);
+
+router.post(
+  '/timeline-update',
+  validateBody(TimelineUpdateSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { initiativeId, field, value, reason } = req.body;
+
+    const existing = (await dbAll(
+      `SELECT ${field} as current_value FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId]
+    )) as { current_value: string | null }[];
+
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
+    }
+
+    const oldValue = existing[0].current_value;
+
+    await dbRun(
+      `UPDATE initiatives SET ${field} = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [value, initiativeId, organizationId]
+    );
+
+    await dbRun(
+      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?, ?)`,
+      [organizationId, initiativeId, field, oldValue, value, reason || null, userId]
+    );
+
+    return res.json({
+      data: { success: true, field, oldValue, newValue: value },
+      meta: executionControlMutationMeta(),
+    });
+  })
 );
 
 export default router;

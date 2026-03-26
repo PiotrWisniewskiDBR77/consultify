@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -97,11 +98,10 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const headers = { Authorization: `Bearer ${token}` };
-
       if (initiativeId) {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const headers = { Authorization: `Bearer ${token}` };
         const res = await fetch(`/api/execution-control/budget/initiative/${initiativeId}`, {
           headers,
         });
@@ -116,17 +116,12 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           );
         }
       } else {
-        const params = new URLSearchParams();
-        if (projectId) params.set('projectId', projectId);
-        const [portfolioRes, signalsRes] = await Promise.all([
-          fetch(`/api/execution-control/budget/portfolio?${params}`, { headers }),
-          fetch(`/api/execution-control/budget/overspend-signals?${params}`, { headers }),
+        const [portfolioData, signalsData] = await Promise.all([
+          V8ExecutionControlApi.getBudgetPortfolio(projectId),
+          V8ExecutionControlApi.getOverspendSignals(projectId),
         ]);
-        if (portfolioRes.ok) setPortfolio(await portfolioRes.json());
-        if (signalsRes.ok) {
-          const data = await signalsRes.json();
-          setOverspendSignals(data.signals || []);
-        }
+        setPortfolio(portfolioData.summary);
+        setOverspendSignals(signalsData.signals || []);
       }
     } catch {
       // non-blocking
@@ -148,20 +143,25 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
         toast.error(t('execution.toast.notAuthenticated', 'Not authenticated'));
         return;
       }
-      const res = await fetch('/api/execution-control/budget/entries', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          initiativeId,
-          entryType: 'ACTUAL',
-          costType: entryForm.costType,
-          amount: parseFloat(entryForm.amount),
-          category: entryForm.category || 'General',
-          description: entryForm.description || undefined,
-          periodMonth: new Date().getMonth() + 1,
-          periodYear: new Date().getFullYear(),
-        }),
-      });
+      const payload = {
+        initiativeId,
+        entryType: 'ACTUAL' as const,
+        costType: entryForm.costType,
+        amount: parseFloat(entryForm.amount),
+        category: entryForm.category || 'General',
+        description: entryForm.description || undefined,
+        periodMonth: new Date().getMonth() + 1,
+        periodYear: new Date().getFullYear(),
+      };
+      const res = await V8ExecutionControlApi.createBudgetEntry(payload)
+        .then(() => ({ ok: true, json: async () => ({}) }))
+        .catch(() =>
+          fetch('/api/execution-control/budget/entries', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        );
       if (res.ok) {
         setShowAddEntry(false);
         setEntryForm({ costType: 'CAPEX', amount: '', category: '', description: '' });

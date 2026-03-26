@@ -2530,14 +2530,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleTimelineUpdate = useCallback(
     async (initiativeId: string, field: string, value: string, reason?: string) => {
       try {
-        const res = await fetch('/api/execution-control/timeline-update', {
-          method: 'POST',
-          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ initiativeId, field, value, reason }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const msg = (json as any)?.error || (json as any)?.message || `HTTP ${res.status}`;
+        const payload = { initiativeId, field, value, reason } as const;
+        const fallbackRequest = () =>
+          fetch('/api/execution-control/timeline-update', {
+            method: 'POST',
+            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        const response = await V8ExecutionControlApi.updateTimeline({
+          initiativeId,
+          field: field as
+            | 'status'
+            | 'planned_start_date'
+            | 'planned_end_date'
+            | 'start_date'
+            | 'actual_end_date'
+            | 'progress',
+          value,
+          reason,
+        })
+          .then((data) => ({ ok: true, json: async () => data }))
+          .catch(fallbackRequest);
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const msg =
+            (json as any)?.error || (json as any)?.message || `HTTP ${(response as Response).status}`;
           throw new Error(String(msg));
         }
 

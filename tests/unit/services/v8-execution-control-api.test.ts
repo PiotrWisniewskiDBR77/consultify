@@ -7,7 +7,7 @@ vi.mock('@/services/api/v8/client', () => ({
 }));
 
 import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
-import { v8Get } from '@/services/api/v8/client';
+import { v8Get, v8Post } from '@/services/api/v8/client';
 
 describe('V8ExecutionControlApi', () => {
   beforeEach(() => {
@@ -85,6 +85,89 @@ describe('V8ExecutionControlApi', () => {
 
     expect(v8Get).toHaveBeenCalledWith('/execution-control/capacity/timeline', {
       initiativeId: 'init-1',
+    });
+  });
+
+  it('posts risk dismisses to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, signalId: 'sig-1' });
+
+    await V8ExecutionControlApi.dismissRiskSignal('sig-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/execution-control/risk-signals/dismiss', {
+      signalId: 'sig-1',
+    });
+  });
+
+  it('posts delay detection to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, detected: 0, persisted: 0, alertsSent: 0 });
+
+    await V8ExecutionControlApi.detectDelaySignals('proj-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/execution-control/delay-signals/detect', {
+      projectId: 'proj-1',
+    });
+  });
+
+  it('posts delay dismisses to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, signalId: 'delay-1' });
+
+    await V8ExecutionControlApi.dismissDelaySignal({
+      signalId: 'delay-1',
+      entityType: 'INITIATIVE',
+      entityId: 'init-1',
+      deviationType: 'OVERDUE',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/execution-control/delay-signals/dismiss', {
+      signalId: 'delay-1',
+      entityType: 'INITIATIVE',
+      entityId: 'init-1',
+      deviationType: 'OVERDUE',
+    });
+  });
+
+  it('posts timeline updates to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      field: 'planned_end_date',
+      oldValue: null,
+      newValue: '2026-04-01',
+    });
+
+    await V8ExecutionControlApi.updateTimeline({
+      initiativeId: 'init-1',
+      field: 'planned_end_date',
+      value: '2026-04-01',
+      reason: 'Rebased after review',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/execution-control/timeline-update', {
+      initiativeId: 'init-1',
+      field: 'planned_end_date',
+      value: '2026-04-01',
+      reason: 'Rebased after review',
+    });
+  });
+
+  it('posts budget entries to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true, id: 'be-1' });
+
+    await V8ExecutionControlApi.createBudgetEntry({
+      initiativeId: 'init-1',
+      entryType: 'ACTUAL',
+      costType: 'CAPEX',
+      amount: 1200,
+      periodMonth: 3,
+      periodYear: 2026,
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/execution-control/budget/entries', {
+      initiativeId: 'init-1',
+      entryType: 'ACTUAL',
+      costType: 'CAPEX',
+      amount: 1200,
+      periodMonth: 3,
+      periodYear: 2026,
     });
   });
 });
