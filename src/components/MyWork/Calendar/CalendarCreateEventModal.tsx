@@ -117,7 +117,9 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
       : `You already have ${totalExistingItems} items on this day.`;
   }, [conflicts, conflictsError, conflictsLoading, isPolish, totalExistingItems]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
     if (!title.trim()) {
       toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
       return;
@@ -159,13 +161,18 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             {isPolish ? 'Anuluj' : 'Cancel'}
           </Button>
-          <Button variant="primary" onClick={handleSubmit} loading={saving}>
+          <Button
+            variant="primary"
+            type="submit"
+            form="calendar-create-event-form"
+            loading={saving}
+          >
             {isPolish ? 'Dodaj' : 'Add'}
           </Button>
         </>
       }
     >
-      <div className="space-y-5">
+      <form id="calendar-create-event-form" onSubmit={handleSubmit} className="space-y-5">
         <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
           <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
             <CheckSquare size={16} className="text-primary-500" />
@@ -185,6 +192,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            autoFocus
             placeholder={isPolish ? 'Np. Przygotować deck na review' : 'e.g. Prepare review deck'}
             className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
           />
@@ -286,7 +294,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
             </div>
           </div>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 };

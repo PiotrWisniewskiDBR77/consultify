@@ -147,4 +147,38 @@ describe('CalendarCreateEventModal', () => {
     expect(onCreated).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('submits from the title field without requiring a footer click', async () => {
+    const onClose = vi.fn();
+    const onCreated = vi.fn();
+
+    render(
+      <CalendarCreateEventModal
+        open
+        defaultDate={new Date('2026-03-27T00:00:00Z')}
+        onClose={onClose}
+        onCreated={onCreated}
+      />,
+    );
+
+    const titleInput = screen.getByPlaceholderText('e.g. Prepare review deck');
+
+    fireEvent.change(titleInput, {
+      target: { value: 'Submit with Enter' },
+    });
+    fireEvent.submit(titleInput.closest('form') as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(createMyWorkCalendarEventMock).toHaveBeenCalledWith({
+        title: 'Submit with Enter',
+        description: undefined,
+        start: '2026-03-27',
+        allDay: true,
+        source: 'task',
+      });
+    });
+
+    expect(onCreated).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
 });
