@@ -273,6 +273,17 @@ This first slice covers only:
 - `Admin / Superadmin` exposes read-only bounded V8 diagnostics coherently enough for operator verification,
 - and the post-closure program exists as a stable execution authority.
 
+### Current finisher status
+
+The first 3-agent finisher pass is now executed and documented in
+`evidence/101-v8-tranche0-three-agent-finisher-proof.md`.
+
+Current result:
+
+- `Calendar` is narrowed to one remaining ambiguity between final create-submit proof and governed `conflicts` runtime failure (`503`),
+- `Organization / Admin / Superadmin` is narrowed to one remaining superadmin access/routing blocker on staging,
+- the tranche is therefore operationally exhausted for this pass but not yet acceptance-complete.
+
 ### Explicitly out of scope
 
 - `Chat` / `AI core` expansion
@@ -288,8 +299,8 @@ This first slice covers only:
 
 | lane | taxonomy | tranche | current posture | next packet |
 | --- | --- | --- | --- | --- |
-| `Calendar` | `T0` | `Tranche 0` | active | clarify conflict/runtime truth and create-path proof |
-| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | active | expose bounded V8 diagnostics coherently on superadmin surface |
+| `Calendar` | `T0` | `Tranche 0` | active - narrowed by live proof | obtain final create-submit proof or formally classify governed `conflicts 503` as the carried blocker |
+| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | active - staging access blocked | obtain a real superadmin route/session that reaches the bounded diagnostics surface |
 | `Reports / Presentations` | `T1` | `Tranche 1` | parked | remove API/UI split-brain |
 | `Idea workspace` | `T1` | `Tranche 1` | parked | resolve runtime red / collaboration split-brain |
 | `Execution / delivery control` | `T2` | `Tranche 2` | parked | charter broader write continuity slice |
@@ -306,3 +317,4 @@ This first slice covers only:
 ## 11. Change log
 
 - 2026-03-26: created the first post-closure debt reduction program and activated `Post-closure exception closure pack v1`
+- 2026-03-26: executed the first 3-agent finisher pass and recorded the live stopping state in `evidence/101-v8-tranche0-three-agent-finisher-proof.md`; `Calendar` and `Admin/Superadmin` remain active but are now narrowed to one blocker each
