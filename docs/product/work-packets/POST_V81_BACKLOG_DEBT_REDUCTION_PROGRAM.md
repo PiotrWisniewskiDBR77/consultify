@@ -291,6 +291,7 @@ Post-pass hardening now completed:
 - `Organization / Admin / Superadmin` client-side role handling is normalized across route guards, active sidebar navigation, and supporting admin surfaces for `SUPERADMIN` / `SUPER_ADMIN`,
 - `Organization / Admin / Superadmin` auth callback redirect is normalized so superadmin sessions are no longer forced through `/chat` after login,
 - `Organization / Admin / Superadmin` RouterSync and centralized permission resolution are normalized so restored sessions and permission-gated surfaces treat `SUPER_ADMIN` as the same operator role,
+- fresh staging redeploy proof confirms the remaining blocker is no longer stale frontend code but unresolved superadmin session entitlement on staging,
 - acceptance still remains pending on fresh staging proof.
 
 ### Explicitly out of scope
@@ -330,3 +331,4 @@ Post-pass hardening now completed:
 - 2026-03-26: linked the operational tracker `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md` and recorded follow-up hardening for `Calendar` submit flow and `Admin / Superadmin` role normalization
 - 2026-03-26: recorded auth-callback redirect hardening for superadmin landing continuity
 - 2026-03-26: recorded RouterSync and permissions-layer normalization for superadmin role variants
+- 2026-03-26: recorded post-deploy staging proof in `evidence/102-v8-superadmin-post-deploy-staging-proof.md`; remaining blocker is narrowed to staging session entitlement
