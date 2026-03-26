@@ -5,6 +5,7 @@
 > Scope: post-closure backlog reduction after the frozen `V8 + V8.1` wave
 > Authority inputs: `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, `docs/product/work-packets/V8_V81_FINAL_SIGNOFF_MEMO.md`, `docs/product/work-packets/V8_V81_FINAL_GO_DECISION.md`, `docs/product/work-packets/V8_V81_WAVE_CLOSURE_DECLARATION.md`
 > Last updated: 2026-03-26
+> Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 
 ---
 
