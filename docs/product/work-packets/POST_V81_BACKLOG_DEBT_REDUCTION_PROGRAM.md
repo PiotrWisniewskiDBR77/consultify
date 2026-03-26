@@ -281,13 +281,14 @@ The first 3-agent finisher pass is now executed and documented in
 
 Current result:
 
-- `Calendar` is narrowed to one remaining ambiguity between final create-submit proof and governed `conflicts` runtime failure (`503`),
+- `Calendar` is now staging-proven end-to-end for the bounded V8 slice, including visible governed `conflicts` degradation and successful create-submit,
 - `Organization / Admin / Superadmin` now has a valid superadmin staging route/session, but the bounded V8 diagnostics surface still does not appear in `Health Monitoring`,
-- the tranche is therefore operationally exhausted for this pass but not yet acceptance-complete.
+- the tranche is no longer ambiguous on `Calendar`, but it is not yet acceptance-complete because `Admin / Superadmin` still remains open.
 
 Post-pass hardening now completed:
 
 - `Calendar` submit path is hardened to native form submission to reduce viewport and automation sensitivity,
+- `Calendar` fresh staging proof confirms `conflicts` degradation is governed in-surface while `POST /api/v8/my-work/calendar/events` still succeeds,
 - `Organization / Admin / Superadmin` client-side role handling is normalized across route guards, active sidebar navigation, and supporting admin surfaces for `SUPERADMIN` / `SUPER_ADMIN`,
 - `Organization / Admin / Superadmin` auth callback redirect is normalized so superadmin sessions are no longer forced through `/chat` after login,
 - `Organization / Admin / Superadmin` RouterSync and centralized permission resolution are normalized so restored sessions and permission-gated surfaces treat `SUPER_ADMIN` as the same operator role,
@@ -310,7 +311,7 @@ Post-pass hardening now completed:
 
 | lane | taxonomy | tranche | current posture | next packet |
 | --- | --- | --- | --- | --- |
-| `Calendar` | `T0` | `Tranche 0` | active - narrowed by live proof | obtain final create-submit proof or formally classify governed `conflicts 503` as the carried blocker |
+| `Calendar` | `T0` | `Tranche 0` | done - staging proven | no further packet inside `Tranche 0`; proof is recorded in `evidence/104-v8-calendar-create-submit-live-proof.md` |
 | `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | active - valid session, diagnostics surface still missing | explain and close the staging gap where `Health Monitoring` omits the bounded V8 diagnostics panel |
 | `Reports / Presentations` | `T1` | `Tranche 1` | parked | remove API/UI split-brain |
 | `Idea workspace` | `T1` | `Tranche 1` | parked | resolve runtime red / collaboration split-brain |
@@ -334,3 +335,4 @@ Post-pass hardening now completed:
 - 2026-03-26: recorded RouterSync and permissions-layer normalization for superadmin role variants
 - 2026-03-26: recorded post-deploy staging proof in `evidence/102-v8-superadmin-post-deploy-staging-proof.md`; remaining blocker is narrowed to staging session entitlement
 - 2026-03-26: recorded valid superadmin staging session and fresh workspace deploy proof in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md`; remaining blocker is now the missing bounded V8 diagnostics surface in `Health Monitoring`
+- 2026-03-26: recorded final calendar staging proof in `evidence/104-v8-calendar-create-submit-live-proof.md`; `Calendar` is now closed as staging-proven for the bounded V8 slice

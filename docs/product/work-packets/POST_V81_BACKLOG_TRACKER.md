@@ -29,7 +29,7 @@ Status vocabulary:
 
 | lane | taxonomy | tranche | status | owner lane | next move |
 | --- | --- | --- | --- | --- | --- |
-| `Calendar` | `T0` | `Tranche 0` | `active` | `Agent B + Agent C` | verify final staging proof after submit-path hardening |
+| `Calendar` | `T0` | `Tranche 0` | `done` | `Agent B + Agent C` | staging proof captured in `evidence/104-v8-calendar-create-submit-live-proof.md` |
 | `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | `blocked` | `Agent A + Agent C` | prove why `Health Monitoring` on staging still omits the bounded V8 diagnostics surface; valid session proof is recorded in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md` |
 | `Reports / Presentations` | `T1` | `Tranche 1` | `parked` | `Agent B` | map V8/legacy split-brain before promotion |
 | `Idea workspace` | `T1` | `Tranche 1` | `parked` | `Agent B + Agent C` | map runtime and collaboration split-brain |
@@ -48,16 +48,16 @@ Status vocabulary:
 
 ### `Calendar`
 
-Current status: `active`
+Current status: `done`
 
 - [x] bounded scope defined
 - [x] governed conflict-check warning for `503` added
 - [x] automated regression for warning path added
 - [x] modal submit path hardened to native form submit
 - [x] automated regression for native submit added
-- [ ] final staging proof for create-submit captured
-- [ ] carried blocker formally declared if staging proof is still impossible
-- [ ] lane accepted and moved to `done`
+- [x] final staging proof for create-submit captured
+- [x] no carried blocker remains after live staging proof
+- [x] lane accepted and moved to `done`
 
 ### `Organization / Admin / Superadmin`
 
@@ -100,3 +100,4 @@ Order:
 - 2026-03-26: added RouterSync and centralized permissions hardening so superadmin role variants follow the same route and capability path
 - 2026-03-26: recorded fresh post-deploy staging proof; `/superadmin` still falls back to `/chat`, so the remaining blocker is now narrowed to real session entitlement on staging
 - 2026-03-26: recorded valid superadmin staging session in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md`; blocker moved from session entitlement to missing bounded V8 diagnostics surface on `Health Monitoring`
+- 2026-03-26: recorded final calendar staging proof in `evidence/104-v8-calendar-create-submit-live-proof.md`; governed `503` warning remains visible but create-submit succeeds and the lane is moved to `done`
