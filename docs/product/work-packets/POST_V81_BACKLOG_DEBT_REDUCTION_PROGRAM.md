@@ -282,7 +282,7 @@ The first 3-agent finisher pass is now executed and documented in
 Current result:
 
 - `Calendar` is narrowed to one remaining ambiguity between final create-submit proof and governed `conflicts` runtime failure (`503`),
-- `Organization / Admin / Superadmin` is narrowed to one remaining superadmin access/routing blocker on staging,
+- `Organization / Admin / Superadmin` now has a valid superadmin staging route/session, but the bounded V8 diagnostics surface still does not appear in `Health Monitoring`,
 - the tranche is therefore operationally exhausted for this pass but not yet acceptance-complete.
 
 Post-pass hardening now completed:
@@ -291,7 +291,8 @@ Post-pass hardening now completed:
 - `Organization / Admin / Superadmin` client-side role handling is normalized across route guards, active sidebar navigation, and supporting admin surfaces for `SUPERADMIN` / `SUPER_ADMIN`,
 - `Organization / Admin / Superadmin` auth callback redirect is normalized so superadmin sessions are no longer forced through `/chat` after login,
 - `Organization / Admin / Superadmin` RouterSync and centralized permission resolution are normalized so restored sessions and permission-gated surfaces treat `SUPER_ADMIN` as the same operator role,
-- fresh staging redeploy proof confirms the remaining blocker is no longer stale frontend code but unresolved superadmin session entitlement on staging,
+- fresh staging proof now confirms the remaining blocker is no longer superadmin session entitlement on staging,
+- the remaining `Admin / Superadmin` blocker is narrowed further to staging surface continuity for the new bounded V8 diagnostics panel in `Health Monitoring`,
 - acceptance still remains pending on fresh staging proof.
 
 ### Explicitly out of scope
@@ -310,7 +311,7 @@ Post-pass hardening now completed:
 | lane | taxonomy | tranche | current posture | next packet |
 | --- | --- | --- | --- | --- |
 | `Calendar` | `T0` | `Tranche 0` | active - narrowed by live proof | obtain final create-submit proof or formally classify governed `conflicts 503` as the carried blocker |
-| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | active - staging access blocked | obtain a real superadmin route/session that reaches the bounded diagnostics surface |
+| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | active - valid session, diagnostics surface still missing | explain and close the staging gap where `Health Monitoring` omits the bounded V8 diagnostics panel |
 | `Reports / Presentations` | `T1` | `Tranche 1` | parked | remove API/UI split-brain |
 | `Idea workspace` | `T1` | `Tranche 1` | parked | resolve runtime red / collaboration split-brain |
 | `Execution / delivery control` | `T2` | `Tranche 2` | parked | charter broader write continuity slice |
@@ -332,3 +333,4 @@ Post-pass hardening now completed:
 - 2026-03-26: recorded auth-callback redirect hardening for superadmin landing continuity
 - 2026-03-26: recorded RouterSync and permissions-layer normalization for superadmin role variants
 - 2026-03-26: recorded post-deploy staging proof in `evidence/102-v8-superadmin-post-deploy-staging-proof.md`; remaining blocker is narrowed to staging session entitlement
+- 2026-03-26: recorded valid superadmin staging session and fresh workspace deploy proof in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md`; remaining blocker is now the missing bounded V8 diagnostics surface in `Health Monitoring`

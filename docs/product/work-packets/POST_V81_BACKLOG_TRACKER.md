@@ -30,7 +30,7 @@ Status vocabulary:
 | lane | taxonomy | tranche | status | owner lane | next move |
 | --- | --- | --- | --- | --- | --- |
 | `Calendar` | `T0` | `Tranche 0` | `active` | `Agent B + Agent C` | verify final staging proof after submit-path hardening |
-| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | `blocked` | `Agent A + Agent C` | obtain a staging session with true superadmin entitlement; fresh deploy proof is recorded in `evidence/102-v8-superadmin-post-deploy-staging-proof.md` |
+| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | `blocked` | `Agent A + Agent C` | prove why `Health Monitoring` on staging still omits the bounded V8 diagnostics surface; valid session proof is recorded in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md` |
 | `Reports / Presentations` | `T1` | `Tranche 1` | `parked` | `Agent B` | map V8/legacy split-brain before promotion |
 | `Idea workspace` | `T1` | `Tranche 1` | `parked` | `Agent B + Agent C` | map runtime and collaboration split-brain |
 | `Execution / delivery control` | `T2` | `Tranche 2` | `parked` | `Agent A` | write charter before promotion |
@@ -74,7 +74,7 @@ Current status: `blocked`
 - [x] RouterSync redirect logic normalized for superadmin role variants
 - [x] centralized permissions hook normalized for superadmin role variants
 - [x] fresh staging deploy retested after hardening
-- [ ] valid superadmin staging route/session obtained
+- [x] valid superadmin staging route/session obtained
 - [ ] bounded diagnostics surface proven live on staging
 - [ ] lane accepted and moved to `done`
 
@@ -99,3 +99,4 @@ Order:
 - 2026-03-26: added auth-callback redirect hardening and regression coverage for superadmin landing
 - 2026-03-26: added RouterSync and centralized permissions hardening so superadmin role variants follow the same route and capability path
 - 2026-03-26: recorded fresh post-deploy staging proof; `/superadmin` still falls back to `/chat`, so the remaining blocker is now narrowed to real session entitlement on staging
+- 2026-03-26: recorded valid superadmin staging session in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md`; blocker moved from session entitlement to missing bounded V8 diagnostics surface on `Health Monitoring`
