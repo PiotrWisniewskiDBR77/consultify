@@ -103,6 +103,49 @@ type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
 
 type ProjectTaskStatus = Task['status'];
 
+interface GovernedTimelineWarning {
+  initiativeId: string;
+  initiativeName: string;
+  type: 'overdue' | 'blocked' | 'dependency_conflict' | 'sla_approaching';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  daysOverdue?: number;
+}
+
+interface GovernedCapacityAlert {
+  userId: string;
+  name: string;
+  capacityHours: number;
+  allocatedHours: number;
+  overloadHours: number;
+  severity: 'warning' | 'critical';
+  suggestion: string;
+}
+
+interface GovernedCapacityWeek {
+  weekStart: string;
+  capacityHours: number;
+  allocatedHours: number;
+  availableHours: number;
+}
+
+const fetchLegacyExecutionControl = async <T,>(
+  path: string,
+  params?: Record<string, string>
+): Promise<T> => {
+  const url = new URL(path, window.location.origin);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  }
+
+  const res = await fetch(url.toString(), { headers: getHeaders() });
+  if (!res.ok) {
+    throw new Error(`Legacy execution control request failed for ${path}`);
+  }
+
+  return (await res.json()) as T;
+};
+
 const mapPriorityToPortfolio = (
   priority: FullInitiative['priority']
 ): PortfolioInitiative['priority'] => {
@@ -539,6 +582,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
+  const [timelineWarnings, setTimelineWarnings] = useState<GovernedTimelineWarning[]>([]);
+  const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
+  const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
+  const [capacityTimeline, setCapacityTimeline] = useState<GovernedCapacityWeek[]>([]);
   /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
   const [actionQueueItems, setActionQueueItems] = useState<
     Array<{
@@ -593,6 +640,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (sev === 'medium') return 'warning' as const;
     return 'info' as const;
   }, []);
+
+  const topTimelineWarning = timelineWarnings[0] ?? null;
+  const topCapacityAlert = capacityAlerts[0] ?? null;
+  const capacityHorizon = capacityTimeline[0] ?? null;
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -809,7 +860,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     const loadRiskSignals = async () => {
       try {
-        const data = await V8ExecutionControlApi.getRiskSignals(currentProjectId).catch(() =>
+        const data = await V8ExecutionControlApi.getRiskSignals(currentProjectId || undefined).catch(() =>
           (async () => {
             const token = localStorage.getItem('token');
             if (!token) return { signals: [] };
@@ -852,6 +903,56 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     loadRiskSignals();
     loadDelaySignals();
   }, [currentProjectId, initiatives.length]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadGovernedControlTower = async () => {
+      try {
+        const [warningsData, alertsData, timelineData] = await Promise.all([
+          V8ExecutionControlApi.getTimelineWarnings(currentProjectId || undefined).catch(() =>
+            fetchLegacyExecutionControl<{ warnings: GovernedTimelineWarning[]; total: number }>(
+              '/api/execution-control/warnings',
+              currentProjectId ? { projectId: currentProjectId } : undefined
+            )
+          ),
+          V8ExecutionControlApi.getCapacityLevelingAlerts().catch(() =>
+            fetchLegacyExecutionControl<{ alerts: GovernedCapacityAlert[] }>(
+              '/api/execution-control/capacity/leveling-alerts'
+            )
+          ),
+          V8ExecutionControlApi.getCapacityTimeline().catch(() =>
+            fetchLegacyExecutionControl<{ weeks: GovernedCapacityWeek[] }>(
+              '/api/execution-control/capacity/timeline'
+            )
+          ),
+        ]);
+
+        if (cancelled) return;
+
+        setTimelineWarnings(warningsData.warnings || []);
+        setTimelineWarningTotal(
+          Number(
+            warningsData.total ?? (Array.isArray(warningsData.warnings) ? warningsData.warnings.length : 0)
+          )
+        );
+        setCapacityAlerts(alertsData.alerts || []);
+        setCapacityTimeline(timelineData.weeks || []);
+      } catch {
+        if (cancelled) return;
+        setTimelineWarnings([]);
+        setTimelineWarningTotal(0);
+        setCapacityAlerts([]);
+        setCapacityTimeline([]);
+      }
+    };
+
+    loadGovernedControlTower();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentProjectId]);
 
   useEffect(() => {
     if (!currentProjectId) return;
@@ -4051,6 +4152,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             {renderExecutionView()}
           </div>
 
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+            <BudgetControlPanel
+              projectId={currentProjectId || undefined}
+              onInitiativeClick={(id) => {
+                const init = initiatives.find((i) => i.id === id);
+                if (init) handleOpenSidePanel(init);
+              }}
+            />
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
             <ToggleBlock
               title={t('execution.reporting.tasksTitle', 'Tasks')}
@@ -4227,6 +4338,95 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                       'No upcoming milestones.'
                     )}
                   />
+                </div>
+              </div>
+              <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {t('execution.execSnapshot.overview.timelineWarnings', 'Timeline warnings')}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {formatNumber(timelineWarningTotal)}
+                  </div>
+                  <div className="mt-2">
+                    {topTimelineWarning ? (
+                      <Callout
+                        compact
+                        variant={severityToCalloutVariant(topTimelineWarning.severity)}
+                        title={
+                          topTimelineWarning.initiativeName ||
+                          t('execution.execSnapshot.overview.topWarning', {
+                            defaultValue: 'Top warning',
+                          })
+                        }
+                      >
+                        {topTimelineWarning.message}
+                      </Callout>
+                    ) : (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {t(
+                          'execution.execSnapshot.overview.noTimelineWarnings',
+                          'No timeline warnings detected.'
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {t('execution.execSnapshot.overview.capacityAlerts', 'Capacity alerts')}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {formatNumber(capacityAlerts.length)}
+                  </div>
+                  <div className="mt-2">
+                    {topCapacityAlert ? (
+                      <Callout
+                        compact
+                        variant={severityToCalloutVariant(topCapacityAlert.severity)}
+                        title={
+                          topCapacityAlert.name ||
+                          t('execution.execSnapshot.overview.topCapacityAlert', {
+                            defaultValue: 'Top alert',
+                          })
+                        }
+                      >
+                        {t('execution.execSnapshot.overview.capacityAlertDetail', {
+                          hours: formatNumber(topCapacityAlert.overloadHours),
+                          defaultValue: '{{hours}}h over capacity',
+                        })}
+                      </Callout>
+                    ) : (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {t(
+                          'execution.execSnapshot.overview.noCapacityAlerts',
+                          'No capacity leveling alerts detected.'
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {t('execution.execSnapshot.overview.capacityHorizon', 'Capacity horizon')}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {capacityHorizon
+                      ? `${formatNumber(capacityHorizon.allocatedHours)}/${formatNumber(capacityHorizon.capacityHours)}h`
+                      : '—'}
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {capacityHorizon
+                      ? t('execution.execSnapshot.overview.capacityHorizonDetail', {
+                          hours: formatNumber(capacityHorizon.availableHours),
+                          date: new Date(capacityHorizon.weekStart).toLocaleDateString(),
+                          defaultValue: '{{hours}}h available in week of {{date}}',
+                        })
+                      : t(
+                          'execution.execSnapshot.overview.noCapacityTimeline',
+                          'No capacity forecast available.'
+                        )}
+                  </div>
                 </div>
               </div>
             </ToggleBlock>

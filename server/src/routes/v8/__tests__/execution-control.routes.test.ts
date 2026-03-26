@@ -199,4 +199,47 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.body.data?.summary).toEqual(summary);
     expect(mockGetPortfolioBudgetSummary).toHaveBeenCalledWith(ORG, undefined);
   });
+
+  it('GET /api/v8/execution-control/capacity/leveling-alerts returns org-scoped alerts', async () => {
+    mockGetLevelingAlerts.mockResolvedValue([
+      {
+        userId: 'u1',
+        name: 'Alex',
+        capacityHours: 40,
+        allocatedHours: 52,
+        overloadHours: 12,
+        severity: 'critical',
+        suggestion: 'Reassign 12h of work or extend deadlines',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/execution-control/capacity/leveling-alerts');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
+    expect(res.body.data?.alerts).toHaveLength(1);
+    expect(mockGetLevelingAlerts).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/execution-control/capacity/timeline returns org-scoped weeks', async () => {
+    mockGetCapacityTimeline.mockResolvedValue([
+      {
+        weekStart: '2026-03-23',
+        capacityHours: 40,
+        allocatedHours: 28,
+        availableHours: 12,
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get(
+      '/api/v8/execution-control/capacity/timeline?initiativeId=init-1'
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
+    expect(res.body.data?.weeks).toHaveLength(1);
+    expect(mockGetCapacityTimeline).toHaveBeenCalledWith(ORG, 'init-1');
+  });
 });
