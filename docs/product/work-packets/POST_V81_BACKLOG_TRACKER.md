@@ -71,6 +71,8 @@ Current status: `blocked`
 - [x] active sidebar and nav-item access normalized for role variants
 - [x] admin/support surfaces normalized for role variants
 - [x] OAuth callback redirect normalized for superadmin role variants
+- [x] RouterSync redirect logic normalized for superadmin role variants
+- [x] centralized permissions hook normalized for superadmin role variants
 - [ ] valid superadmin staging route/session obtained
 - [ ] bounded diagnostics surface proven live on staging
 - [ ] lane accepted and moved to `done`
@@ -94,3 +96,4 @@ Order:
 - 2026-03-26: created execution tracker linked to the debt reduction program
 - 2026-03-26: marked `Calendar` submit hardening complete and expanded `Admin / Superadmin` role-variant hardening across navigation and support surfaces
 - 2026-03-26: added auth-callback redirect hardening and regression coverage for superadmin landing
+- 2026-03-26: added RouterSync and centralized permissions hardening so superadmin role variants follow the same route and capability path

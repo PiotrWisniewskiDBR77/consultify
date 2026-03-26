@@ -5,6 +5,7 @@ import { getAppViewFromPath } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, AuthStep, SessionMode } from '../types';
 import { parseArtifactRef } from '../utils/artifactLinks';
+import { isSuperAdminRole } from '../utils/roleGuards';
 
 /**
  * RouterSync
@@ -154,7 +155,7 @@ export const RouterSync: React.FC = () => {
     // ---------------------------
     // If user is authenticated, keep them out of auth pages
     if ((path === '/login' || path === '/register' || path === '/auth') && isAuthenticated) {
-      const target = userRole === 'SUPERADMIN' ? '/superadmin' : '/chat';
+      const target = isSuperAdminRole(userRole) ? '/superadmin' : '/chat';
       console.log('[RouterSync] Authenticated on auth route, redirecting to', target);
       isNavigatingRef.current = true;
       navigate(target, { replace: true });
@@ -195,7 +196,7 @@ export const RouterSync: React.FC = () => {
 
     // Root route should redirect authenticated users to their home
     if ((path === '/' || path === '') && isAuthenticated) {
-      const target = userRole === 'SUPERADMIN' ? '/superadmin' : '/chat';
+      const target = isSuperAdminRole(userRole) ? '/superadmin' : '/chat';
       console.log('[RouterSync] Authenticated on /, redirecting to', target);
       isNavigatingRef.current = true;
       navigate(target, { replace: true });
@@ -206,7 +207,7 @@ export const RouterSync: React.FC = () => {
     }
 
     // SUPERADMIN should not stay on /chat
-    if ((path === '/chat' || path.startsWith('/chat/')) && userRole === 'SUPERADMIN') {
+    if ((path === '/chat' || path.startsWith('/chat/')) && isSuperAdminRole(userRole)) {
       console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
       isNavigatingRef.current = true;
       navigate('/superadmin', { replace: true });

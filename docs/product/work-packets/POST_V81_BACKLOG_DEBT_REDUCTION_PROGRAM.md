@@ -290,6 +290,7 @@ Post-pass hardening now completed:
 - `Calendar` submit path is hardened to native form submission to reduce viewport and automation sensitivity,
 - `Organization / Admin / Superadmin` client-side role handling is normalized across route guards, active sidebar navigation, and supporting admin surfaces for `SUPERADMIN` / `SUPER_ADMIN`,
 - `Organization / Admin / Superadmin` auth callback redirect is normalized so superadmin sessions are no longer forced through `/chat` after login,
+- `Organization / Admin / Superadmin` RouterSync and centralized permission resolution are normalized so restored sessions and permission-gated surfaces treat `SUPER_ADMIN` as the same operator role,
 - acceptance still remains pending on fresh staging proof.
 
 ### Explicitly out of scope
@@ -328,3 +329,4 @@ Post-pass hardening now completed:
 - 2026-03-26: executed the first 3-agent finisher pass and recorded the live stopping state in `evidence/101-v8-tranche0-three-agent-finisher-proof.md`; `Calendar` and `Admin/Superadmin` remain active but are now narrowed to one blocker each
 - 2026-03-26: linked the operational tracker `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md` and recorded follow-up hardening for `Calendar` submit flow and `Admin / Superadmin` role normalization
 - 2026-03-26: recorded auth-callback redirect hardening for superadmin landing continuity
+- 2026-03-26: recorded RouterSync and permissions-layer normalization for superadmin role variants

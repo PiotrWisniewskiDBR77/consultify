@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { usePermissions, useUserCan } from '@/hooks/usePermissions';
+import { useAppStore } from '@/store/useAppStore';
 
 // Mock useAppStore
 vi.mock('@/store/useAppStore', () => ({
@@ -122,6 +123,23 @@ describe('usePermissions Hook', () => {
     it('returns canManageAllUsers', () => {
       const { result } = renderHook(() => usePermissions());
       expect(typeof result.current.canManageAllUsers).toBe('boolean');
+    });
+
+    it('treats SUPER_ADMIN as superadmin-equivalent', () => {
+      vi.mocked(useAppStore).mockReturnValue({
+        currentUser: {
+          id: 'user-2',
+          role: 'SUPER_ADMIN',
+          organizationId: 'org-1',
+        },
+      } as any);
+
+      const { result } = renderHook(() => usePermissions());
+
+      expect(result.current.userRole).toBe('SUPERADMIN');
+      expect(result.current.isSuperAdmin).toBe(true);
+      expect(result.current.canAccessSuperAdmin).toBe(true);
+      expect(result.current.canManageAllUsers).toBe(true);
     });
   });
 });

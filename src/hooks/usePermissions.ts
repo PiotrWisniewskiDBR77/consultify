@@ -2,6 +2,11 @@ import { useMemo } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
 import { UserRole } from '../types';
+import {
+  isAdminOwnerOrSuperAdminRole,
+  isSuperAdminRole,
+  normalizeAppRole,
+} from '../utils/roleGuards';
 
 /**
  * Centralized permissions interface for Settings/Admin/SuperAdmin layers.
@@ -69,23 +74,22 @@ export const usePermissions = (): Permissions => {
   return useMemo(() => {
     const userId = currentUser?.id || null;
     const userRole = currentUser?.role || null;
+    const normalizedRole = normalizeAppRole(userRole);
     const organizationId =
       (currentUser as any)?.organizationId || (currentUser as any)?.organization_id || null;
 
     // Role checks
     // OWNER has at least ADMIN permissions + billing/ownership/deletion (per UserRole docs)
     const isUser = !!currentUser;
-    const isManager =
-      userRole === UserRole.ADMIN || userRole === UserRole.OWNER || userRole === 'SUPERADMIN';
-    const isAdmin =
-      userRole === UserRole.ADMIN || userRole === UserRole.OWNER || userRole === 'SUPERADMIN';
-    const isSuperAdmin = userRole === 'SUPERADMIN';
+    const isManager = isAdminOwnerOrSuperAdminRole(userRole);
+    const isAdmin = isAdminOwnerOrSuperAdminRole(userRole);
+    const isSuperAdmin = isSuperAdminRole(userRole);
 
     return {
       // User Info
       isAuthenticated,
       userId,
-      userRole,
+      userRole: normalizedRole || null,
       organizationId,
 
       // Role Checks
