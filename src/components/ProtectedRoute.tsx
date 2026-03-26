@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { normalizeAppRole } from '@/utils/roleGuards';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -28,8 +29,8 @@ const roleHierarchy: Record<string, number> = {
  */
 const hasRequiredRole = (userRole: string | undefined, requiredRole: string): boolean => {
   if (!userRole) return false;
-  const userLevel = roleHierarchy[userRole] ?? 0;
-  const requiredLevel = roleHierarchy[requiredRole] ?? 0;
+  const userLevel = roleHierarchy[normalizeAppRole(userRole)] ?? 0;
+  const requiredLevel = roleHierarchy[normalizeAppRole(requiredRole)] ?? 0;
   return userLevel >= requiredLevel;
 };
 

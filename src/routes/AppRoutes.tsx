@@ -24,6 +24,7 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import { isSuperAdminRole } from '@/utils/roleGuards';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { AuthView } from '@/views/AuthView';
@@ -464,13 +465,13 @@ export const AppRoutes: React.FC = () => {
 
   const breadcrumbs = useBreadcrumbs();
 
-  const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
+  const isSuperAdmin = isSuperAdminRole(currentUser?.role);
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
   React.useEffect(() => {
     if (!currentUser?.isAuthenticated) return;
-    if (currentUser?.role !== 'SUPERADMIN') return;
+    if (!isSuperAdminRole(currentUser?.role)) return;
 
     const path = location.pathname || '/';
     const isAlreadyInSuperAdmin = path === '/superadmin' || path.startsWith('/superadmin/');
@@ -495,7 +496,7 @@ export const AppRoutes: React.FC = () => {
     if (currentUser?.isAuthenticated) {
       setCurrentView(AppView.AI_CHAT);
       // Avoid /chat -> /superadmin bounce for SUPERADMIN accounts.
-      navigate(currentUser.role === 'SUPERADMIN' ? '/superadmin' : '/chat');
+      navigate(isSuperAdminRole(currentUser.role) ? '/superadmin' : '/chat');
       return;
     }
 

@@ -60,6 +60,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { AppView, UserRole } from '../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
+import { isSuperAdminRole } from '../../utils/roleGuards';
 import { PhaseIndicator } from '../PMO/PhaseIndicator';
 
 interface MenuItem {
@@ -591,7 +592,7 @@ export const Sidebar: React.FC = () => {
       !(
         currentUser?.role === UserRole.ADMIN ||
         currentUser?.role === UserRole.OWNER ||
-        currentUser?.role === 'SUPERADMIN'
+        isSuperAdminRole(currentUser?.role)
       );
 
     // Get human-readable name for required view
@@ -860,11 +861,11 @@ export const Sidebar: React.FC = () => {
 
             {(currentUser?.role === UserRole.ADMIN ||
               currentUser?.role === UserRole.OWNER ||
-              currentUser?.role === 'SUPERADMIN') &&
+              isSuperAdminRole(currentUser?.role)) &&
               renderMenuItem(organizationMenuItem)}
             {(currentUser?.role === UserRole.ADMIN ||
               currentUser?.role === UserRole.OWNER ||
-              currentUser?.role === 'SUPERADMIN') &&
+              isSuperAdminRole(currentUser?.role)) &&
               renderMenuItem(adminMenuItem)}
             {renderMenuItem(settingsMenuItem)}
 
