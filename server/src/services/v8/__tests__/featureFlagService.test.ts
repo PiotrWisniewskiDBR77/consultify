@@ -1,6 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ZodError } from 'zod';
-
 // ==========================================
 // HOISTED MOCKS (vi.mock factories are hoisted above imports)
 // ==========================================
@@ -51,6 +49,7 @@ import {
 
 const ORG_ID = '00000000-0000-4000-8000-000000000001';
 const OTHER_ORG_ID = '00000000-0000-4000-8000-000000000099';
+const TENANT_ORG_ID = 'dbr77';
 const USER_ID = '00000000-0000-4000-8000-000000000003';
 
 // ==========================================
@@ -91,12 +90,12 @@ describe('featureFlagService', () => {
       expect(result).toBe(false);
     });
 
-    it('returns false when global is on, table exists, but org has no flags', async () => {
+    it('returns true when global is on, table exists, but org has no explicit flags yet', async () => {
       mockDbAll.mockResolvedValue([]);
 
       const result = await isV8Enabled(ORG_ID);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
     it('returns true when org has at least one enabled module', async () => {
@@ -110,7 +109,7 @@ describe('featureFlagService', () => {
       expect(result).toBe(true);
     });
 
-    it('returns false when all org modules are disabled', async () => {
+    it('returns false when all org modules are explicitly disabled', async () => {
       mockDbAll.mockResolvedValue([
         { module: 'chat', enabled: 0 },
         { module: 'finance', enabled: 0 },
@@ -132,7 +131,7 @@ describe('featureFlagService', () => {
       expect(result).toBe(true);
     });
 
-    it('returns false for a specific disabled module', async () => {
+    it('returns false for a specific explicitly disabled module', async () => {
       mockDbAll.mockResolvedValue([
         { module: 'chat', enabled: 1 },
         { module: 'finance', enabled: 0 },
@@ -143,8 +142,25 @@ describe('featureFlagService', () => {
       expect(result).toBe(false);
     });
 
-    it('rejects invalid UUID for organizationId', async () => {
-      await expect(isV8Enabled('not-a-uuid')).rejects.toThrow(ZodError);
+    it('returns true for a specific module when no explicit flags exist yet', async () => {
+      mockDbAll.mockResolvedValue([]);
+
+      const result = await isV8Enabled(ORG_ID, 'chat');
+
+      expect(result).toBe(true);
+    });
+
+    it('accepts tenant-style organization ids', async () => {
+      mockDbAll.mockResolvedValue([{ module: 'chat', enabled: 1 }]);
+
+      const result = await isV8Enabled(TENANT_ORG_ID);
+
+      expect(result).toBe(true);
+      expect(mockDbAll).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID]);
+    });
+
+    it('rejects blank organizationId', async () => {
+      await expect(isV8Enabled('')).rejects.toThrow();
     });
   });
 
@@ -198,8 +214,17 @@ describe('featureFlagService', () => {
       expect(mockDbAll).toHaveBeenCalledTimes(2);
     });
 
-    it('rejects invalid UUID', async () => {
-      await expect(getV8Flags('bad')).rejects.toThrow(ZodError);
+    it('accepts tenant-style organization ids', async () => {
+      mockDbAll.mockResolvedValue([{ module: 'results', enabled: 1 }]);
+
+      const flags = await getV8Flags(TENANT_ORG_ID);
+
+      expect(flags).toEqual({ results: true });
+      expect(mockDbAll).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID]);
+    });
+
+    it('rejects blank organizationId', async () => {
+      await expect(getV8Flags('   ')).rejects.toThrow();
     });
   });
 
@@ -218,7 +243,7 @@ describe('featureFlagService', () => {
 
       expect(mockDbRun).toHaveBeenCalledTimes(1);
       const [sql, params] = mockDbRun.mock.calls[0];
-      expect(sql).toContain('INSERT INTO v8_feature_flags');
+      expect(sql).toContain('INSERT INTO v8.v8_feature_flags');
       expect(params[0]).toBe(`${ORG_ID}:chat`);
       expect(params[1]).toBe(ORG_ID);
       expect(params[2]).toBe('chat');
@@ -239,11 +264,19 @@ describe('featureFlagService', () => {
     });
 
     it('rejects invalid module name', async () => {
-      await expect(setV8OrgFlag(ORG_ID, 'invalid_module' as any, true)).rejects.toThrow(ZodError);
+      await expect(setV8OrgFlag(ORG_ID, 'invalid_module' as any, true)).rejects.toThrow();
     });
 
-    it('rejects invalid UUID', async () => {
-      await expect(setV8OrgFlag('not-uuid', 'chat', true)).rejects.toThrow(ZodError);
+    it('accepts tenant-style organization ids', async () => {
+      await setV8OrgFlag(TENANT_ORG_ID, 'chat', true);
+
+      expect(mockDbRun).toHaveBeenCalledTimes(1);
+      expect(mockDbRun.mock.calls[0]?.[1]?.[0]).toBe(`${TENANT_ORG_ID}:chat`);
+      expect(mockDbRun.mock.calls[0]?.[1]?.[1]).toBe(TENANT_ORG_ID);
+    });
+
+    it('rejects blank organizationId', async () => {
+      await expect(setV8OrgFlag('', 'chat', true)).rejects.toThrow();
     });
   });
 
@@ -261,13 +294,23 @@ describe('featureFlagService', () => {
       expect(mockTableExists).not.toHaveBeenCalled();
     });
 
-    it('returns false when table does not exist', async () => {
+    it('returns true when table does not exist', async () => {
       mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
       mockTableExists.mockResolvedValue(false);
 
       const result = await isV8ShadowMode(ORG_ID);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
+    });
+
+    it('accepts tenant-style organization ids', async () => {
+      mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
+      mockDbGet.mockResolvedValue({ enabled: 1 });
+
+      const result = await isV8ShadowMode(TENANT_ORG_ID);
+
+      expect(result).toBe(true);
+      expect(mockDbGet).toHaveBeenCalledWith(expect.any(String), [TENANT_ORG_ID]);
     });
 
     it('returns true when shadow_mode row is enabled', async () => {
@@ -288,18 +331,18 @@ describe('featureFlagService', () => {
       expect(result).toBe(false);
     });
 
-    it('returns false when no shadow_mode row exists', async () => {
+    it('returns true when no shadow_mode row exists', async () => {
       mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
       mockDbGet.mockResolvedValue(null);
 
       const result = await isV8ShadowMode(ORG_ID);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
-    it('rejects invalid UUID', async () => {
+    it('rejects blank organizationId', async () => {
       mockFeatureFlags.ENABLE_V8_SHADOW_MODE = true;
-      await expect(isV8ShadowMode('bad-id')).rejects.toThrow(ZodError);
+      await expect(isV8ShadowMode('')).rejects.toThrow();
     });
   });
 

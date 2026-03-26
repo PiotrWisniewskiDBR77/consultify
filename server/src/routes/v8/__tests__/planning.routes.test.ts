@@ -10,6 +10,22 @@ const mockGetCriticalPath = vi.fn();
 const mockGetCrossInitiativeDependencies = vi.fn();
 const mockGetDecisionChainsByInitiative = vi.fn();
 const mockGetPendingDecisions = vi.fn();
+const mockGetPortfolioRead = vi.fn();
+const mockGetInitiativeDetailRead = vi.fn();
+const mockGetInitiativeTaskDependenciesRead = vi.fn();
+const mockGetInitiativeWatchersRead = vi.fn();
+const mockGetInitiativeStakeholdersRead = vi.fn();
+const mockGetInitiativeGateRolesRead = vi.fn();
+const mockGetInitiativeStatusHistoryRead = vi.fn();
+const mockGetInitiativeHistoryRead = vi.fn();
+const mockGetInitiativeCommentsRead = vi.fn();
+const mockGetInitiativeGateReadinessRead = vi.fn();
+const mockGetInitiativeResourcesRead = vi.fn();
+const mockGetInitiativeKpisRead = vi.fn();
+const mockGetInitiativeBudgetItemsRead = vi.fn();
+const mockGetInitiativeToolsRead = vi.fn();
+const mockGetInitiativeIntangibleAssetsRead = vi.fn();
+const mockGetInitiativeRaidRead = vi.fn();
 
 vi.mock('../../../services/v8/planningContinuityService.js', () => ({
   getDecompositionTree: (...args: unknown[]) => mockGetDecompositionTree(...args),
@@ -18,6 +34,25 @@ vi.mock('../../../services/v8/planningContinuityService.js', () => ({
   getCrossInitiativeDependencies: (...args: unknown[]) => mockGetCrossInitiativeDependencies(...args),
   getDecisionChainsByInitiative: (...args: unknown[]) => mockGetDecisionChainsByInitiative(...args),
   getPendingDecisions: (...args: unknown[]) => mockGetPendingDecisions(...args),
+}));
+
+vi.mock('../../../services/v8/planningPortfolioReadService.js', () => ({
+  getPortfolioRead: (...args: unknown[]) => mockGetPortfolioRead(...args),
+  getInitiativeDetailRead: (...args: unknown[]) => mockGetInitiativeDetailRead(...args),
+  getInitiativeTaskDependenciesRead: (...args: unknown[]) => mockGetInitiativeTaskDependenciesRead(...args),
+  getInitiativeWatchersRead: (...args: unknown[]) => mockGetInitiativeWatchersRead(...args),
+  getInitiativeStakeholdersRead: (...args: unknown[]) => mockGetInitiativeStakeholdersRead(...args),
+  getInitiativeGateRolesRead: (...args: unknown[]) => mockGetInitiativeGateRolesRead(...args),
+  getInitiativeStatusHistoryRead: (...args: unknown[]) => mockGetInitiativeStatusHistoryRead(...args),
+  getInitiativeHistoryRead: (...args: unknown[]) => mockGetInitiativeHistoryRead(...args),
+  getInitiativeCommentsRead: (...args: unknown[]) => mockGetInitiativeCommentsRead(...args),
+  getInitiativeGateReadinessRead: (...args: unknown[]) => mockGetInitiativeGateReadinessRead(...args),
+  getInitiativeResourcesRead: (...args: unknown[]) => mockGetInitiativeResourcesRead(...args),
+  getInitiativeKpisRead: (...args: unknown[]) => mockGetInitiativeKpisRead(...args),
+  getInitiativeBudgetItemsRead: (...args: unknown[]) => mockGetInitiativeBudgetItemsRead(...args),
+  getInitiativeToolsRead: (...args: unknown[]) => mockGetInitiativeToolsRead(...args),
+  getInitiativeIntangibleAssetsRead: (...args: unknown[]) => mockGetInitiativeIntangibleAssetsRead(...args),
+  getInitiativeRaidRead: (...args: unknown[]) => mockGetInitiativeRaidRead(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -104,6 +139,261 @@ describe('V8 Planning continuity read-only routes', () => {
     mockGetCrossInitiativeDependencies.mockResolvedValue([]);
     mockGetDecisionChainsByInitiative.mockResolvedValue([]);
     mockGetPendingDecisions.mockResolvedValue([]);
+    mockGetPortfolioRead.mockResolvedValue({ initiatives: [], stats: { total: 0, byStatus: {}, avgProgress: 0 } });
+    mockGetInitiativeDetailRead.mockResolvedValue({ id: INIT, name: 'Initiative V8' });
+    mockGetInitiativeTaskDependenciesRead.mockResolvedValue([]);
+    mockGetInitiativeWatchersRead.mockResolvedValue([]);
+    mockGetInitiativeStakeholdersRead.mockResolvedValue([]);
+    mockGetInitiativeGateRolesRead.mockResolvedValue([]);
+    mockGetInitiativeStatusHistoryRead.mockResolvedValue([]);
+    mockGetInitiativeHistoryRead.mockResolvedValue([]);
+    mockGetInitiativeCommentsRead.mockResolvedValue([]);
+    mockGetInitiativeGateReadinessRead.mockResolvedValue({
+      currentStatus: 'PLANNING',
+      userRoles: ['PMO'],
+      availableTransitions: [],
+      readiness: [],
+      allBlocking: true,
+      allWarnings: true,
+    });
+    mockGetInitiativeResourcesRead.mockResolvedValue([]);
+    mockGetInitiativeKpisRead.mockResolvedValue([]);
+    mockGetInitiativeBudgetItemsRead.mockResolvedValue([]);
+    mockGetInitiativeToolsRead.mockResolvedValue([]);
+    mockGetInitiativeIntangibleAssetsRead.mockResolvedValue([]);
+    mockGetInitiativeRaidRead.mockResolvedValue([]);
+  });
+
+  it('GET /api/v8/planning/initiatives/portfolio returns V8 envelope and forwards filters', async () => {
+    mockGetPortfolioRead.mockResolvedValue({
+      initiatives: [{ id: INIT, name: 'Initiative V8' }],
+      stats: {
+        total: 1,
+        byStatus: { EXECUTING: 1 },
+        executing: 1,
+        approved: 0,
+        review: 0,
+        blockedCount: 0,
+        done: 0,
+        totalBudget: 10,
+        totalValue: 20,
+        avgProgress: 50,
+      },
+    });
+
+    const app = createApp();
+    const res = await request(app).get(
+      '/api/v8/planning/initiatives/portfolio?projectId=proj-1&status=executing&priority=high&search=alpha'
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.initiatives?.[0]?.id).toBe(INIT);
+    expect(mockGetPortfolioRead).toHaveBeenCalledWith(ORG, {
+      projectId: 'proj-1',
+      programId: undefined,
+      statuses: undefined,
+      status: ['executing'],
+      priority: ['high'],
+      search: 'alpha',
+    });
+  });
+
+  it('GET /api/v8/planning/initiatives/:id returns V8 envelope and org-scoped initiative detail', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .get(`/api/v8/planning/initiatives/${INIT}`)
+      .set('Accept-Language', 'pl-PL');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.initiative?.id).toBe(INIT);
+    expect(mockGetInitiativeDetailRead).toHaveBeenCalledWith(INIT, ORG, 'pl');
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/task-dependencies returns V8 envelope and org-scoped dependencies', async () => {
+    mockGetInitiativeTaskDependenciesRead.mockResolvedValue([
+      {
+        id: 'dep-1',
+        sourceTaskId: 'task-2',
+        taskId: 'task-1',
+        taskTitle: 'Define scope',
+        dependencyType: 'FS',
+        lagDays: 0,
+        direction: 'predecessor',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/task-dependencies`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.dependencies?.[0]?.id).toBe('dep-1');
+    expect(mockGetInitiativeTaskDependenciesRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/watchers returns V8 envelope and org-scoped watchers', async () => {
+    mockGetInitiativeWatchersRead.mockResolvedValue([{ id: 'watch-1', userId: 'user-1' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/watchers`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.watchers?.[0]?.id).toBe('watch-1');
+    expect(mockGetInitiativeWatchersRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/stakeholders returns V8 envelope and org-scoped stakeholders', async () => {
+    mockGetInitiativeStakeholdersRead.mockResolvedValue([{ id: 'stake-1', userId: 'user-2' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/stakeholders`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.stakeholders?.[0]?.id).toBe('stake-1');
+    expect(mockGetInitiativeStakeholdersRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/gate-roles returns V8 envelope and org-scoped roles', async () => {
+    mockGetInitiativeGateRolesRead.mockResolvedValue([{ id: 'role-1', gateRole: 'PROJECT_SPONSOR' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/gate-roles`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.roles?.[0]?.id).toBe('role-1');
+    expect(mockGetInitiativeGateRolesRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/status-history returns V8 envelope and org-scoped history', async () => {
+    mockGetInitiativeStatusHistoryRead.mockResolvedValue([{ id: 'hist-1', fromStatus: 'DRAFT', toStatus: 'REVIEW' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/status-history`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.history?.[0]?.id).toBe('hist-1');
+    expect(mockGetInitiativeStatusHistoryRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/history returns V8 envelope and org-scoped activity history', async () => {
+    mockGetInitiativeHistoryRead.mockResolvedValue([{ id: 'evt-1', eventType: 'status_changed' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/history`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.events?.[0]?.id).toBe('evt-1');
+    expect(mockGetInitiativeHistoryRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/comments returns V8 envelope and org-scoped comments', async () => {
+    mockGetInitiativeCommentsRead.mockResolvedValue([{ id: 'comment-1', content: 'Looks good' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/comments`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.comments?.[0]?.id).toBe('comment-1');
+    expect(mockGetInitiativeCommentsRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/gate-readiness-check returns V8 envelope and org-scoped readiness', async () => {
+    mockGetInitiativeGateReadinessRead.mockResolvedValue({
+      currentStatus: 'PLANNING',
+      userRoles: ['PMO'],
+      availableTransitions: [],
+      readiness: [{ key: 'scope', label: 'Scope defined', pass: true, severity: 'warning' }],
+      allBlocking: true,
+      allWarnings: true,
+    });
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/gate-readiness-check`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.readiness?.currentStatus).toBe('PLANNING');
+    expect(mockGetInitiativeGateReadinessRead).toHaveBeenCalledWith(INIT, ORG, UID);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/resources returns V8 envelope and org-scoped resources', async () => {
+    mockGetInitiativeResourcesRead.mockResolvedValue([{ id: 'res-1', role: 'Engineer' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/resources`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.resources?.[0]?.id).toBe('res-1');
+    expect(mockGetInitiativeResourcesRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/kpis returns V8 envelope and org-scoped kpis', async () => {
+    mockGetInitiativeKpisRead.mockResolvedValue([{ id: 'kpi-1', name: 'Revenue uplift' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/kpis`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.kpis?.[0]?.id).toBe('kpi-1');
+    expect(mockGetInitiativeKpisRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/budget-items returns V8 envelope and org-scoped budget items', async () => {
+    mockGetInitiativeBudgetItemsRead.mockResolvedValue([{ id: 'budget-1', category: 'software' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/budget-items`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.budgetItems?.[0]?.id).toBe('budget-1');
+    expect(mockGetInitiativeBudgetItemsRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/tools returns V8 envelope and org-scoped tools', async () => {
+    mockGetInitiativeToolsRead.mockResolvedValue([{ id: 'tool-1', name: 'Notion' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/tools`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.tools?.[0]?.id).toBe('tool-1');
+    expect(mockGetInitiativeToolsRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/intangible-assets returns V8 envelope and org-scoped intangible assets', async () => {
+    mockGetInitiativeIntangibleAssetsRead.mockResolvedValue([{ id: 'ia-1', name: 'Enablement pack' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/intangible-assets`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.intangibleAssets?.[0]?.id).toBe('ia-1');
+    expect(mockGetInitiativeIntangibleAssetsRead).toHaveBeenCalledWith(INIT, ORG);
+  });
+
+  it('GET /api/v8/planning/initiatives/:id/raid returns V8 envelope and org-scoped raid items', async () => {
+    mockGetInitiativeRaidRead.mockResolvedValue([{ id: 'raid-1', type: 'risk', title: 'Vendor risk' }]);
+
+    const app = createApp();
+    const res = await request(app).get(`/api/v8/planning/initiatives/${INIT}/raid?limit=25`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_PLANNING_READ_CONTRACT);
+    expect(res.body.data?.items?.[0]?.id).toBe('raid-1');
+    expect(mockGetInitiativeRaidRead).toHaveBeenCalledWith(INIT, ORG, 25);
   });
 
   it('GET /api/v8/planning/initiatives/:id/snapshot returns envelope and calls services with org + initiative', async () => {
@@ -123,13 +413,13 @@ describe('V8 Planning continuity read-only routes', () => {
     expect(mockGetDecisionChainsByInitiative).toHaveBeenCalledWith(INIT, ORG);
   });
 
-  it('GET /api/v8/planning/initiatives/:id/snapshot rejects non-UUID initiative id', async () => {
+  it('GET /api/v8/planning/initiatives/:id/snapshot accepts tenant initiative ids that are not UUIDs', async () => {
     const app = createApp();
-    const res = await request(app).get('/api/v8/planning/initiatives/not-a-uuid/snapshot');
+    const res = await request(app).get('/api/v8/planning/initiatives/init-adma-07/snapshot');
 
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe('PLANNING_INITIATIVE_ID_INVALID');
-    expect(mockGetDecompositionTree).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(res.body.data?.initiativeId).toBe('init-adma-07');
+    expect(mockGetDecompositionTree).toHaveBeenCalledWith('init-adma-07', ORG);
   });
 
   it('GET /api/v8/planning/pending-decisions returns V8 envelope and org-scoped pending chains', async () => {

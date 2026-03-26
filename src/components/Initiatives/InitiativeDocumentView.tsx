@@ -59,6 +59,7 @@ import { useTranslation } from 'react-i18next';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
+import { V8PlanningApi } from '@/services/api/v8/planning';
 import {
   getContextActions,
   getFilteredStatusActions,
@@ -1430,7 +1431,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       const showcaseDetail = isShowcaseInitiativeId(initiativeId)
         ? initiativesDemoData.initiativeDetailsById[initiativeId]
         : null;
-      const data = showcaseDetail?.initiative || (await Api.getInitiativeById(initiativeId));
+      const data =
+        showcaseDetail?.initiative ||
+        (await V8PlanningApi.getInitiative(initiativeId).catch(() => Api.getInitiativeById(initiativeId)));
       setInitiative(data);
       setInitiativeTemplate(null);
       setTitleDraft(String(data.title || data.name || '').trim());
@@ -1726,13 +1729,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             );
           })
           .catch(() => setDecisions([])),
-        Api.get(`/initiatives/${initiativeId}/raid`)
+        V8PlanningApi.getRaid(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/raid`))
           .then((r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : [])))
           .catch(() => setRaidItems([])),
-        Api.get(`/initiatives/${initiativeId}/watchers`)
-          .then((w: any) => setWatchers(w?.watchers || (Array.isArray(w) ? w : [])))
+        V8PlanningApi.getWatchers(initiativeId)
+          .then((watchers) => setWatchers(Array.isArray(watchers) ? watchers : []))
+          .catch(() =>
+            Api.get(`/initiatives/${initiativeId}/watchers`).then((w: any) =>
+              setWatchers(w?.watchers || (Array.isArray(w) ? w : []))
+            )
+          )
           .catch(() => setWatchers([])),
-        Api.get(`/initiatives/${initiativeId}/kpis`)
+        V8PlanningApi.getKpis(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/kpis`))
           .then((res: any) => {
             const rows = Array.isArray(res?.kpis) ? res.kpis : [];
             setLocalKpis(
@@ -1750,7 +1760,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           .catch(() => {
             // keep fallback KPI mapping from initiative payload
           }),
-        Api.get(`/initiatives/${initiativeId}/history`)
+        V8PlanningApi.getHistory(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/history`))
           .then((h: any) => setHistory(h?.events || h?.history || (Array.isArray(h) ? h : [])))
           .catch(() => setHistory([])),
         Api.get(`/tasks?initiativeId=${initiativeId}`)
@@ -1775,10 +1786,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             );
           })
           .catch(() => setTasks([])),
-        Api.get(`/initiatives/${initiativeId}/task-dependencies`)
-          .then((d: any) => setDependencies(Array.isArray(d?.dependencies) ? d.dependencies : []))
+        V8PlanningApi.getTaskDependencies(initiativeId)
+          .then((dependencies) => setDependencies(Array.isArray(dependencies) ? dependencies : []))
+          .catch(() =>
+            Api.get(`/initiatives/${initiativeId}/task-dependencies`).then((d: any) =>
+              setDependencies(Array.isArray(d?.dependencies) ? d.dependencies : [])
+            )
+          )
           .catch(() => setDependencies([])),
-        Api.get(`/initiatives/${initiativeId}/stakeholders`)
+        V8PlanningApi.getStakeholders(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/stakeholders`))
           .then((st: any) => {
             const mapped: Stakeholder[] = (st?.stakeholders || (Array.isArray(st) ? st : [])).map(
               (s: any) => {
@@ -1836,7 +1853,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setPendingApprovals(approvals);
           })
           .catch(() => setPendingApprovals([])),
-        Api.get(`/initiatives/${initiativeId}/comments`)
+        V8PlanningApi.getComments(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/comments`))
           .then((c: any) => {
             const rows = Array.isArray(c?.comments) ? c.comments : Array.isArray(c) ? c : [];
             setComments(
@@ -1853,7 +1871,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           })
           .catch(() => setComments([])),
         // Gate roles & governance
-        Api.get(`/initiatives/${initiativeId}/gate-roles`)
+        V8PlanningApi.getGateRoles(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/gate-roles`))
           .then((gr: any) => {
             const roles: GateRoleAssignment[] = (gr?.roles || []).map((r: any) => ({
               id: r.id,
@@ -1870,20 +1889,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setGateRoles(roles);
           })
           .catch(() => setGateRoles([])),
-        Api.get(`/initiatives/${initiativeId}/gate-readiness-check`)
+        V8PlanningApi.getGateReadiness(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/gate-readiness-check`))
           .then((rc: any) => {
-            setGateReadiness(rc || null);
-            setUserGateRoles(rc?.userRoles || []);
+            const payload = rc?.readiness || rc || null;
+            setGateReadiness(payload);
+            setUserGateRoles(payload?.userRoles || []);
           })
           .catch(() => {
             setGateReadiness(null);
             setUserGateRoles([]);
           }),
-        Api.get(`/initiatives/${initiativeId}/status-history`)
-          .then((sh: any) => setStatusHistory(sh?.history || []))
+        V8PlanningApi.getStatusHistory(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/status-history`))
+          .then((sh: any) => setStatusHistory(sh?.history || (Array.isArray(sh) ? sh : [])))
           .catch(() => setStatusHistory([])),
         // Resources: Team / FTE
-        Api.get(`/initiatives/${initiativeId}/resources`)
+        V8PlanningApi.getResources(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/resources`))
           .then((r: any) => {
             const rows = Array.isArray(r?.resources) ? r.resources : Array.isArray(r) ? r : [];
             setApiResourceItems(
@@ -1905,7 +1928,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           })
           .catch(() => setApiResourceItems([])),
         // Resources: Budget Items
-        Api.get(`/initiatives/${initiativeId}/budget-items`)
+        V8PlanningApi.getBudgetItems(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/budget-items`))
           .then((r: any) => {
             const rows = Array.isArray(r?.budgetItems) ? r.budgetItems : [];
             setApiBudgetItems(
@@ -1922,7 +1946,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           })
           .catch(() => setApiBudgetItems([])),
         // Resources: Tools
-        Api.get(`/initiatives/${initiativeId}/tools`)
+        V8PlanningApi.getTools(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/tools`))
           .then((r: any) => {
             const rows = Array.isArray(r?.tools) ? r.tools : [];
             setApiToolItems(
@@ -1941,7 +1966,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           })
           .catch(() => setApiToolItems([])),
         // Resources: Intangible Assets (Licenses, Training, Knowledge)
-        Api.get(`/initiatives/${initiativeId}/intangible-assets`)
+        V8PlanningApi.getIntangibleAssets(initiativeId)
+          .catch(() => Api.get(`/initiatives/${initiativeId}/intangible-assets`))
           .then((r: any) => {
             const rows = Array.isArray(r?.intangibleAssets) ? r.intangibleAssets : [];
             setApiIntangibleAssets(

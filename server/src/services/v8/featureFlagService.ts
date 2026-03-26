@@ -19,7 +19,7 @@ const V8_MODULES = [
 ] as const;
 type V8Module = (typeof V8_MODULES)[number];
 
-const OrgIdSchema = z.string().uuid();
+const OrgIdSchema = z.string().trim().min(1);
 const ModuleSchema = z.enum(V8_MODULES);
 
 // ---------------------------------------------------------------------------
@@ -66,26 +66,55 @@ async function flagTableExists(): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 export async function isV8Enabled(organizationId: string, module?: string): Promise<boolean> {
-  OrgIdSchema.parse(organizationId);
+  const orgId = OrgIdSchema.parse(organizationId);
 
-  if (!featureFlags.ENABLE_V8_GLOBAL) return false;
-
-  const hasTable = await flagTableExists();
-  if (!hasTable) return false;
-
-  const flags = await getV8Flags(organizationId);
-
-  if (module) {
-    return flags[module] === true;
+  if (!featureFlags.ENABLE_V8_GLOBAL) {
+    Logger.warn(`${LOG_PREFIX} V8 disabled by global flag`, { organizationId: orgId, module });
+    return false;
   }
 
-  return Object.values(flags).some((v) => v === true);
+  const hasTable = await flagTableExists();
+  if (!hasTable) {
+    Logger.warn(`${LOG_PREFIX} V8 feature flag table missing`, { organizationId: orgId, module });
+    return false;
+  }
+
+  const flags = await getV8Flags(orgId);
+
+  // Staging and tenant-style orgs may run with global V8 enabled but without
+  // per-org flag rows materialized yet. In that case, preserve V8 access
+  // instead of hard-disabling the namespace.
+  if (Object.keys(flags).length === 0) {
+    return true;
+  }
+
+  if (module) {
+    const enabled = flags[module] === true;
+    if (!enabled) {
+      Logger.warn(`${LOG_PREFIX} V8 module disabled for org`, {
+        organizationId: orgId,
+        module,
+        flags,
+      });
+    }
+    return enabled;
+  }
+
+  const enabled = Object.values(flags).some((v) => v === true);
+  if (!enabled) {
+    Logger.warn(`${LOG_PREFIX} V8 org disabled by flags`, {
+      organizationId: orgId,
+      module,
+      flags,
+    });
+  }
+  return enabled;
 }
 
 export async function getV8Flags(organizationId: string): Promise<Record<string, boolean>> {
-  OrgIdSchema.parse(organizationId);
+  const orgId = OrgIdSchema.parse(organizationId);
 
-  const cached = getCached(organizationId);
+  const cached = getCached(orgId);
   if (cached) return cached;
 
   const hasTable = await flagTableExists();
@@ -93,7 +122,7 @@ export async function getV8Flags(organizationId: string): Promise<Record<string,
 
   const rows = await dbAll<{ module: string; enabled: number }>(
     `SELECT module, enabled FROM v8.v8_feature_flags WHERE organization_id = $1`,
-    [organizationId],
+    [orgId],
   );
 
   const flags: Record<string, boolean> = {};
@@ -101,7 +130,7 @@ export async function getV8Flags(organizationId: string): Promise<Record<string,
     flags[row.module] = row.enabled === 1;
   }
 
-  setCache(organizationId, flags);
+  setCache(orgId, flags);
   return flags;
 }
 
@@ -111,7 +140,7 @@ export async function setV8OrgFlag(
   enabled: boolean,
   updatedBy?: string,
 ): Promise<void> {
-  OrgIdSchema.parse(organizationId);
+  const orgId = OrgIdSchema.parse(organizationId);
   ModuleSchema.parse(module);
 
   const hasTable = await flagTableExists();
@@ -120,22 +149,22 @@ export async function setV8OrgFlag(
   }
 
   const now = new Date().toISOString();
-  const flagId = `${organizationId}:${module}`;
+  const flagId = `${orgId}:${module}`;
 
   await dbRun(
     `INSERT INTO v8.v8_feature_flags (flag_id, organization_id, module, enabled, updated_at, updated_by)
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (organization_id, module)
      DO UPDATE SET enabled = $4, updated_at = $5, updated_by = $6`,
-    [flagId, organizationId, module, enabled ? 1 : 0, now, updatedBy || null],
+    [flagId, orgId, module, enabled ? 1 : 0, now, updatedBy || null],
   );
 
-  clearFlagCache(organizationId);
-  Logger.info(`${LOG_PREFIX} Flag ${module} set to ${enabled} for org ${organizationId}`);
+  clearFlagCache(orgId);
+  Logger.info(`${LOG_PREFIX} Flag ${module} set to ${enabled} for org ${orgId}`);
 }
 
 export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
-  OrgIdSchema.parse(organizationId);
+  const orgId = OrgIdSchema.parse(organizationId);
 
   if (!featureFlags.ENABLE_V8_SHADOW_MODE) return false;
 
@@ -146,7 +175,7 @@ export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
 
   const row = await dbGet<{ enabled: number }>(
     `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
-    [organizationId],
+    [orgId],
   );
 
   // No row = default to enabled (global flag is on). Row with enabled=0 = opt-out.
