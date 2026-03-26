@@ -21,10 +21,35 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;
   const nudge = payload.nudge;
+  const runtimeSummary = payload.runtimeSummary;
 
   return (
     <HomeBlockShell block={block}>
       <div className="grid gap-4">
+        {runtimeSummary ? (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">
+              {isPolish
+                ? `Idee z taskami ${runtimeSummary.ideasWithTasks}`
+                : `Ideas with tasks ${runtimeSummary.ideasWithTasks}`}
+            </div>
+            <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-cyan-100">
+              {isPolish
+                ? `Ostatnie notatki ${runtimeSummary.recentNotes}`
+                : `Recent notes ${runtimeSummary.recentNotes}`}
+            </div>
+            <div className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-violet-100">
+              {isPolish
+                ? `Ostatnie outputy ${runtimeSummary.recentOutputs}`
+                : `Recent outputs ${runtimeSummary.recentOutputs}`}
+            </div>
+            <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-emerald-100">
+              {isPolish
+                ? `Sygnały z organizacji ${runtimeSummary.orgSignals}`
+                : `Org signals ${runtimeSummary.orgSignals}`}
+            </div>
+          </div>
+        ) : null}
         {nudge ? (
           <button
             onClick={() =>

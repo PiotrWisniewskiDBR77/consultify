@@ -23,6 +23,11 @@ import { resolveInitiativeAccessContext } from '../services/initiative/initiativ
 import notificationService from '../services/notificationService.js';
 import { calculateRiskScore, categorizeScore, DEFAULT_THRESHOLDS } from '../services/raidScoringService.js';
 import { syncInitiativeCapacity } from '../services/staffingPlanService.js';
+import {
+  getInitiativeDetailRead,
+  getInitiativeTaskDependenciesRead,
+  getPortfolioRead,
+} from '../services/v8/planningPortfolioReadService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -430,64 +435,12 @@ export class InitiativeController {
       const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
       const lang = supportedLangs.includes(userLang) ? userLang : 'en';
 
-      const sql = `
-            SELECT i.*, 
-                ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
-                oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
-            FROM initiatives i
-            LEFT JOIN users ob ON i.owner_business_id = ob.id
-            LEFT JOIN users oe ON i.owner_execution_id = oe.id
-            WHERE i.id = ? AND i.organization_id = ?
-        `;
-
-      const initiative = await queryHelpers.queryOne(sql, [id, orgId]);
+      const initiative = await getInitiativeDetailRead(id, orgId, lang);
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
-
-      const i = initiative as Record<string, unknown>;
-
-      // Parse JSON fields and apply multilingual text
-      const parsed = {
-        ...initiative,
-        name: getMultilingualText((i.name as string) || (i.title as string), lang),
-        summary: getMultilingualText(i.summary as string, lang),
-        // UI expects `description` (long narrative). We store it as `hypothesis` in DB.
-        description: getMultilingualText((i.hypothesis as string) || '', lang),
-        deliverables: safeJsonParse(i.deliverables as string, []),
-        successCriteria: safeJsonParse(i.success_criteria as string, []),
-        scopeIn: safeJsonParse(i.scope_in as string, []),
-        scopeOut: safeJsonParse(i.scope_out as string, []),
-        killCriteria: safeJsonParse((i as any).kill_criteria as string, []),
-        keyRisks: safeJsonParse(i.key_risks as string, []),
-        tags: safeJsonParse((i as any).tags as string, []),
-        resourceTools: safeJsonParse((i as any).resource_tools as string, []),
-        estimatedBudget:
-          (i as any).estimated_budget ??
-          (i as any).estimatedBudget ??
-          (i as any).budget_estimate ??
-          null,
-        // UI aliases
-        ownerId: (i as any).owner_execution_id ?? (i as any).owner_id ?? null,
-        sponsorId: (i as any).sponsor_id ?? null,
-        plannedStartDate: (i as any).planned_start_date ?? (i as any).start_date ?? null,
-        plannedEndDate: (i as any).planned_end_date ?? (i as any).end_date ?? null,
-        baselineVersion: (i as any).baseline_version ? Number((i as any).baseline_version) : null,
-        scheduleBaselineId: (i as any).schedule_baseline_id ?? null,
-        targetState: safeJsonParseObject((i as any).target_state as string, {}),
-        // UI expects a nested scope object in some places
-        scope: {
-          inScope: safeJsonParse(i.scope_in as string, []),
-          outScope: safeJsonParse(i.scope_out as string, []),
-          killCriteria: safeJsonParse((i as any).kill_criteria as string, []),
-        },
-        sourceType: i.source_type,
-        sourceId: i.source_id,
-        initiativeTemplateId: (i as any).initiative_template_id ?? null,
-      };
-
-      res.json(parsed);
+      res.json(initiative);
     }
   );
 
@@ -1859,123 +1812,7 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, orgId]
-      );
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
-        return;
-      }
-
-      const dbToShort: Record<string, 'FS' | 'SS' | 'FF' | 'SF'> = {
-        finish_to_start: 'FS',
-        start_to_start: 'SS',
-        finish_to_finish: 'FF',
-        start_to_finish: 'SF',
-        FS: 'FS',
-        SS: 'SS',
-        FF: 'FF',
-        SF: 'SF',
-      };
-
-      let rows: any[] = [];
-      try {
-        // Preferred (current dev DB): predecessor_id / successor_id
-        rows = await queryHelpers.queryAll(
-          `SELECT
-            td.id,
-            td.predecessor_id as fromTaskId,
-            td.successor_id as toTaskId,
-            COALESCE(td.dependency_type, 'finish_to_start') as dependencyType,
-            COALESCE(td.lag_days, 0) as lagDays,
-            td.notes,
-            td.created_at as createdAt,
-            f.title as fromTitle,
-            f.status as fromStatus,
-            f.priority as fromPriority,
-            t.title as toTitle,
-            t.status as toStatus,
-            t.priority as toPriority
-          FROM task_dependencies td
-          JOIN tasks f ON f.id = td.predecessor_id
-          JOIN tasks t ON t.id = td.successor_id
-          WHERE f.organization_id = ?
-            AND t.organization_id = ?
-            AND f.initiative_id = ?
-            AND t.initiative_id = ?
-          ORDER BY td.created_at DESC`,
-          [orgId, orgId, initiativeId, initiativeId]
-        );
-      } catch (err: any) {
-        const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no such column') && !msg.includes('does not exist')) throw err;
-        // Legacy fallback: from_task_id / to_task_id
-        rows = await queryHelpers.queryAll(
-          `SELECT
-            td.id,
-            td.from_task_id as fromTaskId,
-            td.to_task_id as toTaskId,
-            COALESCE(td.dependency_type, 'finish_to_start') as dependencyType,
-            COALESCE(td.lag_days, 0) as lagDays,
-            td.notes,
-            td.created_at as createdAt,
-            f.title as fromTitle,
-            f.status as fromStatus,
-            f.priority as fromPriority,
-            t.title as toTitle,
-            t.status as toStatus,
-            t.priority as toPriority
-          FROM task_dependencies td
-          JOIN tasks f ON f.id = td.from_task_id
-          JOIN tasks t ON t.id = td.to_task_id
-          WHERE f.organization_id = ?
-            AND t.organization_id = ?
-            AND f.initiative_id = ?
-            AND t.initiative_id = ?
-          ORDER BY td.created_at DESC`,
-          [orgId, orgId, initiativeId, initiativeId]
-        );
-      }
-
-      const dependencies = (rows || []).flatMap((r: any) => {
-        const type = dbToShort[String(r.dependencyType || 'FS')] || 'FS';
-        const common = {
-          dependencyType: type,
-          lagDays: Number(r.lagDays || 0) || 0,
-          notes: r.notes || undefined,
-          createdAt: r.createdAt || undefined,
-        };
-
-        // For the shared DependenciesSection UI:
-        // - "predecessor" row is relative to the successor (sourceTaskId = toTaskId)
-        // - "successor" row is relative to the predecessor (sourceTaskId = fromTaskId)
-        return [
-          {
-            id: String(r.id),
-            sourceTaskId: String(r.toTaskId),
-            taskId: String(r.fromTaskId),
-            taskTitle: String(r.fromTitle || ''),
-            taskStatus: String(r.fromStatus || 'todo'),
-            taskPriority: String(r.fromPriority || 'medium'),
-            taskIndexCode: String(r.fromTaskId),
-            direction: 'predecessor' as const,
-            ...common,
-          },
-          {
-            id: String(r.id),
-            sourceTaskId: String(r.fromTaskId),
-            taskId: String(r.toTaskId),
-            taskTitle: String(r.toTitle || ''),
-            taskStatus: String(r.toStatus || 'todo'),
-            taskPriority: String(r.toPriority || 'medium'),
-            taskIndexCode: String(r.toTaskId),
-            direction: 'successor' as const,
-            ...common,
-          },
-        ];
-      });
-
+      const dependencies = await getInitiativeTaskDependenciesRead(initiativeId, orgId);
       res.json({ dependencies });
     }
   );
@@ -2190,226 +2027,16 @@ export class InitiativeController {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-
-      const { projectId, programId: programIdQ, statuses, status, search } = req.query as {
-        projectId?: string;
-        programId?: string;
-        statuses?: string;
-        status?: string;
-        search?: string;
-      };
-      const priorityRaw = (req.query as any)?.priority as string | string[] | undefined;
-      const priorities = Array.isArray(priorityRaw)
-        ? priorityRaw
-        : priorityRaw
-          ? [priorityRaw]
-          : [];
-      const statusRaw = (req.query as any)?.status as string | string[] | undefined;
-      const requestedStatuses = (() => {
-        const out: string[] = [];
-        const fromStatuses = String(statuses || '')
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-        out.push(...fromStatuses);
-        if (Array.isArray(statusRaw)) out.push(...statusRaw);
-        else if (statusRaw) out.push(statusRaw);
-        return Array.from(new Set(out.map((s) => String(s || '').toUpperCase()).filter(Boolean)));
-      })();
-
-      const params: Array<unknown> = [orgId];
-      let sql = `
-            SELECT i.*, 
-                ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
-                oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
-            FROM initiatives i
-            LEFT JOIN users ob ON i.owner_business_id = ob.id
-            LEFT JOIN users oe ON i.owner_execution_id = oe.id
-            WHERE i.organization_id = ?
-        `;
-
-      if (projectId) {
-        sql += ` AND i.project_id = ?`;
-        params.push(String(projectId));
-      }
-      if (programIdQ) {
-        sql += ` AND i.program_id = ?`;
-        params.push(String(programIdQ));
-      }
-      if (priorities.length > 0) {
-        const normalized = priorities.map((p) => String(p || '').toUpperCase()).filter(Boolean);
-        if (normalized.length > 0) {
-          sql += ` AND UPPER(COALESCE(i.priority,'')) IN (${normalized.map(() => '?').join(', ')})`;
-          params.push(...normalized);
-        }
-      }
-      if (search) {
-        const like = `%${String(search).toLowerCase()}%`;
-        sql += ` AND (
-          LOWER(COALESCE(i.title, i.name, '')) LIKE ?
-          OR LOWER(COALESCE(i.summary, '')) LIKE ?
-          OR LOWER(COALESCE(i.hypothesis, '')) LIKE ?
-        )`;
-        params.push(like, like, like);
-      }
-
-      sql += ` ORDER BY i.created_at DESC`;
-
-      const rows = await queryHelpers.queryAll(sql, params);
-
-      // Helper to normalize status
-      const normalizePortfolioStatus = (status: string | unknown): string => {
-        const s = String(status || 'DRAFT').toUpperCase();
-        // Map old statuses to new ones
-        if (s.includes('STEP3') || s.includes('STEP_3')) return 'REVIEW';
-        if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT')) return 'APPROVED';
-        if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL')) return 'EXECUTING';
-        if (s === 'COMPLETED' || s === 'DONE') return 'DONE';
-        if (
-          [
-            'DRAFT',
-            'PENDING_REVIEW',
-            'PLANNING',
-            'REVIEW',
-            'PROMOTED',
-            'APPROVED',
-            'SCHEDULED',
-            'EXECUTING',
-            'BLOCKED',
-            'DONE',
-            'TRACKING',
-            'CANCELLED',
-            'ARCHIVED',
-          ].includes(s)
-        ) {
-          return s;
-        }
-        return 'DRAFT';
-      };
-
-      // Helper to parse localized name
-      const parseName = (name: string | unknown): string => {
-        const n = String(name || 'Untitled Initiative');
-        if (n.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(n);
-            return parsed.en || parsed.pl || n;
-          } catch {
-            return n;
-          }
-        }
-        return n;
-      };
-
-      let initiatives = rows.map((i: Record<string, unknown>) => {
-        const budget =
-          ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) ||
-          (i.business_value as number) ||
-          0;
-        return {
-          id: i.id,
-          organizationId: i.organization_id,
-          projectId: i.project_id,
-          programId: i.program_id ?? undefined,
-          name: parseName(i.title || i.name),
-          title: parseName(i.title || i.name),
-          axis: i.axis || 'operational',
-          area: i.area,
-          summary: i.summary,
-          hypothesis: i.hypothesis,
-          status: normalizePortfolioStatus(i.status),
-          progress: i.progress || 0,
-          currentStage: i.current_stage,
-          businessValue: i.business_value || 0,
-          budget: budget,
-          costCapex: i.cost_capex || 0,
-          costOpex: i.cost_opex || 0,
-          expectedRoi: i.expected_roi || 0,
-          valueDriver: i.value_driver,
-          confidenceLevel: i.confidence_level || 'medium',
-          valueTiming: i.value_timing,
-          plannedStartDate: i.planned_start_date,
-          plannedEndDate: i.planned_end_date,
-          actualStartDate: i.actual_start_date,
-          actualEndDate: i.actual_end_date,
-          priority: String(i.priority || 'MEDIUM').toUpperCase(),
-          sourceId: i.source_id,
-          sourceType: i.source_type,
-          targetQuarter: i.planned_start_date
-            ? `Q${Math.ceil((new Date(i.planned_start_date as string).getMonth() + 1) / 3)} ${new Date(i.planned_start_date as string).getFullYear()}`
-            : undefined,
-          ownerBusiness: i.owner_business_id
-            ? {
-                id: i.owner_business_id,
-                firstName: i.ob_first_name,
-                lastName: i.ob_last_name,
-                avatarUrl: i.ob_avatar,
-              }
-            : null,
-          ownerExecution: i.owner_execution_id
-            ? {
-                id: i.owner_execution_id,
-                firstName: i.oe_first_name,
-                lastName: i.oe_last_name,
-                avatarUrl: i.oe_avatar,
-              }
-            : null,
-          createdAt: i.created_at,
-          updatedAt: i.updated_at,
-        };
+      const data = await getPortfolioRead(orgId, {
+        projectId: typeof req.query.projectId === 'string' ? req.query.projectId : undefined,
+        programId: typeof req.query.programId === 'string' ? req.query.programId : undefined,
+        statuses: (req.query as any)?.statuses as string | string[] | undefined,
+        status: (req.query as any)?.status as string | string[] | undefined,
+        priority: (req.query as any)?.priority as string | string[] | undefined,
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
       });
 
-      // Status filter must use normalized status to support legacy STEP* values.
-      // Supports:
-      // - ?status=REVIEW
-      // - ?status=REVIEW&status=PROMOTED (repeat param)
-      // - ?statuses=REVIEW,PROMOTED (comma)
-      if (requestedStatuses.length > 0) {
-        const set = new Set(requestedStatuses);
-        initiatives = initiatives.filter((i: any) => set.has(String(i.status || '').toUpperCase()));
-      }
-
-      // Calculate stats by status
-      const byStatus: Record<string, number> = {};
-      initiatives.forEach((i: any) => {
-        byStatus[i.status] = (byStatus[i.status] || 0) + 1;
-      });
-
-      const totalInitiatives = initiatives.length;
-      const executing = byStatus['EXECUTING'] || 0;
-      const approved = byStatus['APPROVED'] || 0;
-      const review = byStatus['REVIEW'] || 0;
-      const blockedCount = byStatus['BLOCKED'] || 0;
-      const done = byStatus['DONE'] || 0;
-
-      const totalBudget = initiatives.reduce((sum: number, i: any) => sum + (i.budget || 0), 0);
-      const totalValue = initiatives.reduce(
-        (sum: number, i: any) => sum + (i.businessValue || 0),
-        0
-      );
-      const avgProgress =
-        totalInitiatives > 0
-          ? Math.round(
-              initiatives.reduce((sum: number, i: any) => sum + (i.progress || 0), 0) /
-                totalInitiatives
-            )
-          : 0;
-
-      res.json({
-        initiatives,
-        stats: {
-          total: totalInitiatives,
-          byStatus,
-          executing,
-          approved,
-          review,
-          blockedCount,
-          done,
-          totalBudget,
-          totalValue,
-          avgProgress,
-        },
-      });
+      res.json(data);
     }
   );
 

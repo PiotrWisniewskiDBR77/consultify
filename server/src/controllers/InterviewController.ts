@@ -1170,6 +1170,65 @@ export async function loadInterviewSessionForOrganization(
   return buildSessionResponse(row);
 }
 
+export async function loadAcceptedInterviewSessionsForManager(
+  organizationId: string,
+  userId: string,
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+    templateId?: string;
+    templateName?: string;
+    templateCategory?: string;
+    status: string;
+    startedAt?: string;
+    completedAt?: string;
+    respondentId?: string;
+    respondentName?: string;
+    answeredQuestions: number;
+    totalQuestions: number;
+  }>
+> {
+  const rows = await queryHelpers.queryAll(
+    `SELECT
+       s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
+       s.answered_questions, s.total_questions,
+       t.name as template_name, t.category as template_category,
+       COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
+     FROM interview_sessions s
+     INNER JOIN interview_assignments a
+       ON a.session_id = s.id
+       AND a.organization_id = ?
+       AND a.created_by = ?
+       AND a.status IN ('approved', 'completed')
+     LEFT JOIN projects p ON p.id = s.project_id
+     LEFT JOIN interview_library_templates t ON t.id = s.template_id
+     LEFT JOIN users u ON u.id = s.owner_id
+     WHERE (
+       p.organization_id = ?
+       OR (s.project_id IS NULL AND s.organization_id = ?)
+     )
+     AND s.status = 'completed'
+     ORDER BY s.completed_at DESC`,
+    [organizationId, userId, organizationId, organizationId]
+  );
+
+  return (rows || []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    templateId: row.template_id || undefined,
+    templateName: row.template_name || undefined,
+    templateCategory: row.template_category || undefined,
+    status: row.status,
+    startedAt: row.started_at || undefined,
+    completedAt: row.completed_at || undefined,
+    respondentId: row.owner_id || undefined,
+    respondentName: String(row.respondent_name || '').trim() || undefined,
+    answeredQuestions: row.answered_questions || 0,
+    totalQuestions: row.total_questions || 0,
+  }));
+}
+
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -1191,46 +1250,7 @@ export const InterviewController = {
    */
   getAcceptedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-
-    const rows = await queryHelpers.queryAll(
-      `SELECT
-         s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
-         s.answered_questions, s.total_questions,
-         t.name as template_name, t.category as template_category,
-         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
-       FROM interview_sessions s
-       INNER JOIN interview_assignments a
-         ON a.session_id = s.id
-         AND a.organization_id = ?
-         AND a.created_by = ?
-         AND a.status IN ('approved', 'completed')
-       LEFT JOIN projects p ON p.id = s.project_id
-       LEFT JOIN interview_library_templates t ON t.id = s.template_id
-       LEFT JOIN users u ON u.id = s.owner_id
-       WHERE (
-         p.organization_id = ?
-         OR (s.project_id IS NULL AND s.organization_id = ?)
-       )
-       AND s.status = 'completed'
-       ORDER BY s.completed_at DESC`,
-      [user.organizationId, user.id, user.organizationId, user.organizationId]
-    );
-
-    const sessions = (rows || []).map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      templateId: row.template_id,
-      templateName: row.template_name,
-      templateCategory: row.template_category,
-      status: row.status,
-      startedAt: row.started_at,
-      completedAt: row.completed_at,
-      respondentId: row.owner_id,
-      respondentName: String(row.respondent_name || '').trim() || undefined,
-      answeredQuestions: row.answered_questions,
-      totalQuestions: row.total_questions,
-    }));
-
+    const sessions = await loadAcceptedInterviewSessionsForManager(user.organizationId, user.id);
     res.json(sessions);
   }),
 

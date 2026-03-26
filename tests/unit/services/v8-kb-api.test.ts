@@ -10,6 +10,8 @@ import {
   V8KnowledgeBaseApi,
   V8_KB_ARTICLE_PATH,
   V8_KB_CONTEXT_PATH,
+  V8_KB_FEATURED_PATH,
+  V8_KB_PUBLIC_PATH,
   V8_KB_SEARCH_PATH,
 } from '@/services/api/v8/kb';
 import { v8Get } from '@/services/api/v8/client';
@@ -28,6 +30,28 @@ describe('V8KnowledgeBaseApi', () => {
       q: 'ai',
       lang: 'en',
       limit: '12',
+    });
+  });
+
+  it('requests KB public preview from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ articles: [] });
+
+    await V8KnowledgeBaseApi.getPublicPreview('pl', 3);
+
+    expect(v8Get).toHaveBeenCalledWith(V8_KB_PUBLIC_PATH, {
+      lang: 'pl',
+      limit: '3',
+    });
+  });
+
+  it('requests KB featured articles from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ articles: [] });
+
+    await V8KnowledgeBaseApi.getFeaturedArticles('en', 5);
+
+    expect(v8Get).toHaveBeenCalledWith(V8_KB_FEATURED_PATH, {
+      lang: 'en',
+      limit: '5',
     });
   });
 

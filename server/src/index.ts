@@ -35,7 +35,9 @@ import {
   initializeConnectionPool,
   shutdownConnectionPool,
 } from './database/index.js';
+import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
+import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
@@ -783,6 +785,12 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Public KB V8 bridge is mounted here as well as in ApiGateway.
+// This avoids staged runtime drift where Gateway route updates may lag behind
+// the rest of the deployed backend while we finish the anonymous KB packet.
+app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes);
+
 if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
   const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m

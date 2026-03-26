@@ -36,6 +36,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { V8AssessmentApi } from '@/services/api/v8';
+
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { useAppStore } from '../../store/useAppStore';
 // Multi-framework store
@@ -81,6 +83,16 @@ type AxisSelection = 'dashboard' | DRDAxis;
 
 // Type matching WorkflowStatusBar's expected status type
 type WorkflowStatus = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED';
+
+const COMPLETED_AXES: DRDAxis[] = [
+  'processes',
+  'digitalProducts',
+  'businessModels',
+  'dataManagement',
+  'culture',
+  'cybersecurity',
+  'aiMaturity',
+];
 
 export type HubTab = 'assessment' | 'map' | 'reports' | 'initiatives';
 // REMOVED DUPLICATE TYPE DEFINITION: export type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
@@ -438,52 +450,106 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     setSaveError(null);
 
     try {
-      const token = localStorage.getItem('token');
       const assessmentData = useAppStore.getState().fullSessionData?.assessment || {};
+      const name = assessmentMeta?.name || 'Nowy Assessment';
+      const payload = {
+        name,
+        answers: assessmentData,
+        completionPercent: calculateProgress(),
+        navigation: { selectedAxis, framework },
+      };
 
-      // Determine endpoint - use project-based or assessment-based
-      const endpoint = selectedAssessmentId
-        ? `/api/assessment/${selectedAssessmentId}`
-        : `/api/assessment/${currentProjectId}`;
+      const token = localStorage.getItem('token');
+      const legacyHeaders = {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
 
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: assessmentMeta?.name || 'Nowy Assessment',
-          axisData: assessmentData,
-          projectId: currentProjectId,
-          framework: framework,
-        }),
-      });
+      let assessmentId = selectedAssessmentId;
 
-      if (response.ok) {
-        const data = await response.json();
-        setLastSaved(new Date());
-        setHasUnsavedChanges(false);
-        toast.success('Assessment zapisany');
-
-        // If new assessment was created, update the selected ID
-        if (data.id && !selectedAssessmentId) {
-          setSelectedAssessmentId(data.id);
-          setAssessmentMeta((prev) => (prev ? { ...prev, isNew: false } : null));
+      if (!assessmentId) {
+        try {
+          const created = await V8AssessmentApi.createAssessment({
+            assessmentType: framework,
+            name,
+            projectId: currentProjectId ?? null,
+          });
+          assessmentId = created.id || created.assessment?.id || null;
+        } catch {
+          const createResponse = await fetch('/api/assessment-workflow-v2', {
+            method: 'POST',
+            headers: legacyHeaders,
+            body: JSON.stringify({
+              assessmentType: framework,
+              name,
+              projectId: currentProjectId ?? null,
+            }),
+          });
+          if (!createResponse.ok) {
+            const errorData = await createResponse.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || (isPolish ? 'Nie udało się utworzyć assessmentu' : 'Failed to create assessment')
+            );
+          }
+          const created = await createResponse.json();
+          assessmentId = created.id || null;
         }
-      } else {
-        const errorData = await response.json();
-        setSaveError(errorData.error || (isPolish ? 'Nie udało się zapisać' : 'Failed to save'));
-        toast.error(isPolish ? 'Nie udało się zapisać assessment' : 'Failed to save assessment');
       }
+
+      if (!assessmentId) {
+        throw new Error(isPolish ? 'Brak identyfikatora assessmentu' : 'Missing assessment id');
+      }
+
+      try {
+        await V8AssessmentApi.updateAssessment(assessmentId, payload);
+      } catch {
+        const updateResponse = await fetch(`/api/assessment-workflow-v2/${assessmentId}`, {
+          method: 'PUT',
+          headers: legacyHeaders,
+          body: JSON.stringify(payload),
+        });
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || (isPolish ? 'Nie udało się zapisać' : 'Failed to save assessment')
+          );
+        }
+      }
+
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+      toast.success('Assessment zapisany');
+
+      if (assessmentId !== selectedAssessmentId) {
+        setSelectedAssessmentId(assessmentId);
+      }
+      setAssessmentMeta((prev) =>
+        prev
+          ? { ...prev, name, isNew: false }
+          : { name, isNew: false }
+      );
     } catch (error) {
       console.error('[AssessmentModuleHub] Save error:', error);
-      setSaveError(isPolish ? 'Błąd połączenia' : 'Connection error');
-      toast.error(isPolish ? 'Błąd połączenia' : 'Connection error');
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : isPolish
+            ? 'Błąd połączenia'
+            : 'Connection error';
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedAssessmentId, currentProjectId, assessmentMeta, framework]);
+  }, [
+    selectedAssessmentId,
+    currentProjectId,
+    assessmentMeta,
+    framework,
+    calculateProgress,
+    selectedAxis,
+    isPolish,
+  ]);
 
   // Handle assessment name change
   const handleNameChange = useCallback((newName: string) => {
@@ -546,43 +612,55 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   const loadAssessmentData = useCallback(async (assessmentId: string) => {
     setIsLoadingAssessment(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/assessments/${assessmentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      let assessmentRecord: Record<string, any> | null = null;
 
-      if (response.ok) {
-        const data = await response.json();
-
-        // Update store with loaded assessment data
-        const { setFullSessionData, fullSessionData } = useAppStore.getState();
-        setFullSessionData({
-          ...fullSessionData,
-          assessment: {
-            ...fullSessionData.assessment,
-            ...data.axisData,
-            completedAxes: data.isComplete
-              ? [
-                  'processes',
-                  'digitalProducts',
-                  'businessModels',
-                  'dataManagement',
-                  'culture',
-                  'cybersecurity',
-                  'aiMaturity',
-                ]
-              : fullSessionData.assessment?.completedAxes || [],
-          },
+      try {
+        const data = await V8AssessmentApi.getAssessment(assessmentId);
+        assessmentRecord = data.assessment as Record<string, any>;
+      } catch {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/assessment-workflow-v2/${assessmentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        if (response.ok) {
+          assessmentRecord = await response.json();
+        }
+      }
 
-        setAssessmentMeta({
-          name: data.name,
-          isNew: false,
-        });
-      } else {
+      if (!assessmentRecord) {
         console.warn('[AssessmentModuleHub] Assessment not found or error');
         setAssessmentMeta({ name: 'Nowy Assessment', isNew: true });
+        return;
       }
+
+      const answers = assessmentRecord.answers || assessmentRecord.axisData || {};
+      const completionPercent = Number(
+        assessmentRecord.completion_percent ??
+          assessmentRecord.completionPercent ??
+          0
+      );
+
+      const { setFullSessionData, fullSessionData } = useAppStore.getState();
+      setFullSessionData({
+        ...fullSessionData,
+        assessment: {
+          ...fullSessionData.assessment,
+          ...answers,
+          completedAxes:
+            completionPercent >= 100
+              ? COMPLETED_AXES
+              : fullSessionData.assessment?.completedAxes || [],
+        },
+      });
+
+      setAssessmentMeta({
+        name: assessmentRecord.name || 'Nowy Assessment',
+        isNew: false,
+        status:
+          (assessmentRecord.backendStatus || assessmentRecord.status || undefined) as
+            | WorkflowStatus
+            | undefined,
+      });
     } catch (error) {
       console.error('[AssessmentModuleHub] Error loading assessment:', error);
       setAssessmentMeta({ name: 'Nowy Assessment', isNew: true });

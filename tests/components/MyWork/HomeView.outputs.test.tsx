@@ -52,7 +52,13 @@ vi.mock('../../../src/components/MyWork/Home/MomentumBlock', () => ({
 }));
 
 vi.mock('../../../src/components/MyWork/Home/SparkField', () => ({
-  SparkField: ({ block }: any) => <div>{block.title}</div>,
+  SparkField: ({ block }: any) => (
+    <div>
+      <div>{block.title}</div>
+      <span>{block.payload?.runtimeSummary?.recentNotes}</span>
+      <span>{block.payload?.runtimeSummary?.recentOutputs}</span>
+    </div>
+  ),
 }));
 
 vi.mock('../../../src/components/MyWork/Home/DecisionTemperatureBlock', () => ({
@@ -77,9 +83,13 @@ vi.mock('../../../src/components/MyWork/Home/TeamSignalBlock', () => ({
 
 vi.mock('../../../src/components/MyWork/Home/CommandDock', () => ({
   CommandDock: ({ block, onAction }: any) => (
-    <button type="button" onClick={() => onAction({ type: 'create', target: 'idea' })}>
-      open {block.title}
-    </button>
+    <div>
+      <button type="button" onClick={() => onAction({ type: 'create', target: 'idea' })}>
+        open {block.title}
+      </button>
+      <span>{block.payload?.runtimeSummary?.inboxPending}</span>
+      <span>{block.payload?.runtimeSummary?.recentOutputs}</span>
+    </div>
   ),
 }));
 
@@ -100,7 +110,26 @@ const homeBlocks = [
   relevanceScore: 80,
   freshnessScore: 80,
   ctaIntents: [],
-  payload: {},
+  payload:
+    block.id === 'commandDock'
+      ? {
+          runtimeSummary: {
+            inboxPending: 7,
+            inboxAtRisk: 2,
+            recentOutputs: 3,
+            reviewSharedOutputs: 1,
+          },
+        }
+      : block.id === 'sparkField'
+        ? {
+            runtimeSummary: {
+              ideasWithTasks: 2,
+              recentNotes: 4,
+              recentOutputs: 3,
+              orgSignals: 5,
+            },
+          }
+      : {},
 }));
 
 describe('HomeView aggregated contract', () => {
@@ -125,22 +154,22 @@ describe('HomeView aggregated contract', () => {
 
     useV8MyWorkRoofSummaryMock.mockReturnValue({
       data: {
-        overallStatus: 'partially_coherent',
+        overallStatus: 'coherent',
         surfaceMode: 'home_v2_aggregated_with_outputs_bridge',
         counts: {
-          backed_by_real_service: 2,
-          partial_stitched: 6,
+          backed_by_real_service: 8,
+          partial_stitched: 0,
           placeholder_non_canonical: 0,
         },
         homeBlocks: [
           { blockName: 'aiPulseCore', maturityLevel: 'backed_by_real_service' },
-          { blockName: 'momentum', maturityLevel: 'partial_stitched' },
-          { blockName: 'sparkField', maturityLevel: 'partial_stitched' },
-          { blockName: 'decisionTemperature', maturityLevel: 'partial_stitched' },
+          { blockName: 'momentum', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'sparkField', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'decisionTemperature', maturityLevel: 'backed_by_real_service' },
           { blockName: 'industryLens', maturityLevel: 'backed_by_real_service' },
-          { blockName: 'executionCurrent', maturityLevel: 'partial_stitched' },
-          { blockName: 'teamSignal', maturityLevel: 'partial_stitched' },
-          { blockName: 'commandDock', maturityLevel: 'partial_stitched' },
+          { blockName: 'executionCurrent', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'teamSignal', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'commandDock', maturityLevel: 'backed_by_real_service' },
         ],
       },
       isLoading: false,
@@ -162,6 +191,8 @@ describe('HomeView aggregated contract', () => {
     expect(screen.getAllByText('Spark Field').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Decision Temperature').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Team Signal').length).toBeGreaterThan(0);
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
   });
 
   it('passes home actions through to the My Work hub contract', () => {

@@ -6,6 +6,7 @@
 
 import {
   Activity,
+  AlertCircle,
   ArrowRight,
   Calendar,
   CheckCircle2,
@@ -166,6 +167,27 @@ interface ReportBuilderReportFromAPI {
   updatedAt?: string;
 }
 
+const ASSESSMENT_HUB_CACHE_KEY = 'assessment.hub.cached-list.v1';
+
+function readCachedAssessmentHubList(): AssessmentFromAPI[] {
+  try {
+    const raw = window.sessionStorage.getItem(ASSESSMENT_HUB_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as AssessmentFromAPI[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedAssessmentHubList(items: AssessmentFromAPI[]): void {
+  try {
+    window.sessionStorage.setItem(ASSESSMENT_HUB_CACHE_KEY, JSON.stringify(items));
+  } catch {
+    // Ignore browser storage failures and keep runtime continuity.
+  }
+}
+
 // Map API status to assessment status (preserves assessment-native statuses)
 const mapAssessmentApiStatus = (status: string): AssessmentStatusType => {
   const s = status?.toUpperCase() || 'DRAFT';
@@ -284,7 +306,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [reports, setReports] = useState<ReportBuilderReportFromAPI[]>([]);
   const [initiatives, setInitiatives] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadWarning, setLoadWarning] = useState<string | null>(null);
 
   // Deep link support:
   // - /assessment?assessmentId=<id>
@@ -324,107 +346,132 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     navigate(`/assessment/${framework}/${doc.id}`);
   }, [activeDocumentId, openDocuments, navigate]);
 
-  // Load data from API
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const sleep = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
-        const isTransient = (e: any) => {
-          const status = Number(e?.status);
-          if ([502, 503, 504].includes(status)) return true;
-          // Some browsers throw TypeError("Failed to fetch") on network issues.
-          const msg = String(e?.message || '').toLowerCase();
-          return (
-            msg.includes('failed to fetch') ||
-            msg.includes('networkerror') ||
-            msg.includes('load failed')
-          );
-        };
-
-        // Warm-start / cold-backend safety:
-        // AssessmentHub is often the first module hit in a session; on cold backend/DB
-        // the first request can return 502/503/504. Retrying avoids forcing users to "switch modules".
-        const maxAttempts = 4;
-        let lastErr: any = null;
-
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            // Fetch assessments (required)
-            const assessmentResponse = await Api.listAssessments({ limit: 200, offset: 0 });
-            const assessmentData = (assessmentResponse as any)?.items || [];
-            setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
-
-            // Fetch ALL reports linked to user's assessments (all statuses).
-            // Status filtering is done client-side via the status dropdown.
-            const reportData = await Api.getAssessmentReports(undefined).catch(() => []);
-            setReports(Array.isArray(reportData) ? reportData : []);
-
-            // Fetch initiatives derived from assessments
-            // IMPORTANT: Do NOT swallow errors here — this runs inside the cold-start retry loop.
-            // If we `catch(() => [])` we can incorrectly "succeed" on attempt 1 and persist an empty list,
-            // which looks like "the first initiative didn't load until I come back".
-            const initiativesResponse = await Api.get('/initiatives?source=assessment');
-            const rawInits = Array.isArray(initiativesResponse) ? initiativesResponse : [];
-            setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
-
-            // Fetch imported reports
-            const importsResponse = await Api.listReportImports().catch(() => null);
-            const importsData = importsResponse?.data || [];
-            setImportedReports(Array.isArray(importsData) ? importsData : []);
-
-            lastErr = null;
-            break;
-          } catch (e: any) {
-            lastErr = e;
-            if (attempt < maxAttempts && isTransient(e)) {
-              await sleep(350 * attempt);
-              continue;
-            }
-            throw e;
-          }
-        }
-
-        if (lastErr) throw lastErr;
-      } catch (err: any) {
-        const message =
-          err?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
-        setError(message);
-        console.error('[AssessmentHub] Load error:', err);
-        toast.error(message);
-      } finally {
-        setIsLoading(false);
-      }
+  const loadAssessmentListCore = useCallback(async (): Promise<string | null> => {
+    const sleep = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+    const transientDelayBaseMs = import.meta.env.MODE === 'test' ? 5 : 500;
+    const isTransient = (e: any) => {
+      const status = Number(e?.status);
+      if ([429, 502, 503, 504].includes(status)) return true;
+      const msg = String(e?.message || '').toLowerCase();
+      return (
+        msg.includes('failed to fetch') ||
+        msg.includes('networkerror') ||
+        msg.includes('load failed')
+      );
     };
 
-    loadData();
+    const maxAttempts = 5;
+    let lastErr: any = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const assessmentResponse = await Api.listAssessments({ limit: 200, offset: 0 });
+        const assessmentData = (assessmentResponse as any)?.items || [];
+        const normalized = Array.isArray(assessmentData) ? assessmentData : [];
+        setAssessments(normalized);
+        writeCachedAssessmentHubList(normalized);
+        return null;
+      } catch (e: any) {
+        lastErr = e;
+        if (attempt < maxAttempts && isTransient(e)) {
+          await sleep(transientDelayBaseMs * attempt);
+          continue;
+        }
+        break;
+      }
+    }
+
+    const cached = readCachedAssessmentHubList();
+    if (cached.length > 0) {
+      setAssessments(cached);
+      return Number(lastErr?.status) === 429
+        ? t(
+            'assessment.hub.warnings.rateLimitedCached',
+            'Assessment data is temporarily rate limited. Showing the last available list while staging recovers.'
+          )
+        : t(
+            'assessment.hub.warnings.cached',
+            'Assessment data could not be refreshed. Showing the last available list.'
+          );
+    }
+
+    setAssessments([]);
+    return Number(lastErr?.status) === 429
+      ? t(
+          'assessment.hub.warnings.rateLimitedEmpty',
+          'Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.'
+        )
+      : lastErr?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
+  }, [t]);
+
+  const loadSupplementaryData = useCallback(async () => {
+    const [reportsRes, initiativesRes, importsRes] = await Promise.allSettled([
+      Api.getAssessmentReports(undefined),
+      Api.get('/initiatives?source=assessment'),
+      Api.listReportImports(),
+    ]);
+
+    if (reportsRes.status === 'fulfilled') {
+      setReports(Array.isArray(reportsRes.value) ? reportsRes.value : []);
+    }
+
+    if (initiativesRes.status === 'fulfilled') {
+      const rawInits = Array.isArray(initiativesRes.value) ? initiativesRes.value : [];
+      setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
+    }
+
+    if (importsRes.status === 'fulfilled') {
+      const importsData = importsRes.value?.data || [];
+      setImportedReports(Array.isArray(importsData) ? importsData : []);
+    }
   }, []);
+
+  // Load data from API
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadData = async () => {
+      setIsLoading(true);
+      setLoadWarning(null);
+
+      const warning = await loadAssessmentListCore();
+      if (cancelled) return;
+
+      setLoadWarning(warning);
+      if (warning) {
+        console.warn('[AssessmentHub] Core assessment load warning:', warning);
+      }
+      setIsLoading(false);
+
+      void loadSupplementaryData().catch((err) => {
+        console.warn('[AssessmentHub] Supplementary load warning:', err);
+      });
+    };
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadAssessmentListCore, loadSupplementaryData]);
 
   // Refresh function for manual reload
   const refreshData = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
+    setLoadWarning(null);
     try {
-      const [assessmentsRes, reportsRes, initiativesRes, importsRes] = await Promise.all([
-        Api.listAssessments({ limit: 200, offset: 0 }).catch(() => null),
-        Api.getAssessmentReports(undefined).catch(() => []),
-        Api.get('/initiatives?source=assessment').catch(() => []),
-        Api.listReportImports().catch(() => null),
-      ]);
-
-      setAssessments((assessmentsRes as any)?.items || []);
-      setReports(Array.isArray(reportsRes) ? (reportsRes as any) : []);
-      const rawInits = Array.isArray(initiativesRes) ? initiativesRes : [];
-      setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
-      setImportedReports(importsRes?.data || []);
-    } catch (err: any) {
+      const warning = await loadAssessmentListCore();
+      setLoadWarning(warning);
+      await loadSupplementaryData();
+      if (warning) {
+        toast.error(warning);
+      }
+    } catch {
       toast.error(t('common.refreshFailed', 'Failed to refresh'));
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [loadAssessmentListCore, loadSupplementaryData, t]);
 
   // Get status dropdown context based on active tab
   // Each tab uses its own status family
@@ -1119,6 +1166,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     }));
   }, [currentData]);
 
+  const emptyStateMessage =
+    activeTab === 'list' && loadWarning
+      ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
+      : 'No assessments found. Create your first assessment to get started.';
+
   // Render content based on active document or list
   const renderContent = () => {
     if (activeDocumentId) {
@@ -1279,7 +1331,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onRowAction={handleRowAction}
         activeFilters={activeFilters}
         onFilterChange={setActiveFilters}
-        emptyMessage="No assessments found. Create your first assessment to get started."
+        emptyMessage={emptyStateMessage}
       />
     );
   };
@@ -1410,23 +1462,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     );
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">{error}</p>
-          <button
-            onClick={() => refreshData()}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <ModuleHub
@@ -1448,7 +1483,25 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         newItemLabel={getNewItemLabel()}
         rightControls={statusDropdownControl}
       >
-        {renderContent()}
+        <div className="space-y-3">
+          {loadWarning && (
+            <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                  <p>{loadWarning}</p>
+                </div>
+                <button
+                  onClick={() => refreshData()}
+                  className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+          {renderContent()}
+        </div>
       </ModuleHub>
 
       <InitiativesGenerationWizardModal

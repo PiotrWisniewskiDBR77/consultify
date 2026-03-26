@@ -1,0 +1,235 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: any) => <>{children}</>,
+  motion: {
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  },
+}));
+
+vi.mock('react-hot-toast', () => ({
+  toast: Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback || _key,
+    i18n: { language: 'en' },
+  }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));
+
+vi.mock('../../../src/services/api', () => ({
+  API_URL: '/api',
+  getHeaders: () => ({ Authorization: 'Bearer test' }),
+}));
+
+vi.mock('../../../src/services/funnelAnalytics', () => ({
+  trackFunnelEvent: vi.fn(),
+}));
+
+vi.mock('../../../src/store/useAppStore', () => ({
+  useAppStore: () => ({
+    currentOrganization: { id: 'org-sync-1' },
+  }),
+}));
+
+vi.mock('../../../src/services/api/v8/sync', () => ({
+  V8SyncApi: {
+    getIntegrations: vi.fn(),
+    getAuthHealth: vi.fn(),
+    getAuthEscalations: vi.fn(),
+    getConflicts: vi.fn(),
+    getRefreshTimingPolicy: vi.fn(),
+    getConnectorHealth: vi.fn(),
+    setConnectorAuthState: vi.fn(),
+    resolveAuthEscalation: vi.fn(),
+    resolveConflict: vi.fn(),
+    setRefreshTimingPolicy: vi.fn(),
+  },
+}));
+
+vi.mock('../../../src/services/api/v8/multiplayer', () => ({
+  V8MultiplayerApi: {
+    getWorkspaceMapping: vi.fn(),
+    getRoomBinding: vi.fn(),
+    getRoomPresence: vi.fn(),
+    getRoomLocks: vi.fn(),
+  },
+}));
+
+import { UnifiedSyncHub } from '../../../src/components/Admin/UnifiedSyncHub';
+import { V8MultiplayerApi } from '../../../src/services/api/v8/multiplayer';
+import { V8SyncApi } from '../../../src/services/api/v8/sync';
+
+describe('UnifiedSyncHub V8 health continuity', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getAuthHealth).mockResolvedValue({
+      summary: { total: 2, healthy: 1, failing: 1, escalated: 0 },
+    } as any);
+    vi.mocked(V8SyncApi.getAuthEscalations).mockResolvedValue({
+      escalations: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getConflicts).mockResolvedValue({
+      conflicts: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getRefreshTimingPolicy).mockResolvedValue({ policy: null } as any);
+    vi.mocked(V8MultiplayerApi.getWorkspaceMapping).mockResolvedValue({ mapping: null } as any);
+    vi.mocked(V8MultiplayerApi.getRoomBinding).mockResolvedValue({ binding: null } as any);
+    vi.mocked(V8MultiplayerApi.getRoomPresence).mockResolvedValue({ roomId: 'room-1', presence: [], count: 0 } as any);
+    vi.mocked(V8MultiplayerApi.getRoomLocks).mockResolvedValue({ roomId: 'room-1', locks: [], count: 0 } as any);
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/sync-hub/connectors')) {
+          return {
+            ok: true,
+            json: async () => ({ connectors: [] }),
+          } as Response;
+        }
+        if (url.endsWith('/sync-hub/health')) {
+          return {
+            ok: true,
+            json: async () => ({ summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0 } }),
+          } as Response;
+        }
+        if (url.endsWith('/sync-hub/errors')) {
+          return {
+            ok: true,
+            json: async () => ({ errors: [] }),
+          } as Response;
+        }
+        if (url.endsWith('/sync-hub/audit-log')) {
+          return {
+            ok: true,
+            json: async () => ({ entries: [] }),
+          } as Response;
+        }
+        if (url.endsWith('/sync-hub/integrations')) {
+          return {
+            ok: true,
+            json: async () => ({ integrations: [] }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({}),
+        } as Response;
+      }),
+    );
+  });
+
+  it('shows the empty connected-apps state and governed Sync Health summaries', async () => {
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(V8SyncApi.getIntegrations).toHaveBeenCalled();
+      expect(screen.getByText('Connect your first integration')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('V8 Auth Health')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Governed credentials')).toBeInTheDocument();
+    expect(screen.getByText('V8 Active Auth Escalations')).toBeInTheDocument();
+    expect(screen.getByText('No governed auth escalations are open.')).toBeInTheDocument();
+    expect(screen.getByText('V8 Unresolved Sync Conflicts')).toBeInTheDocument();
+    expect(screen.getByText('No governed sync conflicts are open.')).toBeInTheDocument();
+  });
+
+  it('renders governed multiplayer collaboration subsections on Sync Health', async () => {
+    vi.mocked(V8MultiplayerApi.getWorkspaceMapping).mockResolvedValue({
+      mapping: {
+        mappingId: 'mapping-1',
+        resourceType: 'workspace',
+        roomGranularity: 'resource',
+        embeddedIn: null,
+        surfaceAware: true,
+        organizationId: 'org-sync-1',
+        createdAt: '2026-03-25T00:00:00Z',
+      },
+    } as any);
+    vi.mocked(V8MultiplayerApi.getRoomBinding).mockResolvedValue({
+      binding: {
+        roomResourceType: 'workspace',
+        roomResourceId: 'room-sync-1',
+      },
+    } as any);
+    vi.mocked(V8MultiplayerApi.getRoomPresence).mockResolvedValue({
+      roomId: 'room-sync-1',
+      presence: [
+        {
+          surfacePresenceId: 'presence-1',
+          userId: 'user-1',
+          roomId: 'room-sync-1',
+          activeSurface: 'workspace',
+          presenceType: 'editor',
+          cursorState: null,
+          lastHeartbeat: '2026-03-25T00:00:00Z',
+          organizationId: 'org-sync-1',
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8MultiplayerApi.getRoomLocks).mockResolvedValue({
+      roomId: 'room-sync-1',
+      locks: [
+        {
+          lockId: 'lock-1',
+          organizationId: 'org-sync-1',
+          lockType: 'edit',
+          lockScope: 'document',
+          holderId: 'user-1',
+          holderClientId: 'client-1',
+          roomId: 'room-sync-1',
+          ttl: 120000,
+          acquiredAt: '2026-03-25T00:00:00Z',
+          releasedAt: null,
+          releaseReason: null,
+        },
+      ],
+      count: 1,
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('V8 Collaboration Substrate')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('V8 Workspace Presence')).toBeInTheDocument();
+    expect(screen.getByText('Workspace room: room-sync-1')).toBeInTheDocument();
+    expect(screen.getAllByText('user-1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('workspace').length).toBeGreaterThan(0);
+    expect(screen.getByText('editor')).toBeInTheDocument();
+    expect(screen.getByText('V8 Active Locks')).toBeInTheDocument();
+    expect(screen.getByText('edit')).toBeInTheDocument();
+    expect(screen.getByText('document')).toBeInTheDocument();
+  });
+});

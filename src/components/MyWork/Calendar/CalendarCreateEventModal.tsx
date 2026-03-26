@@ -52,6 +52,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
   const [saving, setSaving] = useState(false);
   const [conflictsLoading, setConflictsLoading] = useState(false);
   const [conflicts, setConflicts] = useState<CalendarConflictResponse | null>(null);
+  const [conflictsError, setConflictsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -59,6 +60,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     setDescription('');
     setDate(toDateInputValue(defaultDate));
     setConflicts(null);
+    setConflictsError(null);
   }, [defaultDate, open]);
 
   useEffect(() => {
@@ -68,12 +70,22 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     const loadConflicts = async () => {
       try {
         setConflictsLoading(true);
-        const res = await Api.get(`/my-work/calendar/conflicts?date=${encodeURIComponent(date)}`);
+        setConflictsError(null);
+        const res = await Api.getMyWorkCalendarConflicts(date);
+        if (!cancelled) setConflicts(res?.data ?? res ?? null);
+      } catch (error: any) {
         if (!cancelled) {
-          setConflicts(res?.data ?? res ?? null);
+          setConflicts(null);
+          setConflictsError(
+            error?.status === 503
+              ? isPolish
+                ? 'Podglad obciazenia dnia jest chwilowo niedostepny, ale nadal mozesz zapisac zadanie.'
+                : 'Day-load preview is temporarily unavailable, but you can still create the task.'
+              : isPolish
+                ? 'Nie udalo sie sprawdzic obciazenia dnia.'
+                : 'Failed to check day load.'
+          );
         }
-      } catch {
-        if (!cancelled) setConflicts(null);
       } finally {
         if (!cancelled) setConflictsLoading(false);
       }
@@ -83,14 +95,18 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     return () => {
       cancelled = true;
     };
-  }, [date, open]);
+  }, [date, isPolish, open]);
 
   const totalExistingItems = Number(conflicts?.totalItems ?? 0);
   const hasBusyDay = Boolean(conflicts?.hasConflicts);
+  const hasCalendarWarning = hasBusyDay || Boolean(conflictsError);
 
   const helperText = useMemo(() => {
     if (conflictsLoading) {
       return isPolish ? 'Sprawdzanie obciążenia dnia...' : 'Checking day load...';
+    }
+    if (conflictsError) {
+      return conflictsError;
     }
     if (!conflicts) return null;
     if (totalExistingItems === 0) {
@@ -99,7 +115,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
     return isPolish
       ? `Na ten dzień masz już ${totalExistingItems} pozycji.`
       : `You already have ${totalExistingItems} items on this day.`;
-  }, [conflicts, conflictsLoading, isPolish, totalExistingItems]);
+  }, [conflicts, conflictsError, conflictsLoading, isPolish, totalExistingItems]);
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -109,7 +125,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 
     try {
       setSaving(true);
-      await Api.post('/my-work/calendar/events', {
+      await Api.createMyWorkCalendarEvent({
         title: title.trim(),
         description: description.trim() || undefined,
         start: date,
@@ -214,7 +230,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 
         <div
           className={`rounded-xl px-4 py-3 ${
-            hasBusyDay
+            hasCalendarWarning
               ? 'bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-100'
               : 'bg-slate-50 text-slate-700 dark:bg-navy-950 dark:text-slate-300'
           }`}
@@ -222,20 +238,25 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <div className="flex items-start gap-2">
             <AlertTriangle
               size={16}
-              className={hasBusyDay ? 'text-amber-500' : 'text-slate-400'}
+              className={hasCalendarWarning ? 'text-amber-500' : 'text-slate-400'}
             />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium">
-                {hasBusyDay
+                {hasCalendarWarning
                   ? isPolish
-                    ? 'Dzień jest już dość obciążony'
-                    : 'This day is already fairly busy'
+                    ? conflictsError
+                      ? 'Podglad dnia jest ograniczony'
+                      : 'Dzień jest już dość obciążony'
+                    : conflictsError
+                      ? 'Day preview is limited'
+                      : 'This day is already fairly busy'
                   : isPolish
                     ? 'Podgląd obciążenia dnia'
                     : 'Day load preview'}
               </div>
               <div className="mt-1 text-xs opacity-80">
-                {conflicts?.suggestion ||
+                {conflictsError ||
+                  conflicts?.suggestion ||
                   (isPolish
                     ? 'Formularz sprawdza istniejące zadania i decyzje dla wybranego dnia.'
                     : 'The form checks existing tasks and decisions for the selected day.')}

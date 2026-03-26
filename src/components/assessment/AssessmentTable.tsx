@@ -27,6 +27,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
 import { WorkflowState } from '../../types';
 
 interface Assessment {
@@ -118,17 +120,10 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
   const fetchAssessments = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      // Build URL with optional projectId filter
-      const url = projectId ? `/api/assessments?projectId=${projectId}` : '/api/assessments';
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await Api.listAssessments({
+        projectId: projectId || undefined,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAssessments(data.assessments || []);
-      }
+      setAssessments((data.items || data.assessments || []) as Assessment[]);
     } catch (err) {
       console.error('[AssessmentTable] Error:', err);
     } finally {

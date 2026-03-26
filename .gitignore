@@ -155,6 +155,7 @@ e2e-results.xml
 debug-*.png
 
 # Local browser/debug artifacts
+/public/videos/en.mp4
 /screenshots/
 /exports/report-builder-public/
 /knowledge/**/*.zip

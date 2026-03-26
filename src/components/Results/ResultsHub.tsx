@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, type V8ResultsDashboardSnapshot } from '@/services/api/v8/results';
 import { InitiativeKPI } from '@/types/core';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -43,6 +44,22 @@ export interface ResultsKPI extends InitiativeKPI {
   trend: KPITrend;
   needsEntry: boolean;
 }
+
+interface ResultsRuntimeChipProps {
+  label: string;
+  value: string;
+  dotClassName: string;
+}
+
+const ResultsRuntimeChip: React.FC<ResultsRuntimeChipProps> = ({ label, value, dotClassName }) => (
+  <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+    <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
+    <span>{label}</span>
+    <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+      {value}
+    </span>
+  </div>
+);
 
 function deriveStatus(kpi: InitiativeKPI): KPIStatus {
   if (kpi.latestValue == null) return 'no-data';
@@ -110,6 +127,7 @@ export const ResultsHub: React.FC = () => {
 
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [loading, setLoading] = useState(true);
+  const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('results');
@@ -175,6 +193,26 @@ export const ResultsHub: React.FC = () => {
   useEffect(() => {
     fetchKPIs();
   }, [fetchKPIs]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadV8Snapshot = async () => {
+      try {
+        const response = await V8ResultsApi.getDashboard();
+        if (!cancelled) {
+          setV8Snapshot(response.snapshot);
+        }
+      } catch {
+        if (!cancelled) {
+          setV8Snapshot(null);
+        }
+      }
+    };
+    void loadV8Snapshot();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const tabs: TabConfig[] = useMemo(
     () => [
@@ -293,6 +331,38 @@ export const ResultsHub: React.FC = () => {
 
   const openRoiPicker = useCallback(() => setRoiOpenModal(true), []);
 
+  const governedRuntimeStrip = useMemo(() => {
+    if (!v8Snapshot) {
+      return null;
+    }
+
+    return (
+      <>
+        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+        <ResultsRuntimeChip
+          label={t('results.runtime.governedKpis', 'Governed KPIs')}
+          value={String(v8Snapshot.kpiScorecard.totalKpis || 0)}
+          dotClassName="bg-emerald-400"
+        />
+        <ResultsRuntimeChip
+          label={t('results.runtime.deviations', 'Deviations')}
+          value={String(v8Snapshot.activeDeviationsCount || 0)}
+          dotClassName="bg-amber-400"
+        />
+        <ResultsRuntimeChip
+          label={t('results.runtime.realizedRoi', 'Realized ROI')}
+          value={v8Snapshot.roiDashboard.totalRealized.toLocaleString()}
+          dotClassName="bg-violet-400"
+        />
+        <ResultsRuntimeChip
+          label={t('results.runtime.reconciliation', 'Reconciliation')}
+          value={String(v8Snapshot.reconciliationHealth.unresolvedCount || 0)}
+          dotClassName="bg-cyan-400"
+        />
+      </>
+    );
+  }, [t, v8Snapshot]);
+
   const commandRowContent = useMemo(() => {
     const chipBase =
       'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
@@ -301,7 +371,7 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'summary') {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('kpis')}
@@ -329,6 +399,7 @@ export const ResultsHub: React.FC = () => {
             <DollarSign size={14} className="text-amber-400" />
             <span>{t('results.tabs.roi', 'ROI')}</span>
           </button>
+          {governedRuntimeStrip}
         </div>
       );
     }
@@ -368,7 +439,7 @@ export const ResultsHub: React.FC = () => {
       };
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveFilters([])}
@@ -482,13 +553,14 @@ export const ResultsHub: React.FC = () => {
               {counts.status['no-data'] || 0}
             </span>
           </button>
+          {governedRuntimeStrip}
         </div>
       );
     }
 
     if (activeTab === 'roi') {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             type="button"
             onClick={openRoiPicker}
@@ -507,13 +579,14 @@ export const ResultsHub: React.FC = () => {
             <DollarSign size={14} className="text-amber-400" />
             <span>{t('results.tabs.roiAnalysis', 'ROI Analysis')}</span>
           </button>
+          {governedRuntimeStrip}
         </div>
       );
     }
 
     if (activeTab === 'roi_analysis') {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('roi')}
@@ -523,13 +596,14 @@ export const ResultsHub: React.FC = () => {
             <DollarSign size={14} className="text-amber-400" />
             <span>{t('results.tabs.roi', 'ROI')}</span>
           </button>
+          {governedRuntimeStrip}
         </div>
       );
     }
 
     if (activeTab === 'kpi_reports') {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             type="button"
             onClick={() => setKpiReportCreateNonce(Date.now())}
@@ -539,12 +613,28 @@ export const ResultsHub: React.FC = () => {
             <Plus size={14} />
             <span>{t('results.kpiReports.new', '+ New KPI report')}</span>
           </button>
+          {governedRuntimeStrip}
         </div>
       );
     }
 
-    return null;
-  }, [activeFilters, activeTab, kpis, openRoiPicker, searchQuery, setKpiReportCreateNonce, t]);
+    if (activeTab === 'operational') {
+      return <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>;
+    }
+
+    return governedRuntimeStrip ? (
+      <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+    ) : null;
+  }, [
+    activeFilters,
+    activeTab,
+    governedRuntimeStrip,
+    kpis,
+    openRoiPicker,
+    searchQuery,
+    setKpiReportCreateNonce,
+    t,
+  ]);
 
   return (
     <>

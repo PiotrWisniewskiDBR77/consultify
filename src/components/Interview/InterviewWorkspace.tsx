@@ -881,31 +881,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
     try {
       if (session.assignmentId) {
-        // Validate completion before submit (basic rule: all questions answered)
-        const missing = questions.filter((q) => q.status !== 'answered');
-        if (missing.length > 0) {
-          const first = missing[0];
-          if (first?.category) {
-            setActiveCategory(first.category as InterviewCategory);
-            setActiveSection('questions');
-            requestAnimationFrame(() => {
-              questionsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-          }
-          toast.error(
-            isPolish
-              ? `Uzupełnij brakujące odpowiedzi (${missing.length}).`
-              : `Please fill missing answers (${missing.length}).`
-          );
-          return;
-        }
-
-        const result = await Api.post(`/interview/assignments/${session.assignmentId}/submit`, {});
+        const result = (await V8InterviewApi.submitAssignment(session.assignmentId).catch(() =>
+          Api.post(`/interview/assignments/${session.assignmentId}/submit`, {})
+        )) as any;
         const updatedSession = (result as any)?.session;
         const updatedAssignment = (result as any)?.assignment;
         const completeness = (result as any)?.completenessPercent;
         if (updatedSession) setSession(updatedSession);
         if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
+        else setAssignmentStatus('submitted');
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
@@ -931,11 +915,18 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       const missingItems = sendBackMissingItems
         .filter((item) => item.checked)
         .map((item) => ({ key: item.key, label: item.label }));
-      await Api.post(`/interview/assignments/${session.assignmentId}/send-back`, {
+      const result = (await V8InterviewApi.sendBackAssignment(session.assignmentId, {
         reason: sendBackReason.trim(),
         missingItems,
-      });
-      setAssignmentStatus('sent_back');
+      }).catch(() =>
+        Api.post(`/interview/assignments/${session.assignmentId}/send-back`, {
+          reason: sendBackReason.trim(),
+          missingItems,
+        })
+      )) as any;
+      const updatedAssignment = result?.assignment;
+      if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
+      else setAssignmentStatus('sent_back');
       setShowSendBackForm(false);
       setSendBackReason('');
       toast.success(isPolish ? 'Wywiad odesłany do poprawy.' : 'Interview sent back for revision.');
@@ -951,7 +942,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (!session?.assignmentId) return;
     setIsApproving(true);
     try {
-      const result = await Api.post(`/interview/assignments/${session.assignmentId}/approve`, {});
+      const result = (await V8InterviewApi.approveAssignment(session.assignmentId).catch(() =>
+        Api.post(`/interview/assignments/${session.assignmentId}/approve`, {})
+      )) as any;
       const updatedAssignment = (result as any)?.assignment;
       if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
       else setAssignmentStatus('approved');

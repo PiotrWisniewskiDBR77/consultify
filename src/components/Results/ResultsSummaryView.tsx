@@ -62,12 +62,6 @@ type KpiMappingLike = {
   [key: string]: unknown;
 };
 
-type RoiSummaryItemLike = {
-  initiativeId?: string;
-  hasRealized?: boolean;
-  [key: string]: unknown;
-};
-
 export interface ResultsSummaryViewProps {
   searchQuery: string;
   activeFilters: FilterChip[];
@@ -256,10 +250,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [initiativesRes, kpiRes, roiRes, v8SnapshotRes] = await Promise.allSettled([
+      const [initiativesRes, kpiRes, v8SnapshotRes] = await Promise.allSettled([
         Api.getInitiativesByStatus('DONE'),
         Api.get('/benefits/kpi-mappings'),
-        Api.get('/benefits/roi/portfolio/summary'),
         V8ResultsApi.getDashboard(),
       ]);
 
@@ -274,14 +267,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
           ? kpiData
           : [];
 
-      const roiPayload = roiRes.status === 'fulfilled' ? (roiRes.value as any) : null;
-      const roiData = (roiPayload as any)?.data ?? roiPayload;
-      const roiItems: RoiSummaryItemLike[] = Array.isArray((roiData as any)?.items)
-        ? (roiData as any).items
-        : [];
-
       const v8Payload = v8SnapshotRes.status === 'fulfilled' ? (v8SnapshotRes.value as any) : null;
-      setV8Snapshot(v8Payload?.snapshot ?? null);
+      const snapshot = v8Payload?.snapshot ?? null;
+      setV8Snapshot(snapshot);
 
       const kpiCountByInitiative = new Map<string, number>();
       for (const r of kpiRows) {
@@ -292,11 +280,18 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 
       const roiPlanIds = new Set<string>();
       const roiRealizedIds = new Set<string>();
-      for (const r of roiItems) {
+      const roiByInitiative = Array.isArray(snapshot?.roiDashboard?.byInitiative)
+        ? snapshot.roiDashboard.byInitiative
+        : [];
+      for (const r of roiByInitiative) {
         const id = String(r.initiativeId ?? '').trim();
         if (!id) continue;
-        roiPlanIds.add(id);
-        if (r.hasRealized) roiRealizedIds.add(id);
+        if ((r.entryCount ?? 0) > 0) {
+          roiPlanIds.add(id);
+        }
+        if ((r.realizedSum ?? 0) > 0) {
+          roiRealizedIds.add(id);
+        }
       }
 
       const mapped: SummaryInitiativeItem[] = (initiativesRaw || []).map((i) => {

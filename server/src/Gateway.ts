@@ -250,6 +250,7 @@ import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import v8Router from './routes/v8/index.js';
+import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -362,6 +363,7 @@ export class ApiGateway {
       app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
       app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/public/anna', publicAnnaRoutes); // Public landing assistant
+      app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes); // Public V8 KB preview/featured
 
       // Core routes
       app.use('/api/sessions', sessionsRoutes);

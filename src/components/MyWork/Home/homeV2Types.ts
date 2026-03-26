@@ -154,6 +154,12 @@ export interface SparkFieldPayload {
   notes: SparkItem[];
   nudge: { text: string; ideaId: string } | null;
   orgIdeas?: SparkItem[];
+  runtimeSummary?: {
+    ideasWithTasks: number;
+    recentNotes: number;
+    recentOutputs: number;
+    orgSignals: number;
+  };
 }
 
 export interface DecisionTemperaturePayload {
@@ -230,6 +236,12 @@ export interface CommandDockPayload {
     target?: 'idea' | 'note' | 'task' | 'decision' | 'ideas' | 'notebook' | 'calendar' | 'tasks';
     starterPrompt?: string;
   }>;
+  runtimeSummary?: {
+    inboxPending: number;
+    inboxAtRisk: number;
+    recentOutputs: number;
+    reviewSharedOutputs: number;
+  };
 }
 
 export type HomeBlockPayloadMap = {

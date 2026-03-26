@@ -127,6 +127,8 @@ router.get(
 
 router.post('/assignments/:id/start', InterviewController.startAssignment);
 
+router.post('/assignments/:id/submit', InterviewController.submitAssignment);
+
 router.post('/assignments/:id/remind', InterviewController.sendAssignmentReminder);
 
 router.post('/assignments/:id/send-back', InterviewController.sendBackAssignment);

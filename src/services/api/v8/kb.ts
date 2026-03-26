@@ -4,6 +4,8 @@ export const V8_KB_SEARCH_PATH = '/kb/search' as const;
 export const V8_KB_ARTICLE_PATH = '/kb/articles' as const;
 export const V8_KB_CONTEXT_PATH = '/kb/context' as const;
 export const V8_KB_CATEGORIES_PATH = '/kb/categories' as const;
+export const V8_KB_PUBLIC_PATH = '/kb/public' as const;
+export const V8_KB_FEATURED_PATH = '/kb/featured' as const;
 
 export interface V8KbCategory {
   id: string;
@@ -40,6 +42,18 @@ export interface V8KbArticle extends V8KbArticleListItem {
 }
 
 export const V8KnowledgeBaseApi = {
+  getPublicPreview: (lang: string, limit = 3) =>
+    v8Get<{ articles: V8KbArticleListItem[] }>(V8_KB_PUBLIC_PATH, {
+      lang,
+      limit: String(limit),
+    }),
+
+  getFeaturedArticles: (lang: string, limit = 4) =>
+    v8Get<{ articles: V8KbArticleListItem[] }>(V8_KB_FEATURED_PATH, {
+      lang,
+      limit: String(limit),
+    }),
+
   getCategories: (lang: string, includePrivate = false) =>
     v8Get<{ categories: V8KbCategory[] }>(V8_KB_CATEGORIES_PATH, {
       lang,

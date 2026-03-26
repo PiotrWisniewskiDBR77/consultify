@@ -11,6 +11,7 @@ const mockGetMyAssignments = vi.fn();
 const mockGetManagedAssignments = vi.fn();
 const mockGetOverdueAssignments = vi.fn();
 const mockStartAssignment = vi.fn();
+const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
@@ -18,6 +19,7 @@ const mockApproveAssignment = vi.fn();
 vi.mock('../../../controllers/InterviewController.js', () => ({
   InterviewController: {
     startAssignment: (...args: unknown[]) => mockStartAssignment(...args),
+    submitAssignment: (...args: unknown[]) => mockSubmitAssignment(...args),
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
     sendBackAssignment: (...args: unknown[]) => mockSendBackAssignment(...args),
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
@@ -255,6 +257,27 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.assignmentId).toBe('asg-1');
     expect(res.body.session.id).toBe('sess-1');
     expect(mockStartAssignment).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/interview/assignments/:id/submit delegates to the legacy workflow handler', async () => {
+    mockSubmitAssignment.mockImplementation(async (req: any, res: any) => {
+      res.json({
+        assignment: { id: req.params.id, status: 'submitted' },
+        session: { id: 'sess-2' },
+        completenessPercent: 50,
+      });
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/assignments/asg-submit/submit')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignment.id).toBe('asg-submit');
+    expect(res.body.assignment.status).toBe('submitted');
+    expect(res.body.completenessPercent).toBe(50);
+    expect(mockSubmitAssignment).toHaveBeenCalled();
   });
 
   it('POST /api/v8/interview/assignments/:id/remind delegates to the legacy workflow handler', async () => {

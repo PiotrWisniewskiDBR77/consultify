@@ -7,7 +7,9 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Api } from '@/services/api';
+import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
+const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
+
 
 // ============================================
 // TYPES
@@ -49,12 +51,29 @@ export interface KbArticle extends KbArticleListItem {
 // API FUNCTIONS
 // ============================================
 
-const fetchCategories = async (language: string = 'en'): Promise<KbCategory[]> => {
-  // Use the existing knowledge base API
-  const response = await fetch(`/api/knowledge-base/categories?lang=${language}`);
-  if (!response.ok) throw new Error('Failed to fetch categories');
+const fetchPublicKbBridge = async <T>(
+  path: string,
+  fallbackError: string
+): Promise<T> => {
+  const response = await fetch(`${PUBLIC_V8_KB_BASE}${path}`);
+  if (!response.ok) throw new Error(fallbackError);
   const data = await response.json();
-  return data.categories || data || [];
+  return data;
+};
+
+const fetchCategories = async (language: string = 'en'): Promise<KbCategory[]> => {
+  try {
+    const data = await fetchPublicKbBridge<{ data?: { categories?: KbCategory[] }; categories?: KbCategory[] }>(
+      `/categories?lang=${language}`,
+      'public v8 unavailable'
+    );
+    return data.data?.categories || data.categories || data || [];
+  } catch {
+    const response = await fetch(`/api/knowledge-base/categories?lang=${language}`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    const data = await response.json();
+    return data.categories || data || [];
+  }
 };
 
 const fetchArticles = async (params: {
@@ -71,50 +90,124 @@ const fetchArticles = async (params: {
   if (params.limit) searchParams.set('limit', params.limit.toString());
   if (params.offset) searchParams.set('offset', params.offset.toString());
 
-  const response = await fetch(`/api/knowledge-base/articles?${searchParams}`);
-  if (!response.ok) throw new Error('Failed to fetch articles');
-  return response.json();
+  try {
+    const data = await fetchPublicKbBridge<{
+      data?: { articles?: KbArticleListItem[]; total?: number };
+      articles?: KbArticleListItem[];
+      total?: number;
+    }>(`/articles?${searchParams.toString()}`, 'public v8 unavailable');
+    return {
+      articles: data.data?.articles || data.articles || [],
+      total: data.data?.total ?? data.total ?? 0,
+    };
+  } catch {
+    try {
+      const data = await V8KnowledgeBaseApi.getArticles({
+        lang: params.language || 'en',
+        category: params.categorySlug,
+        search: params.search,
+        limit: params.limit,
+        offset: params.offset,
+        publicOnly: true,
+      });
+      return {
+        articles: data.articles as KbArticleListItem[],
+        total: data.total || 0,
+      };
+    } catch {
+      const response = await fetch(`/api/knowledge-base/articles?${searchParams}`);
+      if (!response.ok) throw new Error('Failed to fetch articles');
+      return response.json();
+    }
+  }
 };
 
 const fetchArticleBySlug = async (
   slug: string,
   language: string = 'en'
 ): Promise<KbArticle | null> => {
-  const response = await fetch(`/api/knowledge-base/articles/${slug}?lang=${language}`);
-  if (!response.ok) {
-    if (response.status === 404) return null;
-    throw new Error('Failed to fetch article');
+  try {
+    const data = await fetchPublicKbBridge<{ data?: { article?: KbArticle }; article?: KbArticle }>(
+      `/articles/${encodeURIComponent(slug)}?lang=${language}`,
+      'public v8 unavailable'
+    );
+    return data.data?.article || data.article || null;
+  } catch {
+    try {
+      const data = await V8KnowledgeBaseApi.getArticleBySlug(slug, language);
+      return data.article as KbArticle;
+    } catch {
+      const response = await fetch(`/api/knowledge-base/articles/${slug}?lang=${language}`);
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error('Failed to fetch article');
+      }
+      return response.json();
+    }
   }
-  return response.json();
 };
 
 const fetchFeaturedArticles = async (
   language: string = 'en',
   limit: number = 4
 ): Promise<KbArticleListItem[]> => {
-  const response = await fetch(`/api/knowledge-base/featured?lang=${language}&limit=${limit}`);
-  if (!response.ok) throw new Error('Failed to fetch featured articles');
-  const data = await response.json();
-  return data.articles || data || [];
+  try {
+    const publicResponse = await fetch(`${PUBLIC_V8_KB_BASE}/featured?lang=${language}&limit=${limit}`);
+    if (!publicResponse.ok) throw new Error('public v8 unavailable');
+    const publicData = await publicResponse.json();
+    return (publicData.data?.articles || publicData.articles || []) as KbArticleListItem[];
+  } catch {
+    try {
+      const data = await V8KnowledgeBaseApi.getFeaturedArticles(language, limit);
+      return data.articles as KbArticleListItem[];
+    } catch {
+      const response = await fetch(`/api/knowledge-base/featured?lang=${language}&limit=${limit}`);
+      if (!response.ok) throw new Error('Failed to fetch featured articles');
+      const data = await response.json();
+      return data.articles || data || [];
+    }
+  }
 };
 
 const searchArticles = async (
   query: string,
   language: string = 'en'
 ): Promise<KbArticleListItem[]> => {
-  const response = await fetch(
-    `/api/knowledge-base/search?q=${encodeURIComponent(query)}&lang=${language}`
-  );
-  if (!response.ok) throw new Error('Failed to search articles');
-  const data = await response.json();
-  return data.articles || data || [];
+  try {
+    const data = await fetchPublicKbBridge<{ data?: { articles?: KbArticleListItem[] }; articles?: KbArticleListItem[] }>(
+      `/search?q=${encodeURIComponent(query)}&lang=${language}`,
+      'public v8 unavailable'
+    );
+    return data.data?.articles || data.articles || data || [];
+  } catch {
+    try {
+      const data = await V8KnowledgeBaseApi.searchArticles(query, language);
+      return data.articles as KbArticleListItem[];
+    } catch {
+      const response = await fetch(
+        `/api/knowledge-base/search?q=${encodeURIComponent(query)}&lang=${language}`
+      );
+      if (!response.ok) throw new Error('Failed to search articles');
+      const data = await response.json();
+      return data.articles || data || [];
+    }
+  }
 };
 
 const trackArticleView = async (articleId: string): Promise<void> => {
-  await fetch(`/api/knowledge-base/articles/${articleId}/view`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  try {
+    const response = await fetch(`${PUBLIC_V8_KB_BASE}/articles/${articleId}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'public_docs' }),
+    });
+    if (!response.ok) throw new Error('public v8 unavailable');
+  } catch {
+    await fetch(`/api/knowledge-base/articles/${articleId}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 };
 
 // ============================================

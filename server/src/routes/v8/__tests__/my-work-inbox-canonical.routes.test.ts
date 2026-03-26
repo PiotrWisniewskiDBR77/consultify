@@ -24,6 +24,8 @@ vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
 const mockGetInboxItems = vi.fn();
 const mockGetInboxStats = vi.fn();
 const mockMaterializeInboxItems = vi.fn();
+const mockApplyGovernedInboxTriage = vi.fn();
+const mockApplyGovernedBulkInboxTriage = vi.fn();
 
 vi.mock('../../../services/inboxService.js', () => ({
   default: {
@@ -31,6 +33,23 @@ vi.mock('../../../services/inboxService.js', () => ({
     getInboxStats: (...a: unknown[]) => mockGetInboxStats(...a),
     materializeInboxItems: (...a: unknown[]) => mockMaterializeInboxItems(...a),
   },
+}));
+
+vi.mock('../../../services/inboxTriageService.js', () => ({
+  VALID_INBOX_TRIAGE_ACTIONS: [
+    'accept_today',
+    'accept_week',
+    'accept_later',
+    'schedule',
+    'delegate',
+    'archive',
+    'dismiss',
+    'done',
+    'save',
+    'reject',
+  ],
+  applyGovernedInboxTriage: (...a: unknown[]) => mockApplyGovernedInboxTriage(...a),
+  applyGovernedBulkInboxTriage: (...a: unknown[]) => mockApplyGovernedBulkInboxTriage(...a),
 }));
 
 let mockUser: {
@@ -161,5 +180,67 @@ describe('B-05 V8 My Work inbox canonical routes', () => {
     expect(res.body.meta.version).toBe('v8');
     expect(res.body.data).toEqual({ success: true, upserted: 3 });
     expect(mockMaterializeInboxItems).toHaveBeenCalledWith(UID, ORG);
+  });
+
+  it('POST /api/v8/my-work/inbox/:itemId/triage returns mutation envelope', async () => {
+    mockApplyGovernedInboxTriage.mockResolvedValue({
+      success: true,
+      triagedAt: '2026-03-25T12:00:00.000Z',
+      item: null,
+    });
+
+    const res = await request(createApp()).post('/api/v8/my-work/inbox/item-1/triage').send({
+      action: 'save',
+      itemKey: 'task:t-1',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta).toEqual({
+      version: 'v8',
+      contract: 'my_work_inbox_triage_mutation_v1',
+    });
+    expect(mockApplyGovernedInboxTriage).toHaveBeenCalledWith({
+      userId: UID,
+      organizationId: ORG,
+      itemId: 'item-1',
+      itemKey: 'task:t-1',
+      action: 'save',
+      params: undefined,
+      fromAISuggestion: false,
+      confidence: undefined,
+    });
+  });
+
+  it('POST /api/v8/my-work/inbox/bulk-triage returns mutation envelope', async () => {
+    mockApplyGovernedBulkInboxTriage.mockResolvedValue({
+      success: true,
+      triagedAt: '2026-03-25T12:00:00.000Z',
+      processed: 2,
+    });
+
+    const res = await request(createApp()).post('/api/v8/my-work/inbox/bulk-triage').send({
+      action: 'done',
+      itemKeys: ['task:t-1', 'task:t-2'],
+      items: [
+        { itemId: 'item-1', itemKey: 'task:t-1' },
+        { itemId: 'item-2', itemKey: 'task:t-2' },
+      ],
+      aiItems: [{ itemKey: 'task:t-2', confidence: 0.92 }],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta.contract).toBe('my_work_inbox_triage_mutation_v1');
+    expect(mockApplyGovernedBulkInboxTriage).toHaveBeenCalledWith({
+      userId: UID,
+      organizationId: ORG,
+      items: [
+        { itemId: 'item-1', itemKey: 'task:t-1' },
+        { itemId: 'item-2', itemKey: 'task:t-2' },
+      ],
+      itemKeys: ['task:t-1', 'task:t-2'],
+      action: 'done',
+      params: undefined,
+      aiItems: [{ itemKey: 'task:t-2', confidence: 0.92 }],
+    });
   });
 });

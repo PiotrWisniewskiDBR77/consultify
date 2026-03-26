@@ -16,4 +16,10 @@ export const V8AdminApi = {
   getHealth: () => v8Get('/admin/health'),
 
   getMetrics: () => v8Get('/admin/metrics'),
+
+  getShadowStats: () => v8Get('/admin/shadow/stats'),
+
+  getShadowComparisons: (limit = 25) => v8Get('/admin/shadow/comparisons', { limit: String(limit) }),
+
+  getShadowPromotionReadiness: () => v8Get('/admin/shadow/promotion-readiness'),
 };

@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { V8AssessmentApi } from '@/services/api/v8';
 import { useAppStore } from '@/store/useAppStore';
 
 // ==========================================
@@ -101,6 +102,11 @@ const DEFAULT_PERMISSIONS: AssessmentPermissions = {
   canRequestAccess: true,
 };
 
+function shouldFallbackToLegacyAssessmentPermissions(error: unknown): boolean {
+  const status = Number((error as { status?: number })?.status);
+  return [400, 403, 404, 405, 501].includes(status);
+}
+
 // ==========================================
 // HOOK
 // ==========================================
@@ -155,7 +161,17 @@ export function useAssessmentPermissions(
       setIsLoading(true);
       setError(null);
 
-      const response = await Api.get(`/assessment-workflow-v2/${assessmentId}/my-role`);
+      let response: UserRoleInfo;
+      try {
+        response = (await V8AssessmentApi.getMyRole(assessmentId)) as UserRoleInfo;
+      } catch (error) {
+        if (!shouldFallbackToLegacyAssessmentPermissions(error)) {
+          throw error;
+        }
+        response = (await Api.get(
+          `/assessment-workflow-v2/${assessmentId}/my-role`
+        )) as UserRoleInfo;
+      }
 
       if (response) {
         setRole(response.role || 'viewer');

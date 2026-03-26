@@ -23,10 +23,36 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;
+  const runtimeSummary = payload.runtimeSummary;
 
   return (
     <HomeBlockShell block={block} className="sticky bottom-4 z-20">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="grid gap-3">
+        {runtimeSummary ? (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-cyan-100">
+              {isPolish
+                ? `Inbox oczekuje ${runtimeSummary.inboxPending}`
+                : `Inbox pending ${runtimeSummary.inboxPending}`}
+            </div>
+            <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">
+              {isPolish
+                ? `SLA zagrozone ${runtimeSummary.inboxAtRisk}`
+                : `SLA at risk ${runtimeSummary.inboxAtRisk}`}
+            </div>
+            <div className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-violet-100">
+              {isPolish
+                ? `Ostatnie outputy ${runtimeSummary.recentOutputs}`
+                : `Recent outputs ${runtimeSummary.recentOutputs}`}
+            </div>
+            <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-emerald-100">
+              {isPolish
+                ? `Do review ${runtimeSummary.reviewSharedOutputs}`
+                : `Needs review ${runtimeSummary.reviewSharedOutputs}`}
+            </div>
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
         {payload.actions.map((action) => {
           const Icon =
             action.id === 'new-idea'
@@ -73,6 +99,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
         })}
         <div className="ml-auto text-xs text-slate-300/55">
           {isPolish ? 'Most do całej aplikacji i czatu AI' : 'Bridge to the app and AI chat'}
+        </div>
         </div>
       </div>
     </HomeBlockShell>

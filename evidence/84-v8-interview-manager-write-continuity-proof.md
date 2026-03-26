@@ -6,12 +6,12 @@ Environment:
 - Railway project `heartfelt-blessing`
 - service `consultify`
 - environment `staging`
-- deployment `df4382d9-7950-4a44-a8fb-bd5cb43d24e9`
+- closure deployment `f08cb143-4581-429e-901a-4d0c646797ef`
 
 Deployment verification:
-- the bounded interview workflow-write bridge batch was deployed to staging
-- Railway build logs for deployment `df4382d9-7950-4a44-a8fb-bd5cb43d24e9` show successful image build and `/ping` healthcheck
-- Railway control-plane status lagged across `BUILDING` and `DEPLOYING` during capture, but a fresh browser tab later loaded the new interview bundle fingerprint `InterviewHub-CAbGn598.js`, confirming the active frontend cutover
+- the follow-up Interview submit/workspace bridge batch was deployed to staging
+- Railway deployment `f08cb143-4581-429e-901a-4d0c646797ef` reached `SUCCESS`
+- Railway build logs for that deployment completed image push and `/ping` healthcheck successfully
 
 Local validation before deploy:
 - `tests/unit/services/v8-interview-api.test.ts` passed
@@ -25,8 +25,9 @@ Authenticated browser session:
 
 ## What was verified
 
-Fresh post-cutover browser tabs loaded the new Interview runtime bundle:
-- `GET /assets/InterviewHub-CAbGn598.js` -> `200`
+Fresh post-success browser tabs loaded the new Interview runtime bundle:
+- `GET /assets/index-Cu-95u5l.js` -> active runtime bundle
+- `GET /assets/InterviewHub-DZ--1tU4.js` -> active Interview surface bundle
 
 The governed read lane remained healthy after the cutover:
 - `GET /api/v8/interview/assignments/my` -> `200`
@@ -34,9 +35,12 @@ The governed read lane remained healthy after the cutover:
 - `GET /api/v8/interview/assignments/overdue` -> `200`
 - `GET /api/v8/interview/sessions/accepted` -> `200`
 
-Manager write continuity is now partially browser-proven on governed V8 paths:
+Bounded workflow-write continuity is now browser-proven on governed V8 paths:
 - `POST /api/v8/interview/assignments/seed_ia_dbr77_submitted_1/remind` -> `200`
 - `POST /api/v8/interview/assignments/seed_ia_dbr77_submitted_1/approve` -> `200`
+- `POST /api/v8/interview/assignments/ia_c43a5dd5-09d9-4162-98bd-b09e1c77924a/start` -> `200`
+- `POST /api/v8/interview/assignments/ia_c43a5dd5-09d9-4162-98bd-b09e1c77924a/submit` -> `200`
+- `POST /api/v8/interview/assignments/ia_c43a5dd5-09d9-4162-98bd-b09e1c77924a/send-back` -> `200`
 
 Post-write refresh stayed on governed V8 reads:
 - `GET /api/v8/interview/assignments/managed` -> `200`
@@ -44,16 +48,18 @@ Post-write refresh stayed on governed V8 reads:
 - `GET /api/v8/interview/assignments/my` -> `200`
 - `GET /api/v8/interview/sessions/accepted` -> `200`
 
-## Remaining bounded gap
+## Closure sequence
 
-Two write-side subflows were not browser-proven in the same staging wave because live fixtures were no longer available after the cutover retest sequence:
-- `start`: a real start action was exercised earlier in the rollout window, but it happened before the fresh post-cutover bundle verification; after the new bundle was active, no self-assignee `Assigned` record remained in the live lane
-- `send-back`: the only live `Submitted` manager fixture was consumed by the approval proof, and the remaining live records were `approved`, `assigned`, `in_progress`, or already `sent_back`
-
-No false closure claim should be made from this packet alone:
-- bounded V8 manager write continuity is now staging-proven for `remind` and `approve`
-- `B-06d` still needs one additional live staging pass with fresh fixtures to close `start` and `send-back`
+- a fresh self-assignee fixture was created earlier on staging and then started through the governed bridge
+- five answers were saved on that started session, leaving the live runtime at `Submitted 50%` eligibility
+- an earlier stale tab still running the pre-success frontend bundle failed to emit submit, which is now confirmed as a stale-runtime artifact, not the active staging truth
+- after the follow-up deployment reached `SUCCESS`, a fresh tab loaded `index-Cu-95u5l.js` + `InterviewHub-DZ--1tU4.js`
+- on that fresh runtime, clicking `Submit` from the review screen emitted `POST /api/v8/interview/assignments/ia_c43a5dd5-09d9-4162-98bd-b09e1c77924a/submit` -> `200`
+- the same assignment immediately reappeared in the manager lane as `Submitted 50% 1d left`, with `To approve 1`
+- manager row actions then emitted `POST /api/v8/interview/assignments/ia_c43a5dd5-09d9-4162-98bd-b09e1c77924a/send-back` -> `200`
+- the manager lane settled back to `To approve 0`, confirming truthful consumption of the fresh submitted fixture on the governed V8 path
 
 Conclusion:
-- the interview packet moved forward materially: manager write continuity is no longer fully legacy-only
-- `B-06d` should remain `yellow`, but its remaining live blocker is now narrowed to the missing `start` and `send-back` fixture-backed proofs, not the absence of governed V8 manager writes altogether
+- the bounded Interview workflow-write packet is now closure-grade on staging for `start`, `submit`, `remind`, `approve`, and `send-back`
+- `B-06d` is no longer blocked by missing fixture production or submit-path ambiguity
+- this packet should now be treated as `green`

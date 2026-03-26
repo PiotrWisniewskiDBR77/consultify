@@ -4,7 +4,7 @@
  * Wraps the shared baseClient with V8 envelope unwrapping.
  */
 
-import { getHeaders, fetchWithRetry, handleResponse } from '../baseClient';
+import { fetchWithRetry, getHeaders, handleResponse } from '../baseClient';
 
 const V8_BASE = '/api/v8';
 
@@ -38,5 +38,14 @@ export async function v8Put<T>(path: string, body?: unknown): Promise<T> {
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await handleResponse<{ data: T }>(res, `V8 PUT ${path}`);
+  return json.data;
+}
+
+export async function v8Delete<T>(path: string): Promise<T> {
+  const res = await fetchWithRetry(`${V8_BASE}${path}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ data: T }>(res, `V8 DELETE ${path}`);
   return json.data;
 }

@@ -28,17 +28,14 @@ export function useCalendarData(
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
-      if (dateRange?.start) params.set('start', dateRange.start);
-      if (dateRange?.end) params.set('end', dateRange.end);
-      if (filter.sources.length < ALL_SOURCES.length) {
-        params.set('sources', filter.sources.join(','));
-      }
-      if (filter.projectId) params.set('projectId', filter.projectId);
-
-      const res = await Api.get(`/my-work/calendar/unified?${params.toString()}`);
-      if (res?.data?.events) {
-        setEvents(res.data.events);
+      const res = await Api.getMyWorkCalendarUnified({
+        start: dateRange?.start,
+        end: dateRange?.end,
+        sources: filter.sources.length < ALL_SOURCES.length ? filter.sources : undefined,
+        projectId: filter.projectId,
+      });
+      if (res?.events) {
+        setEvents(res.events);
       } else {
         setEvents([]);
       }

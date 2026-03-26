@@ -1,4 +1,4 @@
-import { v8Get, v8Post } from './client';
+import { v8Delete, v8Get, v8Post, v8Put } from './client';
 
 export type V8MyWorkRoofStatus = 'mixed_truth' | 'partially_coherent' | 'coherent';
 export type V8MyWorkRoofMaturity =
@@ -80,6 +80,37 @@ export interface V8CanonicalInboxMaterializeResult {
   upserted?: number;
 }
 
+export type V8InboxTriageAction =
+  | 'accept_today'
+  | 'accept_week'
+  | 'accept_later'
+  | 'schedule'
+  | 'delegate'
+  | 'archive'
+  | 'dismiss'
+  | 'done'
+  | 'save'
+  | 'reject';
+
+export interface V8InboxTriageResult {
+  success: boolean;
+  triagedAt: string;
+  item: V8CanonicalInboxItem | null;
+}
+
+export interface V8InboxBulkTriageResult {
+  success: boolean;
+  triagedAt: string;
+  processed: number;
+}
+
+export interface V8InboxAiAssistResult {
+  brief: string;
+  bullets: string[];
+  recommendedAction: V8InboxTriageAction;
+  recommendedReason: string;
+}
+
 export interface V8CanonicalInboxTableParams {
   section?: string;
   status?: 'pending' | 'resolved' | 'snoozed';
@@ -87,6 +118,77 @@ export interface V8CanonicalInboxTableParams {
   slaStatus?: string;
   limit?: number;
   offset?: number;
+}
+
+export interface V8NotebookPage {
+  id: string;
+  ownerUserId?: string;
+  organizationId?: string;
+  projectId?: string | null;
+  visibility?: string | null;
+  title: string;
+  contentJson: Record<string, unknown>;
+  contentText?: string | null;
+  tags: string[];
+  maturity?: string | null;
+  icon?: string | null;
+  summary?: string | null;
+  status: string;
+  pinned: boolean;
+  verificationStatus?: string;
+  reviewCadence?: string;
+  staleAt?: string | null;
+  lastReviewedAt?: string | null;
+  convertedTo?: Record<string, unknown> | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface V8NotebookPageFilters {
+  projectId?: string | null;
+  status?: string;
+  pinned?: boolean;
+  sort?: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface V8CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end?: string;
+  allDay: boolean;
+  source: string;
+  sourceId: string;
+  color?: string;
+  status?: string;
+  priority?: string;
+  description?: string;
+}
+
+export interface V8CalendarConflictItem {
+  id: string;
+  title: string;
+  due_date?: string | null;
+  deadline?: string | null;
+}
+
+export interface V8CalendarConflicts {
+  date: string;
+  tasks: V8CalendarConflictItem[];
+  decisions: V8CalendarConflictItem[];
+  totalItems: number;
+  hasConflicts: boolean;
+  suggestion?: string | null;
+}
+
+export interface V8CalendarUnifiedFilters {
+  start?: string;
+  end?: string;
+  sources?: string[];
+  projectId?: string;
 }
 
 export const V8MyWorkApi = {
@@ -103,4 +205,101 @@ export const V8MyWorkApi = {
   getCanonicalInboxStats: () => v8Get<V8CanonicalInboxStats>('/my-work/inbox/canonical/stats'),
   materializeCanonicalInbox: () =>
     v8Post<V8CanonicalInboxMaterializeResult>('/my-work/inbox/canonical/materialize'),
+  triageCanonicalInboxItem: (
+    itemId: string,
+    body: {
+      action: V8InboxTriageAction;
+      itemKey: string;
+      params?: Record<string, unknown>;
+      fromAISuggestion?: boolean;
+      confidence?: number;
+    }
+  ) => v8Post<V8InboxTriageResult>(`/my-work/inbox/${encodeURIComponent(itemId)}/triage`, body),
+  bulkTriageCanonicalInbox: (body: {
+    items?: Array<{ itemId?: string; itemKey: string }>;
+    itemKeys: string[];
+    action: V8InboxTriageAction;
+    params?: Record<string, unknown>;
+    aiItems?: Array<{ itemKey: string; confidence?: number | null }>;
+  }) => v8Post<V8InboxBulkTriageResult>('/my-work/inbox/bulk-triage', body),
+  aiAssistInboxItem: (body: {
+    language?: string;
+    item: {
+      title: string;
+      description?: string;
+      type?: string;
+      section?: string;
+      urgency?: string;
+      receivedAt?: string;
+      dueDate?: string;
+      sla?: {
+        level?: string;
+        remainingMs?: number;
+        isBreached?: boolean;
+      } | null;
+      reason?: string;
+      linkedTaskId?: string;
+      linkedDecisionId?: string;
+      source?: { type?: 'user' | 'system' | 'ai'; userName?: string } | null;
+    };
+  }) => v8Post<{ result: V8InboxAiAssistResult }>('/my-work/inbox/ai-assist', body),
+  getNotebookPages: (filters?: V8NotebookPageFilters) =>
+    v8Get<V8NotebookPage[]>(
+      '/my-work/notebook/pages',
+      filters
+        ? Object.fromEntries(
+            Object.entries(filters)
+              .filter(([, value]) => value !== undefined && value !== null)
+              .map(([key, value]) => [key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value)]),
+          )
+        : undefined,
+    ),
+  getNotebookPage: (id: string) => v8Get<V8NotebookPage>(`/my-work/notebook/pages/${encodeURIComponent(id)}`),
+  createNotebookPage: (page: {
+    title?: string;
+    projectId?: string | null;
+    visibility?: string;
+    tags?: string[];
+    contentJson?: unknown;
+    contentText?: string;
+    icon?: string | null;
+    status?: string;
+    template?: string;
+  }) => v8Post<V8NotebookPage>('/my-work/notebook/pages', page),
+  updateNotebookPage: (id: string, updates: Record<string, unknown>) =>
+    v8Put<V8NotebookPage>(`/my-work/notebook/pages/${encodeURIComponent(id)}`, updates),
+  deleteNotebookPage: (id: string) =>
+    v8Delete<{ success: boolean; id: string }>(`/my-work/notebook/pages/${encodeURIComponent(id)}`),
+  pinNotebookPage: (id: string) =>
+    v8Put<{ id: string; pinned: boolean }>(`/my-work/notebook/pages/${encodeURIComponent(id)}/pin`),
+  setNotebookPageStatus: (id: string, status: string) =>
+    v8Put<{ id: string; status: string }>(
+      `/my-work/notebook/pages/${encodeURIComponent(id)}/status`,
+      { status },
+    ),
+  getCalendarUnified: (filters?: V8CalendarUnifiedFilters) =>
+    v8Get<{ events: V8CalendarEvent[] }>(
+      '/my-work/calendar/unified',
+      filters
+        ? (Object.fromEntries(
+            Object.entries({
+              ...filters,
+              sources:
+                Array.isArray(filters.sources) && filters.sources.length > 0
+                  ? filters.sources.join(',')
+                  : undefined,
+            }).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+          ) as Record<string, string>)
+        : undefined,
+    ),
+  getCalendarConflicts: (date: string) =>
+    v8Get<V8CalendarConflicts>('/my-work/calendar/conflicts', { date }),
+  createCalendarEvent: (body: {
+    title: string;
+    start: string;
+    end?: string;
+    allDay?: boolean;
+    source?: 'task' | 'initiative' | 'decision';
+    description?: string;
+  }) => v8Post<{ id: string; source: string; message: string }>('/my-work/calendar/events', body),
 };

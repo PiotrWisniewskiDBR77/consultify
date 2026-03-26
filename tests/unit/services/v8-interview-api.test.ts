@@ -67,21 +67,27 @@ describe('V8InterviewApi', () => {
     vi.mocked(v8Post).mockResolvedValue({ success: true } as any);
 
     await V8InterviewApi.startAssignment('asg-1', { projectId: 'proj-1' });
-    await V8InterviewApi.remindAssignment('asg-2');
-    await V8InterviewApi.sendBackAssignment('asg-3', { reason: 'Missing answers' });
-    await V8InterviewApi.approveAssignment('asg-4');
+    await V8InterviewApi.submitAssignment('asg-2');
+    await V8InterviewApi.remindAssignment('asg-3');
+    await V8InterviewApi.sendBackAssignment('asg-4', { reason: 'Missing answers' });
+    await V8InterviewApi.approveAssignment('asg-5');
 
     expect(v8Post).toHaveBeenNthCalledWith(
       1,
       '/interview/assignments/asg-1/start',
       { projectId: 'proj-1' }
     );
-    expect(v8Post).toHaveBeenNthCalledWith(2, '/interview/assignments/asg-2/remind', {});
+    expect(v8Post).toHaveBeenNthCalledWith(2, '/interview/assignments/asg-2/submit', {});
     expect(v8Post).toHaveBeenNthCalledWith(
       3,
-      '/interview/assignments/asg-3/send-back',
+      '/interview/assignments/asg-3/remind',
+      {}
+    );
+    expect(v8Post).toHaveBeenNthCalledWith(
+      4,
+      '/interview/assignments/asg-4/send-back',
       { reason: 'Missing answers' }
     );
-    expect(v8Post).toHaveBeenNthCalledWith(4, '/interview/assignments/asg-4/approve', {});
+    expect(v8Post).toHaveBeenNthCalledWith(5, '/interview/assignments/asg-5/approve', {});
   });
 });

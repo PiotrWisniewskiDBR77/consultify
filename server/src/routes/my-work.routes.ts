@@ -32,6 +32,13 @@ import { radarActionService } from '../services/radar/radarActionService.js';
 import { radarService } from '../services/radar/radarService.js';
 import { radarRankingService } from '../services/radar/radarRankingService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
+import { getActiveRoomsByOrg, getRoomHealth } from '../services/v8/collaborationRoomService.js';
+import { rollupSignals } from '../services/v8/executionVisibilityService.js';
+import { getPendingDecisions } from '../services/v8/planningContinuityService.js';
+import {
+  InboxAiAssistItemSchema,
+  runInboxAiAssist,
+} from '../services/inboxAiAssistService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -9460,138 +9467,18 @@ router.post(
     const { orgId } = identity;
 
     const body = req.body || {};
-    const language = String(body.language || 'pl')
-      .toLowerCase()
-      .startsWith('pl')
-      ? 'pl'
-      : 'en';
-
-    const itemSchema = z.object({
-      title: z.string().min(1).max(400),
-      description: z.string().max(8000).optional().nullable(),
-      type: z.string().max(64).optional().nullable(),
-      section: z.string().max(64).optional().nullable(),
-      urgency: z.string().max(32).optional().nullable(),
-      receivedAt: z.string().max(64).optional().nullable(),
-      dueDate: z.string().max(64).optional().nullable(),
-      sla: z
-        .object({
-          level: z.string().max(16).optional().nullable(),
-          remainingMs: z.number().optional().nullable(),
-          isBreached: z.boolean().optional().nullable(),
-        })
-        .optional()
-        .nullable(),
-      reason: z.string().max(2000).optional().nullable(),
-      linkedTaskId: z.string().max(128).optional().nullable(),
-      linkedDecisionId: z.string().max(128).optional().nullable(),
-      source: z
-        .object({
-          type: z.enum(['user', 'system', 'ai']).optional().nullable(),
-          userName: z.string().max(160).optional().nullable(),
-        })
-        .optional()
-        .nullable(),
-    });
-
-    const payload = itemSchema.safeParse(body.item);
+    const payload = InboxAiAssistItemSchema.safeParse(body.item);
     if (!payload.success) {
       return res.status(400).json({ error: 'Invalid item payload' });
     }
 
-    const item = payload.data;
-
-    const outSchema = z.object({
-      brief: z.string().min(1).max(280),
-      bullets: z.array(z.string().min(1).max(140)).max(4),
-      recommendedAction: z.enum([
-        'accept_today',
-        'accept_week',
-        'accept_later',
-        'schedule',
-        'delegate',
-        'archive',
-        'dismiss',
-        'done',
-        'save',
-        'reject',
-      ]),
-      recommendedReason: z.string().min(1).max(260),
-      draftNote: z.string().max(800).optional(),
-    });
-
     try {
-      const { llmService } = await import('../services/ai/llmService.js');
-      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
-      const modelCfg = await modelRouter.select({
-        capability: 'chat',
+      const result = await runInboxAiAssist({
         organizationId: orgId,
-        options: { tier: 'STANDARD' },
+        language: body.language,
+        item: payload.data,
       });
-
-      const prompt =
-        language === 'pl'
-          ? `Użytkownik ogląda element w panelu Preview (MyWork → Inbox).
-Zadanie: wygeneruj krótki BRIEF (max 2 zdania), 2–4 bullet points, oraz rekomendowaną akcję triage (jedna z listy).
-Nie powtarzaj tytułu; skup się na tym "co to jest" i "co zrobić dalej".
-
-Dane elementu:
-- title: ${JSON.stringify(item.title)}
-- type: ${JSON.stringify(item.type || '')}
-- section: ${JSON.stringify(item.section || '')}
-- urgency: ${JSON.stringify(item.urgency || '')}
-- receivedAt: ${JSON.stringify(item.receivedAt || '')}
-- dueDate: ${JSON.stringify(item.dueDate || '')}
-- SLA: ${item.sla ? JSON.stringify(item.sla) : 'null'}
-- source: ${item.source ? JSON.stringify(item.source) : 'null'}
-- linkedTaskId: ${JSON.stringify(item.linkedTaskId || '')}
-- linkedDecisionId: ${JSON.stringify(item.linkedDecisionId || '')}
-- reason (why shown): ${JSON.stringify(item.reason || '')}
-- description: ${JSON.stringify(String(item.description || '').slice(0, 2500))}
-
-Zwróć TYLKO JSON obiektu zgodny ze schematem. Bez markdown i bez dodatkowego tekstu.`
-          : `The user is viewing a Preview pane item (MyWork → Inbox).
-Task: generate a short BRIEF (max 2 sentences), 2–4 bullet points, and one recommended triage action (from the allowed list).
-Do not repeat the title; focus on what it is and what to do next.
-
-Item data:
-- title: ${JSON.stringify(item.title)}
-- type: ${JSON.stringify(item.type || '')}
-- section: ${JSON.stringify(item.section || '')}
-- urgency: ${JSON.stringify(item.urgency || '')}
-- receivedAt: ${JSON.stringify(item.receivedAt || '')}
-- dueDate: ${JSON.stringify(item.dueDate || '')}
-- SLA: ${item.sla ? JSON.stringify(item.sla) : 'null'}
-- source: ${item.source ? JSON.stringify(item.source) : 'null'}
-- linkedTaskId: ${JSON.stringify(item.linkedTaskId || '')}
-- linkedDecisionId: ${JSON.stringify(item.linkedDecisionId || '')}
-- reason (why shown): ${JSON.stringify(item.reason || '')}
-- description: ${JSON.stringify(String(item.description || '').slice(0, 2500))}
-
-Return ONLY a JSON object matching the schema. No markdown, no extra text.`;
-
-      const r = await llmService.call({
-        type: 'structured',
-        schema: outSchema,
-        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt:
-          language === 'pl'
-            ? 'Jesteś asystentem pracy konsultanta. Odpowiadasz zwięźle. Zwracasz wyłącznie poprawny JSON.'
-            : 'You are a consulting work assistant. Be concise. Return only valid JSON.',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
-        maxTokens: 600,
-        timeoutMs: 12000,
-        breakerOptions: { retryAttempts: 1 },
-      });
-
-      const object = (r as any)?.object;
-      const parsed = outSchema.safeParse(object);
-      if (!parsed.success) {
-        return res.status(500).json({ error: 'AI response invalid' });
-      }
-
-      return res.json({ result: parsed.data });
+      return res.json({ result });
     } catch (err: any) {
       logger.error('[InboxAIAssist] Failed:', err);
       return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
@@ -11913,6 +11800,7 @@ router.get(
 
     try {
       const now = new Date();
+      const signalWindowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const timeMode = inferHomeV2TimeMode(now);
       const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
       const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
@@ -11940,7 +11828,21 @@ router.get(
         return [];
       };
 
-      const [tasks, decisions, ideas, notes, orgIdeas, peerTipEvents, initiatives, aiNews, outputs] =
+      const [
+        tasks,
+        decisions,
+        ideas,
+        notes,
+        orgIdeas,
+        peerTipEvents,
+        initiatives,
+        aiNews,
+        outputs,
+        inboxStats,
+        executionSignalRollup,
+        activeRooms,
+        pendingDecisionChains,
+      ] =
         await Promise.all([
         safeHomeV2Query('tasks', [
           {
@@ -12089,7 +11991,25 @@ router.get(
             roleKey: req.user?.role ? String(req.user.role) : null,
             limit: 8,
           }),
+        inboxService.getInboxStats(userId, orgId).catch(() => ({
+          total: 0,
+          bySection: {},
+          bySlaStatus: {},
+          byPriority: {},
+          byStatus: {},
+        })),
+        rollupSignals(orgId, signalWindowStart.toISOString(), now.toISOString()).catch(() => ({
+          byType: new Map<string, number>(),
+          byInitiative: new Map<string, number>(),
+          total: 0,
+        })),
+        getActiveRoomsByOrg(orgId, 12).catch(() => []),
+        getPendingDecisions(orgId).catch(() => []),
       ]);
+
+      const roomHealths = await Promise.all(
+        (activeRooms || []).slice(0, 6).map((room) => getRoomHealth(room.roomId, orgId).catch(() => null)),
+      );
 
       const { appTip, aiPlaybookTip } = pickTipOfDay(now);
 
@@ -12134,6 +12054,44 @@ router.get(
         deliveryState: String(artifact.deliveryState || 'draft'),
         visibilityScope: String(artifact.visibilityScope || 'private'),
       }));
+
+      const executionSignalTypes = Array.from(executionSignalRollup.byType.entries()).sort(
+        (left, right) => right[1] - left[1],
+      );
+      const topExecutionSignalType = executionSignalTypes[0]?.[0] ?? null;
+      const formatExecutionSignalType = (value: string | null): string => {
+        if (!value) {
+          return L('no dominant pattern yet', 'brak dominujacego wzorca');
+        }
+
+        const normalized = value.replace(/_/g, ' ').trim();
+        if (!normalized) {
+          return L('no dominant pattern yet', 'brak dominujacego wzorca');
+        }
+
+        return normalized;
+      };
+
+      const collaborationHealth = roomHealths.filter(Boolean);
+      const degradedRoomCount = collaborationHealth.filter(
+        (room) => room && (room.state === 'error' || room.degradedSince),
+      ).length;
+      const activePresenceCount = collaborationHealth.reduce(
+        (sum, room) => sum + (room?.activePresenceCount ?? 0),
+        0,
+      );
+      const inboxPendingCount = Number(inboxStats.byStatus?.pending || 0);
+      const inboxAtRiskCount = Number(inboxStats.bySlaStatus?.at_risk || 0);
+      const reviewSharedOutputCount = outputFlow.filter(
+        (artifact) => artifact.visibilityScope === 'review_shared',
+      ).length;
+      const governedPendingDecisionChainCount = (pendingDecisionChains || []).length;
+      const governedPendingDecisionStepCount = (pendingDecisionChains || []).reduce((sum, chain) => {
+        const pendingSteps = Array.isArray(chain?.decisions)
+          ? chain.decisions.filter((decision) => decision?.status === 'pending').length
+          : 0;
+        return sum + pendingSteps;
+      }, 0);
 
       const nextUpCutoff = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       const todayKey = now.toISOString().slice(0, 10);
@@ -12360,84 +12318,145 @@ router.get(
           ctaIntents: ['summarize_momentum', 'prioritize'],
           payload: {
             headline:
-              ideas.length > 0
-                ? L('Ideas are moving faster than decisions.', 'Pomysły idą szybciej niż decyzje.')
-                : L('Execution is moving, but ideation needs fresh energy.', 'Wykonanie idzie, ale ideacja potrzebuje świeżej energii.'),
-            summary:
-              pendingDecisions.length > 0
+              governedPendingDecisionChainCount > 0
                 ? L(
-                    'The program is alive, but one or two decisions are shaping the rate of progress more than task volume.',
-                    'Program żyje, ale tempo bardziej kształtuje 1–2 decyzje niż wolumen zadań.'
+                    'Governed decision chains are setting the pace.',
+                    'Governed decision chains nadają dziś tempo.',
                   )
-                : L(
-                    'There is enough movement in the system to convert energy into one stronger transformation storyline.',
-                    'W systemie jest dość ruchu, żeby zamienić energię w jedną silniejszą narrację transformacji.'
-                  ),
+                : executionSignalRollup.total > 0
+                  ? L(
+                      'Governed execution is carrying the week.',
+                      'Governed execution niesie ten tydzień.',
+                    )
+                  : inboxPendingCount > 0
+                    ? L(
+                        'Follow-through is waiting in the inbox.',
+                        'Follow-through czeka teraz w inboxie.',
+                      )
+                    : L(
+                        'Governed momentum is stable but still light.',
+                        'Governed momentum jest stabilny, ale wciąż lekkie.',
+                      )
+                ,
+            summary:
+              governedPendingDecisionChainCount > 0
+                ? isPolish
+                  ? `${governedPendingDecisionChainCount} governed chainów i ${governedPendingDecisionStepCount} oczekujących kroków nadal spowalnia przejście od execution do decyzji.`
+                  : `${governedPendingDecisionChainCount} governed chains and ${governedPendingDecisionStepCount} pending decision steps are still slowing the move from execution into closure.`
+                : executionSignalRollup.total > 0
+                  ? isPolish
+                    ? `${executionSignalRollup.total} sygnałów execution z ostatnich 7 dni wskazuje, że program ma realny ruch operacyjny, a nie tylko deklaratywny status.`
+                    : `${executionSignalRollup.total} execution signals from the last 7 days show that the program has real operational movement, not just narrative status.`
+                  : inboxPendingCount > 0
+                    ? isPolish
+                      ? `${inboxPendingCount} pozycji pending w inboxie i ${inboxAtRiskCount} zagrożonych SLA pokazuje, gdzie follow-through może osłabić momentum bez kolejnych decyzji.`
+                      : `${inboxPendingCount} pending inbox items and ${inboxAtRiskCount} at-risk SLA items show where follow-through can weaken momentum even without new decisions.`
+                    : L(
+                        'The governed rails are quiet right now, so the next lift should come from shaping a stronger lane rather than clearing operational drag.',
+                        'Governed rails są teraz spokojne, więc kolejny lift powinien wynikać z lepszego ukształtowania lane, a nie z usuwania operacyjnego tarcia.',
+                      ),
             stats: [
               {
-                label: L('Ideas shaped', 'Uformowane pomysły'),
-                value: String(ideas.length),
-                trend: ideas.length > 1 ? L('rising', 'rośnie') : L('steady', 'stabilnie'),
+                label: L('Execution signals', 'Sygnały execution'),
+                value: String(executionSignalRollup.total),
+                trend:
+                  executionSignalRollup.total > 0
+                    ? formatExecutionSignalType(topExecutionSignalType)
+                    : L('quiet window', 'spokojne okno'),
               },
               {
-                label: L('Tasks near term', 'Zadania “na teraz”'),
-                value: String(tasksDueSoon.length),
-                trend: overdueTasks.length > 0 ? L('attention needed', 'wymaga uwagi') : L('under control', 'pod kontrolą'),
+                label: L('Decision chains', 'Decision chains'),
+                value: String(governedPendingDecisionChainCount),
+                trend:
+                  governedPendingDecisionChainCount > 0
+                    ? isPolish
+                      ? `${governedPendingDecisionStepCount} kroków pending`
+                      : `${governedPendingDecisionStepCount} pending steps`
+                    : L('currently clear', 'obecnie czyste'),
               },
               {
-                label: L('Decisions active', 'Aktywne decyzje'),
-                value: String(pendingDecisions.length),
-                trend: pendingDecisions.length > 1 ? L('leadership pull', 'ciąg liderów') : L('contained', 'okiełznane'),
+                label: L('Inbox pending', 'Inbox pending'),
+                value: String(inboxPendingCount),
+                trend:
+                  inboxAtRiskCount > 0
+                    ? isPolish
+                      ? `${inboxAtRiskCount} SLA zagrożone`
+                      : `${inboxAtRiskCount} SLA at risk`
+                    : L('under control', 'pod kontrolą'),
               },
             ],
             signals: [
               {
                 id: 'momentum-1',
-                title: ideas.length > 0 ? L('Concept shaping is ahead of governance', 'Kształt konceptu wyprzedza governance') : L('Narrative energy is low', 'Energia narracji jest niska'),
-                summary:
-                  ideas.length > 0
+                title:
+                  executionSignalRollup.total > 0
                     ? L(
-                        'Your strongest ideas are clearer than the approvals around them. That is a signal to tighten decision framing.',
-                        'Najsilniejsze pomysły są już jaśniejsze niż approvals wokół nich. To sygnał, żeby dociąć ramę decyzyjną.'
+                        'Governed execution is producing real movement',
+                        'Governed execution generuje realny ruch',
                       )
                     : L(
-                        'There is space to generate a stronger future-state storyline before the next steering conversation.',
-                        'Jest przestrzeń, żeby wzmocnić „future-state storyline” przed kolejnym steeringiem.'
+                        'The execution lane is currently quiet',
+                        'Lane wykonawczy jest teraz spokojny',
                       ),
-                tag: 'Program pulse',
-                tone: ideas.length > 0 ? 'positive' : 'warning',
+                summary:
+                  executionSignalRollup.total > 0
+                    ? isPolish
+                      ? `${executionSignalRollup.total} sygnałów execution z ostatnich 7 dni pokazuje, że program ma aktywny governed heartbeat; top pattern: ${formatExecutionSignalType(topExecutionSignalType)}.`
+                      : `${executionSignalRollup.total} execution signals in the last 7 days show that the program has an active governed heartbeat; top pattern: ${formatExecutionSignalType(topExecutionSignalType)}.`
+                    : L(
+                        'The execution signal rail is quiet right now, so momentum depends more on shaping and commitment than on active delivery pull.',
+                        'Rail execution signals jest teraz cichy, więc momentum zależy bardziej od kształtowania i commitmentu niż od aktywnego delivery pull.'
+                      ),
+                tag: 'Execution rail',
+                tone: executionSignalRollup.total > 0 ? 'positive' : 'neutral',
               },
               {
                 id: 'momentum-2',
-                title: tasksDueSoon.length > 0 ? L('Execution has a concrete next move', 'Wykonanie ma konkretny next move') : L('Execution bandwidth is available', 'Jest bandwidth na wykonanie'),
-                summary:
-                  tasksDueSoon.length > 0
+                title:
+                  governedPendingDecisionChainCount > 0
                     ? L(
-                        'Near-term work is visible, which makes this a good moment to connect it to the broader transformation narrative.',
-                        'Praca “na teraz” jest widoczna — to dobry moment, żeby podpiąć ją pod szerszą narrację transformacji.'
+                        'Decision chains are still constraining throughput',
+                        'Decision chains nadal ograniczają throughput',
                       )
                     : L(
-                        'You can safely use some bandwidth to clarify the strongest lane rather than react to noise.',
-                        'Możesz bezpiecznie użyć części bandwidthu na doprecyzowanie najmocniejszego “lane”, zamiast reagować na szum.'
+                        'Decision throughput is currently clean',
+                        'Decision throughput jest obecnie czysty',
                       ),
-                tag: 'Execution',
-                tone: 'positive',
+                summary:
+                  governedPendingDecisionChainCount > 0
+                    ? isPolish
+                      ? `${governedPendingDecisionChainCount} chainów i ${governedPendingDecisionStepCount} kroków pending nadal czeka na domknięcie w planning spine.`
+                      : `${governedPendingDecisionChainCount} chains and ${governedPendingDecisionStepCount} pending steps are still waiting for closure in the planning spine.`
+                    : L(
+                        'The planning spine is not currently reporting governed pending chains, which creates space to convert movement into commitment.',
+                        'Planning spine nie raportuje teraz governed pending chains, co daje przestrzeń, by zamienić ruch w commitment.'
+                      ),
+                tag: 'Planning spine',
+                tone: governedPendingDecisionChainCount > 0 ? 'warning' : 'neutral',
               },
               {
                 id: 'momentum-3',
-                title: pendingDecisions.length > 0 ? L('Decision pacing is the main constraint', 'Tempo decyzji jest głównym ograniczeniem') : L('Decision flow is currently clean', 'Przepływ decyzji jest teraz czysty'),
-                summary:
-                  pendingDecisions.length > 0
+                title:
+                  inboxPendingCount > 0 || reviewSharedOutputCount > 0
                     ? L(
-                        'The system does not need more updates. It needs one cleaner decision sequence.',
-                        'System nie potrzebuje kolejnych update’ów. Potrzebuje czystszej sekwencji decyzji.'
+                        'Follow-through is accumulating in governed queues',
+                        'Follow-through kumuluje się w governed queues',
                       )
                     : L(
-                        'This is a rare moment to push the strongest opportunity forward without governance drag.',
-                        'To rzadki moment, żeby pchnąć najmocniejszą szansę do przodu bez tarcia governance.'
+                        'Follow-through pressure is currently light',
+                        'Presja follow-through jest obecnie lekka',
                       ),
-                tag: 'Decision flow',
-                tone: pendingDecisions.length > 0 ? 'warning' : 'neutral',
+                summary:
+                  inboxPendingCount > 0 || reviewSharedOutputCount > 0
+                    ? isPolish
+                      ? `${inboxPendingCount} pozycji inbox pending i ${reviewSharedOutputCount} outputów review_shared pokazuje, gdzie ruch wymaga domknięcia, a nie kolejnych nowych startów.`
+                      : `${inboxPendingCount} pending inbox items and ${reviewSharedOutputCount} review-shared outputs show where movement needs closure rather than additional fresh starts.`
+                    : L(
+                        'There is little governed queue pressure right now, so momentum can be directed toward shaping the strongest next lane.',
+                        'Presja na governed queues jest teraz mała, więc momentum można skierować na kształtowanie najmocniejszego kolejnego lane.'
+                      ),
+                tag: 'Follow-through',
+                tone: inboxPendingCount > 0 || reviewSharedOutputCount > 0 ? 'warning' : 'neutral',
               },
             ],
           },
@@ -12473,6 +12492,12 @@ router.get(
               updatedAt: String(note.updated_at || ''),
             })),
             orgIdeas: orgIdeasPayload,
+            runtimeSummary: {
+              ideasWithTasks: ideas.filter((idea: any) => Number(idea.task_count || 0) > 0).length,
+              recentNotes: notes.length,
+              recentOutputs: outputFlow.length,
+              orgSignals: orgIdeasPayload.length,
+            },
             nudge:
               ideas[0] && Number(ideas[0].task_count || 0) === 0
                 ? {
@@ -12512,6 +12537,30 @@ router.get(
                 }
               : null,
             signals: [
+              {
+                id: 'decision-heat-governed-chain',
+                title:
+                  governedPendingDecisionChainCount > 0
+                    ? L(
+                        'Governed decision chains are still open in the planning spine',
+                        'W planning spine nadal sa otwarte governed decision chains',
+                      )
+                    : L(
+                        'Governed decision chains are currently clear',
+                        'Governed decision chains sa obecnie czyste',
+                      ),
+                summary:
+                  governedPendingDecisionChainCount > 0
+                    ? isPolish
+                      ? `${governedPendingDecisionChainCount} aktywnych chainow i ${governedPendingDecisionStepCount} oczekujacych krokow decyzyjnych nadal czeka na domkniecie.`
+                      : `${governedPendingDecisionChainCount} active chains and ${governedPendingDecisionStepCount} pending decision steps are still waiting for closure.`
+                    : L(
+                        'The governed planning spine does not currently report any pending decision chains for this organization.',
+                        'Governed planning spine nie raportuje obecnie zadnych oczekujacych decision chains dla tej organizacji.',
+                      ),
+                tag: 'Governed planning',
+                tone: governedPendingDecisionChainCount > 0 ? 'warning' : 'neutral',
+              },
               {
                 id: 'decision-heat-1',
                 title:
@@ -12618,6 +12667,19 @@ router.get(
                     'Wykonanie jest relatywnie lekkie. To okno na shaping.'
                   ),
             streams: [
+              executionSignalRollup.total > 0
+                ? {
+                    id: 'execution-signal-rollup',
+                    label: L('Governed execution signals', 'Governed execution signals'),
+                    progressLabel: isPolish
+                      ? `${executionSignalRollup.total} sygnalow z ostatnich 7 dni · top: ${formatExecutionSignalType(topExecutionSignalType)}`
+                      : `${executionSignalRollup.total} signals in the last 7 days · top: ${formatExecutionSignalType(topExecutionSignalType)}`,
+                    status:
+                      executionSignalRollup.total >= 5 || topExecutionSignalType?.includes('block')
+                        ? 'blocked'
+                        : 'steady',
+                  }
+                : null,
               tasksDueSoon[0]
                 ? {
                     id: `task-${tasksDueSoon[0].id}`,
@@ -12686,6 +12748,29 @@ router.get(
                   ),
             signals: [
               {
+                id: 'team-signal-collaboration',
+                title:
+                  activeRooms.length > 0
+                    ? L(
+                        'Live collaboration is visible in the workspace layer',
+                        'W warstwie workspace widac zywa wspolprace',
+                      )
+                    : L(
+                        'Collaboration substrate is quiet right now',
+                        'Substrat wspolpracy jest teraz cichy',
+                      ),
+                detail:
+                  activeRooms.length > 0
+                    ? isPolish
+                      ? `${activeRooms.length} aktywnych pokoi, ${activePresenceCount} aktywnych obecnosci i ${degradedRoomCount} pokojow zdegradowanych.`
+                      : `${activeRooms.length} active rooms, ${activePresenceCount} active presences, and ${degradedRoomCount} degraded rooms.`
+                    : L(
+                        'No active collaboration rooms are currently bound to this organization, so alignment still depends mostly on narrative and decision rhythm.',
+                        'Brak aktywnych pokoi wspolpracy dla tej organizacji, wiec alignment nadal opiera sie glownie na narracji i rytmie decyzji.',
+                      ),
+                tone: degradedRoomCount > 0 ? 'warning' : activeRooms.length > 0 ? 'positive' : 'neutral',
+              },
+              {
                 id: 'team-signal-1',
                 title: L('There is enough movement in the system', 'W systemie jest dość ruchu'),
                 detail: L(
@@ -12751,6 +12836,13 @@ router.get(
                   ),
               },
             ],
+            runtimeSummary: {
+              inboxPending: Number(inboxStats.byStatus?.pending || 0),
+              inboxAtRisk: Number(inboxStats.bySlaStatus?.at_risk || 0),
+              recentOutputs: outputFlow.length,
+              reviewSharedOutputs: outputFlow.filter((artifact) => artifact.visibilityScope === 'review_shared')
+                .length,
+            },
           },
         },
       ];

@@ -2932,8 +2932,14 @@ export class TaskController {
               task_index_code: string;
             }>(
               `SELECT td.id, td.predecessor_id, td.successor_id,
-                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
-                      COALESCE(td.lag_days, 0) as lag_days,
+                      CASE
+                        WHEN td.dependency_type IS NULL OR TRIM(CAST(td.dependency_type AS TEXT)) = '' THEN 'finish_to_start'
+                        ELSE LOWER(TRIM(CAST(td.dependency_type AS TEXT)))
+                      END as dependency_type,
+                      CASE
+                        WHEN td.lag_days IS NULL OR TRIM(CAST(td.lag_days AS TEXT)) = '' THEN 0
+                        ELSE CAST(td.lag_days AS INTEGER)
+                      END as lag_days,
                       td.notes, td.created_at, td.created_by,
                       t.title as task_title, t.status as task_status,
                       t.priority as task_priority, t.id as task_index_code
@@ -2958,8 +2964,14 @@ export class TaskController {
               task_index_code: string;
             }>(
               `SELECT td.id, td.from_task_id, td.to_task_id,
-                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
-                      COALESCE(td.lag_days, 0) as lag_days,
+                      CASE
+                        WHEN td.dependency_type IS NULL OR TRIM(CAST(td.dependency_type AS TEXT)) = '' THEN 'finish_to_start'
+                        ELSE LOWER(TRIM(CAST(td.dependency_type AS TEXT)))
+                      END as dependency_type,
+                      CASE
+                        WHEN td.lag_days IS NULL OR TRIM(CAST(td.lag_days AS TEXT)) = '' THEN 0
+                        ELSE CAST(td.lag_days AS INTEGER)
+                      END as lag_days,
                       td.notes, td.created_at, td.created_by,
                       t.title as task_title, t.status as task_status,
                       t.priority as task_priority, t.id as task_index_code
@@ -2987,8 +2999,14 @@ export class TaskController {
               task_index_code: string;
             }>(
               `SELECT td.id, td.predecessor_id, td.successor_id,
-                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
-                      COALESCE(td.lag_days, 0) as lag_days,
+                      CASE
+                        WHEN td.dependency_type IS NULL OR TRIM(CAST(td.dependency_type AS TEXT)) = '' THEN 'finish_to_start'
+                        ELSE LOWER(TRIM(CAST(td.dependency_type AS TEXT)))
+                      END as dependency_type,
+                      CASE
+                        WHEN td.lag_days IS NULL OR TRIM(CAST(td.lag_days AS TEXT)) = '' THEN 0
+                        ELSE CAST(td.lag_days AS INTEGER)
+                      END as lag_days,
                       td.notes, td.created_at, td.created_by,
                       t.title as task_title, t.status as task_status,
                       t.priority as task_priority, t.id as task_index_code
@@ -3013,8 +3031,14 @@ export class TaskController {
               task_index_code: string;
             }>(
               `SELECT td.id, td.from_task_id, td.to_task_id,
-                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
-                      COALESCE(td.lag_days, 0) as lag_days,
+                      CASE
+                        WHEN td.dependency_type IS NULL OR TRIM(CAST(td.dependency_type AS TEXT)) = '' THEN 'finish_to_start'
+                        ELSE LOWER(TRIM(CAST(td.dependency_type AS TEXT)))
+                      END as dependency_type,
+                      CASE
+                        WHEN td.lag_days IS NULL OR TRIM(CAST(td.lag_days AS TEXT)) = '' THEN 0
+                        ELSE CAST(td.lag_days AS INTEGER)
+                      END as lag_days,
                       td.notes, td.created_at, td.created_by,
                       t.title as task_title, t.status as task_status,
                       t.priority as task_priority, t.id as task_index_code

@@ -52,6 +52,16 @@ export interface KbArticle extends KbArticleListItem {
 // ============================================
 
 const API_BASE = '/api/kb';
+const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
+
+async function fetchPublicBridgeArticles(path: 'public' | 'featured', lang: string, limit: number) {
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/${path}?lang=${lang}&limit=${limit}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch public KB bridge: ${path}`);
+  }
+  const data = await res.json();
+  return (data.data?.articles || data.articles || []) as KbArticleListItem[];
+}
 
 async function fetchCategories(lang: string, includePrivate = false): Promise<KbCategory[]> {
   try {
@@ -117,17 +127,35 @@ async function fetchArticle(slug: string, lang: string): Promise<KbArticle> {
 }
 
 async function fetchPublicPreview(lang: string, limit = 3): Promise<KbArticleListItem[]> {
-  const res = await fetch(`${API_BASE}/public?lang=${lang}&limit=${limit}`);
-  if (!res.ok) throw new Error('Failed to fetch public preview');
-  const data = await res.json();
-  return data.articles;
+  try {
+    return await fetchPublicBridgeArticles('public', lang, limit);
+  } catch {
+    try {
+    const data = await V8KnowledgeBaseApi.getPublicPreview(lang, limit);
+    return data.articles as KbArticleListItem[];
+    } catch {
+      const res = await fetch(`${API_BASE}/public?lang=${lang}&limit=${limit}`);
+      if (!res.ok) throw new Error('Failed to fetch public preview');
+      const data = await res.json();
+      return data.articles;
+    }
+  }
 }
 
 async function fetchFeatured(lang: string, limit = 4): Promise<KbArticleListItem[]> {
-  const res = await fetch(`${API_BASE}/featured?lang=${lang}&limit=${limit}`);
-  if (!res.ok) throw new Error('Failed to fetch featured articles');
-  const data = await res.json();
-  return data.articles;
+  try {
+    return await fetchPublicBridgeArticles('featured', lang, limit);
+  } catch {
+    try {
+    const data = await V8KnowledgeBaseApi.getFeaturedArticles(lang, limit);
+    return data.articles as KbArticleListItem[];
+    } catch {
+      const res = await fetch(`${API_BASE}/featured?lang=${lang}&limit=${limit}`);
+      if (!res.ok) throw new Error('Failed to fetch featured articles');
+      const data = await res.json();
+      return data.articles;
+    }
+  }
 }
 
 async function searchArticles(

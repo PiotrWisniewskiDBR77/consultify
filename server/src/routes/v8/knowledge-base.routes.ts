@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -14,6 +14,7 @@ import KnowledgeBaseService from '../../services/KnowledgeBaseService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
+export const publicKnowledgeBaseRoutes = Router();
 
 /** Stable contract id for clients parsing V8 KB read responses. */
 export const V8_KB_READ_CONTRACT = 'knowledge_base_read_v1';
@@ -33,6 +34,140 @@ function parseBoundedLimit(raw: unknown, fallback: number, max: number): number 
 function kbMeta() {
   return { version: 'v8' as const, contract: V8_KB_READ_CONTRACT };
 }
+
+/**
+ * GET /api/v8/kb/categories?lang=&all=
+ * Anonymous-safe category listing for public docs and landing surfaces.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/categories',
+  asyncHandler(async (req: Request, res: Response) => {
+    const language = firstParam(req.query.lang) || 'en';
+    const categories = await KnowledgeBaseService.getCategories(language, false);
+    return res.json({ data: { categories }, meta: kbMeta() });
+  }),
+);
+
+/**
+ * GET /api/v8/kb/public?lang=&limit=
+ * Anonymous-safe public article preview for landing surfaces.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/public',
+  asyncHandler(async (req: Request, res: Response) => {
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 3, 20);
+    const articles = await KnowledgeBaseService.getPublicPreview(language, limit);
+    return res.json({ data: { articles }, meta: kbMeta() });
+  }),
+);
+
+/**
+ * GET /api/v8/kb/featured?lang=&limit=
+ * Anonymous-safe featured article cards for public or authenticated help surfaces.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/featured',
+  asyncHandler(async (req: Request, res: Response) => {
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 4, 20);
+    const articles = await KnowledgeBaseService.getFeaturedArticles(language, limit);
+    return res.json({ data: { articles }, meta: kbMeta() });
+  }),
+);
+
+/**
+ * GET /api/v8/kb/articles?lang=&category=&search=&limit=&offset=
+ * Anonymous-safe public docs article listing.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/articles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const language = firstParam(req.query.lang) || 'en';
+    const categorySlug = firstParam(req.query.category);
+    const search = firstParam(req.query.search);
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
+    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+
+    const result = await KnowledgeBaseService.getArticles({
+      language,
+      categorySlug,
+      search,
+      limit,
+      offset,
+      publicOnly: true,
+    });
+
+    return res.json({ data: result, meta: kbMeta() });
+  }),
+);
+
+/**
+ * GET /api/v8/kb/search?q=&lang=&limit=
+ * Anonymous-safe public docs search.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/search',
+  asyncHandler(async (req: Request, res: Response) => {
+    const qStr = firstParam(req.query.q);
+    const lang = firstParam(req.query.lang) || 'en';
+    const limit = parseBoundedLimit(firstParam(req.query.limit), 10, 50);
+
+    if (!qStr || qStr.length < 2) {
+      return res.json({ data: { articles: [] }, meta: kbMeta() });
+    }
+
+    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
+    const publicArticles = articles.filter((article: { is_public?: boolean }) => article.is_public !== false);
+    return res.json({ data: { articles: publicArticles }, meta: kbMeta() });
+  }),
+);
+
+/**
+ * GET /api/v8/kb/articles/:slug?lang=
+ * Anonymous-safe public docs article detail.
+ */
+publicKnowledgeBaseRoutes.get(
+  '/articles/:slug',
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = firstParam((req.params as { slug?: string }).slug);
+    const language = firstParam(req.query.lang) || 'en';
+    if (!slug) {
+      return res.status(400).json({ error: 'slug is required', code: 'KB_SLUG_REQUIRED' });
+    }
+
+    const article = await KnowledgeBaseService.getArticleBySlug(slug, language);
+    if (!article || !article.is_public) {
+      return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+    }
+
+    return res.json({ data: { article }, meta: kbMeta() });
+  }),
+);
+
+/**
+ * POST /api/v8/kb/articles/:id/view
+ * Anonymous-safe public docs article view tracking.
+ */
+publicKnowledgeBaseRoutes.post(
+  '/articles/:id/view',
+  asyncHandler(async (req: Request, res: Response) => {
+    const articleId = firstParam((req.params as { id?: string }).id);
+    const source =
+      typeof req.body?.source === 'string' && req.body.source.trim() ? req.body.source.trim() : 'public_docs';
+    const sessionId =
+      typeof req.body?.sessionId === 'string' && req.body.sessionId.trim()
+        ? req.body.sessionId.trim()
+        : undefined;
+
+    if (!articleId) {
+      return res.status(400).json({ error: 'id is required', code: 'KB_ARTICLE_ID_REQUIRED' });
+    }
+
+    await KnowledgeBaseService.trackView(articleId, undefined, sessionId, source);
+    return res.json({ data: { success: true }, meta: kbMeta() });
+  }),
+);
 
 /**
  * GET /api/v8/kb/categories?lang=&all=

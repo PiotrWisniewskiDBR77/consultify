@@ -12,6 +12,7 @@ import {
   WorkflowStagesTable,
 } from '@/components/assessment/manage/WorkflowStagesTable';
 import { Api } from '@/services/api';
+import { V8AssessmentApi } from '@/services/api/v8';
 import { DRD_STRUCTURE, getAreaById } from '@/services/drdStructure';
 
 type TabId = 'workflow' | 'team' | 'initiatives' | 'reports' | 'access' | 'logs';
@@ -296,7 +297,8 @@ export function AssessmentManagePanel(props: {
       Api.get(`/assessment-workflow-v2/${assessmentId}/initiative-batches`).catch(() => ({
         batches: [],
       })),
-      Api.get(`/assessment-workflow-v2/${assessmentId}/assignments`).catch(() => ({
+      V8AssessmentApi.listAssignments(assessmentId).catch(() => ({
+        assessmentId,
         assignments: [],
       })),
       Api.get(`/assessment-workflow-v2/${assessmentId}/gate-decisions`).catch(() => ({
@@ -556,7 +558,7 @@ export function AssessmentManagePanel(props: {
 
   const handleAssignArea = useCallback(
     async (areaId: string, userId: string, dueAt?: string) => {
-      await Api.put(`/assessment-workflow-v2/${assessmentId}/assignments`, {
+      await V8AssessmentApi.upsertAssignment(assessmentId, {
         areaId,
         assignedUserId: userId,
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
@@ -570,7 +572,7 @@ export function AssessmentManagePanel(props: {
 
   const handleRemoveAssignment = useCallback(
     async (assignmentId: string) => {
-      await Api.delete(`/assessment-workflow-v2/${assessmentId}/assignments/${assignmentId}`);
+      await V8AssessmentApi.deleteAssignment(assessmentId, assignmentId);
       toast.success('Assignment removed');
       await reload();
     },

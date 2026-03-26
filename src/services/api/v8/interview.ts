@@ -94,6 +94,14 @@ export const V8InterviewApi = {
       payload ?? {}
     ),
 
+  submitAssignment: (id: string) =>
+    v8Post<{
+      assignment: V8InterviewAssignment;
+      session: V8InterviewSession;
+      completenessPercent: number;
+      entersContext: boolean;
+    }>(`/interview/assignments/${encodeURIComponent(id)}/submit`, {}),
+
   remindAssignment: (id: string) =>
     v8Post(`/interview/assignments/${encodeURIComponent(id)}/remind`, {}),
 

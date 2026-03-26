@@ -1,12 +1,23 @@
+import { randomUUID } from 'crypto';
 import { Router } from 'express';
 import type { Response } from 'express';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import inboxService from '../../services/inboxService.js';
+import {
+  InboxAiAssistItemSchema,
+  runInboxAiAssist,
+} from '../../services/inboxAiAssistService.js';
+import {
+  applyGovernedBulkInboxTriage,
+  applyGovernedInboxTriage,
+  VALID_INBOX_TRIAGE_ACTIONS,
+} from '../../services/inboxTriageService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   CalendarPhaseName,
   CalendarPhaseStatus,
@@ -19,6 +30,10 @@ const router = Router();
 
 /** B-05: V8 envelope for governed canonical inbox (V4-INBX-01) intake surface. */
 const V8_INBOX_CANONICAL_CONTRACT = 'my_work_inbox_canonical_v1';
+const V8_INBOX_TRIAGE_MUTATION_CONTRACT = 'my_work_inbox_triage_mutation_v1';
+const V8_INBOX_AI_ASSIST_CONTRACT = 'my_work_inbox_ai_assist_v1';
+const V8_NOTEBOOK_CONTRACT = 'my_work_notebook_v1';
+const V8_CALENDAR_CONTRACT = 'my_work_calendar_v1';
 
 async function requireCanonicalInboxTable(res: Response): Promise<boolean> {
   const isTestGateway =
@@ -47,6 +62,159 @@ async function requireCanonicalInboxTable(res: Response): Promise<boolean> {
   }
   return true;
 }
+
+async function requireInboxTriageTables(res: Response): Promise<boolean> {
+  const isTestGateway =
+    process.env.NODE_ENV === 'test' ||
+    process.env.E2E_MODE === 'true' ||
+    process.env.ENABLE_TEST_GATEWAY === 'true';
+  const mockDbEnabled =
+    process.env.MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false');
+
+  if (isTestGateway && mockDbEnabled) {
+    return true;
+  }
+
+  const triageCols = await getTableColumns('my_work_inbox_triage');
+  const focusCols = await getTableColumns('my_work_focus_state');
+  if (!triageCols?.size || !focusCols?.size) {
+    res.status(503).json({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
+    });
+    return false;
+  }
+
+  return true;
+}
+
+async function requireNotebookPagesTable(res: Response): Promise<boolean> {
+  const cols = await getTableColumns('notebook_pages');
+  if (!cols?.size) {
+    res.status(503).json({
+      error: 'Notebook pages table is not configured',
+      code: 'NOTEBOOK_TABLE_NOT_CONFIGURED',
+    });
+    return false;
+  }
+  return true;
+}
+
+const parseTagsArray = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
+  if (typeof input === 'string' && input.trim()) {
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((value) => String(value || '').trim())
+          .filter(Boolean)
+          .slice(0, 50);
+      }
+    } catch {
+      return input
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .slice(0, 50);
+    }
+  }
+
+  return [];
+};
+
+const safeJsonString = (value: unknown, fallback: string) => {
+  try {
+    if (value === undefined) return fallback;
+    return JSON.stringify(value);
+  } catch {
+    return fallback;
+  }
+};
+
+const parseConvertedTo = (raw: string | null | undefined) => {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const parseNotebookContent = (raw: string | null | undefined) => {
+  try {
+    return raw ? JSON.parse(raw) : { type: 'doc', content: [] };
+  } catch {
+    return { type: 'doc', content: [] };
+  }
+};
+
+const formatNotebookRow = (row: any) => ({
+  ...row,
+  tags: parseTagsArray(row?.tags),
+  pinned: Boolean(row?.pinned),
+  verificationStatus: row?.verificationStatus ?? 'unverified',
+  reviewCadence: row?.reviewCadence ?? 'monthly',
+  staleAt: row?.staleAt ?? null,
+  lastReviewedAt: row?.lastReviewedAt ?? null,
+  convertedTo: parseConvertedTo(row?.convertedToJson),
+  convertedToJson: undefined,
+  contentJson: parseNotebookContent(row?.contentJson),
+});
+
+async function canAccessNotebookRow(userId: string, orgId: string, row: any): Promise<boolean> {
+  if (!row) return false;
+  if (String(row.organization_id || row.organizationId || '') !== String(orgId)) return false;
+
+  const visibility = String(row.visibility || 'private').toLowerCase();
+  const ownerId = String(row.owner_user_id || row.ownerUserId || '');
+  const projectId = row.project_id || row.projectId || null;
+
+  if (visibility === 'private') {
+    return ownerId === String(userId);
+  }
+
+  if (visibility === 'project' && projectId) {
+    if (ownerId === String(userId)) return true;
+    const member = await queryHelpers.queryOne<{ ok: number }>(
+      `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
+      [projectId, userId],
+    );
+    return Boolean(member);
+  }
+
+  return ownerId === String(userId);
+}
+
+const toDateOnly = (value: unknown): string | null => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return value.toISOString().slice(0, 10);
+  }
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const dateOnly = raw.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateOnly) ? dateOnly : null;
+};
+
+const addDaysDateOnly = (dateOnly: string, days: number): string => {
+  const date = new Date(`${dateOnly}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return dateOnly;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
 
 function handleMyWorkRoofError(err: unknown, res: Response, fallbackMessage: string): Response | null {
   if (err instanceof ZodError) {
@@ -90,24 +258,25 @@ const DERIVED_HOME_BLOCKS: DerivedHomeBlockTruth[] = [
   },
   {
     blockName: 'momentum',
-    maturityLevel: 'partial_stitched',
-    serviceRef: 'GET /api/my-work/home/v2 · tasks, decisions, ideas',
+    maturityLevel: 'backed_by_real_service',
+    serviceRef:
+      'executionVisibilityService.rollupSignals + planningContinuityService.getPendingDecisions + inboxService.getInboxStats',
     rationale:
-      'Momentum narrative and stats are stitched in the home/v2 handler from live tasks, decisions, and ideas queries — canonical on the aggregated Home V2 surface, thinner than a dedicated Radar-class domain service.',
+      'Momentum now surfaces governed execution-signal, decision-chain, and inbox-follow-through truth directly on the aggregated Home V2 surface instead of relying only on stitched ideas/tasks narrative.',
   },
   {
     blockName: 'sparkField',
-    maturityLevel: 'partial_stitched',
-    serviceRef: 'GET /api/my-work/home/v2 · ideas, notebook_pages, org ideas',
+    maturityLevel: 'backed_by_real_service',
+    serviceRef: 'artifactRegistryService + notebook_pages + ideas/task linkage reads',
     rationale:
-      'Spark Field payloads are assembled from home/v2 reads of user ideas, notebook pages, and org-wide ideas; real aggregated contract, not a standalone spark microservice.',
+      'Spark Field now surfaces visible persisted notebook, artifact-output, and idea-to-task linkage summary on the Home V2 surface instead of acting only as a stitched list of idea and note cards.',
   },
   {
     blockName: 'decisionTemperature',
-    maturityLevel: 'partial_stitched',
-    serviceRef: 'GET /api/my-work/home/v2 · decisions, overdue tasks',
+    maturityLevel: 'backed_by_real_service',
+    serviceRef: 'planningContinuityService.getPendingDecisions + home/v2 decisions/tasks',
     rationale:
-      'Heat and pending-decision framing come from live decisions rows plus overdue-task pressure in home/v2; deeper execution-signal closure remains a separate WP-W7 gap.',
+      'Decision Temperature now surfaces governed pending-decision-chain depth from planningContinuityService on top of live decisions and overdue-task pressure in Home V2.',
   },
   {
     blockName: 'industryLens',
@@ -117,22 +286,24 @@ const DERIVED_HOME_BLOCKS: DerivedHomeBlockTruth[] = [
   },
   {
     blockName: 'executionCurrent',
-    maturityLevel: 'partial_stitched',
-    serviceRef: '/api/my-work/home/v2 + artifactRegistryService',
-    rationale: 'Execution context is partially present through aggregated Home V2 data and outputs bridge, but not as the frozen canonical block.',
+    maturityLevel: 'backed_by_real_service',
+    serviceRef: 'executionVisibilityService.rollupSignals + artifactRegistryService',
+    rationale:
+      'Execution Current now reads governed execution-signal depth from executionVisibilityService alongside the live outputs bridge on the aggregated Home V2 surface.',
   },
   {
     blockName: 'teamSignal',
-    maturityLevel: 'partial_stitched',
-    serviceRef: 'GET /api/my-work/home/v2 · organizationContextService, organization_events',
+    maturityLevel: 'backed_by_real_service',
+    serviceRef: 'collaborationRoomService.getActiveRoomsByOrg/getRoomHealth',
     rationale:
-      'Team alignment copy stitches organizationContext priorities, decision backlog, peer tips from organization_events, and narrative scaffolding in home/v2; multiplayer/collaboration event wiring called out in WP-W7 remains thin.',
+      'Team Signal now surfaces governed collaboration-room depth through collaborationRoomService, while still blending narrative scaffolding and peer tips on the Home V2 surface.',
   },
   {
     blockName: 'commandDock',
-    maturityLevel: 'partial_stitched',
-    serviceRef: 'HomeView actions + outputs bridge',
-    rationale: 'Home exposes real jump actions and governed outputs entry points, but not yet as the frozen command-dock block contract.',
+    maturityLevel: 'backed_by_real_service',
+    serviceRef: 'inboxService.getInboxStats + artifactRegistryService',
+    rationale:
+      'Command Dock now surfaces governed inbox and outputs runtime summary alongside the existing app/chat action bridge on the Home V2 surface.',
   },
 ];
 
@@ -318,6 +489,130 @@ router.post(
 );
 
 router.post(
+  '/inbox/:itemId/triage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireCanonicalInboxTable(res))) return;
+    if (!(await requireInboxTriageTables(res))) return;
+
+    const action = String(req.body?.action || '');
+    const itemKey = String(req.body?.itemKey || req.body?._key || req.query.itemKey || '');
+    const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
+    const fromAISuggestion = Boolean(req.body?.fromAISuggestion);
+    const confidence = typeof req.body?.confidence === 'number' ? req.body.confidence : undefined;
+
+    if (!VALID_INBOX_TRIAGE_ACTIONS.includes(action as any)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    if (!itemKey || !itemKey.includes(':')) {
+      return res.status(400).json({
+        error: 'Missing itemKey (expected task:<id> | decision:<id> | notification:<id>)',
+      });
+    }
+
+    const data = await applyGovernedInboxTriage({
+      userId,
+      organizationId,
+      itemId: req.params.itemId,
+      itemKey,
+      action: action as any,
+      params,
+      fromAISuggestion,
+      confidence,
+    });
+
+    return res.json({
+      data,
+      meta: { version: 'v8', contract: V8_INBOX_TRIAGE_MUTATION_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/inbox/bulk-triage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireCanonicalInboxTable(res))) return;
+    if (!(await requireInboxTriageTables(res))) return;
+
+    const action = String(req.body?.action || '');
+    const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
+    const itemKeys = Array.isArray(req.body?.itemKeys)
+      ? req.body.itemKeys.map((value: unknown) => String(value)).filter(Boolean)
+      : [];
+    const items = Array.isArray(req.body?.items)
+      ? req.body.items
+          .map((row: any) => ({
+            itemId: typeof row?.itemId === 'string' ? row.itemId : undefined,
+            itemKey: typeof row?.itemKey === 'string' ? row.itemKey : '',
+          }))
+          .filter((row: { itemId?: string; itemKey: string }) => Boolean(row.itemKey))
+      : undefined;
+    const aiItems = Array.isArray(req.body?.aiItems)
+      ? req.body.aiItems
+          .map((row: any) => ({
+            itemKey: typeof row?.itemKey === 'string' ? row.itemKey : '',
+            confidence:
+              typeof row?.confidence === 'number' && Number.isFinite(row.confidence)
+                ? row.confidence
+                : null,
+          }))
+          .filter((row: { itemKey: string; confidence: number | null }) => Boolean(row.itemKey))
+      : undefined;
+
+    if (!VALID_INBOX_TRIAGE_ACTIONS.includes(action as any)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    if (itemKeys.length === 0) {
+      return res.status(400).json({ error: 'Missing itemKeys[]' });
+    }
+
+    const data = await applyGovernedBulkInboxTriage({
+      userId,
+      organizationId,
+      items,
+      itemKeys,
+      action: action as any,
+      params,
+      aiItems,
+    });
+
+    return res.json({
+      data,
+      meta: { version: 'v8', contract: V8_INBOX_TRIAGE_MUTATION_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/inbox/ai-assist',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const body = req.body || {};
+    const payload = InboxAiAssistItemSchema.safeParse(body.item);
+
+    if (!payload.success) {
+      return res.status(400).json({ error: 'Invalid item payload' });
+    }
+
+    try {
+      const result = await runInboxAiAssist({
+        organizationId,
+        language: body.language,
+        item: payload.data,
+      });
+
+      return res.json({
+        data: { result },
+        meta: { version: 'v8', contract: V8_INBOX_AI_ASSIST_CONTRACT },
+      });
+    } catch (err: any) {
+      return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
+    }
+  }),
+);
+
+router.post(
   '/inbox/materializations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
@@ -343,6 +638,1070 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const data = await myWorkRoofService.getInboxMaterializationStats(userId, organizationId);
     return res.json({ data, meta: { version: 'v8' } });
+  }),
+);
+
+router.get(
+  '/notebook/pages',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const where = [`np.organization_id = ?`];
+    const params: Array<string | number> = [organizationId];
+
+    if (req.query.projectId) {
+      where.push('np.project_id = ?');
+      params.push(String(req.query.projectId));
+    }
+
+    if (req.query.status) {
+      where.push('coalesce(np.status, \'active\') = ?');
+      params.push(String(req.query.status));
+    }
+
+    if (req.query.pinned === '1') {
+      where.push('coalesce(np.pinned, 0) = 1');
+    } else if (req.query.pinned === '0') {
+      where.push('coalesce(np.pinned, 0) = 0');
+    }
+
+    if (req.query.q) {
+      const like = `%${String(req.query.q).trim().toLowerCase()}%`;
+      where.push('(lower(np.title) LIKE ? OR lower(coalesce(np.content_text, \'\')) LIKE ?)');
+      params.push(like, like);
+    }
+
+    where.push(
+      `(
+        (lower(np.visibility) = 'private' AND np.owner_user_id = ?)
+        OR (
+          lower(np.visibility) = 'project'
+          AND np.project_id IS NOT NULL
+          AND (
+            np.owner_user_id = ?
+            OR pm.user_id IS NOT NULL
+          )
+        )
+      )`,
+    );
+    params.push(userId, userId);
+
+    const sortParam = String(req.query.sort || 'updated').toLowerCase();
+    const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
+    const offset = Math.max(Number(req.query.offset || 0), 0);
+    const orderClauses: Record<string, string> = {
+      updated: 'np.pinned DESC, np.updated_at DESC',
+      created: 'np.pinned DESC, np.created_at DESC',
+      title: 'np.pinned DESC, np.title ASC',
+    };
+    const orderBy = orderClauses[sortParam] || orderClauses.updated;
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          np.id,
+          np.owner_user_id as "ownerUserId",
+          np.organization_id as "organizationId",
+          np.project_id as "projectId",
+          np.visibility,
+          np.title,
+          np.content_json as "contentJson",
+          np.content_text as "contentText",
+          np.tags_json as tags,
+          np.maturity,
+          np.icon,
+          np.summary,
+          coalesce(np.status, 'active') as status,
+          coalesce(np.pinned, 0) as pinned,
+          coalesce(np.verification_status, 'unverified') as "verificationStatus",
+          coalesce(np.review_cadence, 'monthly') as "reviewCadence",
+          np.stale_at as "staleAt",
+          np.last_reviewed_at as "lastReviewedAt",
+          np.converted_to_json as "convertedToJson",
+          np.created_at as "createdAt",
+          np.updated_at as "updatedAt"
+        FROM notebook_pages np
+        LEFT JOIN project_members pm
+          ON pm.project_id = np.project_id
+         AND pm.user_id = ?
+        WHERE ${where.join(' AND ')}
+        ORDER BY ${orderBy}
+        LIMIT ? OFFSET ?
+      `,
+        [userId, ...params, limit, offset],
+      )) || [];
+
+    return res.json({
+      data: rows.map((row) => formatNotebookRow(row)),
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/notebook/pages',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const title = String(req.body?.title || '').trim();
+    if (!title) {
+      return res.status(400).json({ error: 'title is required', code: 'NOTEBOOK_TITLE_REQUIRED' });
+    }
+
+    const projectId = req.body?.projectId ? String(req.body.projectId) : null;
+    const visibility = (
+      req.body?.visibility ? String(req.body.visibility).toLowerCase() : projectId ? 'project' : 'private'
+    ) as 'private' | 'project';
+
+    if (visibility === 'project' && !projectId) {
+      return res
+        .status(400)
+        .json({ error: 'projectId is required for visibility=project', code: 'PROJECT_ID_REQUIRED' });
+    }
+
+    if (visibility === 'project' && projectId) {
+      const member = await queryHelpers.queryOne<{ ok: number }>(
+        `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
+        [projectId, userId],
+      );
+      if (!member) {
+        return res.status(403).json({ error: 'Not a project member', code: 'PROJECT_MEMBERSHIP_REQUIRED' });
+      }
+    }
+
+    const id = randomUUID();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO notebook_pages
+        (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, icon, maturity, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        userId,
+        organizationId,
+        projectId,
+        visibility,
+        title,
+        safeJsonString(req.body?.contentJson, JSON.stringify({ type: 'doc', content: [] })),
+        typeof req.body?.contentText === 'string' ? req.body.contentText : null,
+        JSON.stringify(parseTagsArray(req.body?.tags)),
+        typeof req.body?.icon === 'string' ? req.body.icon : null,
+        typeof req.body?.maturity === 'string' ? req.body.maturity : 'seed',
+        typeof req.body?.status === 'string' && ['inbox', 'active'].includes(req.body.status)
+          ? req.body.status
+          : 'active',
+        now,
+        now,
+      ],
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as "verificationStatus",
+        coalesce(review_cadence, 'monthly') as "reviewCadence",
+        stale_at as "staleAt",
+        last_reviewed_at as "lastReviewedAt",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id],
+    );
+
+    return res.status(201).json({
+      data: formatNotebookRow(row),
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.get(
+  '/notebook/pages/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as "verificationStatus",
+        coalesce(review_cadence, 'monthly') as "reviewCadence",
+        stale_at as "staleAt",
+        last_reviewed_at as "lastReviewedAt",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [String(req.params.id || '').trim()],
+    );
+
+    if (!row) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (!(await canAccessNotebookRow(userId, organizationId, row))) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+
+    return res.json({
+      data: formatNotebookRow(row),
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.put(
+  '/notebook/pages/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, project_id, visibility
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id],
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(existing.organization_id || '') !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(existing.owner_user_id || '') !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    const setParts: string[] = [];
+    const params: unknown[] = [];
+    const set = (col: string, value: unknown) => {
+      setParts.push(`${col} = ?`);
+      params.push(value);
+    };
+
+    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
+    if (req.body?.tags !== undefined) set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
+    if (req.body?.contentJson !== undefined) {
+      set('content_json', safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] })));
+    }
+    if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
+    if (typeof req.body?.maturity === 'string') set('maturity', req.body.maturity);
+    if (typeof req.body?.icon === 'string') set('icon', req.body.icon);
+    if (typeof req.body?.summary === 'string') set('summary', req.body.summary);
+    if (
+      typeof req.body?.status === 'string' &&
+      ['inbox', 'active', 'converted', 'archived'].includes(req.body.status)
+    ) {
+      set('status', req.body.status);
+    }
+    if (
+      typeof req.body?.verificationStatus === 'string' &&
+      ['unverified', 'verified', 'disputed'].includes(req.body.verificationStatus)
+    ) {
+      set('verification_status', req.body.verificationStatus);
+    }
+    if (
+      typeof req.body?.reviewCadence === 'string' &&
+      ['weekly', 'monthly', 'quarterly', 'never'].includes(req.body.reviewCadence)
+    ) {
+      set('review_cadence', req.body.reviewCadence);
+    }
+    if (req.body?.staleAt === null || (typeof req.body?.staleAt === 'string' && req.body.staleAt)) {
+      set('stale_at', req.body.staleAt || null);
+    }
+    if (req.body?.lastReviewedAt !== undefined) {
+      set('last_reviewed_at', req.body.lastReviewedAt || null);
+    }
+    if (req.body?.projectId !== undefined) {
+      const nextProjectId = req.body.projectId ? String(req.body.projectId) : null;
+      set('project_id', nextProjectId);
+      set('visibility', nextProjectId ? 'project' : 'private');
+    }
+
+    if (setParts.length > 0) {
+      setParts.push('updated_at = CURRENT_TIMESTAMP');
+      params.push(id);
+      await queryHelpers.queryRun(`UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`, params);
+    }
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as "verificationStatus",
+        coalesce(review_cadence, 'monthly') as "reviewCadence",
+        stale_at as "staleAt",
+        last_reviewed_at as "lastReviewedAt",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id],
+    );
+
+    return res.json({
+      data: formatNotebookRow(row),
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.delete(
+  '/notebook/pages/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id],
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(existing.organization_id || '') !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(existing.owner_user_id || '') !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    await queryHelpers.queryRun(`DELETE FROM notebook_pages WHERE id = ?`, [id]);
+    return res.json({
+      data: { success: true, id },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.put(
+  '/notebook/pages/:id/pin',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, coalesce(pinned, 0) as pinned FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id],
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(existing.organization_id || '') !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(existing.owner_user_id || '') !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    const pinned = existing.pinned ? 0 : 1;
+    await queryHelpers.queryRun(
+      `UPDATE notebook_pages SET pinned = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [pinned, id],
+    );
+
+    return res.json({
+      data: { id, pinned: Boolean(pinned) },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.put(
+  '/notebook/pages/:id/status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const status = String(req.body?.status || '').trim().toLowerCase();
+    if (!['inbox', 'active', 'converted', 'archived'].includes(status)) {
+      return res.status(400).json({
+        error: 'Invalid status. Must be inbox|active|converted|archived',
+        code: 'NOTEBOOK_STATUS_INVALID',
+      });
+    }
+
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id],
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(existing.organization_id || '') !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(existing.owner_user_id || '') !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE notebook_pages SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [status, id],
+    );
+
+    return res.json({
+      data: { id, status },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.get(
+  '/calendar/unified',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const startRaw = req.query.start ? String(req.query.start).trim() : '';
+    const endRaw = req.query.end ? String(req.query.end).trim() : '';
+    const start = startRaw || null;
+    const end = endRaw || null;
+    const hasRange = Boolean(start && end);
+
+    const sourcesParam = req.query.sources ? String(req.query.sources) : null;
+    const requestedSources = sourcesParam
+      ? sourcesParam
+          .split(',')
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
+      : ['task', 'initiative', 'decision', 'outlook', 'google', 'consultify'];
+    const projectId = req.query.projectId ? String(req.query.projectId).trim() : '';
+
+    const events: Array<{
+      id: string;
+      title: string;
+      start: string;
+      end?: string;
+      allDay: boolean;
+      source: string;
+      sourceId: string;
+      color?: string;
+      status?: string;
+      priority?: string;
+      description?: string;
+    }> = [];
+
+    if (requestedSources.includes('task')) {
+      const taskCols = await getTableColumns('tasks');
+      const hasDue = taskCols.has('due_date');
+      const hasStart = taskCols.has('start_date');
+      const hasEnd = taskCols.has('end_date');
+      const hasPlannedStart = taskCols.has('planned_start_date');
+      const hasPlannedEnd = taskCols.has('planned_end_date');
+      const hasProjectId = taskCols.has('project_id');
+      const hasAssigneeId = taskCols.has('assignee_id');
+      const hasAssignedTo = taskCols.has('assigned_to');
+      const hasOwnerId = taskCols.has('owner_id');
+      const hasCreatedBy = taskCols.has('created_by');
+
+      const dateExprParts: string[] = [];
+      if (hasDue) dateExprParts.push('t.due_date');
+      if (hasStart) dateExprParts.push('t.start_date');
+      if (hasPlannedStart) dateExprParts.push('t.planned_start_date');
+      const primaryDateExpr = dateExprParts.length > 0 ? `COALESCE(${dateExprParts.join(', ')})` : null;
+
+      const assignmentParts: string[] = [];
+      if (hasAssigneeId) assignmentParts.push('t.assignee_id = ?');
+      if (hasAssignedTo) assignmentParts.push('t.assigned_to = ?');
+      if (hasOwnerId) assignmentParts.push('t.owner_id = ?');
+      if (assignmentParts.length === 0 && hasCreatedBy) assignmentParts.push('t.created_by = ?');
+
+      const where: string[] = ['t.organization_id = ?'];
+      const params: Array<string | number> = [organizationId];
+
+      if (assignmentParts.length > 0) {
+        where.push(`(${assignmentParts.join(' OR ')})`);
+        for (let i = 0; i < assignmentParts.length; i++) params.push(userId);
+      } else {
+        where.push('1=0');
+      }
+
+      where.push("LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','cancelled')");
+
+      const hasAnyDateParts: string[] = [];
+      if (hasDue) hasAnyDateParts.push('t.due_date IS NOT NULL');
+      if (hasStart) hasAnyDateParts.push('t.start_date IS NOT NULL');
+      if (hasPlannedStart) hasAnyDateParts.push('t.planned_start_date IS NOT NULL');
+      if (hasAnyDateParts.length > 0) {
+        where.push(`(${hasAnyDateParts.join(' OR ')})`);
+      }
+
+      if (projectId && hasProjectId) {
+        where.push('t.project_id = ?');
+        params.push(projectId);
+      }
+
+      if (hasRange && primaryDateExpr) {
+        where.push(`${primaryDateExpr} >= ? AND ${primaryDateExpr} < ?`);
+        params.push(start!, end!);
+      }
+
+      const select: string[] = ['t.id', 't.title', 't.status', 't.priority', 't.description'];
+      if (hasDue) select.push('t.due_date as due_date');
+      if (hasStart) select.push('t.start_date as start_date');
+      if (hasEnd) select.push('t.end_date as end_date');
+      if (hasPlannedStart) select.push('t.planned_start_date as planned_start_date');
+      if (hasPlannedEnd) select.push('t.planned_end_date as planned_end_date');
+
+      const rows =
+        (await queryHelpers.queryAll<any>(
+          `
+            SELECT ${select.join(', ')}
+            FROM tasks t
+            WHERE ${where.join(' AND ')}
+            ORDER BY ${primaryDateExpr ? `${primaryDateExpr} ASC` : 't.updated_at DESC'}
+            LIMIT 800
+          `,
+          params,
+        )) || [];
+
+      for (const row of rows) {
+        const due = toDateOnly(row?.due_date);
+        const startDate = due || toDateOnly(row?.start_date) || toDateOnly(row?.planned_start_date);
+        const endDate = toDateOnly(row?.end_date) || toDateOnly(row?.planned_end_date);
+        if (!startDate) continue;
+
+        events.push({
+          id: `task-${row.id}`,
+          title: String(row.title || '').trim() || 'Task',
+          start: startDate,
+          end: due ? undefined : endDate ? addDaysDateOnly(endDate, 1) : undefined,
+          allDay: true,
+          source: 'task',
+          sourceId: String(row.id),
+          color: '#2563eb',
+          status: row.status,
+          priority: row.priority,
+          description: row.description,
+        });
+      }
+    }
+
+    if (requestedSources.includes('initiative')) {
+      const initCols = await getTableColumns('initiatives');
+      const hasInitPlannedStart = initCols.has('planned_start_date');
+      const hasInitPlannedEnd = initCols.has('planned_end_date');
+      const hasInitStart = initCols.has('start_date');
+      const hasInitEnd = initCols.has('end_date');
+      const hasInitTarget = initCols.has('target_date');
+      const hasInitProjectId = initCols.has('project_id');
+      const hasInitOwnerBusiness = initCols.has('owner_business_id');
+      const hasInitOwnerExecution = initCols.has('owner_execution_id');
+      const hasInitOwnerLegacy = initCols.has('owner_id');
+      const hasInitSponsor = initCols.has('sponsor_id');
+      const hasInitCreatedBy = initCols.has('created_by');
+      const stakeholderCols = await getTableColumns('initiative_stakeholders');
+      const hasStakeholders = stakeholderCols.has('initiative_id') && stakeholderCols.has('user_id');
+
+      const startExpr =
+        (hasInitPlannedStart && 'i.planned_start_date') ||
+        (hasInitStart && 'i.start_date') ||
+        (hasInitTarget && 'i.target_date') ||
+        null;
+      const endExpr =
+        (hasInitPlannedEnd && 'i.planned_end_date') ||
+        (hasInitEnd && 'i.end_date') ||
+        (hasInitTarget && 'i.target_date') ||
+        null;
+
+      if (startExpr) {
+        const relationParts: string[] = [];
+        if (hasInitOwnerExecution) relationParts.push('i.owner_execution_id = ?');
+        if (hasInitOwnerBusiness) relationParts.push('i.owner_business_id = ?');
+        if (hasInitOwnerLegacy) relationParts.push('i.owner_id = ?');
+        if (hasInitSponsor) relationParts.push('i.sponsor_id = ?');
+        if (hasStakeholders) {
+          relationParts.push(
+            'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)',
+          );
+        }
+        if (relationParts.length === 0 && hasInitCreatedBy) relationParts.push('i.created_by = ?');
+
+        const where: string[] = ['i.organization_id = ?'];
+        const params: Array<string | number> = [organizationId];
+
+        if (relationParts.length > 0) {
+          where.push(`(${relationParts.join(' OR ')})`);
+          for (let i = 0; i < relationParts.length; i++) params.push(userId);
+        } else {
+          where.push('1=0');
+        }
+
+        where.push(`${startExpr} IS NOT NULL`);
+        where.push("LOWER(COALESCE(i.status,'')) NOT IN ('completed','done','cancelled')");
+
+        if (projectId && hasInitProjectId) {
+          where.push('i.project_id = ?');
+          params.push(projectId);
+        }
+
+        if (hasRange) {
+          const endOrStart = endExpr ? `COALESCE(${endExpr}, ${startExpr})` : startExpr;
+          where.push(`${startExpr} < ? AND ${endOrStart} >= ?`);
+          params.push(end!, start!);
+        }
+
+        const rows =
+          (await queryHelpers.queryAll<any>(
+            `
+              SELECT i.id, i.name, i.status,
+                     ${startExpr} as start_date
+                     ${endExpr ? `, ${endExpr} as end_date` : ''}
+              FROM initiatives i
+              WHERE ${where.join(' AND ')}
+              ORDER BY ${startExpr} ASC
+              LIMIT 400
+            `,
+            params,
+          )) || [];
+
+        for (const row of rows) {
+          const startDate = toDateOnly(row?.start_date);
+          const endDate = toDateOnly(row?.end_date);
+          if (!startDate) continue;
+          events.push({
+            id: `initiative-${row.id}`,
+            title: String(row.name || '').trim() || 'Initiative',
+            start: startDate,
+            end: endDate ? addDaysDateOnly(endDate, 1) : undefined,
+            allDay: true,
+            source: 'initiative',
+            sourceId: String(row.id),
+            color: '#7c3aed',
+            status: row.status,
+          });
+        }
+      }
+
+      const milestoneCols = await getTableColumns('initiative_milestones');
+      const hasMilestones = milestoneCols.has('target_date');
+      const hasMsProjectId = milestoneCols.has('project_id');
+      if (hasMilestones) {
+        const relationParts: string[] = [];
+        if (hasInitOwnerExecution) relationParts.push('i.owner_execution_id = ?');
+        if (hasInitOwnerBusiness) relationParts.push('i.owner_business_id = ?');
+        if (hasInitOwnerLegacy) relationParts.push('i.owner_id = ?');
+        if (hasInitSponsor) relationParts.push('i.sponsor_id = ?');
+        if (hasStakeholders) {
+          relationParts.push(
+            'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)',
+          );
+        }
+        if (relationParts.length === 0 && hasInitCreatedBy) relationParts.push('i.created_by = ?');
+
+        const where: string[] = ['m.organization_id = ?', 'm.target_date IS NOT NULL'];
+        const params: Array<string | number> = [organizationId];
+
+        if (relationParts.length > 0) {
+          where.push(`(${relationParts.join(' OR ')})`);
+          for (let i = 0; i < relationParts.length; i++) params.push(userId);
+        } else {
+          where.push('1=0');
+        }
+
+        if (projectId && hasMsProjectId) {
+          where.push('m.project_id = ?');
+          params.push(projectId);
+        }
+
+        if (hasRange) {
+          where.push('m.target_date >= ? AND m.target_date < ?');
+          params.push(start!, end!);
+        }
+
+        const rows =
+          (await queryHelpers.queryAll<any>(
+            `
+              SELECT
+                m.id,
+                m.initiative_id,
+                m.name,
+                m.status,
+                m.target_date,
+                i.name as initiative_name
+              FROM initiative_milestones m
+              LEFT JOIN initiatives i ON i.id = m.initiative_id
+              WHERE ${where.join(' AND ')}
+              ORDER BY m.target_date ASC
+              LIMIT 600
+            `,
+            params,
+          )) || [];
+
+        for (const row of rows) {
+          const targetDate = toDateOnly(row?.target_date);
+          if (!targetDate) continue;
+          const initiativeName = String(row?.initiative_name || '').trim();
+          const milestoneName = String(row?.name || '').trim();
+          events.push({
+            id: `initiative-ms-${row.id}`,
+            title: initiativeName ? `${initiativeName}: ${milestoneName || 'Milestone'}` : milestoneName || 'Milestone',
+            start: targetDate,
+            allDay: true,
+            source: 'initiative',
+            sourceId: String(row.initiative_id || row.id),
+            color: '#7c3aed',
+            status: row.status,
+          });
+        }
+      }
+    }
+
+    if (requestedSources.includes('decision')) {
+      const decisionCols = await getTableColumns('decisions');
+      const hasDecisionMaker = decisionCols.has('decision_maker_id');
+      const hasCreatedBy = decisionCols.has('created_by');
+      const hasAssignedTo = decisionCols.has('assigned_to');
+      const hasDecisionOwner = decisionCols.has('decision_owner_id');
+      const hasProjectId = decisionCols.has('project_id');
+
+      const ownerParts: string[] = [];
+      if (hasDecisionOwner) ownerParts.push('d.decision_owner_id = ?');
+      if (hasDecisionMaker) ownerParts.push('d.decision_maker_id = ?');
+      if (hasAssignedTo) ownerParts.push('d.assigned_to = ?');
+      if (ownerParts.length === 0 && hasCreatedBy) ownerParts.push('d.created_by = ?');
+      if (ownerParts.length === 0) ownerParts.push('1=0');
+
+      const ownerParamCount =
+        (hasDecisionOwner ? 1 : 0) +
+        (hasDecisionMaker ? 1 : 0) +
+        (hasAssignedTo ? 1 : 0) +
+        (ownerParts.includes('d.created_by = ?') ? 1 : 0);
+
+      const where: string[] = [
+        'd.organization_id = ?',
+        'd.deadline IS NOT NULL',
+        `(${ownerParts.join(' OR ')})`,
+        "LOWER(COALESCE(d.status,'')) NOT IN ('resolved','done','completed','cancelled')",
+      ];
+      const params: Array<string | number> = [organizationId];
+      for (let i = 0; i < ownerParamCount; i++) params.push(userId);
+
+      if (projectId && hasProjectId) {
+        where.push('d.project_id = ?');
+        params.push(projectId);
+      }
+
+      if (hasRange) {
+        where.push('d.deadline >= ? AND d.deadline < ?');
+        params.push(start!, end!);
+      }
+
+      const rows =
+        (await queryHelpers.queryAll<any>(
+          `
+            SELECT d.id, d.title, d.deadline, d.status,
+                   ${decisionCols.has('priority') ? 'd.priority' : `'MEDIUM' as priority`}
+            FROM decisions d
+            WHERE ${where.join(' AND ')}
+            ORDER BY d.deadline ASC
+            LIMIT 400
+          `,
+          params,
+        )) || [];
+
+      for (const row of rows) {
+        const dueDate = toDateOnly(row?.deadline);
+        if (!dueDate) continue;
+        events.push({
+          id: `decision-${row.id}`,
+          title: String(row.title || '').trim() || 'Decision',
+          start: dueDate,
+          allDay: true,
+          source: 'decision',
+          sourceId: String(row.id),
+          color: '#d97706',
+          status: row.status,
+          priority: row.priority,
+        });
+      }
+    }
+
+    const wantOutlook = requestedSources.includes('outlook');
+    const wantGoogle = requestedSources.includes('google');
+    const wantConsultify = requestedSources.includes('consultify');
+    if (wantOutlook || wantGoogle || wantConsultify) {
+      const meetingCols = await getTableColumns('meetings');
+      if (meetingCols.has('start_at') && meetingCols.has('end_at')) {
+        const where: string[] = ['m.organization_id = ?'];
+        const params: Array<string | number> = [organizationId];
+
+        if (meetingCols.has('created_by')) {
+          where.push('m.created_by = ?');
+          params.push(userId);
+        }
+
+        if (hasRange) {
+          where.push('m.start_at >= ? AND m.start_at < ?');
+          params.push(start!, end!);
+        }
+
+        const rows =
+          (await queryHelpers.queryAll<any>(
+            `
+              SELECT m.id, m.title, m.start_at, m.end_at, m.location, m.status, m.agenda_json
+              FROM meetings m
+              WHERE ${where.join(' AND ')}
+              ORDER BY m.start_at ASC
+              LIMIT 200
+            `,
+            params,
+          )) || [];
+
+        const sourceColorMap: Record<string, string> = {
+          google: '#059669',
+          outlook: '#4f46e5',
+          consultify: '#6d28d9',
+        };
+
+        for (const row of rows) {
+          let agenda: Record<string, any> = {};
+          try {
+            agenda = JSON.parse(row.agenda_json || '{}');
+          } catch {
+            agenda = {};
+          }
+          const calendarSource = agenda.calendarSource || 'outlook';
+          if (calendarSource === 'outlook' && !wantOutlook) continue;
+          if (calendarSource === 'google' && !wantGoogle) continue;
+          if (calendarSource === 'consultify' && !wantConsultify) continue;
+
+          const meetingType = agenda.meetingType || 'team';
+          const prefix = meetingType === 'personal' ? '👤 ' : '👥 ';
+          const startIso = row.start_at ? new Date(row.start_at).toISOString() : null;
+          const endIso = row.end_at ? new Date(row.end_at).toISOString() : null;
+          if (!startIso) continue;
+
+          events.push({
+            id: `${calendarSource}-${row.id}`,
+            title: `${prefix}${String(row.title || '').trim() || 'Meeting'}`,
+            start: startIso,
+            end: endIso || undefined,
+            allDay: false,
+            source: calendarSource,
+            sourceId: String(row.id),
+            color: sourceColorMap[calendarSource] || '#4f46e5',
+            status: row.status || 'confirmed',
+            description: row.location ? `📍 ${row.location}` : undefined,
+          });
+        }
+      }
+    }
+
+    if (hasRange && start && end) {
+      const meetingStarts = events
+        .filter((event) => !event.allDay && ['outlook', 'google', 'consultify'].includes(event.source))
+        .map((event) => ({
+          start: new Date(event.start),
+          end: event.end ? new Date(event.end) : new Date(new Date(event.start).getTime() + 3600000),
+        }));
+
+      const rangeStart = new Date(start);
+      const rangeEnd = new Date(end);
+      const dayMs = 86400000;
+
+      for (let current = new Date(rangeStart); current < rangeEnd; current = new Date(current.getTime() + dayMs)) {
+        const dayOfWeek = current.getUTCDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+        const dayStr = current.toISOString().slice(0, 10);
+        const dayMeetings = meetingStarts
+          .filter((meeting) => meeting.start.toISOString().slice(0, 10) === dayStr)
+          .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+        const workStart = new Date(`${dayStr}T08:00:00Z`);
+        const workEnd = new Date(`${dayStr}T17:00:00Z`);
+        const slots: Array<{ start: Date; end: Date }> = [];
+        let cursor = workStart;
+
+        for (const meeting of dayMeetings) {
+          const meetingStart = meeting.start < workStart ? workStart : meeting.start;
+          if (meetingStart > cursor) {
+            slots.push({ start: cursor, end: meetingStart });
+          }
+          if (meeting.end > cursor) cursor = meeting.end;
+        }
+
+        if (cursor < workEnd) {
+          slots.push({ start: cursor, end: workEnd });
+        }
+
+        let bestGap = { start: workStart, end: workStart, duration: 0 };
+        for (const slot of slots) {
+          const duration = slot.end.getTime() - slot.start.getTime();
+          if (duration > bestGap.duration) bestGap = { ...slot, duration };
+        }
+
+        if (dayMeetings.length > 0 && bestGap.duration >= 5400000) {
+          const focusStart = bestGap.start;
+          const focusDuration = Math.min(bestGap.duration, 7200000);
+          const focusEnd = new Date(focusStart.getTime() + focusDuration);
+
+          events.push({
+            id: `ai-focus-${dayStr}`,
+            title: '🧠 Focus time (AI suggestion)',
+            start: focusStart.toISOString(),
+            end: focusEnd.toISOString(),
+            allDay: false,
+            source: 'task',
+            sourceId: `ai-focus-${dayStr}`,
+            color: 'rgba(124, 58, 237, 0.15)',
+            status: 'ai_suggestion',
+            description: 'AI-suggested deep work block based on your calendar gaps',
+          });
+        }
+      }
+    }
+
+    events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    return res.json({
+      data: { events },
+      meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/calendar/events',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const schema = z.object({
+      title: z.string().min(1).max(500),
+      start: z.string(),
+      end: z.string().optional(),
+      allDay: z.boolean().optional().default(true),
+      source: z.enum(['task', 'initiative', 'decision']).optional().default('task'),
+      description: z.string().optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid event data',
+        details: parsed.error.issues,
+      });
+    }
+
+    const { title, start, source, description } = parsed.data;
+    if (source !== 'task') {
+      return res.status(501).json({
+        error: `Creating ${source} events from calendar is not yet supported`,
+      });
+    }
+
+    const id = randomUUID();
+    await queryHelpers.queryRun(
+      `INSERT INTO tasks (id, title, description, due_date, assignee_id, organization_id, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'todo', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [id, title, description || null, start, userId, organizationId],
+    );
+
+    return res.status(201).json({
+      data: { id, source: 'task', message: 'Task created from calendar' },
+      meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
+    });
+  }),
+);
+
+router.get(
+  '/calendar/conflicts',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const date = req.query.date ? String(req.query.date) : new Date().toISOString().split('T')[0];
+
+    const [tasks, decisions] = await Promise.all([
+      queryHelpers.queryAll<any>(
+        `SELECT id, title, due_date
+         FROM tasks
+         WHERE assignee_id = ? AND organization_id = ?
+           AND date(due_date) = date(?)
+           AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
+         ORDER BY due_date ASC`,
+        [userId, organizationId, date],
+      ),
+      queryHelpers.queryAll<any>(
+        `SELECT id, title, deadline
+         FROM decisions
+         WHERE organization_id = ?
+           AND (created_by = ? OR assigned_to = ?)
+           AND date(deadline) = date(?)
+           AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
+         ORDER BY deadline ASC`,
+        [organizationId, userId, userId, date],
+      ),
+    ]);
+
+    const taskRows = tasks || [];
+    const decisionRows = decisions || [];
+    const totalItems = taskRows.length + decisionRows.length;
+    const hasConflicts = totalItems > 3;
+
+    return res.json({
+      data: {
+        date,
+        tasks: taskRows,
+        decisions: decisionRows,
+        totalItems,
+        hasConflicts,
+        suggestion: hasConflicts
+          ? 'This day looks busy. Consider rescheduling lower-priority items.'
+          : null,
+      },
+      meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
+    });
   }),
 );
 

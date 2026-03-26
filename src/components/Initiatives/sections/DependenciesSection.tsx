@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { V8PlanningApi } from '@/services/api/v8/planning';
 
 import { DependenciesSection as SharedDependenciesSection } from '../../MyWork/shared';
 import { useInitiativeContext } from './InitiativeContext';
@@ -57,8 +58,11 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
   const refresh = React.useCallback(async () => {
     if (!initiativeId) return;
     try {
-      const res = await Api.get(`/initiatives/${initiativeId}/task-dependencies`);
-      setDependencies(Array.isArray(res?.dependencies) ? res.dependencies : []);
+      const dependencies = await V8PlanningApi.getTaskDependencies(initiativeId).catch(async () => {
+        const res = await Api.get(`/initiatives/${initiativeId}/task-dependencies`);
+        return Array.isArray(res?.dependencies) ? res.dependencies : [];
+      });
+      setDependencies(Array.isArray(dependencies) ? dependencies : []);
     } catch {
       // best-effort
     }

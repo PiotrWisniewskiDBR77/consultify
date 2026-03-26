@@ -21,7 +21,15 @@ vi.mock('../../../src/services/api', () => ({
   },
 }));
 
+vi.mock('../../../src/services/api/v8', () => ({
+  V8PartnerApi: {
+    getReferralAnalytics: vi.fn(),
+    getEarningsSummary: vi.fn(),
+  },
+}));
+
 import { Api } from '../../../src/services/api';
+import { V8PartnerApi } from '../../../src/services/api/v8';
 import { PartnerPortalViewNew } from '../../../src/views/partner/PartnerPortalView';
 
 // Test wrapper with providers
@@ -34,6 +42,32 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 describe('PartnerPortalView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getReferralAnalytics).mockResolvedValue({
+      analytics: {
+        totalClicks: 42,
+        uniqueClicks: 30,
+        signups: 8,
+        trials: 5,
+        paidCustomers: 3,
+        conversionRate: 37.5,
+        clicksByDay: [],
+        clicksBySource: [],
+      },
+      days: 30,
+    });
+    vi.mocked(V8PartnerApi.getEarningsSummary).mockResolvedValue({
+      earnings: {
+        totalEarned: 1200,
+        totalPending: 200,
+        totalApproved: 700,
+        totalPaid: 500,
+        thisMonth: 120,
+        thisMonthCount: 2,
+        lastMonth: 90,
+        readyForPayout: 150,
+        currency: 'EUR',
+      },
+    });
   });
 
   afterEach(() => {
@@ -55,35 +89,48 @@ describe('PartnerPortalView', () => {
     });
 
     it('should fetch and display dashboard data', async () => {
-      const mockDashboardData = {
-        success: true,
-        data: {
-          stats: {
-            activeClients: 12,
-            activeProjects: 8,
-            certificationLevel: 'Gold',
-            monthlyRevenue: 24500,
-            revenueChange: 15,
-            totalLicenses: 150,
-            activeLicenses: 142,
-            availableLicenses: 8,
-          },
-          recentActivity: [
-            { type: 'client', text: 'New client: Test Corp', time: '2h ago' },
-            { type: 'project', text: 'Project completed', time: '1d ago' },
-          ],
-          certificationProgress: {
-            completed: 2,
-            total: 4,
-            courses: [
-              { name: 'Foundations', status: 'completed', progress: 100 },
-              { name: 'Advanced', status: 'in-progress', progress: 50 },
-            ],
-          },
-        },
-      };
+      vi.mocked(Api.get).mockImplementation(async (url: string) => {
+        if (url === '/api/partners/connection') {
+          return {
+            success: true,
+            data: { data: { connected: true, organization: { name: 'Partner Org' } } },
+          } as any;
+        }
 
-      vi.mocked(Api.get).mockResolvedValue({ data: mockDashboardData });
+        if (url === '/api/partners/dashboard') {
+          return {
+            success: true,
+            data: {
+              data: {
+                stats: {
+                  activeClients: 12,
+                  activeProjects: 8,
+                  certificationLevel: 'Gold',
+                  monthlyRevenue: 24500,
+                  revenueChange: 15,
+                  totalLicenses: 150,
+                  activeLicenses: 142,
+                  availableLicenses: 8,
+                },
+                recentActivity: [
+                  { type: 'client', text: 'New client: Test Corp', time: '2h ago' },
+                  { type: 'project', text: 'Project completed', time: '1d ago' },
+                ],
+                certificationProgress: {
+                  completed: 2,
+                  total: 4,
+                  courses: [
+                    { name: 'Foundations', status: 'completed', progress: 100 },
+                    { name: 'Advanced', status: 'in-progress', progress: 50 },
+                  ],
+                },
+              },
+            },
+          } as any;
+        }
+
+        throw new Error(`Unexpected GET ${url}`);
+      });
 
       render(
         <TestWrapper>
@@ -93,8 +140,53 @@ describe('PartnerPortalView', () => {
 
       // Wait for data to load
       await waitFor(() => {
+        expect(Api.get).toHaveBeenCalledWith('/api/partners/connection');
         expect(Api.get).toHaveBeenCalledWith('/api/partners/dashboard');
       });
+    });
+
+    it('renders governed V8 runtime summary on the default dashboard', async () => {
+      vi.mocked(Api.get).mockImplementation(async (url: string) => {
+        if (url === '/api/partners/connection') {
+          return {
+            success: true,
+            data: { data: { connected: true, organization: { name: 'Partner Org' } } },
+          } as any;
+        }
+
+        if (url === '/api/partners/dashboard') {
+          return {
+            success: true,
+            data: {
+              data: {
+                stats: { activeClients: 12, activeProjects: 8, certificationLevel: 'Gold' },
+                recentActivity: [],
+                certificationProgress: { completed: 0, total: 4, courses: [] },
+              },
+            },
+          } as any;
+        }
+
+        throw new Error(`Unexpected GET ${url}`);
+      });
+
+      render(
+        <TestWrapper>
+          <PartnerPortalViewNew />
+        </TestWrapper>
+      );
+
+      await waitFor(() => {
+        expect(Api.get).toHaveBeenCalledWith('/api/partners/dashboard');
+        expect(V8PartnerApi.getReferralAnalytics).toHaveBeenCalled();
+        expect(V8PartnerApi.getEarningsSummary).toHaveBeenCalled();
+      });
+
+      expect(screen.getByText('V8 Runtime Summary')).toBeInTheDocument();
+      expect(screen.getByText('Referral clicks')).toBeInTheDocument();
+      expect(screen.getByText('Ready for payout')).toBeInTheDocument();
+      expect(screen.getByText('30 unique')).toBeInTheDocument();
+      expect(screen.getByText('200 pending')).toBeInTheDocument();
     });
 
     it('should handle dashboard API error', async () => {

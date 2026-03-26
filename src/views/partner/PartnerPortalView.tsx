@@ -93,6 +93,7 @@ interface DashboardData {
 const DashboardSection: React.FC = () => {
   const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [v8RuntimeSummary, setV8RuntimeSummary] = useState<V8PartnerRuntimeSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -151,9 +152,19 @@ const DashboardSection: React.FC = () => {
     }
   }, []);
 
+  const fetchV8RuntimeSummary = useCallback(async () => {
+    try {
+      const summary = await loadPartnerV8RuntimeSummary();
+      setV8RuntimeSummary(summary);
+    } catch {
+      setV8RuntimeSummary(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboard();
-  }, [fetchDashboard]);
+    void fetchV8RuntimeSummary();
+  }, [fetchDashboard, fetchV8RuntimeSummary]);
 
   const quickActions = [
     { label: 'Add New Client', icon: Plus, action: 'add-client' },
@@ -238,6 +249,8 @@ const DashboardSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {v8RuntimeSummary && <PartnerV8RuntimeSummaryStrip summary={v8RuntimeSummary} />}
+
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -434,6 +447,80 @@ interface V8PartnerRuntimeSummary {
   earnings: V8PartnerEarningsSummary;
 }
 
+async function loadPartnerV8RuntimeSummary(): Promise<V8PartnerRuntimeSummary> {
+  const [analyticsResponse, earningsResponse] = await Promise.all([
+    V8PartnerApi.getReferralAnalytics(),
+    V8PartnerApi.getEarningsSummary(),
+  ]);
+
+  return {
+    analytics: analyticsResponse.analytics,
+    earnings: earningsResponse.earnings,
+  };
+}
+
+const PartnerV8RuntimeSummaryStrip: React.FC<{ summary: V8PartnerRuntimeSummary }> = ({
+  summary,
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-violet-500" />
+            {t('partner.metrics.v8RuntimeTitle', 'V8 Runtime Summary')}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t(
+              'partner.metrics.v8RuntimeSubtitle',
+              'Live partner-authenticated governed reads from the V8 namespace.'
+            )}
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            label: t('partner.metrics.v8ReferralClicks', 'Referral clicks'),
+            value: String(summary.analytics.totalClicks ?? 0),
+            detail: `${summary.analytics.uniqueClicks ?? 0} unique`,
+          },
+          {
+            label: t('partner.metrics.v8PaidCustomers', 'Paid customers'),
+            value: String(summary.analytics.paidCustomers ?? 0),
+            detail: `${summary.analytics.signups ?? 0} signups`,
+          },
+          {
+            label: t('partner.metrics.v8ConversionRate', 'Conversion rate'),
+            value: `${summary.analytics.conversionRate ?? 0}%`,
+            detail: `${summary.analytics.trials ?? 0} trials`,
+          },
+          {
+            label: t('partner.metrics.v8ReadyForPayout', 'Ready for payout'),
+            value: `${summary.earnings.currency ?? 'EUR'} ${(summary.earnings.readyForPayout ?? 0).toLocaleString()}`,
+            detail: `${summary.earnings.totalPending ?? 0} pending`,
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+          >
+            <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {card.label}
+            </div>
+            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+              {card.value}
+            </div>
+            <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.detail}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const buildFallbackMetricsData = (
   referralAnalytics: V8PartnerReferralAnalytics,
   earningsSummary: V8PartnerEarningsSummary
@@ -527,14 +614,8 @@ const MetricsSection: React.FC = () => {
 
   const fetchV8RuntimeSummary = useCallback(async () => {
     try {
-      const [analyticsResponse, earningsResponse] = await Promise.all([
-        V8PartnerApi.getReferralAnalytics(),
-        V8PartnerApi.getEarningsSummary(),
-      ]);
-      setV8RuntimeSummary({
-        analytics: analyticsResponse.analytics,
-        earnings: earningsResponse.earnings,
-      });
+      const summary = await loadPartnerV8RuntimeSummary();
+      setV8RuntimeSummary(summary);
     } catch {
       setV8RuntimeSummary(null);
     }
@@ -618,63 +699,7 @@ const MetricsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {v8RuntimeSummary && (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-violet-500" />
-                {t('partner.metrics.v8RuntimeTitle', 'V8 Runtime Summary')}
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                {t(
-                  'partner.metrics.v8RuntimeSubtitle',
-                  'Live partner-authenticated governed reads from the V8 namespace.'
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                label: t('partner.metrics.v8ReferralClicks', 'Referral clicks'),
-                value: String(v8RuntimeSummary.analytics.totalClicks ?? 0),
-                detail: `${v8RuntimeSummary.analytics.uniqueClicks ?? 0} unique`,
-              },
-              {
-                label: t('partner.metrics.v8PaidCustomers', 'Paid customers'),
-                value: String(v8RuntimeSummary.analytics.paidCustomers ?? 0),
-                detail: `${v8RuntimeSummary.analytics.signups ?? 0} signups`,
-              },
-              {
-                label: t('partner.metrics.v8ConversionRate', 'Conversion rate'),
-                value: `${v8RuntimeSummary.analytics.conversionRate ?? 0}%`,
-                detail: `${v8RuntimeSummary.analytics.trials ?? 0} trials`,
-              },
-              {
-                label: t('partner.metrics.v8ReadyForPayout', 'Ready for payout'),
-                value: `${v8RuntimeSummary.earnings.currency ?? 'EUR'} ${(
-                  v8RuntimeSummary.earnings.readyForPayout ?? 0
-                ).toLocaleString()}`,
-                detail: `${v8RuntimeSummary.earnings.totalPending ?? 0} pending`,
-              },
-            ].map((card) => (
-              <div
-                key={card.label}
-                className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
-              >
-                <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {card.label}
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                  {card.value}
-                </div>
-                <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{card.detail}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {v8RuntimeSummary && <PartnerV8RuntimeSummaryStrip summary={v8RuntimeSummary} />}
 
       <div className="flex items-center justify-between">
         <div>

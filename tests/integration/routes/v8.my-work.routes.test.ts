@@ -12,6 +12,7 @@ const mockRecordInboxMaterialization = vi.fn();
 const mockGetInboxMaterializationStats = vi.fn();
 const mockSetCalendarPhase = vi.fn();
 const mockGetCalendarPhases = vi.fn();
+const mockRunInboxAiAssist = vi.fn();
 
 vi.mock('../../../server/src/services/v8/myWorkRoofService.js', () => ({
   setCanonicalObjectState: (...args: unknown[]) => mockSetCanonicalObjectState(...args),
@@ -23,6 +24,13 @@ vi.mock('../../../server/src/services/v8/myWorkRoofService.js', () => ({
   getInboxMaterializationStats: (...args: unknown[]) => mockGetInboxMaterializationStats(...args),
   setCalendarPhase: (...args: unknown[]) => mockSetCalendarPhase(...args),
   getCalendarPhases: (...args: unknown[]) => mockGetCalendarPhases(...args),
+}));
+
+vi.mock('../../../server/src/services/inboxAiAssistService.js', () => ({
+  InboxAiAssistItemSchema: {
+    safeParse: (value: unknown) => ({ success: true, data: value }),
+  },
+  runInboxAiAssist: (...args: unknown[]) => mockRunInboxAiAssist(...args),
 }));
 
 import myWorkRoutes from '../../../server/src/routes/v8/my-work.routes.js';
@@ -88,6 +96,12 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
       blockedBy: null,
     });
     mockGetCalendarPhases.mockResolvedValue([]);
+    mockRunInboxAiAssist.mockResolvedValue({
+      brief: 'Triage this today.',
+      bullets: ['Confirm owner', 'Assess deadline'],
+      recommendedAction: 'accept_today',
+      recommendedReason: 'Actionable and time-sensitive',
+    });
   });
 
   it('sets and reads canonical object state with org injected from v8 context', async () => {
@@ -262,12 +276,12 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
     expect(mockGetInboxMaterializationStats).toHaveBeenCalledWith(USER_ID, ORG);
     expect(mockGetCalendarPhases).toHaveBeenCalledWith(ORG);
 
-    expect(res.body.data.overallStatus).toBe('partially_coherent');
+    expect(res.body.data.overallStatus).toBe('coherent');
     expect(res.body.data.surfaceMode).toBe('home_v2_aggregated_with_outputs_bridge');
     expect(res.body.data.contracts.homeViewUsesAggregatedContract).toBe(true);
     expect(res.body.data.counts).toEqual({
-      backed_by_real_service: 2,
-      partial_stitched: 6,
+      backed_by_real_service: 8,
+      partial_stitched: 0,
       placeholder_non_canonical: 0,
     });
     expect(res.body.data.homeBlocks).toHaveLength(8);
@@ -327,5 +341,37 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
         }),
       ]),
     );
+  });
+
+  it('serves inbox ai assist through the v8 envelope', async () => {
+    const res = await request(createApp()).post('/api/v8/my-work/inbox/ai-assist').send({
+      language: 'en',
+      item: {
+        title: 'Client escalation',
+        description: 'Need follow-up today',
+        type: 'escalation',
+        section: 'blocked_escalations',
+        urgency: 'high',
+        receivedAt: '2026-03-25T10:00:00.000Z',
+        reason: 'Escalated due to SLA risk',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockRunInboxAiAssist).toHaveBeenCalledWith({
+      organizationId: ORG,
+      language: 'en',
+      item: {
+        title: 'Client escalation',
+        description: 'Need follow-up today',
+        type: 'escalation',
+        section: 'blocked_escalations',
+        urgency: 'high',
+        receivedAt: '2026-03-25T10:00:00.000Z',
+        reason: 'Escalated due to SLA risk',
+      },
+    });
+    expect(res.body.data.result.recommendedAction).toBe('accept_today');
+    expect(res.body.meta.contract).toBe('my_work_inbox_ai_assist_v1');
   });
 });

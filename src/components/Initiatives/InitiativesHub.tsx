@@ -16,7 +16,7 @@ import {
   RefreshCw,
   Shield,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -24,7 +24,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
-import { V8PlanningApi, type V8PlanningDecisionChain } from '@/services/api/v8/planning';
+import {
+  V8PlanningApi,
+  type V8PlanningDecisionChain,
+  type V8PlanningInitiativeSnapshot,
+} from '@/services/api/v8/planning';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
@@ -160,6 +164,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
   );
+  const [v8InitiativeSnapshot, setV8InitiativeSnapshot] =
+    useState<V8PlanningInitiativeSnapshot | null>(null);
+  const [v8SnapshotInitiativeId, setV8SnapshotInitiativeId] = useState<string | null>(null);
+  const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
+  const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -180,6 +189,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Preview pane state (V3 Table+Preview)
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
+  const activeDocument = useMemo(
+    () => (activeDocumentId ? openDocuments.find((document) => document.id === activeDocumentId) : null),
+    [activeDocumentId, openDocuments]
+  );
+  const activeInitiativeDocumentId = useMemo(() => {
+    if (!activeDocumentId) return null;
+    // When a deep link opens an initiative document, the active document can render
+    // before the session-backed openDocuments list catches up. Treat that transient
+    // state as an initiative document so the governed snapshot still hydrates.
+    if (activeDocument?.type === 'decision' || activeDocument?.type === 'task') return null;
+    return activeDocumentId;
+  }, [activeDocument, activeDocumentId]);
+  const v8SnapshotTargetId = useMemo(() => {
+    if (activeDocumentId) {
+      return activeInitiativeDocumentId;
+    }
+    return previewInitiativeId;
+  }, [activeDocumentId, activeInitiativeDocumentId, previewInitiativeId]);
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
@@ -219,6 +246,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     };
   }, []);
 
+  useEffect(() => {
+    const requestId = ++v8SnapshotRequestRef.current;
+
+    if (!v8SnapshotTargetId?.trim() || isShowcaseInitiativeId(v8SnapshotTargetId)) {
+      setV8InitiativeSnapshot(null);
+      setV8SnapshotInitiativeId(v8SnapshotTargetId ?? null);
+      setIsV8InitiativeSnapshotLoading(false);
+      return;
+    }
+
+    setV8SnapshotInitiativeId(v8SnapshotTargetId);
+    setV8InitiativeSnapshot(null);
+    setIsV8InitiativeSnapshotLoading(true);
+
+    void V8PlanningApi.getInitiativeSnapshot(v8SnapshotTargetId)
+      .then((snapshot) => {
+        if (v8SnapshotRequestRef.current !== requestId) return;
+        setV8InitiativeSnapshot(snapshot);
+      })
+      .catch(() => {
+        if (v8SnapshotRequestRef.current !== requestId) return;
+        setV8InitiativeSnapshot(null);
+      })
+      .finally(() => {
+        if (v8SnapshotRequestRef.current !== requestId) return;
+        setIsV8InitiativeSnapshotLoading(false);
+      });
+  }, [v8SnapshotTargetId]);
+
   // ============================================
   // DATA FETCHING - Real API
   // ============================================
@@ -247,10 +303,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
         if (searchQuery) params.append('search', searchQuery);
 
-        // Try portfolio endpoint first, fallback to regular initiatives
+        // Prefer governed V8 portfolio continuity, then fallback to legacy portfolio reads.
         let response: { initiatives?: PortfolioInitiative[] } = { initiatives: [] };
         try {
-          response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
+          response = await V8PlanningApi.getPortfolio({
+            projectId: currentProjectId || undefined,
+            statuses: scope === 'active' && !activeStatusFilter ? ACTIVE_STATUSES : undefined,
+            status: activeStatusFilter || undefined,
+            priority: filters.priority?.length ? filters.priority : undefined,
+            search: searchQuery || undefined,
+          });
         } catch {
           // Fallback to regular initiatives endpoint
           const fallbackResponse = await Api.getInitiatives(currentProjectId || undefined);
@@ -266,14 +328,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
         setInitiatives(allowed);
 
-        // Also fetch all initiatives (including archived/cancelled) for duplicate detection
-        // Try to fetch all initiatives without status filter
+        // Also fetch all initiatives (including archived/cancelled) for duplicate detection.
         try {
-          const allParams = new URLSearchParams();
-          if (currentProjectId) allParams.append('projectId', currentProjectId);
-          if (searchQuery) allParams.append('search', searchQuery);
-          // Try portfolio endpoint without status filter to get all initiatives
-          const allResponse = await Api.get(`/initiatives/portfolio?${allParams.toString()}`);
+          const allResponse = await V8PlanningApi.getPortfolio({
+            projectId: currentProjectId || undefined,
+            search: searchQuery || undefined,
+          });
           setAllInitiatives(allResponse.initiatives || response.initiatives || []);
         } catch {
           // Fallback: use current initiatives
@@ -398,10 +458,43 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // HANDLERS
   // ============================================
 
+  const requestV8InitiativeSnapshot = useCallback((initiativeId: string | null | undefined) => {
+    const trimmedId = String(initiativeId || '').trim();
+    if (!trimmedId || isShowcaseInitiativeId(trimmedId)) {
+      return;
+    }
+    const requestId = ++v8SnapshotRequestRef.current;
+    setV8SnapshotInitiativeId(trimmedId);
+    setV8InitiativeSnapshot(null);
+    setIsV8InitiativeSnapshotLoading(true);
+
+    void V8PlanningApi.getInitiativeSnapshot(trimmedId)
+      .then((snapshot) => {
+        if (v8SnapshotRequestRef.current !== requestId) return;
+        setV8InitiativeSnapshot(snapshot);
+      })
+      .catch(() => {
+        if (v8SnapshotRequestRef.current !== requestId) return;
+        setV8InitiativeSnapshot(null);
+      })
+      .finally(() => {
+        if (v8SnapshotRequestRef.current !== requestId) return;
+        setIsV8InitiativeSnapshotLoading(false);
+      });
+  }, []);
+
+  const handlePreviewSelection = useCallback(
+    (initiativeId: string | null) => {
+      setPreviewInitiativeId(initiativeId);
+      requestV8InitiativeSnapshot(initiativeId);
+    },
+    [requestV8InitiativeSnapshot]
+  );
+
   // Single click row/card → selection + preview (V3 Table+Preview)
   const handleInitiativeClick = useCallback((initiative: PortfolioInitiative) => {
-    setPreviewInitiativeId(initiative.id);
-  }, []);
+    handlePreviewSelection(initiative.id);
+  }, [handlePreviewSelection]);
 
   // Open initiative as dynamic document (DynamicTabs)
   const handleOpenFullScreen = useCallback(
@@ -423,8 +516,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       }
       // Set as active document - this renders InitiativeDocumentView in ModuleHub
       setActiveDocumentId(initiative.id);
+      requestV8InitiativeSnapshot(initiative.id);
     },
-    [openDocuments, setActiveDocumentId, setOpenDocuments]
+    [openDocuments, requestV8InitiativeSnapshot, setActiveDocumentId, setOpenDocuments]
   );
 
   // Open decision as dynamic tab (called from InitiativeDocumentView → DecisionsSection)
@@ -507,10 +601,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     const run = async () => {
       try {
-        // Prefer list row if already loaded; fallback to GET by id
+        // Prefer list row if already loaded; fallback to governed V8 detail read.
         const fromList = initiatives.find((i) => i.id === openId);
         const fromShowcase = initiativesDemoData.initiatives.find((i) => i.id === openId);
-        const response = fromList || fromShowcase ? null : await Api.get(`/initiatives/${openId}`);
+        let response: any = null;
+        if (!fromList && !fromShowcase) {
+          try {
+            response = await V8PlanningApi.getInitiative(openId);
+          } catch {
+            response = await Api.get(`/initiatives/${openId}`);
+          }
+        }
         const initiative = (fromList || fromShowcase || response?.initiative || response) as any;
 
         if (!initiative?.id) {
@@ -947,7 +1048,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <TableWithPreviewLayout<PreviewItem>
               selectedId={previewInitiativeId}
               selectedItem={selectedItem}
-              onSelect={setPreviewInitiativeId}
+              onSelect={handlePreviewSelection}
               itemIds={itemIds}
               getItemById={(id) => {
                 const x = searchedInitiatives.find((i) => i.id === id);
@@ -1122,6 +1223,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       sum + chain.decisions.filter((decision) => decision.status === 'pending').length,
     0
   );
+  const hasActiveV8Snapshot =
+    !!v8InitiativeSnapshot && !!v8SnapshotTargetId && v8SnapshotInitiativeId === v8SnapshotTargetId;
+  const v8SnapshotPendingDecisionEntries = hasActiveV8Snapshot
+    ? v8InitiativeSnapshot.decisionChains.reduce(
+        (sum, chain) =>
+          sum + chain.decisions.filter((decision) => decision.status === 'pending').length,
+        0
+      )
+    : 0;
+  const v8SnapshotGapCount =
+    hasActiveV8Snapshot && !v8InitiativeSnapshot.wbsCompleteness.complete
+      ? v8InitiativeSnapshot.wbsCompleteness.gaps.length
+      : 0;
 
   const commandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -1182,6 +1296,58 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {totalPendingDecisionEntries}
             </span>
           </div>
+        </>
+      )}
+      {v8SnapshotTargetId && (isV8InitiativeSnapshotLoading || hasActiveV8Snapshot) && (
+        <>
+          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-violet-200/80 dark:border-violet-400/20 text-violet-700 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-500/10">
+            <Shield className="w-3 h-3" />
+            <span>{t('initiatives.v8.snapshot', 'V8 snapshot')}</span>
+            <span className="rounded-full bg-white/80 dark:bg-violet-950/50 px-2 py-0.5 text-[10px] text-violet-700 dark:text-violet-100">
+              {isV8InitiativeSnapshotLoading
+                ? t('initiatives.v8.loading', 'loading')
+                : t('initiatives.v8.ready', 'ready')}
+            </span>
+          </div>
+          {hasActiveV8Snapshot && (
+            <>
+              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    v8InitiativeSnapshot.wbsCompleteness.complete ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}
+                />
+                <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  {v8InitiativeSnapshot.wbsCompleteness.complete
+                    ? t('initiatives.v8.complete', 'complete')
+                    : t('initiatives.v8.gaps', { count: v8SnapshotGapCount, defaultValue: '{{count}} gaps' })}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                <span>{t('initiatives.v8.criticalPath', 'V8 critical path')}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  {v8InitiativeSnapshot.criticalPath.length}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+                <span className="w-2 h-2 rounded-full bg-fuchsia-400" />
+                <span>{t('initiatives.v8.dependencies', 'V8 dependencies')}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  {v8InitiativeSnapshot.crossInitiativeDependencies.length}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>{t('initiatives.v8.snapshotDecisions', 'V8 initiative decisions')}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  {v8SnapshotPendingDecisionEntries}
+                </span>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
@@ -1369,9 +1535,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   fetchData(true);
                   const createdId = created?.id || created?.initiative?.id;
                   if (createdId) {
-                    // Best-effort: fetch full row for drawer
+                    // Best-effort: fetch full row for drawer via governed V8 read first.
                     try {
-                      const full = await Api.get(`/initiatives/${createdId}`);
+                      let full: any;
+                      try {
+                        full = await V8PlanningApi.getInitiative(createdId);
+                      } catch {
+                        full = await Api.get(`/initiatives/${createdId}`);
+                      }
                       handleInitiativeClick(full as any);
                     } catch {
                       // ignore

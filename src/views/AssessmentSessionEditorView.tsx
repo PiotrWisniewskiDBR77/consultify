@@ -30,6 +30,7 @@ import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
+import { V8AssessmentApi } from '@/services/api/v8';
 import { CMMI_PRACTICE_AREAS } from '@/services/cmmiStructure';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { SIRI_DIMENSIONS } from '@/services/siriStructure';
@@ -101,6 +102,41 @@ function parseIntOr(n: string | null, fallback: number): number {
 
 function getAssessmentNavStorageKey(assessmentId: string): string {
   return `assessment.nav.${assessmentId}`;
+}
+
+function shouldFallbackToLegacyAssessmentLane(error: unknown): boolean {
+  const status = Number((error as { status?: number })?.status);
+  return [400, 403, 404, 405, 501].includes(status);
+}
+
+function mapV8AssessmentToSession(detail: any): AssessmentSession {
+  return {
+    id: String(detail?.id || ''),
+    name: String(detail?.name || ''),
+    status: String(detail?.backendStatus || detail?.status || 'DRAFT'),
+    type: detail?.assessment_type || detail?.assessmentType,
+    completion_percent: Number(detail?.completion_percent ?? detail?.completionPercent ?? 0),
+    confidence_avg: Number(detail?.confidence_avg ?? detail?.confidenceAvg ?? 0),
+    created_at: detail?.created_at || detail?.createdAt,
+    created_by: detail?.created_by || detail?.createdBy,
+    updated_at: detail?.updated_at || detail?.updatedAt,
+    updated_by: detail?.updated_by || detail?.updatedBy,
+    updated_by_name: detail?.updated_by_name || detail?.updatedByName,
+    updated_by_email: detail?.updated_by_email || detail?.updatedByEmail,
+    answers: detail?.answers || {},
+    contextSnapshot: detail?.contextSnapshot || {},
+    navigation: detail?.navigation || null,
+  };
+}
+
+function mapV8AssessmentUserState(state: any): DRDPosition | null {
+  const nav = state?.navigation;
+  if (!nav?.axisId || !nav?.areaId || !nav?.level) return null;
+  return {
+    axisId: Number(nav.axisId),
+    areaId: String(nav.areaId),
+    level: Number(nav.level),
+  };
 }
 
 function calcDrdCompletionPercent(drd: any): number {
@@ -348,6 +384,103 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [isInitiativesWizardOpen, setIsInitiativesWizardOpen] = useState(false);
   const [isReportTemplatePickerOpen, setIsReportTemplatePickerOpen] = useState(false);
 
+  const loadCoreAssessmentSession = useCallback(async (): Promise<AssessmentSession> => {
+    if (!assessmentId) throw new Error('Missing assessment id');
+
+    try {
+      const data = await V8AssessmentApi.getAssessment(assessmentId);
+      return mapV8AssessmentToSession(data.assessment);
+    } catch (error) {
+      if (!shouldFallbackToLegacyAssessmentLane(error)) {
+        throw error;
+      }
+
+      return (await Api.get(`/assessment-workflow-v2/${assessmentId}`)) as AssessmentSession;
+    }
+  }, [assessmentId]);
+
+  const updateCoreAssessmentSession = useCallback(
+    async (payload: Record<string, any>): Promise<{ updatedAt?: string }> => {
+      if (!assessmentId) throw new Error('Missing assessment id');
+
+      try {
+        return await V8AssessmentApi.updateAssessment(assessmentId, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyAssessmentLane(error)) {
+          throw error;
+        }
+
+        return (await Api.put(`/assessment-workflow-v2/${assessmentId}`, payload)) as {
+          updatedAt?: string;
+        };
+      }
+    },
+    [assessmentId]
+  );
+
+  const loadAssessmentUserState = useCallback(async (): Promise<DRDPosition | null> => {
+    if (!assessmentId) return null;
+    try {
+      const state = await V8AssessmentApi.getUserState(assessmentId);
+      return mapV8AssessmentUserState(state);
+    } catch (error) {
+      if (!shouldFallbackToLegacyAssessmentLane(error)) {
+        throw error;
+      }
+      const state = await Api.get(`/assessment-workflow-v2/${assessmentId}/user-state`);
+      return mapV8AssessmentUserState(state);
+    }
+  }, [assessmentId]);
+
+  const persistAssessmentUserState = useCallback(
+    async (navigation: DRDPosition): Promise<void> => {
+      if (!assessmentId) return;
+      try {
+        await V8AssessmentApi.updateUserState(assessmentId, { navigation });
+      } catch (error) {
+        if (!shouldFallbackToLegacyAssessmentLane(error)) {
+          throw error;
+        }
+        await Api.put(`/assessment-workflow-v2/${assessmentId}/user-state`, { navigation });
+      }
+    },
+    [assessmentId]
+  );
+
+  const loadAssessmentAssignments = useCallback(async (): Promise<any[]> => {
+    if (!assessmentId) return [];
+    try {
+      const response = await V8AssessmentApi.listAssignments(assessmentId);
+      return Array.isArray(response?.assignments) ? response.assignments : [];
+    } catch (error) {
+      if (!shouldFallbackToLegacyAssessmentLane(error)) {
+        throw error;
+      }
+      const response = await Api.get(`/assessment-workflow-v2/${assessmentId}/assignments`);
+      return Array.isArray(response?.assignments) ? response.assignments : [];
+    }
+  }, [assessmentId]);
+
+  const upsertAssessmentAssignment = useCallback(
+    async (payload: {
+      areaId: string;
+      assignedUserId: string;
+      dueAt?: string | null;
+      status?: string;
+    }) => {
+      if (!assessmentId) return;
+      try {
+        await V8AssessmentApi.upsertAssignment(assessmentId, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyAssessmentLane(error)) {
+          throw error;
+        }
+        await Api.put(`/assessment-workflow-v2/${assessmentId}/assignments`, payload);
+      }
+    },
+    [assessmentId]
+  );
+
   // Permissions
   const {
     role: userRole,
@@ -391,7 +524,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = (await Api.get(`/assessment-workflow-v2/${assessmentId}`)) as AssessmentSession;
+      const data = await loadCoreAssessmentSession();
       setAssessment(data);
       setAnswers(data?.answers || {});
       setNameDraft(data?.name || '');
@@ -400,23 +533,12 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
       // Enterprise: load per-user state + assignments (DRD only)
       if (framework === 'drd') {
-        Api.get(`/assessment-workflow-v2/${assessmentId}/user-state`)
-          .then((s: any) => {
-            const nav = s?.navigation;
-            if (nav?.axisId && nav?.areaId && nav?.level) {
-              setUserNavFromServer({
-                axisId: Number(nav.axisId),
-                areaId: String(nav.areaId),
-                level: Number(nav.level),
-              });
-            } else {
-              setUserNavFromServer(null);
-            }
-          })
+        loadAssessmentUserState()
+          .then((nav) => setUserNavFromServer(nav))
           .catch(() => setUserNavFromServer(null));
 
-        Api.get(`/assessment-workflow-v2/${assessmentId}/assignments`)
-          .then((a: any) => setAssignments(Array.isArray(a?.assignments) ? a.assignments : []))
+        loadAssessmentAssignments()
+          .then((nextAssignments) => setAssignments(nextAssignments))
           .catch(() => setAssignments([]));
       }
     } catch (e: any) {
@@ -424,7 +546,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [assessmentId, framework]);
+  }, [
+    assessmentId,
+    framework,
+    loadAssessmentAssignments,
+    loadAssessmentUserState,
+    loadCoreAssessmentSession,
+  ]);
 
   useEffect(() => {
     load();
@@ -578,7 +706,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
               level: currentLevel,
             };
           }
-          const resp = (await Api.put(`/assessment-workflow-v2/${assessmentId}`, payload)) as
+          const resp = (await updateCoreAssessmentSession(payload)) as
             | { updatedAt?: string }
             | undefined;
           if (!isMountedRef.current) return;
@@ -598,8 +726,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
           // Enterprise: persist per-user resume without affecting shared position semantics
           if (framework === 'drd') {
-            Api.put(`/assessment-workflow-v2/${assessmentId}/user-state`, {
-              navigation: { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel },
+            persistAssessmentUserState({
+              axisId: currentAxisId,
+              areaId: currentAreaId,
+              level: currentLevel,
             }).catch(() => {});
           }
         } catch (e: any) {
@@ -620,6 +750,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
       currentAreaId,
       currentLevel,
       currentUser?.id,
+      persistAssessmentUserState,
+      updateCoreAssessmentSession,
     ]
   );
 
@@ -639,7 +771,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       if (framework === 'drd') {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
       }
-      const resp = (await Api.put(`/assessment-workflow-v2/${assessmentId}`, payload)) as
+      const resp = (await updateCoreAssessmentSession(payload)) as
         | { updatedAt?: string }
         | undefined;
       const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
@@ -656,8 +788,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
           : prev
       );
       if (framework === 'drd') {
-        Api.put(`/assessment-workflow-v2/${assessmentId}/user-state`, {
-          navigation: { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel },
+        persistAssessmentUserState({
+          axisId: currentAxisId,
+          areaId: currentAreaId,
+          level: currentLevel,
         }).catch(() => {});
       }
       toast.success('Assessment saved successfully');
@@ -678,6 +812,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
     currentAreaId,
     currentLevel,
     currentUser?.id,
+    persistAssessmentUserState,
+    updateCoreAssessmentSession,
   ]);
 
   // Exit handlers
@@ -709,7 +845,14 @@ export const AssessmentSessionEditorView: React.FC = () => {
       if (framework === 'drd') {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
       }
-      await Api.put(`/assessment-workflow-v2/${assessmentId}`, payload);
+      await updateCoreAssessmentSession(payload);
+      if (framework === 'drd') {
+        persistAssessmentUserState({
+          axisId: currentAxisId,
+          areaId: currentAreaId,
+          level: currentLevel,
+        }).catch(() => {});
+      }
       toast.success('Assessment saved');
       navigate('/assessment/overview');
     } catch (e: any) {
@@ -725,6 +868,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
     currentAreaId,
     currentLevel,
     navigate,
+    persistAssessmentUserState,
+    updateCoreAssessmentSession,
   ]);
 
   // Workspace context for AI chat awareness (assessment data snapshot)
@@ -968,17 +1113,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
     async (areaId: string) => {
       if (!assessmentId || !currentUser?.id) return;
       try {
-        await Api.put(`/assessment-workflow-v2/${assessmentId}/assignments`, {
+        await upsertAssessmentAssignment({
           areaId,
           assignedUserId: currentUser.id,
         });
-        const refreshed = await Api.get(`/assessment-workflow-v2/${assessmentId}/assignments`);
-        setAssignments(Array.isArray(refreshed?.assignments) ? refreshed.assignments : []);
+        const refreshed = await loadAssessmentAssignments();
+        setAssignments(refreshed);
       } catch {
         // ignore
       }
     },
-    [assessmentId, currentUser?.id]
+    [assessmentId, currentUser?.id, loadAssessmentAssignments, upsertAssessmentAssignment]
   );
 
   // Resolve "last edited by" display name (enterprise-friendly)
@@ -1379,7 +1524,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                         const nextName = String(nameDraft || '').trim();
                         if (!nextName || !assessmentId) return;
                         try {
-                          await Api.put(`/assessment-workflow-v2/${assessmentId}`, {
+                          await updateCoreAssessmentSession({
                             name: nextName,
                           });
                           setAssessment((prev) =>
@@ -1792,7 +1937,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                         chat: lastMessages,
                       };
 
-                      await Api.put(`/assessment-workflow-v2/${assessmentId}`, {
+                      await updateCoreAssessmentSession({
                         contextSnapshot: nextContextSnapshot,
                       });
 

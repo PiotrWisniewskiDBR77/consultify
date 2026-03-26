@@ -2,6 +2,8 @@
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import { trackFunnelEvent } from './funnelAnalytics';
 import { tokenService } from './tokenService';
+import { V8AssessmentApi } from './api/v8/assessment';
+import { V8MyWorkApi } from './api/v8/my-work';
 import i18n from '@/i18n';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
@@ -4921,19 +4923,65 @@ export const Api = {
     description?: string;
     projectId?: string | null;
   }): Promise<{ id: string; status: string }> => {
-    const res = await fetch(`${API_URL}/assessment-workflow-v2`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    return handleResponse(res, 'Failed to create assessment session');
+    const shouldFallbackToLegacy = (error: any) => {
+      const status = Number(error?.status);
+      return [400, 403, 404, 405, 501].includes(status);
+    };
+
+    try {
+      const created = await V8AssessmentApi.createAssessment({
+        assessmentType: payload.assessmentType,
+        name: payload.name,
+        projectId: payload.projectId ?? null,
+      });
+
+      return {
+        id: created.id || created.assessment?.id,
+        status: created.assessment?.status || 'DRAFT',
+      };
+    } catch (error) {
+      if (!shouldFallbackToLegacy(error)) {
+        throw error;
+      }
+
+      const res = await fetch(`${API_URL}/assessment-workflow-v2`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res, 'Failed to create assessment session');
+    }
   },
 
   getAssessmentSession: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to fetch assessment session');
+    const shouldFallbackToLegacy = (error: any) => {
+      const status = Number(error?.status);
+      return [400, 403, 404, 405, 501].includes(status);
+    };
+
+    try {
+      const data = await V8AssessmentApi.getAssessment(assessmentId);
+      const assessment = data.assessment || {};
+      return {
+        ...assessment,
+        type: assessment.assessment_type || assessment.assessmentType,
+        completion_percent: Number(
+          assessment.completion_percent ?? assessment.completionPercent ?? 0
+        ),
+        confidence_avg: Number(assessment.confidence_avg ?? assessment.confidenceAvg ?? 0),
+        created_at: assessment.created_at || assessment.createdAt,
+        updated_at: assessment.updated_at || assessment.updatedAt,
+      };
+    } catch (error) {
+      if (!shouldFallbackToLegacy(error)) {
+        throw error;
+      }
+
+      const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to fetch assessment session');
+    }
   },
 
   updateAssessmentSession: async (
@@ -4947,12 +4995,25 @@ export const Api = {
       currentSectionId?: string | null;
     }
   ): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    return handleResponse(res, 'Failed to update assessment session');
+    const shouldFallbackToLegacy = (error: any) => {
+      const status = Number(error?.status);
+      return [400, 403, 404, 405, 501].includes(status);
+    };
+
+    try {
+      return await V8AssessmentApi.updateAssessment(assessmentId, payload);
+    } catch (error) {
+      if (!shouldFallbackToLegacy(error)) {
+        throw error;
+      }
+
+      const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res, 'Failed to update assessment session');
+    }
   },
 
   /**
@@ -4975,26 +5036,65 @@ export const Api = {
     // Backwards-compat: some call sites may still look for `assessments`
     assessments?: any[];
   }> => {
-    const query = new URLSearchParams();
-    if (params?.projectId) query.set('projectId', params.projectId);
-    if (params?.status) query.set('status', params.status);
-    if (params?.assessmentType) query.set('assessmentType', params.assessmentType);
-    if (params?.limit) query.set('limit', String(params.limit));
-    if (params?.offset) query.set('offset', String(params.offset));
-
-    const url = `${API_URL}/assessment-workflow-v2${query.toString() ? `?${query.toString()}` : ''}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    const data = await handleResponse(res, 'Failed to list assessments');
-
-    const rows = (data?.items || data?.assessments || data || []) as any[];
-    const out = {
-      items: Array.isArray(rows) ? rows : [],
-      total: Number(data?.total ?? (Array.isArray(rows) ? rows.length : 0)) || 0,
-      limit: Number(params?.limit ?? data?.limit ?? 100) || 100,
-      offset: Number(params?.offset ?? data?.offset ?? 0) || 0,
-      assessments: Array.isArray(data?.assessments) ? data.assessments : undefined,
+    const isTransientListError = (error: any) => {
+      const status = Number(error?.status);
+      if ([429, 502, 503, 504].includes(status)) return true;
+      const msg = String(error?.message || '').toLowerCase();
+      return (
+        msg.includes('failed to fetch') ||
+        msg.includes('networkerror') ||
+        msg.includes('load failed')
+      );
     };
-    return out;
+
+    const shouldFallbackToLegacy = (error: any) => {
+      const status = Number(error?.status);
+      return [400, 403, 404, 405, 501].includes(status);
+    };
+
+    try {
+      let lastV8Error: any = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          return await V8AssessmentApi.listAssessments(params);
+        } catch (error: any) {
+          lastV8Error = error;
+          if (attempt < 3 && isTransientListError(error)) {
+            await sleep(250 * attempt);
+            continue;
+          }
+          break;
+        }
+      }
+
+      if (!shouldFallbackToLegacy(lastV8Error)) {
+        throw lastV8Error;
+      }
+    } catch (error) {
+      if (!shouldFallbackToLegacy(error)) {
+        throw error;
+      }
+
+      const query = new URLSearchParams();
+      if (params?.projectId) query.set('projectId', params.projectId);
+      if (params?.status) query.set('status', params.status);
+      if (params?.assessmentType) query.set('assessmentType', params.assessmentType);
+      if (params?.limit) query.set('limit', String(params.limit));
+      if (params?.offset) query.set('offset', String(params.offset));
+
+      const url = `${API_URL}/assessment-workflow-v2${query.toString() ? `?${query.toString()}` : ''}`;
+      const res = await fetch(url, { headers: getHeaders() });
+      const data = await handleResponse(res, 'Failed to list assessments');
+
+      const rows = (data?.items || data?.assessments || data || []) as any[];
+      return {
+        items: Array.isArray(rows) ? rows : [],
+        total: Number(data?.total ?? (Array.isArray(rows) ? rows.length : 0)) || 0,
+        limit: Number(params?.limit ?? data?.limit ?? 100) || 100,
+        offset: Number(params?.offset ?? data?.offset ?? 0) || 0,
+        assessments: Array.isArray(data?.assessments) ? data.assessments : undefined,
+      };
+    }
   },
 
   deleteAssessment: async (assessmentId: string): Promise<any> => {
@@ -8241,6 +8341,69 @@ export const Api = {
   },
   disconnectCalendar: async (calendarId: string): Promise<void> => {
     return;
+  },
+  shouldFallbackToLegacyMyWorkCalendar: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
+  },
+  getMyWorkCalendarUnified: async (filters?: {
+    start?: string;
+    end?: string;
+    sources?: string[];
+    projectId?: string;
+  }): Promise<{ events: any[] }> => {
+    try {
+      return await V8MyWorkApi.getCalendarUnified(filters);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
+        throw error;
+      }
+      const params = new URLSearchParams();
+      if (filters?.start) params.set('start', filters.start);
+      if (filters?.end) params.set('end', filters.end);
+      if (filters?.sources?.length) params.set('sources', filters.sources.join(','));
+      if (filters?.projectId) params.set('projectId', filters.projectId);
+      const qs = params.toString();
+      const res = await fetch(`${API_URL}/my-work/calendar/unified${qs ? `?${qs}` : ''}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to load unified calendar');
+    }
+  },
+  getMyWorkCalendarConflicts: async (date: string): Promise<any> => {
+    try {
+      return await V8MyWorkApi.getCalendarConflicts(date);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/calendar/conflicts?date=${encodeURIComponent(date)}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to check conflicts');
+    }
+  },
+  createMyWorkCalendarEvent: async (body: {
+    title: string;
+    start: string;
+    end?: string;
+    allDay?: boolean;
+    source?: 'task' | 'initiative' | 'decision';
+    description?: string;
+  }): Promise<any> => {
+    try {
+      return await V8MyWorkApi.createCalendarEvent(body);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/calendar/events`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      });
+      return handleResponse(res, 'Failed to create calendar event');
+    }
   },
   // Assessment Reports
   getAssessmentReports: async (projectId?: string) => {
@@ -11946,6 +12109,10 @@ export const Api = {
   // ==========================================
   // MY WORK (V2): NOTEBOOK (T011)
   // ==========================================
+  shouldFallbackToLegacyMyWorkNotebook: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
+  },
   getNotebookPages: async (filters?: {
     projectId?: string | null;
     status?: string;
@@ -11955,28 +12122,42 @@ export const Api = {
     limit?: number;
     offset?: number;
   }): Promise<any[]> => {
-    let url = `${API_URL}/my-work/notebook/pages`;
-    if (filters) {
-      const params = new URLSearchParams();
-      if (filters.projectId) params.append('projectId', filters.projectId);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.pinned !== undefined) params.append('pinned', filters.pinned ? '1' : '0');
-      if (filters.sort) params.append('sort', filters.sort);
-      if (filters.q) params.append('q', filters.q);
-      if (filters.limit) params.append('limit', String(filters.limit));
-      if (filters.offset) params.append('offset', String(filters.offset));
-      if (params.toString()) url += `?${params.toString()}`;
+    try {
+      return await V8MyWorkApi.getNotebookPages(filters);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      let url = `${API_URL}/my-work/notebook/pages`;
+      if (filters) {
+        const params = new URLSearchParams();
+        if (filters.projectId) params.append('projectId', filters.projectId);
+        if (filters.status) params.append('status', filters.status);
+        if (filters.pinned !== undefined) params.append('pinned', filters.pinned ? '1' : '0');
+        if (filters.sort) params.append('sort', filters.sort);
+        if (filters.q) params.append('q', filters.q);
+        if (filters.limit) params.append('limit', String(filters.limit));
+        if (filters.offset) params.append('offset', String(filters.offset));
+        if (params.toString()) url += `?${params.toString()}`;
+      }
+      const res = await fetch(url, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch notebook pages');
+      return res.json();
     }
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch notebook pages');
-    return res.json();
   },
 
   getNotebookPage: async (id: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to fetch notebook page');
+    try {
+      return await V8MyWorkApi.getNotebookPage(id);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to fetch notebook page');
+    }
   },
 
   /** V4-NOTE-01: Upload PDF/XLSX/TXT → extract text → create notebook page */
@@ -12004,46 +12185,81 @@ export const Api = {
     status?: string;
     template?: string;
   }): Promise<any> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(page),
-    });
-    return handleResponse(res, 'Failed to create notebook page');
+    try {
+      return await V8MyWorkApi.createNotebookPage(page);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(page),
+      });
+      return handleResponse(res, 'Failed to create notebook page');
+    }
   },
 
   updateNotebookPage: async (id: string, updates: Record<string, any>): Promise<any> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(updates),
-    });
-    return handleResponse(res, 'Failed to update notebook page');
+    try {
+      return await V8MyWorkApi.updateNotebookPage(id, updates);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(updates),
+      });
+      return handleResponse(res, 'Failed to update notebook page');
+    }
   },
 
   deleteNotebookPage: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    await handleResponse(res, 'Failed to delete notebook page');
+    try {
+      await V8MyWorkApi.deleteNotebookPage(id);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      await handleResponse(res, 'Failed to delete notebook page');
+    }
   },
 
   pinNotebookPage: async (id: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/pin`, {
-      method: 'PUT',
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to toggle pin');
+    try {
+      return await V8MyWorkApi.pinNotebookPage(id);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/pin`, {
+        method: 'PUT',
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to toggle pin');
+    }
   },
 
   setNotebookPageStatus: async (id: string, status: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/status`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({ status }),
-    });
-    return handleResponse(res, 'Failed to update page status');
+    try {
+      return await V8MyWorkApi.setNotebookPageStatus(id, status);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/status`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      return handleResponse(res, 'Failed to update page status');
+    }
   },
 
   convertNotebookPage: async (

@@ -12,6 +12,7 @@ import { EpicHeroSection } from '../components/Landing/EpicHeroSection';
 import { ForWhomSection } from '../components/Landing/ForWhomSection';
 import { HowItWorksSection } from '../components/Landing/HowItWorksSection';
 import { InfoSections } from '../components/Landing/InfoSections';
+import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
 import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
 import { TrustStrip } from '../components/Landing/TrustStrip';
 import { WhereItHappensSection } from '../components/Landing/WhereItHappensSection';
@@ -116,6 +117,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <ForWhomSection />
 
         <DocumentationSection />
+
+        <KnowledgePreviewSection />
 
         <InfoSections />
       </main>

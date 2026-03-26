@@ -72,7 +72,7 @@ interface AssessmentReportRow {
 }
 
 // Status mapping
-const normalizeStatus = (status: string | null | undefined): SimplifiedStatus => {
+export const normalizeStatus = (status: string | null | undefined): SimplifiedStatus => {
   const s = (status || 'DRAFT').toUpperCase();
   if (s === 'IN_REVIEW' || s === 'AWAITING_APPROVAL') return 'REVIEW';
   if (s === 'APPROVED') return 'APPROVED';
@@ -301,7 +301,7 @@ const logAudit = async (
 };
 
 // Schema initialization
-const ensureAssessmentSchema = async (): Promise<void> => {
+export const ensureAssessmentSchema = async (): Promise<void> => {
   try {
     const tryAddColumn = async (
       table: string,

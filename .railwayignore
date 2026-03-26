@@ -36,6 +36,12 @@
 server/exports/
 server/logs/
 server/backups/
+server/*.db
+server/*.db-journal
+server/*.db-wal
+server/*.db-shm
+server/*.sqlite
+server/*.sqlite-*
 
 # Build outputs
 /dist/

@@ -916,11 +916,36 @@ const PreviewPane: React.FC<{
     recommendedReason: string;
   } | null>(null);
 
+  const requestInboxAiAssist = useCallback(
+    async (payload: {
+      language: string;
+      item: {
+        title: string;
+        description?: string;
+        type: InboxItemType;
+        section: InboxSection;
+        urgency: InboxUrgency;
+        receivedAt: string;
+        dueDate?: string;
+        sla?: InboxItem['sla'];
+        reason: string;
+        linkedTaskId?: string;
+        linkedDecisionId?: string;
+        source?: { type: 'user' | 'system' | 'ai'; userName?: string };
+      };
+    }) => {
+      return V8MyWorkApi.aiAssistInboxItem(payload)
+        .then((res) => res.result)
+        .catch(() => Api.post('/my-work/inbox/ai-assist', payload).then((res: any) => res?.result));
+    },
+    []
+  );
+
   const runAi = useCallback(async () => {
     setAiLoading(true);
     setAiError(null);
     try {
-      const res = (await Api.post('/my-work/inbox/ai-assist', {
+      const r = await requestInboxAiAssist({
         language: isPolish ? 'pl' : 'en',
         item: {
           title: item.title,
@@ -938,8 +963,7 @@ const PreviewPane: React.FC<{
             ? { type: item.source.type, userName: item.source.userName }
             : undefined,
         },
-      })) as any;
-      const r = res?.result;
+      });
       if (!r?.brief || !r?.recommendedAction) throw new Error('Invalid AI response');
       setAiResult({
         brief: String(r.brief),
@@ -954,7 +978,7 @@ const PreviewPane: React.FC<{
     } finally {
       setAiLoading(false);
     }
-  }, [isPolish, item]);
+  }, [isPolish, item, requestInboxAiAssist]);
 
   useEffect(() => {
     setAiResult(null);
@@ -1005,7 +1029,7 @@ const PreviewPane: React.FC<{
               ? `Podsumuj poniższy element w 1-2 zdaniach. Co to jest i co z tym zrobić?\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
               : `Summarize the following item in 1-2 sentences. What is it and what to do?\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`;
 
-        const res = (await Api.post('/my-work/inbox/ai-assist', {
+        const r = await requestInboxAiAssist({
           language: isPolish ? 'pl' : 'en',
           item: {
             title: item.title,
@@ -1023,8 +1047,7 @@ const PreviewPane: React.FC<{
               ? { type: item.source.type, userName: item.source.userName }
               : undefined,
           },
-        })) as any;
-        const r = res?.result;
+        });
         if (r?.brief) {
           const full = [
             r.brief,
@@ -1040,7 +1063,7 @@ const PreviewPane: React.FC<{
         setDetailsLoading(false);
       }
     },
-    [isPolish, item, descriptionTrimmed, detailsOverride, aiResult]
+    [isPolish, item, descriptionTrimmed, detailsOverride, aiResult, requestInboxAiAssist]
   );
 
   const metaPills: MetaPill[] = [
@@ -1775,14 +1798,23 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     ) => {
       if (action === 'snooze') return;
       try {
-        await Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
+        await V8MyWorkApi.triageCanonicalInboxItem(item.id, {
           action,
           itemKey: item._key,
           ...(opts?.fromAISuggestion && {
             fromAISuggestion: true,
             confidence: opts.confidence ?? item.suggestedConfidence,
           }),
-        });
+        }).catch(() =>
+          Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
+            action,
+            itemKey: item._key,
+            ...(opts?.fromAISuggestion && {
+              fromAISuggestion: true,
+              confidence: opts.confidence ?? item.suggestedConfidence,
+            }),
+          })
+        );
         // Optimistic: remove from current view (item moves to different status tab)
         setData((prev) => {
           if (!prev) return prev;
@@ -1856,11 +1888,17 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       setSnoozedKeys((prev) => new Set([...prev, item._key]));
       setSnoozeOpenForId(null);
       try {
-        await Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
+        await V8MyWorkApi.triageCanonicalInboxItem(item.id, {
           action: 'archive',
           itemKey: item._key,
           params: { snooze: preset },
-        });
+        }).catch(() =>
+          Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
+            action: 'archive',
+            itemKey: item._key,
+            params: { snooze: preset },
+          })
+        );
         setData((prev) => {
           if (!prev) return prev;
           return { ...prev, items: prev.items.filter((x) => x._key !== item._key) };
@@ -1892,7 +1930,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             itemKey: item._key,
             confidence: item.suggestedConfidence ?? null,
           }));
-        await Api.post('/my-work/inbox/bulk-triage', { itemKeys, action, aiItems });
+        await V8MyWorkApi.bulkTriageCanonicalInbox({
+          items: selectedItems.map((item) => ({ itemId: item.id, itemKey: item._key })),
+          itemKeys,
+          action,
+          aiItems,
+        }).catch(() => Api.post('/my-work/inbox/bulk-triage', { itemKeys, action, aiItems }));
         const removedKeys = new Set(itemKeys);
         setData((prev) => {
           if (!prev) return prev;

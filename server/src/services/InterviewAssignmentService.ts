@@ -651,7 +651,11 @@ class InterviewAssignmentService {
     const db = await this.getDb();
     const params: any[] = [organizationId, userId, userId];
 
-    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR m.user_id = ?)`;
+    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR EXISTS (
+      SELECT 1
+      FROM interview_assignment_members m
+      WHERE m.assignment_id = a.id AND m.user_id = ?
+    ))`;
 
     if (options?.status) {
       where += ` AND a.status = ?`;
@@ -661,7 +665,7 @@ class InterviewAssignmentService {
     }
 
     const rows = await db.all<any>(
-      `SELECT DISTINCT
+      `SELECT
          a.*,
          t.name as template_name,
          t.description as template_description,
@@ -672,7 +676,6 @@ class InterviewAssignmentService {
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN interview_sessions s ON s.id = a.session_id
-       LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
        ${where}
        ORDER BY
          CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
