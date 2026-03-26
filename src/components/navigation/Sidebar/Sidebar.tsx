@@ -17,6 +17,10 @@ import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView, UserRole } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
+import {
+  isAdminOwnerOrSuperAdminRole,
+  isSuperAdminRole,
+} from '../../../utils/roleGuards';
 import { OnboardingChecklist } from '../../Onboarding/OnboardingChecklist';
 import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
@@ -151,11 +155,7 @@ export const Sidebar: React.FC = () => {
       const isLocked =
         item.requiresView &&
         !completedViews.includes(item.requiresView) &&
-        !(
-          currentUser?.role === UserRole.ADMIN ||
-          currentUser?.role === UserRole.OWNER ||
-          currentUser?.role === 'SUPERADMIN'
-        );
+        !isAdminOwnerOrSuperAdminRole(currentUser?.role);
 
       if (isLocked) {
         console.warn('[Sidebar] BLOCKED - Item is locked:', {
@@ -381,17 +381,13 @@ export const Sidebar: React.FC = () => {
           onLogout={logout}
           onNavigate={handleFooterNavigate}
           t={t as any}
-          showPartnerPortal={currentUser?.role !== 'SUPERADMIN'}
+          showPartnerPortal={!isSuperAdminRole(currentUser?.role)}
         >
-          {(currentUser?.role === UserRole.ADMIN ||
-            currentUser?.role === UserRole.OWNER ||
-            currentUser?.role === 'SUPERADMIN') &&
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
             renderNavItem(organizationMenuItem)}
-          {(currentUser?.role === UserRole.ADMIN ||
-            currentUser?.role === UserRole.OWNER ||
-            currentUser?.role === 'SUPERADMIN') &&
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
             renderNavItem(adminMenuItem)}
-          {currentUser?.role === 'SUPERADMIN' && renderNavItem(superAdminMenuItem)}
+          {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>
       </motion.div>

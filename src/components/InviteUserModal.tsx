@@ -2,6 +2,7 @@ import { AlertCircle, CreditCard, Loader2, Mail, Plus, UserPlus, X } from 'lucid
 import React, { useEffect, useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
+import { isAdminOrSuperAdminRole } from '../utils/roleGuards';
 
 interface InviteUserModalProps {
   onClose: () => void;
@@ -187,7 +188,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
     }
   };
 
-  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPERADMIN';
+  const isAdmin = isAdminOrSuperAdminRole(currentUser?.role);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

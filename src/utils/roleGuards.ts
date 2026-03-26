@@ -13,3 +13,13 @@ export function normalizeAppRole(role: string | null | undefined): string {
 export function isSuperAdminRole(role: string | null | undefined): boolean {
   return normalizeAppRole(role) === 'SUPERADMIN';
 }
+
+export function isAdminOrSuperAdminRole(role: string | null | undefined): boolean {
+  const normalized = normalizeAppRole(role);
+  return normalized === 'ADMIN' || normalized === 'SUPERADMIN';
+}
+
+export function isAdminOwnerOrSuperAdminRole(role: string | null | undefined): boolean {
+  const normalized = normalizeAppRole(role);
+  return normalized === 'ADMIN' || normalized === 'OWNER' || normalized === 'SUPERADMIN';
+}

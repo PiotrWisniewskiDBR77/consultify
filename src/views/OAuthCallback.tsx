@@ -3,7 +3,8 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAppStore } from '../store/useAppStore';
-import { AppView, UserRole } from '../types';
+import { AppView } from '../types';
+import { isSuperAdminRole } from '../utils/roleGuards';
 
 const OAuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -11,6 +12,8 @@ const OAuthCallback: React.FC = () => {
   const { setCurrentUser, setCurrentView } = useAppStore();
   const [status, setStatus] = React.useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = React.useState('');
+
+  const getPostAuthRoute = (role?: string) => (isSuperAdminRole(role) ? '/superadmin' : '/chat');
 
   useEffect(() => {
     const processCallback = async () => {
@@ -69,7 +72,7 @@ const OAuthCallback: React.FC = () => {
 
           setStatus('success');
           setTimeout(() => {
-            navigate('/chat');
+            navigate(getPostAuthRoute(authenticatedUser.role));
           }, 1000);
         } else {
           // If no user data, try to fetch from API
@@ -88,7 +91,7 @@ const OAuthCallback: React.FC = () => {
 
               setStatus('success');
               setTimeout(() => {
-                navigate('/chat');
+                navigate(getPostAuthRoute(authenticatedUser.role));
               }, 1000);
             } else {
               throw new Error('Failed to fetch user data');

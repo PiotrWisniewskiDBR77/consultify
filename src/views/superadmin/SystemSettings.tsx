@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { isSuperAdminRole } from '../../utils/roleGuards';
 import { SuperAdminStorageDetailModal } from './SuperAdminStorageDetailModal';
 
 type SettingsTab =
@@ -95,7 +96,7 @@ export const SystemSettings: React.FC = () => {
   const fetchAdmins = async () => {
     try {
       const users = await Api.getSuperAdminUsers();
-      setAdmins(users.filter((u) => u.role === 'SUPERADMIN' && u.status === 'active'));
+      setAdmins(users.filter((u) => isSuperAdminRole(u.role) && u.status === 'active'));
     } catch (_) {
       toast.error('Failed to load admins');
     }

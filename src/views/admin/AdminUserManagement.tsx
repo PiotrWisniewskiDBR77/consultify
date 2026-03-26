@@ -21,6 +21,7 @@ import { useUserCan } from '../../hooks/useUserCan';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { User, UserRole } from '../../types';
+import { isSuperAdminRole } from '../../utils/roleGuards';
 
 interface ExtendedUser extends User {
   isOwner?: boolean;
@@ -263,7 +264,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     // Light mode compatible - visible badges with backgrounds
     if (isOwner || role === 'OWNER')
       return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
-    if (role === 'SUPERADMIN')
+    if (isSuperAdminRole(role))
       return 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30';
     if (role === UserRole.ADMIN)
       return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30';

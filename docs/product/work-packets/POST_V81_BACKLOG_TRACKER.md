@@ -30,7 +30,7 @@ Status vocabulary:
 | lane | taxonomy | tranche | status | owner lane | next move |
 | --- | --- | --- | --- | --- | --- |
 | `Calendar` | `T0` | `Tranche 0` | `active` | `Agent B + Agent C` | verify final staging proof after submit-path hardening |
-| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | `blocked` | `Agent A + Agent C` | obtain valid superadmin session/route proof on staging |
+| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | `blocked` | `Agent A + Agent C` | retest staging after role-variant hardening across navigation and admin surfaces |
 | `Reports / Presentations` | `T1` | `Tranche 1` | `parked` | `Agent B` | map V8/legacy split-brain before promotion |
 | `Idea workspace` | `T1` | `Tranche 1` | `parked` | `Agent B + Agent C` | map runtime and collaboration split-brain |
 | `Execution / delivery control` | `T2` | `Tranche 2` | `parked` | `Agent A` | write charter before promotion |
@@ -68,6 +68,9 @@ Current status: `blocked`
 - [x] client methods for diagnostics/shadow reads added
 - [x] automated regression for diagnostics surface added
 - [x] frontend role guard hardened for `SUPERADMIN` / `SUPER_ADMIN`
+- [x] active sidebar and nav-item access normalized for role variants
+- [x] admin/support surfaces normalized for role variants
+- [x] OAuth callback redirect normalized for superadmin role variants
 - [ ] valid superadmin staging route/session obtained
 - [ ] bounded diagnostics surface proven live on staging
 - [ ] lane accepted and moved to `done`
@@ -89,3 +92,5 @@ Order:
 ## 5. Change Log
 
 - 2026-03-26: created execution tracker linked to the debt reduction program
+- 2026-03-26: marked `Calendar` submit hardening complete and expanded `Admin / Superadmin` role-variant hardening across navigation and support surfaces
+- 2026-03-26: added auth-callback redirect hardening and regression coverage for superadmin landing

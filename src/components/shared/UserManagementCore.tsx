@@ -17,6 +17,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 import { User, UserRole } from '../../types';
+import { isSuperAdminRole } from '../../utils/roleGuards';
 import { UserAssignmentsPanel } from '../Admin/UserAssignmentsPanel';
 
 export interface UserManagementCoreProps {
@@ -69,7 +70,7 @@ export const UserTableRow: React.FC<{
   mode,
 }) => {
   const getRoleBadgeColor = (role?: string) => {
-    if (role === 'SUPERADMIN') return 'bg-red-500/20 text-red-400';
+    if (isSuperAdminRole(role)) return 'bg-red-500/20 text-red-400';
     if (role === UserRole.ADMIN) return 'bg-purple-500/20 text-purple-400 border-purple-500/50';
     return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
   };
@@ -152,7 +153,7 @@ export const UserTableRow: React.FC<{
               Move
             </button>
           )}
-          {showImpersonate && onImpersonate && user.role !== 'SUPERADMIN' && (
+          {showImpersonate && onImpersonate && !isSuperAdminRole(user.role) && (
             <button
               onClick={() => onImpersonate(user.id)}
               className="p-2 hover:bg-purple-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-purple-400 text-xs font-medium"
@@ -161,7 +162,7 @@ export const UserTableRow: React.FC<{
               Impersonate
             </button>
           )}
-          {showBlock && onBlock && user.role !== 'SUPERADMIN' && (
+          {showBlock && onBlock && !isSuperAdminRole(user.role) && (
             <button
               onClick={() => onBlock(user.id, user.status || 'active')}
               className={`p-2 rounded-lg text-xs font-medium ${

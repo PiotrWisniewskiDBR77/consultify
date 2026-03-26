@@ -10,6 +10,7 @@ import { CheckCircle2, ChevronRight, Lock } from 'lucide-react';
 import React from 'react';
 
 import { AppView, UserRole } from '../../../types';
+import { isAdminOwnerOrSuperAdminRole } from '../../../utils/roleGuards';
 import { MenuItem } from './types';
 
 interface NavItemProps {
@@ -51,11 +52,7 @@ export const NavItem: React.FC<NavItemProps> = ({
   const isLocked =
     item.requiresView &&
     !completedViews.includes(item.requiresView) &&
-    !(
-      currentUserRole === UserRole.ADMIN ||
-      currentUserRole === UserRole.OWNER ||
-      currentUserRole === 'SUPERADMIN'
-    );
+    !isAdminOwnerOrSuperAdminRole(currentUserRole);
 
   const isChildActive = (i: MenuItem): boolean => {
     if (i.viewId === currentView) return true;

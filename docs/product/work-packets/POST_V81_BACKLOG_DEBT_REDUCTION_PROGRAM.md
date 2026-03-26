@@ -285,6 +285,13 @@ Current result:
 - `Organization / Admin / Superadmin` is narrowed to one remaining superadmin access/routing blocker on staging,
 - the tranche is therefore operationally exhausted for this pass but not yet acceptance-complete.
 
+Post-pass hardening now completed:
+
+- `Calendar` submit path is hardened to native form submission to reduce viewport and automation sensitivity,
+- `Organization / Admin / Superadmin` client-side role handling is normalized across route guards, active sidebar navigation, and supporting admin surfaces for `SUPERADMIN` / `SUPER_ADMIN`,
+- `Organization / Admin / Superadmin` auth callback redirect is normalized so superadmin sessions are no longer forced through `/chat` after login,
+- acceptance still remains pending on fresh staging proof.
+
 ### Explicitly out of scope
 
 - `Chat` / `AI core` expansion
@@ -319,3 +326,5 @@ Current result:
 
 - 2026-03-26: created the first post-closure debt reduction program and activated `Post-closure exception closure pack v1`
 - 2026-03-26: executed the first 3-agent finisher pass and recorded the live stopping state in `evidence/101-v8-tranche0-three-agent-finisher-proof.md`; `Calendar` and `Admin/Superadmin` remain active but are now narrowed to one blocker each
+- 2026-03-26: linked the operational tracker `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md` and recorded follow-up hardening for `Calendar` submit flow and `Admin / Superadmin` role normalization
+- 2026-03-26: recorded auth-callback redirect hardening for superadmin landing continuity

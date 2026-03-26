@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { Api } from '../../services/api';
 import { AIProviderType, User } from '../../types';
 import { LLMProviderConfig } from '../../types/domain/ai';
+import { isAdminOrSuperAdminRole } from '../../utils/roleGuards';
 
 export interface AIConfigCoreProps {
   mode: 'user' | 'org-admin' | 'platform';
@@ -245,7 +246,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
   const [orgConfig, setOrgConfig] = useState<OrgConfig | null>(null);
   const [isSaved, setIsSaved] = useState(false);
 
-  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPERADMIN';
+  const isAdmin = isAdminOrSuperAdminRole(currentUser?.role);
 
   useEffect(() => {
     // Fetch public models for preference selection
