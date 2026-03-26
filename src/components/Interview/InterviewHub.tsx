@@ -193,6 +193,10 @@ interface InterviewSession {
   startedAt: string;
   completedAt?: string;
   lastActivityAt?: string;
+  templateName?: string;
+  templateCategory?: string;
+  respondentId?: string;
+  respondentName?: string;
 }
 
 interface InterviewInsight {
@@ -558,6 +562,38 @@ export const InterviewHub: React.FC = () => {
     []
   );
 
+  const loadAcceptedSessions = useCallback(async (): Promise<InterviewSession[]> => {
+    const sessionsRes = await V8InterviewApi.getAcceptedSessions()
+      .then((res) => res.sessions)
+      .catch(() => Api.get('/interview/sessions/accepted'))
+      .catch(() => []);
+    return Array.isArray(sessionsRes) ? (sessionsRes as InterviewSession[]) : [];
+  }, []);
+
+  const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
+    const assignmentsRes = await V8InterviewApi.getMyAssignments()
+      .then((res) => res.assignments)
+      .catch(() => Api.get('/interview/assignments/my'))
+      .catch(() => []);
+    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+  }, []);
+
+  const loadManagedAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
+    const assignmentsRes = await V8InterviewApi.getManagedAssignments()
+      .then((res) => res.assignments)
+      .catch(() => Api.get('/interview/assignments/managed'))
+      .catch(() => []);
+    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+  }, []);
+
+  const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
+    const assignmentsRes = await V8InterviewApi.getOverdueAssignments()
+      .then((res) => res.assignments)
+      .catch(() => Api.get('/interview/assignments/overdue'))
+      .catch(() => []);
+    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+  }, []);
+
   // V3-A02: Dynamic documents state with sessionStorage persistence
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
     try {
@@ -649,7 +685,7 @@ export const InterviewHub: React.FC = () => {
         const [sessionsRes, insightsRes, templatesRes] = await Promise.all([
           // Sessions tab is "accepted sources" in the manager workflow.
           // Non-managers won't see the tab, so empty here is fine.
-          Api.get('/interview/sessions/accepted').catch(() => []),
+          loadAcceptedSessions(),
           Api.get('/interview/insights').catch(() => []),
           Api.get('/interview/templates').catch(() => []),
         ]);
@@ -677,7 +713,7 @@ export const InterviewHub: React.FC = () => {
     };
 
     loadData();
-  }, [normalizeTemplateRecord]);
+  }, [loadAcceptedSessions, normalizeTemplateRecord]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
@@ -699,18 +735,15 @@ export const InterviewHub: React.FC = () => {
       setAssignmentsLoading(true);
       try {
         // Always load my assignments
-        const myRes = await Api.get('/interview/assignments/my').catch(() => []);
-        const apiMyAssignments = Array.isArray(myRes) ? myRes : [];
+        const apiMyAssignments = await loadMyAssignments();
         setMyAssignments(apiMyAssignments);
 
         // Load managed/overdue only if user has permission
         if (permissionsCanViewManaged || isUsingDemoData) {
-          const [managedRes, overdueRes] = await Promise.all([
-            Api.get('/interview/assignments/managed').catch(() => []),
-            Api.get('/interview/assignments/overdue').catch(() => []),
+          const [apiManagedAssignments, apiOverdueAssignments] = await Promise.all([
+            loadManagedAssignments(),
+            loadOverdueAssignments(),
           ]);
-          const apiManagedAssignments = Array.isArray(managedRes) ? managedRes : [];
-          const apiOverdueAssignments = Array.isArray(overdueRes) ? overdueRes : [];
           setManagedAssignments(apiManagedAssignments);
           setOverdueAssignments(apiOverdueAssignments);
         }
@@ -725,7 +758,14 @@ export const InterviewHub: React.FC = () => {
     };
 
     loadAssignments();
-  }, [permissionsLoading, permissionsCanViewManaged, isUsingDemoData]);
+  }, [
+    isUsingDemoData,
+    loadManagedAssignments,
+    loadMyAssignments,
+    loadOverdueAssignments,
+    permissionsCanViewManaged,
+    permissionsLoading,
+  ]);
 
   // Open session from URL
   useEffect(() => {
@@ -1233,11 +1273,11 @@ export const InterviewHub: React.FC = () => {
     (sessionId: string) => {
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
       // Refresh sessions list
-      Api.get('/interview/sessions/accepted').then((res) => {
-        setSessions(Array.isArray(res) ? res : []);
+      loadAcceptedSessions().then((res) => {
+        setSessions(res);
       });
     },
-    [isPolish]
+    [isPolish, loadAcceptedSessions]
   );
 
   const handleSessionChange = useCallback((session: InterviewSession) => {
@@ -1370,20 +1410,22 @@ export const InterviewHub: React.FC = () => {
       if (!selectedAssignment) return;
 
       try {
-        await Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason });
+        await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
+          Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
+        );
         toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
         setShowSendBackModal(false);
         setSelectedAssignment(null);
 
         // Refresh all assignments (both my and managed)
         const [myRes, managedRes, overdueRes] = await Promise.all([
-          Api.get('/interview/assignments/my').catch(() => []),
-          Api.get('/interview/assignments/managed').catch(() => []),
-          Api.get('/interview/assignments/overdue').catch(() => []),
+          loadMyAssignments(),
+          loadManagedAssignments(),
+          loadOverdueAssignments(),
         ]);
-        setMyAssignments(Array.isArray(myRes) ? myRes : []);
-        setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-        setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+        setMyAssignments(myRes);
+        setManagedAssignments(managedRes);
+        setOverdueAssignments(overdueRes);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to send back:', error);
         safeToastError(
@@ -1393,25 +1435,27 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [selectedAssignment, isPolish]
+    [isPolish, loadManagedAssignments, loadMyAssignments, loadOverdueAssignments, selectedAssignment]
   );
 
   const handleApproveAssignment = useCallback(
     async (assignment: InterviewAssignment) => {
       try {
-        await Api.post(`/interview/assignments/${assignment.id}/approve`, {});
+        await V8InterviewApi.approveAssignment(assignment.id).catch(() =>
+          Api.post(`/interview/assignments/${assignment.id}/approve`, {})
+        );
         toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
 
         // Refresh assignments + accepted sessions (post-approval)
         const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
-          Api.get('/interview/assignments/my').catch(() => []),
-          Api.get('/interview/assignments/managed').catch(() => []),
-          Api.get('/interview/assignments/overdue').catch(() => []),
-          Api.get('/interview/sessions/accepted').catch(() => []),
+          loadMyAssignments(),
+          loadManagedAssignments(),
+          loadOverdueAssignments(),
+          loadAcceptedSessions(),
         ]);
-        setMyAssignments(Array.isArray(myRes) ? myRes : []);
-        setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-        setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+        setMyAssignments(myRes);
+        setManagedAssignments(managedRes);
+        setOverdueAssignments(overdueRes);
         setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to approve assignment:', error);
@@ -1422,7 +1466,13 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [isPolish]
+    [
+      isPolish,
+      loadAcceptedSessions,
+      loadManagedAssignments,
+      loadMyAssignments,
+      loadOverdueAssignments,
+    ]
   );
 
   // Export intentionally not available in this view (KANON v3).
@@ -3462,9 +3512,13 @@ export const InterviewHub: React.FC = () => {
           return;
         }
         toast.loading(isPolish ? 'Rozpoczynanie wywiadu...' : 'Starting interview...');
-        const result = (await Api.post(`/interview/assignments/${assignment.id}/start`, {
+        const result = (await V8InterviewApi.startAssignment(assignment.id, {
           projectId,
-        })) as any;
+        }).catch(() =>
+          Api.post(`/interview/assignments/${assignment.id}/start`, {
+            projectId,
+          })
+        )) as any;
         toast.dismiss();
 
         // Open the session - backend returns { assignmentId, session }
@@ -3487,12 +3541,10 @@ export const InterviewHub: React.FC = () => {
 
         // Refresh assignments
         const [myRes, managedRes] = await Promise.all([
-          Api.get('/interview/assignments/my').catch(() => []),
-          canViewManaged
-            ? Api.get('/interview/assignments/managed').catch(() => [])
-            : Promise.resolve([]),
+          loadMyAssignments(),
+          canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
         ]);
-        setMyAssignments(Array.isArray(myRes) ? myRes : []);
+        setMyAssignments(myRes);
         if (canViewManaged) setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
       } catch (error: any) {
         toast.dismiss();
@@ -3504,7 +3556,7 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [canViewManaged, ensureProjectId, handleOpenDocument, isPolish]
+    [canViewManaged, ensureProjectId, handleOpenDocument, isPolish, loadManagedAssignments, loadMyAssignments]
   );
 
   const openInterviewAssignmentFull = useCallback(
@@ -3768,9 +3820,13 @@ Return ONLY the answer text (no markdown fences).`;
           return;
         }
         toast.loading(isPolish ? 'Rozpoczynanie wywiadu...' : 'Starting interview...');
-        const result = (await Api.post(`/interview/assignments/${assignment.id}/start`, {
+        const result = (await V8InterviewApi.startAssignment(assignment.id, {
           projectId,
-        })) as any;
+        }).catch(() =>
+          Api.post(`/interview/assignments/${assignment.id}/start`, {
+            projectId,
+          })
+        )) as any;
         toast.dismiss();
 
         // Open the session - backend returns { assignmentId, session }
@@ -3793,12 +3849,10 @@ Return ONLY the answer text (no markdown fences).`;
 
         // Refresh all assignments
         const [myRes, managedRes] = await Promise.all([
-          Api.get('/interview/assignments/my').catch(() => []),
-          canViewManaged
-            ? Api.get('/interview/assignments/managed').catch(() => [])
-            : Promise.resolve([]),
+          loadMyAssignments(),
+          canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
         ]);
-        setMyAssignments(Array.isArray(myRes) ? myRes : []);
+        setMyAssignments(myRes);
         if (canViewManaged) {
           setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
         }
@@ -3815,7 +3869,9 @@ Return ONLY the answer text (no markdown fences).`;
 
     const handleSendReminder = async (assignment: InterviewAssignment) => {
       try {
-        await Api.post(`/interview/assignments/${assignment.id}/remind`, {});
+        await V8InterviewApi.remindAssignment(assignment.id).catch(() =>
+          Api.post(`/interview/assignments/${assignment.id}/remind`, {})
+        );
         toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
       } catch (error: any) {
         console.error('[InterviewHub] Failed to send reminder:', error);
@@ -5957,15 +6013,11 @@ Return ONLY the answer text (no markdown fences).`;
           // Refresh assignments after successful creation
           try {
             const [myRes, managedRes, overdueRes] = await Promise.all([
-              Api.get('/interview/assignments/my').catch(() => []),
-              canViewManaged
-                ? Api.get('/interview/assignments/managed').catch(() => [])
-                : Promise.resolve([]),
-              canViewOverdue
-                ? Api.get('/interview/assignments/overdue').catch(() => [])
-                : Promise.resolve([]),
+              loadMyAssignments(),
+              canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
+              canViewOverdue ? loadOverdueAssignments() : Promise.resolve([]),
             ]);
-            setMyAssignments(Array.isArray(myRes) ? myRes : []);
+            setMyAssignments(myRes);
             setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
             setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
             setSelectedTemplateForAssign(null);
@@ -6025,7 +6077,9 @@ Return ONLY the answer text (no markdown fences).`;
                 <button
                   onClick={async () => {
                     try {
-                      await Api.post(`/interview/assignments/${selectedAssignment.id}/remind`, {});
+                      await V8InterviewApi.remindAssignment(selectedAssignment.id).catch(() =>
+                        Api.post(`/interview/assignments/${selectedAssignment.id}/remind`, {})
+                      );
                       toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
                       setShowReminderModal(false);
                       setSelectedAssignment(null);
