@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -299,6 +302,25 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
     expect(res.body.data?.count).toBeGreaterThan(0);
     expect(res.body.data?.connectors?.[0]?.category).toBe('project_management');
+  });
+
+  it('POST /api/v8/sync/connectors/:connectorId/connect creates a governed pending integration', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/connectors/jira/connect').send({});
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.integration?.connectorId).toBe('jira');
+    expect(res.body.data?.integration?.status).toBe('pending');
+    expect(res.body.data?.onboardingStatus).toBe('pending_external_auth_or_configuration');
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO integrations'),
+      expect.arrayContaining([ORG, 'jira', 'Jira', 'project_management', 'pending', 'oauth2']),
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO integration_audit_log'),
+      expect.arrayContaining([ORG, expect.any(String), 'connect_initiated', UID, UID]),
+    );
   });
 
   it('GET /api/v8/sync/health returns governed hub health summary', async () => {

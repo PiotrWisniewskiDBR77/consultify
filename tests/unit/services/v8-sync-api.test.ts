@@ -89,6 +89,28 @@ describe('V8SyncApi', () => {
     expect(data.connectors[0].id).toBe('jira');
   });
 
+  it('posts connect initiation to the governed V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      integration: {
+        id: 'int-1',
+        connectorId: 'jira',
+        name: 'Jira',
+        category: 'project_management',
+        status: 'pending',
+        capabilities: ['issues'],
+        authType: 'oauth2',
+        scopes: ['read:issues'],
+      },
+      onboardingStatus: 'pending_external_auth_or_configuration',
+    });
+
+    const data = await V8SyncApi.connectIntegration('jira');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/connectors/jira/connect', {});
+    expect(data.integration.status).toBe('pending');
+    expect(data.onboardingStatus).toBe('pending_external_auth_or_configuration');
+  });
+
   it('requests governed hub health summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       summary: { total: 2, healthy: 1, degraded: 1, unhealthy: 0 },

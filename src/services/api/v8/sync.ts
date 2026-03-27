@@ -129,6 +129,17 @@ export interface V8SyncCatalogConnector {
   comingSoon: boolean;
 }
 
+export interface V8SyncInitiatedIntegration {
+  id: string;
+  connectorId: string;
+  name: string;
+  category: string;
+  status: 'pending';
+  capabilities: string[];
+  authType: string;
+  scopes: string[];
+}
+
 export interface V8SyncHealthSummary {
   total: number;
   healthy: number;
@@ -176,6 +187,14 @@ export const V8SyncApi = {
       '/sync/connectors',
       params?.category ? { category: params.category } : undefined,
     ),
+  connectIntegration: (
+    connectorId: string,
+    payload?: { config?: Record<string, unknown>; displayName?: string },
+  ) =>
+    v8Post<{
+      integration: V8SyncInitiatedIntegration;
+      onboardingStatus: 'pending_external_auth_or_configuration';
+    }>(`/sync/connectors/${encodeURIComponent(connectorId)}/connect`, payload ?? {}),
   getHubHealth: () => v8Get<{ summary: V8SyncHealthSummary }>('/sync/health'),
   getErrors: (params?: { integrationId?: string }) =>
     v8Get<{ errors: V8SyncErrorItem[]; count: number }>(

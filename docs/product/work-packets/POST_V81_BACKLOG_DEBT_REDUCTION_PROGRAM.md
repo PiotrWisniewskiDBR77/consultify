@@ -7,7 +7,7 @@
 > Last updated: 2026-03-27
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: held - broader `Partner Program` parity accepted in bounded form; next queued broader lanes remain visible but unpromoted
+> Current state: active - broader `Sync` completion promoted after broader `Partner Program` parity acceptance
 
 ---
 
@@ -257,71 +257,48 @@ The following do **not** qualify as done:
 
 Current state:
 
-- broader `Partner Program` parity is currently promoted
-- broader `Finance` parity is accepted in bounded form and moved to `done`
+- broader `Sync` completion is currently promoted
+- broader `Partner Program` parity is accepted in bounded form and moved to `done`
 
 ### Slice name
 
-broader `Partner Program` parity
+broader `Sync` completion
 
 ### Scope
 
-The accepted bounded `Partner Program` lane already closed payout request, campaign create/delete, and visible profile settings continuity, but active payout-history, statement-history, broader onboarding continuity, and client-access breadth still remained at promotion time.
+The accepted bounded `Sync / connectors / interoperability` lane already closed entry authority, observability, recovery, and lifecycle-control continuity, but active connect initiation, honest onboarding state, and broader OAuth/provider completion breadth still remained at promotion time.
 
-This promoted broader lane starts with the smallest active real residual: payout-history continuity on the live partner portal.
+This promoted broader lane starts with the smallest active real residual: connect initiation continuity on the live admin/operator sync hub.
 
 ### Three-agent assignment
 
-- `Manager`: maintain this program, tranche rules, and broader-partner packet discipline
-- `Agent A`: close active broader-partner seams one honest packet at a time
-- `Agent B`: keep broader finance done and other non-partner lanes parked while this lane is active
+- `Manager`: maintain this program, tranche rules, and broader-sync packet discipline
+- `Agent A`: close active broader-sync seams one honest packet at a time
+- `Agent B`: keep broader partner done and other non-sync lanes parked while this lane is active
 
 ### Exit criteria
 
-- the active broader partner lane keeps bounded packet discipline,
+- the active broader sync lane keeps bounded packet discipline,
 - accepted bounded evidence remains the authority for previously closed lanes,
-- and the earlier accepted bounded `Partner Program` cut does not get silently reopened as a whole-partner rewrite.
+- and the earlier accepted bounded sync lane does not get silently reopened as a whole-sync rewrite.
 
 ### Current lane status
 
-The active lane is documented in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`.
+The active lane is documented in `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`.
 
 Current result:
 
-- broader `Finance` parity is now accepted in `evidence/418-v81-broader-finance-parity-t4-acceptance.md`,
-- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`,
-- the active lane continues to use the existing split-brain map in `evidence/155-v81-partner-program-split-brain-map.md`,
-- the first real bounded broader partner packet landed in `evidence/419-v81-broader-partner-payout-history-read-v8-seam.md` by moving visible payout-history continuity onto the governed V8 seam with bounded compatibility fallback,
-- the second real bounded broader partner packet landed in `evidence/420-v81-broader-partner-statement-history-read-v8-seam.md` by moving visible statement-history continuity onto the governed V8 seam with bounded compatibility fallback,
-- the third real bounded broader partner packet landed in `evidence/421-v81-broader-partner-referred-customers-list-v8-seam.md` by moving visible referred-customer list continuity onto the governed V8 seam with bounded compatibility fallback,
-- the fourth real bounded broader partner packet landed in `evidence/422-v81-broader-partner-referral-tools-read-v8-seam.md` by moving visible referral-tools body read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the fifth real bounded broader partner packet landed in `evidence/423-v81-broader-partner-referred-customer-lifecycle-readback-seam.md` by expanding visible lifecycle detail readback on the governed attribution seam without broadening into onboarding or mutation breadth,
-- the sixth real bounded broader partner packet landed in `evidence/424-v81-broader-partner-home-onboarding-status-readback-seam.md` by moving visible `partner-home` onboarding progress off a static checklist and onto a governed V8-first status seam with bounded compatibility fallback,
-- the seventh real bounded broader partner packet landed in `evidence/425-v81-broader-partner-home-onboarding-cta-authority-seam.md` by moving visible `partner-home` onboarding CTA authority onto a dedicated partner onboarding entry instead of the wrong global onboarding wizard route,
-- the eighth real bounded broader partner packet landed in `evidence/426-v81-broader-partner-enterprise-onboarding-wizard-status-readback-seam.md` by moving visible `EnterpriseOnboardingWizard` status restoration onto the governed partner V8 status seam with bounded compatibility fallback,
-- the ninth real bounded broader partner packet landed in `evidence/427-v81-broader-partner-enterprise-onboarding-accept-terms-v8-seam.md` by moving visible enterprise onboarding legal acceptance continuity onto the governed partner V8 write seam with bounded compatibility fallback,
-- the tenth real bounded broader partner packet landed in `evidence/428-v81-broader-partner-enterprise-onboarding-select-tier-v8-seam.md` by moving visible enterprise onboarding pricing-tier continuity onto the governed partner V8 write seam with bounded compatibility fallback,
-- the eleventh real bounded broader partner packet landed in `evidence/429-v81-broader-partner-enterprise-onboarding-complete-v8-seam.md` by moving visible enterprise onboarding completion continuity onto the governed partner V8 write seam with bounded compatibility fallback,
-- the twelfth real bounded broader partner packet landed in `evidence/430-v81-broader-partner-client-access-clients-list-read-v8-seam.md` by moving the shared visible client-organizations list continuity onto a governed partner V8-first read seam with bounded compatibility fallback,
-- the thirteenth real bounded broader partner packet landed in `evidence/431-v81-broader-partner-client-access-projects-read-v8-seam.md` by moving the active partner projects subsection onto a governed partner V8-first read seam with bounded compatibility fallback,
-- the fourteenth real bounded broader partner packet landed in `evidence/432-v81-broader-partner-client-access-access-link-read-v8-seam.md` by moving the active client-access link authority onto the governed partner referral-tools seam with bounded compatibility fallback,
-- the fifteenth real bounded broader partner packet landed in `evidence/433-v81-broader-partner-client-access-employees-read-v8-seam.md` by moving the active employee roster onto a governed partner V8-first read seam backed by `partner_users` plus user/session activity while leaving unknown client assignment counts explicitly unclaimed,
-- the sixteenth real bounded broader partner packet landed in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md` by moving the active `CommissionView` statement cards off placeholder hook data and onto the existing governed partner payout and commission seams with bounded compatibility fallback,
-- the post-`CommissionView` residual assessment recorded in `evidence/435-v81-broader-partner-post-commissionview-residual-assessment.md` confirmed there is no thinner honest statement-source micro-packet left before the heavier commission/dashboard truth migration or partner `payout-settings` ownership work,
-- the seventeenth real bounded broader partner packet landed in `evidence/436-v81-broader-partner-dashboard-runtime-summary-v8-seam.md` by extracting a shared partner runtime-summary seam and moving the active `PartnerDashboardView` analytics block off placeholder hook data onto existing governed partner runtime reads with bounded compatibility fallback,
-- the eighteenth real bounded broader partner packet landed in `evidence/437-v81-broader-partner-dashboard-trust-progression-runtime-seam.md` by replacing static `PartnerDashboardView` trust progression hook state with a bounded governed milestone snapshot derived from existing partner connection, onboarding, client, referral, and earnings seams while leaving `CommissionIntelligence` explicitly out of scope,
-- the nineteenth real bounded broader partner packet landed in `evidence/438-v81-broader-partner-payout-settings-ownership-seam.md` by replacing hard-coded active payout-settings placeholders with partner-authenticated V8-first read/write seams over partner-owned threshold, payout method, auto-payout state, and primary payout-account details with bounded compatibility fallback,
-- the twentieth real bounded broader partner packet landed in `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md` by removing fake deal intelligence and fake inquiry submit behavior from the live commission surfaces instead of pretending a partner deal-pipeline or partner-user support contract already exists,
 - broader `Partner Program` parity is now accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`,
-- the program is now held again in `evidence/441-v81-post-backlog-program-held-state-after-broader-partner-parity.md` until a next broader lane is explicitly promoted,
-- the previously accepted bounded `Partner Program` lane stays capped rather than silently reopening its narrower payout, campaign, and profile packets.
+- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`,
+- the active lane now uses the split-brain map in `evidence/442-v81-broader-sync-completion-split-brain-map.md`,
+- the first real bounded broader sync packet landed in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md` by moving visible sync-hub connect authority onto a governed V8-first seam while keeping new integrations in honest `pending` onboarding state,
+- the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
 
 - broader `Chat` / `AI core` parity expansion
 - broader `Results / KPI / ROI` parity
 - broader `Partner Program` parity
-- broader `Sync` completion
 - broader `Multiplayer / collaboration` breadth
 - broader `Notes` adjunct / object-linked outputs breadth
 
@@ -345,7 +322,8 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the currently promoted scopes
 - the bounded `T4` unlock series is complete through the Anna broader voice UX / architecture acceptance
 - broader `Finance` parity is accepted in bounded form
-- broader `Partner Program` parity is now the active broader lane
+- broader `Partner Program` parity is accepted in bounded form
+- broader `Sync` completion is now the active broader lane
 - what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
 
 ### Remaining work to reach 100%
@@ -362,7 +340,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Results / KPI / ROI` parity | done | accepted lane closed bounded read/runtime truth seams, and the sixteen broader write seams now close the smallest honest visible write residuals without broadening into a larger results redesign | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | done | accepted lane closed active analysis seams, and the first thirty-one broader packets now close visible models, valuations, budgets, statement-pack list/read, statement-pack detail read, child-statement detail read, advanced statement workspace initial detail continuity, canonical-line catalog continuity, statement-ratios continuity, related-list continuity, document-intelligence search continuity, statement confirm continuity, values-save continuity, statement detect continuity, statement extract/map continuity, `FinancialStatementImportWizard` manual detect/extract/map/canonical-lines continuity, `FinancialStatementImportWizard` values-save continuity, `FinancialStatementImportWizard` confirm continuity, active finance model detail continuity, active finance model validations continuity, active finance model outputs continuity, active finance model compute continuity, active finance model approve continuity, active finance model delete continuity, active finance model create continuity, active finance model event-add continuity, active finance model event-delete continuity, active finance model assumptions-save continuity, active statement-pack workspace analytics continuity, active finance import upload continuity, and active finance model workspace list continuity without needing another honest micro-packet | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | done | accepted lane plus twenty broader packets now close the smallest honest active partner residuals across payout/statement history, referral-tools, referred-customer lifecycle, onboarding, client-access, dashboard runtime/trust, payout-settings ownership, and final commission-surface placeholder retirement without forcing a broader partner pipeline/support product build | `10` | remaining partner breadth is closed or explicitly retired |
-| broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
+| broader `Sync` completion | active | accepted sync lane closed bounded observability and lifecycle controls; wider connect/onboarding and OAuth/provider completion breadth remains and is now promoted | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | visible, not promoted | accepted lane closed presence + lock indicators only; deeper realtime collaboration was never promoted | `12` | remaining collaboration breadth is closed or explicitly retired |
 | broader `Notes` adjunct / object-linked outputs breadth | visible, not promoted | accepted lane closed AI proposals + convert continuity only; attachment/upload/output breadth remains outside current package acceptance | `13` | remaining notes/output breadth is closed or explicitly retired |
 
@@ -476,6 +454,8 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the first real bounded packet inside broader `Sync` completion by moving visible sync-hub connect initiation authority onto a governed V8 seam in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md`, so the active `UnifiedSyncHub` connect CTA no longer defaults to legacy `sync-hub` connect truth or fake immediate `connected` state during normal operation
+- 2026-03-27: promoted broader `Sync` completion with charter `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`, recorded the split-brain map in `evidence/442-v81-broader-sync-completion-split-brain-map.md`, and selected visible connect initiation continuity as the first bounded packet candidate
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Partner Program` parity by moving visible `CommissionView` statement continuity onto the existing governed partner payout and commission seams in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md`, so the active commission workspace no longer renders placeholder-only statement cards during normal operation
 - 2026-03-27: landed the fifteenth real bounded packet inside broader `Partner Program` parity by moving visible client-access employee roster continuity onto a governed partner V8-first read seam in `evidence/433-v81-broader-partner-client-access-employees-read-v8-seam.md`, so the active employee tab no longer defaults to a placeholder-only legacy employees route during normal operation while unknown client assignment counts stay explicitly unclaimed
 - 2026-03-27: landed the fourteenth real bounded packet inside broader `Partner Program` parity by moving visible client-access access-link authority onto the governed partner referral-tools seam in `evidence/432-v81-broader-partner-client-access-access-link-read-v8-seam.md`, so the active client-access link action no longer defaults to the placeholder-only legacy `access-links` route during normal operation

@@ -56,6 +56,7 @@ import {
   type V8SyncCredentialHealthSummary,
   type V8SyncErrorItem,
   type V8SyncHealthSummary,
+  type V8SyncInitiatedIntegration,
   type V8SyncIntegrationInventoryRow,
   type V8SyncProviderFamily,
   type V8SyncRefreshTimingPolicy,
@@ -649,19 +650,54 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const handleConnect = async (connectorId: string) => {
     try {
-      const res = await fetch(`${API_URL}/sync-hub/connect`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ connectorId, config: {} }),
-      });
-      if (res.ok) {
-        toast.success(t('integrations.syncHub.connected', 'Integration connected'));
-        trackFunnelEvent('integration_connected', { connectorId });
+      let initiatedIntegration: V8SyncInitiatedIntegration | null = null;
+      try {
+        const data = await V8SyncApi.connectIntegration(connectorId);
+        initiatedIntegration = data.integration;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+
+        const res = await fetch(`${API_URL}/sync-hub/connect`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ connectorId, config: {} }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          toast.error(err.error || 'Failed to connect');
+          return;
+        }
+
+        const data = (await res.json()) as { integration?: { id: string; status?: string } };
+        if (data.integration?.id) {
+          initiatedIntegration = {
+            id: data.integration.id,
+            connectorId,
+            name: connectorId,
+            category: 'collaboration',
+            status: (data.integration.status === 'pending' ? 'pending' : 'pending') as const,
+            capabilities: [],
+            authType: 'oauth2',
+            scopes: [],
+          };
+        }
+      }
+
+      if (initiatedIntegration) {
+        toast.success(
+          t(
+            'integrations.syncHub.connectInitiated',
+            'Connection started. The integration is pending external auth or configuration.',
+          ),
+        );
+        trackFunnelEvent('integration_connect_initiated', {
+          connectorId,
+          status: initiatedIntegration.status,
+        });
         setShowConnectModal(false);
         await loadAll();
-      } else {
-        const err = await res.json();
-        toast.error(err.error || 'Failed to connect');
       }
     } catch {
       toast.error(t('integrations.syncHub.connectFailed', 'Connection failed'));

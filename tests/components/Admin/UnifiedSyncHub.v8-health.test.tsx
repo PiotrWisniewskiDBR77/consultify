@@ -49,6 +49,7 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
   V8SyncApi: {
     getIntegrations: vi.fn(),
     getConnectors: vi.fn(),
+    connectIntegration: vi.fn(),
     getHubHealth: vi.fn(),
     getErrors: vi.fn(),
     resolveError: vi.fn(),
@@ -479,5 +480,57 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     });
 
     expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/sync/int-1', expect.anything());
+  });
+
+  it('uses governed V8 connect initiation before legacy fallback and keeps onboarding honest', async () => {
+    vi.mocked(V8SyncApi.getConnectors).mockResolvedValue({
+      connectors: [
+        {
+          id: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          capabilities: ['issues'],
+          authType: 'oauth2',
+          isAvailable: true,
+          isV2Ready: true,
+          comingSoon: false,
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.connectIntegration).mockResolvedValue({
+      integration: {
+        id: 'int-1',
+        connectorId: 'jira',
+        name: 'Jira',
+        category: 'project_management',
+        status: 'pending',
+        capabilities: ['issues'],
+        authType: 'oauth2',
+        scopes: ['read:issues'],
+      },
+      onboardingStatus: 'pending_external_auth_or_configuration',
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Connect your first integration/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Connect your first integration/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /^Connect$/i }).length).toBeGreaterThan(0);
+    });
+
+    const connectButtons = screen.getAllByRole('button', { name: /^Connect$/i });
+    fireEvent.click(connectButtons[connectButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(V8SyncApi.connectIntegration).toHaveBeenCalledWith('jira');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/connect', expect.anything());
   });
 });

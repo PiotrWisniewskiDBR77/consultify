@@ -109,6 +109,11 @@ const RefreshTimingPolicyBodySchema = z.object({
   maxRetryAttempts: z.number().int().min(1),
 });
 
+const InitiateConnectorConnectionBodySchema = z.object({
+  config: z.record(z.string(), z.unknown()).optional(),
+  displayName: z.string().trim().min(1).optional(),
+});
+
 router.get(
   '/integrations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -143,6 +148,85 @@ router.get(
     return res.json({
       data: { connectors: catalog, count: catalog.length },
       meta: syncReadMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/connectors/:connectorId/connect',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const connectorId =
+      typeof req.params.connectorId === 'string' ? req.params.connectorId.trim().toLowerCase() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!connectorId) {
+      return res.status(400).json({ error: 'connectorId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const parsedBody = InitiateConnectorConnectionBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        error: parsedBody.error.issues[0]?.message ?? 'Invalid connection payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    const connector = CONNECTORS[connectorId];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+
+    const integrationId = `int-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const integrationName = parsedBody.data.displayName?.trim() || connector.name;
+    const scopes = connector.capabilities.map((capability) => `read:${capability}`);
+
+    await dbRun(
+      `INSERT INTO integrations (
+         id, organization_id, connector_id, name, category,
+         status, config, capabilities, auth_type, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        integrationId,
+        organizationId,
+        connector.id,
+        integrationName,
+        connector.category,
+        'pending',
+        JSON.stringify(parsedBody.data.config ?? {}),
+        JSON.stringify(scopes),
+        connector.authType,
+      ],
+    );
+
+    await logIntegrationAudit(organizationId, integrationId, 'connect_initiated', actorId, actorId, {
+      connectorId: connector.id,
+      authType: connector.authType,
+    });
+
+    return res.status(201).json({
+      data: {
+        integration: {
+          id: integrationId,
+          connectorId: connector.id,
+          name: integrationName,
+          category: connector.category,
+          status: 'pending' as const,
+          capabilities: connector.capabilities,
+          authType: connector.authType,
+          scopes,
+        },
+        onboardingStatus: 'pending_external_auth_or_configuration' as const,
+      },
+      meta: syncMutationMeta(),
     });
   }),
 );

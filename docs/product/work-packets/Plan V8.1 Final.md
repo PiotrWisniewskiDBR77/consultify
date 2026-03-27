@@ -65,12 +65,13 @@ Only one major lane should be `active` at a time unless independence is proven.
 - the program is no longer blocked by micro residue
 - what remains is broad residual breadth that must be closed intentionally
 - the first two lanes under this plan are now accepted: `Landing Anna prompt-quality / retrieval-quality` and `Landing Anna multilingual expansion`
+- broader `Sync` completion is now the active lane after broader partner acceptance was returned to held state
 
 ### Current success metric
 
 - completed remaining themes: `9 / 13`
-- active lane: `none (program held)`
-- landed packets in the last accepted lane: `20`
+- active lane: broader `Sync` completion
+- landed packets in the current active lane: `1`
 
 ---
 
@@ -88,7 +89,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
 | `10` | broader `Partner Program` parity | `Phase C` | `done` | accepted partner payout/campaign/profile seams plus twenty broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, dashboard runtime/trust, payout-settings ownership, and final commission placeholder retirement | broader partner breadth is accepted |
-| `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
+| `11` | broader `Sync` completion | `Phase C` | `active` | bounded hub/lifecycle work did not close full OAuth/provider breadth, so the broader lane is now promoted around connect/onboarding completion truth | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
 | `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
 
@@ -163,16 +164,15 @@ No lane should jump directly from `queued` to `done`.
 
 ### Current lane
 
-- status: `held`
-- lane: `none`
-- latest evidence: broader partner acceptance recorded in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`
-- reason: broader `Partner Program` parity is now accepted after the last active commission placeholder surface was retired instead of being left on fake deal intelligence and fake inquiry submit behavior
+- status: `active`
+- lane: broader `Sync` completion
+- latest evidence: first broader sync packet recorded in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md`
+- reason: the accepted bounded sync lane left active connect/onboarding authority outside scope, and the live sync hub still mixed governed V8 reads/mutations with legacy connect truth
 
 ### Next three lanes
 
-1. broader `Sync` completion
-2. broader `Multiplayer / collaboration` breadth
-3. broader `Notes` adjunct / object-linked outputs breadth
+1. broader `Multiplayer / collaboration` breadth
+2. broader `Notes` adjunct / object-linked outputs breadth
 
 ### Active blockers
 
@@ -386,13 +386,13 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Sync` completion
 
-- status: `queued`
-- charter: `not written yet`
-- split-brain map: `not written yet`
-- current packet: `not defined yet`
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
+- split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
+- current packet: `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `wait for prior platform parity lanes`
+- next action: `assess the next smallest honest broader sync completion packet after governed connect initiation continuity`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
