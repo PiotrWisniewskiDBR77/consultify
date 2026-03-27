@@ -201,6 +201,21 @@ async function getStatementsListWithFallback() {
   }
 }
 
+async function searchStatementDocumentIntelligenceWithFallback(statementId: string, query: string) {
+  try {
+    const data = await V8FinanceApi.searchStatementDocumentIntelligence(statementId, { q: query });
+    return Array.isArray(data?.matches) ? data.matches : [];
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    const response = (await Api.get(
+      `/api/finance-statements/${statementId}/document-intelligence/search?q=${encodeURIComponent(query)}`
+    )) as { matches?: DocumentIntelMatch[] };
+    return Array.isArray(response?.matches) ? response.matches : [];
+  }
+}
+
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
   const rawStatus = String(detail.status || 'draft');
   const readinessStatus = deriveStatementReadinessStatus(
@@ -576,10 +591,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   const handleSearchDocumentIntelligence = useCallback(async () => {
     if (!detail || !docQuery.trim()) return;
     try {
-      const response = (await Api.get(
-        `/api/finance-statements/${detail.id}/document-intelligence/search?q=${encodeURIComponent(docQuery.trim())}`
-      )) as { matches?: DocumentIntelMatch[] };
-      setDocMatches(Array.isArray(response?.matches) ? response.matches : []);
+      const matches = await searchStatementDocumentIntelligenceWithFallback(detail.id, docQuery.trim());
+      setDocMatches(matches);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     }

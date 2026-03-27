@@ -18,6 +18,7 @@ const mockGetAnalysisInsights = vi.fn();
 const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
+const mockSearchStatementDocumentIntelligence = vi.fn();
 const mockRunFullAnalysis = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
@@ -60,6 +61,11 @@ vi.mock('../../../services/budgetingService.js', () => ({
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
   computeRatios: (...args: unknown[]) => mockComputeRatios(...args),
+}));
+
+vi.mock('../../../services/documentIntelligenceService.js', () => ({
+  searchStatementDocumentIntelligence: (...args: unknown[]) =>
+    mockSearchStatementDocumentIntelligence(...args),
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -189,6 +195,7 @@ describe('V8 finance read-only routes', () => {
       ratios: [],
       coverageSummary: { total: 0, computed: 0, na: 0, coveragePct: 0 },
     });
+    mockSearchStatementDocumentIntelligence.mockResolvedValue([]);
     mockRunFullAnalysis.mockResolvedValue({ ratios: [] });
     mockDbGet.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
@@ -363,6 +370,42 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.ratios?.statementId).toBe('statement-1');
     expect(res.body.data?.ratios?.coverageSummary?.coveragePct).toBe(100);
     expect(mockComputeRatios).toHaveBeenCalledWith('statement-1', ORG);
+  });
+
+  it('GET /api/v8/finance/statements/:id/document-intelligence/search returns envelope and delegates to search service', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'P&L',
+      period_label: 'Q1 2026',
+      values: [],
+      validationLedger: [],
+    });
+    mockSearchStatementDocumentIntelligence.mockResolvedValue([
+      {
+        chunkText: 'Revenue increased due to seasonality.',
+        score: 0.91,
+        metadata: { sourceType: 'financial_statement_document_intelligence' },
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/finance/statements/statement-1/document-intelligence/search')
+      .query({ q: 'revenue', limit: 3 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.statementId).toBe('statement-1');
+    expect(res.body.data?.query).toBe('revenue');
+    expect(res.body.data?.matches?.[0]?.chunkText).toBe('Revenue increased due to seasonality.');
+    expect(res.body.data?.authoritativeForNumbers).toBe(false);
+    expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
+    expect(mockSearchStatementDocumentIntelligence).toHaveBeenCalledWith({
+      statementId: 'statement-1',
+      organizationId: ORG,
+      query: 'revenue',
+      limit: 3,
+    });
   });
 
   it('GET /api/v8/finance/canonical-lines returns envelope and delegates to the canonical line query', async () => {

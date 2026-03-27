@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -30,6 +30,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     getStatements: vi.fn(),
     getStatement: vi.fn(),
     getStatementRatios: vi.fn(),
+    searchStatementDocumentIntelligence: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -330,5 +331,74 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     expect(V8FinanceApi.getStatements).toHaveBeenCalled();
     expect(Api.get).toHaveBeenCalledWith('/api/finance-statements');
     expect(screen.getByText('acme-bs.csv')).toBeTruthy();
+  });
+
+  it('prefers governed document-intelligence search before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pending',
+        status: 'draft',
+        readinessStatus: 'recoverable',
+        validationMessages: [],
+        values: [],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [],
+        coverageSummary: { coveragePct: 0, computed: 0, total: 0 },
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.searchStatementDocumentIntelligence).mockResolvedValue({
+      statementId: 'statement-1',
+      query: 'revenue',
+      matches: [{ chunkText: 'Revenue increased due to seasonality.', score: 0.91 }],
+      authoritativeForNumbers: false,
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Q1 2026').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Ask the report'), {
+      target: { value: 'revenue' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Revenue increased due to seasonality.')).toBeTruthy();
+    });
+
+    expect(V8FinanceApi.searchStatementDocumentIntelligence).toHaveBeenCalledWith('statement-1', {
+      q: 'revenue',
+    });
+    expect(Api.get).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/document-intelligence/search?q=revenue',
+    );
   });
 });

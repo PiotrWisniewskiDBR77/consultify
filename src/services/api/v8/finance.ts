@@ -196,6 +196,19 @@ export interface V8FinanceStatementRatioResult {
   compositeScores?: Record<string, unknown> | null;
 }
 
+export interface V8FinanceStatementDocumentIntelMatch {
+  chunkText: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface V8FinanceStatementDocumentIntelResult {
+  statementId: string;
+  query: string;
+  matches: V8FinanceStatementDocumentIntelMatch[];
+  authoritativeForNumbers: boolean;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -256,6 +269,17 @@ export const V8FinanceApi = {
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
   getStatementRatios: (statementId: string) =>
     v8Get<{ ratios: V8FinanceStatementRatioResult }>(`/finance/statements/${statementId}/ratios`),
+  searchStatementDocumentIntelligence: (
+    statementId: string,
+    params: { q: string; limit?: number },
+  ) =>
+    v8Get<{ matches: V8FinanceStatementDocumentIntelMatch[]; statementId: string; query: string }>(
+      `/finance/statements/${statementId}/document-intelligence/search`,
+      {
+        q: params.q,
+        ...(typeof params.limit === 'number' ? { limit: params.limit } : {}),
+      },
+    ),
   getCanonicalLines: () =>
     v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>('/finance/canonical-lines'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>

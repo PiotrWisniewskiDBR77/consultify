@@ -200,6 +200,32 @@ describe('V8FinanceApi', () => {
     expect(data.ratios.coverageSummary?.coveragePct).toBe(100);
   });
 
+  it('requests governed finance statement document-intelligence search from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      statementId: 'statement-1',
+      query: 'revenue',
+      matches: [
+        {
+          chunkText: 'Revenue increased due to seasonality.',
+          score: 0.91,
+        },
+      ],
+      authoritativeForNumbers: false,
+    });
+
+    const data = await V8FinanceApi.searchStatementDocumentIntelligence('statement-1', {
+      q: 'revenue',
+      limit: 3,
+    });
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1/document-intelligence/search', {
+      q: 'revenue',
+      limit: 3,
+    });
+    expect(data.statementId).toBe('statement-1');
+    expect(data.matches[0].chunkText).toBe('Revenue increased due to seasonality.');
+  });
+
   it('requests governed finance canonical lines from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       canonicalLines: [

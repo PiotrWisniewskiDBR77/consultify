@@ -21,6 +21,7 @@ import {
   runFullAnalysis,
 } from '../../services/financialAnalysisService.js';
 import { listBudgets } from '../../services/budgetingService.js';
+import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { listModels } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
@@ -169,6 +170,42 @@ router.get(
     } catch (error: any) {
       return res.status(404).json({ error: error?.message || 'Statement not found' });
     }
+  }),
+);
+
+router.get(
+  '/statements/:statementId/document-intelligence/search',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const statementId = String(req.params.statementId || '');
+    const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    if (!query) {
+      return res.status(400).json({ error: 'q is required' });
+    }
+    const statement = await getStatementDetail(organizationId, statementId);
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+    const rawLimit =
+      typeof req.query.limit === 'string' || typeof req.query.limit === 'number'
+        ? Number(req.query.limit)
+        : 5;
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 5;
+    const matches = await searchStatementDocumentIntelligence({
+      statementId,
+      organizationId,
+      query,
+      limit,
+    });
+    return res.json({
+      data: {
+        statementId,
+        query,
+        matches,
+        authoritativeForNumbers: false,
+      },
+      meta: financeMeta(),
+    });
   }),
 );
 
