@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 
 interface KPICreateModalProps {
   onClose: () => void;
@@ -78,7 +79,15 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
       try {
         // Always create as a global KPI and (optionally) link to initiatives via mappings.
         // This keeps Results compatible with the V3 SSOT mapping model (N↔N).
-        const created: any = await Api.post('/benefits/kpis', payload);
+        let created: any;
+        try {
+          created = await V8ResultsApi.createKpi(payload);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          created = await Api.post('/benefits/kpis', payload);
+        }
         const kpiId =
           (created as any)?.data?.id ||
           (created as any)?.id ||
@@ -87,17 +96,26 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
           null;
 
         if (initiativeIds.length > 0 && kpiId) {
-          await Promise.allSettled(
-            initiativeIds.map((id) =>
-              Api.post('/benefits/kpi-mappings', {
-                initiativeId: id,
-                kpiId,
-                impactWeight: 1.0,
-                impactDirection: direction === 'decrease' ? 'decrease' : 'increase',
-                confidence: 'medium',
-                notes: 'Linked from Results KPI create',
-              })
-            )
+          const mappingPayloads = initiativeIds.map((id) => ({
+            initiativeId: id,
+            kpiId,
+            impactWeight: 1.0,
+            impactDirection: direction === 'decrease' ? 'decrease' : 'increase',
+            confidence: 'medium',
+            notes: 'Linked from Results KPI create',
+          }));
+
+          await Promise.all(
+            mappingPayloads.map(async (mapping) => {
+              try {
+                await V8ResultsApi.createKpiMapping(mapping);
+              } catch (error) {
+                if (!shouldFallbackToLegacyResults(error)) {
+                  throw error;
+                }
+                await Api.post('/benefits/kpi-mappings', mapping);
+              }
+            })
           );
         }
 

@@ -2,13 +2,14 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_RESULTS_READ_CONTRACT } from '../results.routes.js';
+import { V8_RESULTS_READ_CONTRACT, V8_RESULTS_WRITE_CONTRACT } from '../results.routes.js';
 
 const mockGetResultsDashboard = vi.fn();
 const mockGetROIPortfolioSummary = vi.fn();
 const mockGetROIInitiativeDetail = vi.fn();
 const mockGetResultsKpiCatalog = vi.fn();
 const mockGetResultsKpiDrawerDetail = vi.fn();
+const mockDbRun = vi.fn();
 
 vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
@@ -16,6 +17,10 @@ vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsKpiDrawerDetail: (...args: unknown[]) => mockGetResultsKpiDrawerDetail(...args),
   getROIPortfolioSummary: (...args: unknown[]) => mockGetROIPortfolioSummary(...args),
   getROIInitiativeDetail: (...args: unknown[]) => mockGetROIInitiativeDetail(...args),
+}));
+
+vi.mock('../../../utils/DbPromise.js', () => ({
+  run: (...args: unknown[]) => mockDbRun(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -152,6 +157,7 @@ describe('V8 results read-only routes', () => {
       measurements: [],
       openCase: null,
     });
+    mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
   it('GET /api/v8/results/dashboard returns envelope and delegates to getResultsDashboard', async () => {
@@ -202,5 +208,51 @@ describe('V8 results read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.kpiId).toBe('kpi-1');
     expect(mockGetResultsKpiDrawerDetail).toHaveBeenCalledWith('kpi-1', ORG);
+  });
+
+  it('POST /api/v8/results/kpis creates a KPI in the governed V8 namespace', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/kpis').send({
+      name: 'Revenue Growth',
+      targetValue: 100,
+      measurementFrequency: 'MONTHLY',
+      direction: 'HIGHER_IS_BETTER',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.id).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain('INSERT INTO initiative_kpis');
+    expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining([ORG, 'Revenue Growth', 100, 'MONTHLY', 'HIGHER_IS_BETTER']),
+    );
+  });
+
+  it('POST /api/v8/results/kpi-mappings creates a governed KPI mapping', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/kpi-mappings').send({
+      initiativeId: 'init-1',
+      kpiId: 'kpi-1',
+      impactDirection: 'increase',
+      confidence: 'medium',
+      notes: 'Linked from Results KPI create',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        initiativeId: 'init-1',
+        kpiId: 'kpi-1',
+      }),
+    );
+    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain(
+      'INSERT INTO initiative_kpi_mappings',
+    );
+    expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining(['init-1', 'kpi-1', ORG, 'increase', 'medium', UID]),
+    );
   });
 });

@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
+  v8Post: vi.fn(),
 }));
 
 import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
-import { v8Get } from '@/services/api/v8/client';
+import { v8Get, v8Post } from '@/services/api/v8/client';
 
 describe('V8ResultsApi', () => {
   beforeEach(() => {
@@ -133,5 +134,44 @@ describe('V8ResultsApi', () => {
     expect(shouldFallbackToLegacyResults({ status: 501 })).toBe(true);
     expect(shouldFallbackToLegacyResults({ status: 500 })).toBe(false);
     expect(shouldFallbackToLegacyResults({ status: 429 })).toBe(false);
+  });
+
+  it('requests governed KPI create from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ id: 'kpi-1' });
+
+    const data = await V8ResultsApi.createKpi({
+      name: 'Revenue Growth',
+      targetValue: 100,
+      measurementFrequency: 'MONTHLY',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/results/kpis', {
+      name: 'Revenue Growth',
+      targetValue: 100,
+      measurementFrequency: 'MONTHLY',
+    });
+    expect(data.id).toBe('kpi-1');
+  });
+
+  it('requests governed KPI mapping create from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      id: 'map-1',
+      initiativeId: 'init-1',
+      kpiId: 'kpi-1',
+    });
+
+    const data = await V8ResultsApi.createKpiMapping({
+      initiativeId: 'init-1',
+      kpiId: 'kpi-1',
+      impactDirection: 'increase',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/results/kpi-mappings', {
+      initiativeId: 'init-1',
+      kpiId: 'kpi-1',
+      impactDirection: 'increase',
+    });
+    expect(data.id).toBe('map-1');
+    expect(data.initiativeId).toBe('init-1');
   });
 });

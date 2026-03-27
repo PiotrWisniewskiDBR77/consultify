@@ -1,4 +1,4 @@
-import { v8Get } from './client';
+import { v8Get, v8Post } from './client';
 
 export const shouldFallbackToLegacyResults = (error: any) => {
   const status = Number(error?.status);
@@ -228,6 +228,46 @@ export interface V8ResultsKpiDrawerDetail {
   } | null;
 }
 
+export interface V8ResultsCreateKpiPayload {
+  name: string;
+  description?: string;
+  unit?: string;
+  baselineValue?: number | null;
+  targetValue?: number | null;
+  measurementFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  alertThreshold?: number | null;
+  alertDirection?: 'BELOW' | 'ABOVE';
+  ownerUserId?: string | null;
+  direction?: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+  thresholdMode?: 'ABSOLUTE' | 'PERCENT_FROM_TARGET';
+  amberThresholdPct?: number | null;
+  redThresholdPct?: number | null;
+  amberThresholdAbs?: number | null;
+  redThresholdAbs?: number | null;
+}
+
+export interface V8ResultsCreateKpiResponse {
+  id: string;
+}
+
+export interface V8ResultsCreateKpiMappingPayload {
+  initiativeId: string;
+  kpiId: string;
+  impactWeight?: number;
+  impactDirection?: 'increase' | 'decrease';
+  expectedDelta?: number | null;
+  expectedDeltaUnit?: string | null;
+  lagDays?: number;
+  confidence?: string;
+  notes?: string | null;
+}
+
+export interface V8ResultsCreateKpiMappingResponse {
+  id: string;
+  initiativeId: string;
+  kpiId: string;
+}
+
 export const V8ResultsApi = {
   getDashboard: () => v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard'),
   getKpiCatalog: (params?: { kpiId?: string }) =>
@@ -243,4 +283,8 @@ export const V8ResultsApi = {
     v8Get<V8ResultsRoiInitiativeDetail>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/detail`,
     ),
+  createKpi: (payload: V8ResultsCreateKpiPayload) =>
+    v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
+  createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
+    v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
 };

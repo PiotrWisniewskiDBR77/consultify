@@ -79,7 +79,7 @@ Status vocabulary:
 | broader canonical `/` and public marketing breadth | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`; landed packets: `evidence/346-v81-broader-canonical-public-marketing-hero-messaging-authority-seam.md`, `evidence/347-v81-broader-canonical-public-marketing-trust-strip-order-authority-seam.md`, `evidence/349-v81-broader-canonical-public-marketing-problem-platform-pattern-seam.md`, `evidence/351-v81-broader-canonical-public-marketing-value-journey-seam.md`, `evidence/353-v81-broader-canonical-public-marketing-extended-scope-seam.md`; accepted in `evidence/354-v81-broader-canonical-public-marketing-t4-acceptance.md` |
 | broader `Mobile` redesign | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`; split-brain map recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`; landed packets: `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`, `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`, `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`, `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`; accepted in `evidence/360-v81-broader-mobile-redesign-t4-acceptance.md` |
 | broader `Chat / AI core` parity expansion | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`; split-brain map recorded in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`; landed packets: `evidence/362-v81-broader-chat-ai-core-stream-session-metadata-continuity-seam.md`, `evidence/363-v81-broader-chat-ai-core-trust-provenance-readback-seam.md`, `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`, `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`; accepted in `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md` |
-| broader `Results / KPI / ROI` parity | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`; split-brain map recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`; next move is to assess the first honest broader results packet |
+| broader `Results / KPI / ROI` parity | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`; split-brain map recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`; first real bounded packet landed in `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md`; next move is to assess the next honest broader results packet |
 
 ---
 
@@ -177,7 +177,9 @@ Current status: `active`
 - [x] broader `Results / KPI / ROI` parity charter written
 - [x] split-brain map captured for the broader results residual after accepted bounded `Results / KPI / ROI` reads/runtime truth
 - [x] first evidence-first packet defined around the broader results parity split-brain map
-- [ ] assess the first real bounded broader results packet after the split-brain map
+- [x] assess the first real bounded broader results packet after the split-brain map
+- [x] first real bounded packet landed around visible KPI create continuity on a governed V8-first seam
+- [x] focused regression added for governed KPI create continuity across route, client, and active modal surface
 - [ ] lane accepted and moved to `done`
 
 ### `Landing Anna backend analytics / dashboard breadth`
@@ -998,6 +1000,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: landed the first real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPICreateModal` write flow onto governed V8 results routes in `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md`, so active KPI creation no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: accepted broader `Chat / AI core` parity expansion in `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md` after four bounded packets landed, then promoted broader `Results / KPI / ROI` parity into `active`, added charter `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`, and recorded the initial split-brain map in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
 - 2026-03-27: landed the fourth bounded packet inside broader `Chat / AI core` parity expansion by mirroring the shared `Private mode` runtime indicator onto `AIChatWelcomeView` in `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`, so the two live chat surfaces no longer diverge on visible private-mode state
 - 2026-03-27: landed the third bounded packet inside broader `Chat / AI core` parity expansion by extending the existing governed `V8ContextIndicator` and `V8ArtifactRunControl` onto `AIChatWelcomeView` in `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`, so the legacy full-screen chat surface no longer trails the shared chat panel on visible governed V8 controls
