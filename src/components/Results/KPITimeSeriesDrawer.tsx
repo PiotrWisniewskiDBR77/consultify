@@ -582,11 +582,19 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     if (!closeEvidenceText.trim() && !closeEvidenceRef.trim()) return;
     setCaseBusy(true);
     try {
-      await Api.post(`/benefits/deviation-cases/${openCase.id}/close`, {
+      const payload = {
         evidenceText: closeEvidenceText.trim() || undefined,
         evidenceRef: closeEvidenceRef.trim() || undefined,
         resolutionNotes: closeResolutionNotes.trim() || undefined,
-      });
+      };
+      try {
+        await V8ResultsApi.closeDeviationCase(openCase.id, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        await Api.post(`/benefits/deviation-cases/${openCase.id}/close`, payload);
+      }
       fetchData();
     } finally {
       setCaseBusy(false);

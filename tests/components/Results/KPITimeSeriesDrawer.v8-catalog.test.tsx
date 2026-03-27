@@ -35,6 +35,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     createDeviationAction: vi.fn(),
     updateDeviationAction: vi.fn(),
     resolveDeviationCase: vi.fn(),
+    closeDeviationCase: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -1102,6 +1103,117 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
 
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/resolve', {});
+    });
+  });
+
+  it('closes deviation cases through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'RESOLVED',
+        deviationSummary: 'Below target',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.closeDeviationCase).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Close')).toBeInTheDocument();
+    });
+
+    fireEvent.change(
+      screen.getByPlaceholderText('Describe the evidence that confirms the deviation is closed.'),
+      { target: { value: 'Verified mitigation in review pack' } },
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText('Resolution notes for audit trail (optional)'),
+      { target: { value: 'Closed after governance review' } },
+    );
+    fireEvent.click(screen.getByText('Close'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.closeDeviationCase).toHaveBeenCalledWith('case-1', {
+        evidenceText: 'Verified mitigation in review pack',
+        evidenceRef: undefined,
+        resolutionNotes: 'Closed after governance review',
+      });
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/close', expect.anything());
+  });
+
+  it('falls back to legacy deviation close only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'RESOLVED',
+        deviationSummary: 'Below target',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.closeDeviationCase).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Close')).toBeInTheDocument();
+    });
+
+    fireEvent.change(
+      screen.getByPlaceholderText('Describe the evidence that confirms the deviation is closed.'),
+      { target: { value: 'Verified mitigation in review pack' } },
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText('Resolution notes for audit trail (optional)'),
+      { target: { value: 'Closed after governance review' } },
+    );
+    fireEvent.click(screen.getByText('Close'));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/close', {
+        evidenceText: 'Verified mitigation in review pack',
+        evidenceRef: undefined,
+        resolutionNotes: 'Closed after governance review',
+      });
     });
   });
 });

@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `7 / 13`
 - active lane: broader `Results / KPI / ROI` parity
-- landed packets in the active lane: `14`
+- landed packets in the active lane: `15`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Results / KPI / ROI` parity
-- latest evidence: `deviation resolve V8 write seam` recorded in `evidence/381-v81-broader-results-kpi-roi-deviation-resolve-v8-write-seam.md`
-- reason: after deviation action-status continuity landed, the next smallest honest broader results packet was the visible `Resolve` workflow inside the open deviation-case panel of `KPITimeSeriesDrawer`, which still posted through the legacy benefits route
+- latest evidence: `deviation close V8 write seam` recorded in `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md`
+- reason: after deviation resolve continuity landed, the next smallest honest broader results packet was the visible `Close` workflow inside the open deviation-case panel of `KPITimeSeriesDrawer`, which still posted through the legacy benefits route with closure evidence payload
 
 ### Next three lanes
 
@@ -356,10 +356,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
 - split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader results packet after deviation resolve continuity`
-- last accepted packet: `deviation resolve V8 write seam`
+- current packet: `assess whether broader results is now ready for bounded acceptance after deviation close continuity`
+- last accepted packet: `deviation close V8 write seam`
 - blocker: `none`
-- next action: `choose the next smallest honest broader results packet after deviation resolve continuity, likely close, without smuggling in the whole deviation workflow at once`
+- next action: `assess whether any honest active mixed-truth mutation remains in the governed Results drawer and either accept the broader lane in bounded form or name the smallest residual without smuggling in wider results breadth`
 - acceptance evidence: `none`
 
 #### broader `Finance` parity

@@ -664,6 +664,89 @@ router.post(
 );
 
 /**
+ * POST /api/v8/results/deviation-cases/:caseId/close
+ * Bounded deviation-case close seam for the active Results drawer surface.
+ */
+router.post(
+  '/deviation-cases/:caseId/close',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    const { evidenceText, evidenceRef, resolutionNotes, linkedInitiativeId, linkedTaskId } =
+      req.body || {};
+
+    if (!caseId) {
+      return res.status(400).json({
+        error: 'caseId is required',
+        code: 'RESULTS_DEVIATION_CASE_ID_REQUIRED',
+      });
+    }
+
+    const safeEvidenceText = typeof evidenceText === 'string' ? evidenceText.trim() : '';
+    const safeEvidenceRef = typeof evidenceRef === 'string' ? evidenceRef.trim() : '';
+    const safeResolutionNotes =
+      typeof resolutionNotes === 'string' ? resolutionNotes.trim() : '';
+
+    if (!safeEvidenceText && !safeEvidenceRef) {
+      return res.status(400).json({
+        error: 'At least one of evidenceText or evidenceRef is required to close a deviation case',
+        code: 'RESULTS_DEVIATION_CLOSE_EVIDENCE_REQUIRED',
+      });
+    }
+
+    const row = await dbGet<any>(
+      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, organizationId],
+    );
+    if (!row?.id) {
+      return res.status(404).json({
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+      });
+    }
+
+    try {
+      await dbRun(
+        `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+         evidence_text = ?, evidence_ref = ?, closed_by = ?, resolution_notes = ?,
+         linked_initiative_id = COALESCE(?, linked_initiative_id),
+         linked_task_id = COALESCE(?, linked_task_id)
+         WHERE id = ? AND organization_id = ?`,
+        [
+          safeEvidenceText || null,
+          safeEvidenceRef || null,
+          userId || null,
+          safeResolutionNotes || null,
+          linkedInitiativeId || null,
+          linkedTaskId || null,
+          caseId,
+          organizationId,
+        ],
+      );
+    } catch {
+      await dbRun(
+        `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+         evidence_text = ?, evidence_ref = ?, closed_by = ?, resolution_notes = ?
+         WHERE id = ? AND organization_id = ?`,
+        [
+          safeEvidenceText || null,
+          safeEvidenceRef || null,
+          userId || null,
+          safeResolutionNotes || null,
+          caseId,
+          organizationId,
+        ],
+      );
+    }
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/results/kpis/:kpiId/drawer-detail
  * Bounded KPI drawer bridge for time-series and open deviation-case continuity.
  */

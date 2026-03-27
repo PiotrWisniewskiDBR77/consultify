@@ -311,6 +311,21 @@ describe('V8ResultsApi', () => {
     expect(data.success).toBe(true);
   });
 
+  it('requests governed deviation-case close from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.closeDeviationCase('case-1', {
+      evidenceText: 'Verified mitigation in review pack',
+      resolutionNotes: 'Closed after governance review',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/results/deviation-cases/case-1/close', {
+      evidenceText: 'Verified mitigation in review pack',
+      resolutionNotes: 'Closed after governance review',
+    });
+    expect(data.success).toBe(true);
+  });
+
   it('requests governed KPI report create from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       snapshotId: 'snap-1',

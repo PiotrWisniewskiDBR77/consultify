@@ -354,6 +354,18 @@ export interface V8ResultsResolveDeviationCaseResponse {
   success: boolean;
 }
 
+export interface V8ResultsCloseDeviationCasePayload {
+  evidenceText?: string | null;
+  evidenceRef?: string | null;
+  resolutionNotes?: string | null;
+  linkedInitiativeId?: string | null;
+  linkedTaskId?: string | null;
+}
+
+export interface V8ResultsCloseDeviationCaseResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiReportPayload {
   periodStart: string;
   periodEnd?: string | null;
@@ -461,6 +473,11 @@ export const V8ResultsApi = {
     v8Post<V8ResultsResolveDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/resolve`,
       {},
+    ),
+  closeDeviationCase: (caseId: string, payload: V8ResultsCloseDeviationCasePayload) =>
+    v8Post<V8ResultsCloseDeviationCaseResponse>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/close`,
+      payload,
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
