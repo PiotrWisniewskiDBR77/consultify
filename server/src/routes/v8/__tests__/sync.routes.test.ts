@@ -32,6 +32,8 @@ const mockGetConnectedIntegrations = vi.fn();
 const mockSyncIntegration = vi.fn();
 const mockUpdateIntegrationStatus = vi.fn();
 const mockDisconnectIntegration = vi.fn();
+const mockStoreRefreshExecutionSecret = vi.fn();
+const mockExecuteRefreshExecution = vi.fn();
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 
@@ -70,6 +72,11 @@ vi.mock('../../../services/syncGuardrailsService.js', async () => {
 
 vi.mock('../../../services/v8/pmSyncInventoryService.js', () => ({
   listGovernedIntegrations: (...args: unknown[]) => mockListGovernedIntegrations(...args),
+}));
+
+vi.mock('../../../services/v8/pmSyncRefreshExecutionService.js', () => ({
+  storeRefreshExecutionSecret: (...args: unknown[]) => mockStoreRefreshExecutionSecret(...args),
+  executeRefreshExecution: (...args: unknown[]) => mockExecuteRefreshExecution(...args),
 }));
 
 vi.mock('../../../services/integrationHubService.js', async () => {
@@ -217,6 +224,16 @@ describe('V8 sync read-only routes', () => {
       maxRetryAttempts: 5,
       createdAt: '2025-01-02T00:00:00.000Z',
       updatedAt: '2025-01-03T00:00:00.000Z',
+    });
+    mockStoreRefreshExecutionSecret.mockResolvedValue({
+      connectorId: 'jira',
+      organizationId: ORG,
+      clientId: 'client-1',
+      tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+    });
+    mockExecuteRefreshExecution.mockResolvedValue({
+      status: 'missing_secret',
+      reason: 'Governed refresh secret has not been materialized for this connector yet.',
     });
     mockGetConnectorHealth.mockResolvedValue({
       healthy: true,
@@ -768,11 +785,149 @@ describe('V8 sync read-only routes', () => {
     const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
 
     expect(res.status).toBe(409);
-    expect(res.body.code).toBe('REFRESH_EXECUTION_REQUIRED');
+    expect(res.body.code).toBe('REFRESH_SECRET_REQUIRED');
     expect(res.body.refreshWindowMinutes).toBe(15);
     expect(mockGetRefreshTimingPolicy).toHaveBeenCalledWith('atlassian', ORG);
+    expect(mockExecuteRefreshExecution).toHaveBeenCalledWith('jira', ORG);
     expect(mockRecordRefreshResult).not.toHaveBeenCalled();
     expect(mockRecordRequest).not.toHaveBeenCalled();
+    expect(mockSyncIntegration).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/refresh-secret stores governed refresh material', async () => {
+    mockDbAll.mockResolvedValueOnce([{ id: 'int-1', connector_id: 'jira', status: 'connected' }]);
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-1/refresh-secret')
+      .send({
+        clientId: 'client-1',
+        clientSecret: 'secret-1',
+        refreshToken: 'refresh-1',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.refreshSecret?.clientIdPresent).toBe(true);
+    expect(mockStoreRefreshExecutionSecret).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      clientId: 'client-1',
+      clientSecret: 'secret-1',
+      refreshToken: 'refresh-1',
+      tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+    });
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync executes real governed refresh before continuing runtime sync', async () => {
+    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockGetCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+    mockExecuteRefreshExecution.mockResolvedValue({
+      status: 'success',
+      tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+      tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      rotatedRefreshToken: true,
+    });
+    mockStoreCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+    mockSyncIntegration.mockResolvedValue({
+      recordsSynced: 12,
+      duration: 321,
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(200);
+    expect(mockExecuteRefreshExecution).toHaveBeenCalledWith('jira', ORG);
+    expect(mockStoreCredential).toHaveBeenCalled();
+    expect(mockRecordRefreshResult).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      result: 'success',
+    });
+    expect(mockSyncIntegration).toHaveBeenCalledWith('int-1', {});
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync turns refresh auth break into governed reauth truth', async () => {
+    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockGetCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+    mockRecordRefreshResult.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: '2026-03-27T19:00:00.000Z',
+      lastRefreshResult: 'credential_expired',
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T19:00:00.000Z',
+    });
+    mockGetConnectorHealth.mockResolvedValue({
+      healthy: true,
+      syncStatus: 'unknown',
+      conflictCount: 0,
+      lastSyncAt: null,
+      authState: 'healthy',
+    });
+    mockExecuteRefreshExecution.mockResolvedValue({
+      status: 'credential_expired',
+      tokenEndpoint: 'https://auth.atlassian.com/oauth/token',
+      error: 'invalid_grant',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('REFRESH_REAUTH_REQUIRED');
+    expect(mockRecordRefreshResult).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      result: 'credential_expired',
+    });
+    expect(mockRecordAuthEscalation).toHaveBeenCalledWith('jira', ORG, 'credential_expired');
     expect(mockSyncIntegration).not.toHaveBeenCalled();
   });
 

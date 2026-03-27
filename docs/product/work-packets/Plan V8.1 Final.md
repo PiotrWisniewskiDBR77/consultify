@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `16`
+- landed packets in the current active lane: `17`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: residual assessment recorded in `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md`
-- reason: after both org-level connect entrypoints were aligned, no thinner honest authority packet remained before real governed refresh execution continuity
+- latest evidence: seventeenth broader sync packet recorded in `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md`
+- reason: after the org-level authority seams were aligned, the active governed runtime still blocked stale oauth credentials instead of executing a real refresh step before sync
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md`
+- current packet: `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote real governed refresh execution continuity as the next honest broader-sync implementation step`
+- next action: `assess whether callback-driven governed refresh secret materialization continuity or deeper authority alignment is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

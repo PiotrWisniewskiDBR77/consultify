@@ -46,6 +46,10 @@ import {
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
+import {
+  executeRefreshExecution,
+  storeRefreshExecutionSecret,
+} from '../../services/v8/pmSyncRefreshExecutionService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -91,8 +95,19 @@ const DEFAULT_REFRESH_WINDOW_MINUTES: Partial<Record<(typeof ProviderFamilyValue
   linear: 15,
 };
 
+const DEFAULT_REFRESH_TOKEN_ENDPOINTS: Partial<Record<string, string>> = {
+  jira: 'https://auth.atlassian.com/oauth/token',
+  gmail: 'https://oauth2.googleapis.com/token',
+  slack: 'https://slack.com/api/oauth.v2.access',
+  asana: 'https://app.asana.com/-/oauth_token',
+};
+
 function getProviderFamilyForConnector(connectorId: string): (typeof ProviderFamilyValues)[number] | null {
   return CONNECTOR_PROVIDER_FAMILY_MAP[connectorId.trim().toLowerCase()] ?? null;
+}
+
+function getDefaultRefreshTokenEndpoint(connectorId: string): string | null {
+  return DEFAULT_REFRESH_TOKEN_ENDPOINTS[connectorId.trim().toLowerCase()] ?? null;
 }
 
 async function logIntegrationAudit(
@@ -163,6 +178,13 @@ const StoreIntegrationCredentialBodySchema = z.object({
   tokenExpiresAt: z.string().trim().min(1).nullable().optional(),
 });
 
+const StoreIntegrationRefreshSecretBodySchema = z.object({
+  clientId: z.string().trim().min(1),
+  clientSecret: z.string().trim().min(1),
+  refreshToken: z.string().trim().min(1),
+  tokenEndpoint: z.string().trim().url().optional(),
+});
+
 const RecordIntegrationRefreshResultBodySchema = z.object({
   result: z.enum(LastRefreshResultValues),
 });
@@ -203,6 +225,219 @@ function getPendingOnboardingStatus(
   return hasAllRequiredFields
     ? ('configuration_submitted_pending_validation' as const)
     : ('pending_configuration' as const);
+}
+
+async function handleGovernedRefreshExecutionBeforeSync({
+  connectorId,
+  integrationId,
+  organizationId,
+  actorId,
+  credential,
+  providerFamily,
+  refreshWindowMinutes,
+  tokenExpired,
+}: {
+  connectorId: string;
+  integrationId: string;
+  organizationId: string;
+  actorId: string;
+  credential: Awaited<ReturnType<typeof getCredential>>;
+  providerFamily: (typeof ProviderFamilyValues)[number] | null;
+  refreshWindowMinutes: number | null;
+  tokenExpired: boolean;
+}): Promise<
+  | { kind: 'continue' }
+  | { kind: 'response'; status: number; body: Record<string, unknown> }
+> {
+  const refreshExecution = await executeRefreshExecution(connectorId, organizationId);
+
+  if (refreshExecution.status === 'success') {
+    const refreshedCredential = await storeCredential({
+      connectorId,
+      organizationId,
+      providerAccountId: credential?.providerAccountId ?? connectorId,
+      workspaceOrTenantId: credential?.workspaceOrTenantId ?? connectorId,
+      scopesGranted: credential?.scopesGranted?.length ? credential.scopesGranted : ['read:sync'],
+      tokenExpiresAt: refreshExecution.tokenExpiresAt ?? credential?.tokenExpiresAt ?? null,
+    });
+    await recordRefreshResult({
+      connectorId,
+      organizationId,
+      result: 'success',
+    });
+    const connectorHealth = await getConnectorHealth(connectorId, organizationId);
+    if (connectorHealth.authState !== 'healthy') {
+      await setConnectorAuthState({
+        connectorId,
+        organizationId,
+        targetState: 'healthy',
+        transitionedBy: actorId,
+        reason: 'refresh_execution_succeeded',
+      });
+    }
+    await resolveAuthEscalationsForConnector(connectorId, actorId, organizationId);
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'refresh_execution_succeeded',
+      actorId,
+      actorId,
+      {
+        connectorId,
+        tokenEndpoint: refreshExecution.tokenEndpoint,
+        previousTokenExpiresAt: credential?.tokenExpiresAt ?? null,
+        tokenExpiresAt: refreshedCredential.tokenExpiresAt,
+        rotatedRefreshToken: refreshExecution.rotatedRefreshToken,
+      },
+    );
+    return { kind: 'continue' };
+  }
+
+  if (refreshExecution.status === 'missing_secret') {
+    if (tokenExpired) {
+      const refreshedCredential = await recordRefreshResult({
+        connectorId,
+        organizationId,
+        result: 'credential_expired',
+      });
+      const escalation = await recordAuthEscalation(connectorId, organizationId, 'credential_expired');
+      const connectorHealth = await getConnectorHealth(connectorId, organizationId);
+      if (connectorHealth.authState !== 'degraded_reauth_needed') {
+        await setConnectorAuthState({
+          connectorId,
+          organizationId,
+          targetState: 'degraded_reauth_needed',
+          transitionedBy: actorId,
+          reason: 'sync_preflight_credential_expired',
+        });
+      }
+      await logIntegrationAudit(
+        organizationId,
+        integrationId,
+        'sync_preflight_blocked_missing_refresh_secret',
+        actorId,
+        actorId,
+        {
+          connectorId,
+          credentialId: refreshedCredential.credentialId,
+          escalationId: escalation.escalationId,
+          tokenExpiresAt: refreshedCredential.tokenExpiresAt,
+        },
+      );
+
+      return {
+        kind: 'response',
+        status: 409,
+        body: {
+          error:
+            'Governed credential expired and no governed refresh secret is materialized for this connector. Re-authorize the integration or store refresh runtime secrets to resume syncing.',
+          code: 'REFRESH_REAUTH_REQUIRED',
+          authTransition: 'degraded_reauth_needed',
+        },
+      };
+    }
+
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'sync_preflight_blocked_refresh_secret_missing',
+      actorId,
+      actorId,
+      {
+        connectorId,
+        providerFamily,
+        tokenExpiresAt: credential?.tokenExpiresAt ?? null,
+        refreshWindowMinutes,
+      },
+    );
+
+    return {
+      kind: 'response',
+      status: 409,
+      body: {
+        error:
+          'Governed refresh execution now exists on the active runtime path, but this connector still needs a governed refresh secret before stale auth can be refreshed automatically.',
+        code: 'REFRESH_SECRET_REQUIRED',
+        providerFamily,
+        refreshWindowMinutes,
+        tokenExpiresAt: credential?.tokenExpiresAt ?? null,
+      },
+    };
+  }
+
+  if (refreshExecution.status === 'transient_failure') {
+    await recordRefreshResult({
+      connectorId,
+      organizationId,
+      result: 'transient_failure',
+    });
+    await logIntegrationAudit(
+      organizationId,
+      integrationId,
+      'refresh_execution_failed_transient',
+      actorId,
+      actorId,
+      {
+        connectorId,
+        tokenEndpoint: refreshExecution.tokenEndpoint,
+        error: refreshExecution.error,
+      },
+    );
+
+    return {
+      kind: 'response',
+      status: 502,
+      body: {
+        error:
+          'Governed refresh execution failed with a transient provider/runtime error. Retry the sync after the provider recovers.',
+        code: 'REFRESH_RETRY_LATER',
+        providerFamily,
+        tokenExpiresAt: credential?.tokenExpiresAt ?? null,
+      },
+    };
+  }
+
+  const refreshedCredential = await recordRefreshResult({
+    connectorId,
+    organizationId,
+    result: refreshExecution.status,
+  });
+  const escalation = await recordAuthEscalation(connectorId, organizationId, refreshExecution.status);
+  const connectorHealth = await getConnectorHealth(connectorId, organizationId);
+  if (connectorHealth.authState !== 'degraded_reauth_needed') {
+    await setConnectorAuthState({
+      connectorId,
+      organizationId,
+      targetState: 'degraded_reauth_needed',
+      transitionedBy: actorId,
+      reason: 'refresh_execution_auth_break',
+    });
+  }
+  await logIntegrationAudit(
+    organizationId,
+    integrationId,
+    'refresh_execution_failed_auth_break',
+    actorId,
+    actorId,
+    {
+      connectorId,
+      credentialId: refreshedCredential.credentialId,
+      escalationId: escalation.escalationId,
+      tokenEndpoint: refreshExecution.tokenEndpoint,
+      error: refreshExecution.error,
+    },
+  );
+
+  return {
+    kind: 'response',
+    status: 409,
+    body: {
+      error:
+        'Governed refresh execution determined that the provider credential now requires re-authorization before sync can continue.',
+      code: 'REFRESH_REAUTH_REQUIRED',
+      authTransition: 'degraded_reauth_needed',
+    },
+  };
 }
 
 router.get(
@@ -831,6 +1066,117 @@ router.post(
 );
 
 router.post(
+  '/integrations/:integrationId/refresh-secret',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const parsedBody = StoreIntegrationRefreshSecretBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        error: parsedBody.error.issues[0]?.message ?? 'Invalid refresh secret payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    const rows = await dbAll<{
+      id: string;
+      connector_id: string;
+      status: string;
+    }>(
+      `SELECT id, connector_id, status
+       FROM integrations
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [integrationId, organizationId],
+    );
+    const integration = rows[0];
+    if (!integration) {
+      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+    }
+
+    const connector = CONNECTORS[integration.connector_id];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+    if (connector.authType !== 'oauth2') {
+      return res.status(409).json({
+        error: 'Refresh secret materialization is only supported for governed oauth2 connectors',
+        code: 'REFRESH_SECRET_UNSUPPORTED',
+      });
+    }
+
+    const tokenEndpoint =
+      parsedBody.data.tokenEndpoint ?? getDefaultRefreshTokenEndpoint(connector.id) ?? null;
+    if (!tokenEndpoint) {
+      return res.status(400).json({
+        error: 'tokenEndpoint is required for this connector',
+        code: 'TOKEN_ENDPOINT_REQUIRED',
+      });
+    }
+
+    try {
+      const storedSecret = await storeRefreshExecutionSecret({
+        connectorId: connector.id,
+        organizationId,
+        clientId: parsedBody.data.clientId,
+        clientSecret: parsedBody.data.clientSecret,
+        refreshToken: parsedBody.data.refreshToken,
+        tokenEndpoint,
+      });
+
+      await logIntegrationAudit(
+        organizationId,
+        integrationId,
+        'refresh_secret_materialized',
+        actorId,
+        actorId,
+        {
+          connectorId: connector.id,
+          tokenEndpoint: storedSecret.tokenEndpoint,
+          clientIdPresent: true,
+          refreshTokenPresent: true,
+        },
+      );
+
+      return res.json({
+        data: {
+          refreshSecret: {
+            connectorId: storedSecret.connectorId,
+            organizationId: storedSecret.organizationId,
+            clientIdPresent: true,
+            refreshTokenPresent: true,
+            tokenEndpoint: storedSecret.tokenEndpoint,
+          },
+        },
+        meta: syncMutationMeta(),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to materialize governed refresh secret';
+      const code = message.includes('storage is unavailable')
+        ? 'REFRESH_SECRET_STORAGE_UNAVAILABLE'
+        : 'REFRESH_SECRET_MATERIALIZATION_FAILED';
+      return res.status(409).json({ error: message, code });
+    }
+  }),
+);
+
+router.post(
   '/integrations/:integrationId/sync',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
@@ -879,61 +1225,38 @@ router.post(
 
       if (Number.isFinite(tokenExpiresAtMs)) {
         const now = Date.now();
-
-        if (tokenExpiresAtMs <= now) {
-          const refreshedCredential = await recordRefreshResult({
-            connectorId: connector.id,
-            organizationId,
-            result: 'credential_expired',
-          });
-          const escalation = await recordAuthEscalation(
-            connector.id,
-            organizationId,
-            'credential_expired',
-          );
-          const connectorHealth = await getConnectorHealth(connector.id, organizationId);
-
-          if (connectorHealth.authState !== 'degraded_reauth_needed') {
-            await setConnectorAuthState({
-              connectorId: connector.id,
-              organizationId,
-              targetState: 'degraded_reauth_needed',
-              transitionedBy: actorId,
-              reason: 'sync_preflight_credential_expired',
-            });
-          }
-
-          await logIntegrationAudit(
-            organizationId,
-            integrationId,
-            'sync_preflight_blocked_credential_expired',
-            actorId,
-            actorId,
-            {
-              connectorId: connector.id,
-              credentialId: refreshedCredential.credentialId,
-              escalationId: escalation.escalationId,
-              tokenExpiresAt: refreshedCredential.tokenExpiresAt,
-            },
-          );
-
-          return res.status(409).json({
-            error:
-              'Governed credential expired before sync could start. Re-authorize the integration to resume syncing.',
-            code: 'REFRESH_REAUTH_REQUIRED',
-            authTransition: 'degraded_reauth_needed',
-          });
-        }
-
         const providerFamily = getProviderFamilyForConnector(connector.id);
         const policy = providerFamily ? await getRefreshTimingPolicy(providerFamily, organizationId) : null;
         const refreshWindowMinutes =
           policy?.refreshWindowMinutes ??
           (providerFamily ? DEFAULT_REFRESH_WINDOW_MINUTES[providerFamily] ?? null : null);
+        const tokenExpired = tokenExpiresAtMs <= now;
+        let insideRefreshWindow =
+          typeof refreshWindowMinutes === 'number' &&
+          tokenExpiresAtMs - refreshWindowMinutes * 60 * 1000 <= now;
+
+        if (tokenExpired || insideRefreshWindow) {
+          const refreshGate = await handleGovernedRefreshExecutionBeforeSync({
+            connectorId: connector.id,
+            integrationId,
+            organizationId,
+            actorId,
+            credential,
+            providerFamily,
+            refreshWindowMinutes,
+            tokenExpired,
+          });
+
+          if (refreshGate.kind === 'response') {
+            return res.status(refreshGate.status).json(refreshGate.body);
+          }
+
+          insideRefreshWindow = false;
+        }
 
         if (
           typeof refreshWindowMinutes === 'number' &&
-          tokenExpiresAtMs - refreshWindowMinutes * 60 * 1000 <= now
+          insideRefreshWindow
         ) {
           await logIntegrationAudit(
             organizationId,
@@ -951,8 +1274,8 @@ router.post(
 
           return res.status(409).json({
             error:
-              'Governed token refresh execution is not wired on the active runtime path yet. This credential is already inside the refresh window, so sync is blocked before stale auth is used.',
-            code: 'REFRESH_EXECUTION_REQUIRED',
+              'Governed refresh execution could not be completed before sync started, so stale auth is still blocked on the active runtime path.',
+            code: 'REFRESH_SECRET_REQUIRED',
             providerFamily,
             refreshWindowMinutes,
             tokenExpiresAt: credential?.tokenExpiresAt ?? null,
