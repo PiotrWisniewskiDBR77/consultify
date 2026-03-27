@@ -272,4 +272,57 @@ describe('settings integrations authority continuity', () => {
       }),
     );
   });
+
+  it('POST /api/settings/integrations/:provider/test uses governed status truth instead of stubbed success', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const pendingRes = await request(app).post('/api/settings/integrations/jira/test');
+
+    expect(pendingRes.status).toBe(409);
+    expect(pendingRes.body).toEqual({
+      success: false,
+      error: 'Integration is not fully connected yet',
+    });
+
+    mockListGovernedIntegrations.mockResolvedValueOnce([
+      {
+        id: 'int-1',
+        connectorId: 'jira',
+        name: 'Jira',
+        category: 'project_management',
+        status: 'connected',
+        lastSyncAt: null,
+        lastError: null,
+        health: 'healthy',
+        errorRate: 0,
+        unresolvedErrors: 0,
+        lastRun: null,
+        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+        onboardingStatus: null,
+        credential: {
+          providerAccountId: 'acct-1',
+          workspaceOrTenantId: 'tenant-1',
+          scopesGranted: ['read:jira-work'],
+          tokenExpiresAt: null,
+          lastVerificationAt: null,
+          lastRefreshAt: null,
+          lastRefreshResult: null,
+        },
+        connector: {
+          id: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          capabilities: ['issues'],
+          authType: 'oauth2',
+          configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+        },
+      },
+    ]);
+
+    const activeRes = await request(app).post('/api/settings/integrations/jira/test');
+
+    expect(activeRes.status).toBe(200);
+    expect(activeRes.body).toEqual({ success: true });
+  });
 });

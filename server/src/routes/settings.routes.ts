@@ -1071,7 +1071,32 @@ router.delete(
 router.post(
   '/integrations/:provider/test',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
+    const { provider } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
+    const item = integrations.find((integration) => integration.provider === provider);
+    if (!item) {
+      return res.status(404).json({ success: false, error: 'Integration not connected' });
+    }
+
+    if (item.status !== 'active') {
+      return res.status(409).json({
+        success: false,
+        error:
+          item.status === 'pending'
+            ? 'Integration is not fully connected yet'
+            : item.status === 'expired'
+              ? 'Integration requires reauthorization'
+              : item.status === 'revoked'
+                ? 'Integration is disconnected'
+                : item.lastError || 'Integration is not healthy enough to test',
+      });
+    }
+
     return res.json({ success: true });
   })
 );

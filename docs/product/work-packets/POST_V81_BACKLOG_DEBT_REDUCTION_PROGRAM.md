@@ -330,6 +330,7 @@ Current result:
 - the post-settings disconnect authority residual assessment recorded in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md` confirmed that one thinner readback seam still remains before wider cleanup, with settings status now emerging as the next honest step,
 - the twenty-sixth real bounded broader sync packet landed in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md` by aligning the dedicated settings status route with the governed sync readback, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth,
 - the post-settings status readback residual assessment recorded in `evidence/481-v81-broader-sync-post-settings-status-readback-residual-assessment.md` confirmed that one thinner live seam still remains before wider cleanup, with settings test connection now emerging as the next honest step,
+- the twenty-seventh real bounded broader sync packet landed in `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md` by aligning the settings test connection route with effective governed truth, so that surface no longer returns stubbed success when the connector is only pending or otherwise not testable,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -492,6 +493,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the twenty-seventh real bounded packet inside broader `Sync` completion by aligning the settings test connection route with effective governed truth in `evidence/482-v81-broader-sync-settings-test-connection-continuity-seam.md`, so that surface no longer returns stubbed success when the connector is only pending or otherwise not testable
 - 2026-03-27: recorded the broader `Sync` post-settings status readback residual assessment in `evidence/481-v81-broader-sync-post-settings-status-readback-residual-assessment.md`, confirming that settings test connection continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-sixth real bounded packet inside broader `Sync` completion by aligning the dedicated settings status route with the governed sync readback in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md`, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth
 - 2026-03-27: recorded the broader `Sync` post-settings disconnect authority residual assessment in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md`, confirming that settings status readback continuity is now the next honest broader-sync step
