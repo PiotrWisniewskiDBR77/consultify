@@ -52,10 +52,15 @@ vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
 }));
 
 vi.mock('../../../src/components/Results/ResultsKpisTableV3', () => ({
-  ResultsKpisTableV3: ({ kpis }: any) => (
+  ResultsKpisTableV3: ({ kpis, onDeleteKpi }: any) => (
     <div>
       <div>results-kpis-table</div>
       <div data-testid="results-kpi-count">{Array.isArray(kpis) ? kpis.length : -1}</div>
+      {Array.isArray(kpis) && kpis[0] ? (
+        <button type="button" onClick={() => onDeleteKpi?.(kpis[0].id)}>
+          delete-first-kpi
+        </button>
+      ) : null}
     </div>
   ),
 }));
@@ -99,6 +104,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
   V8ResultsApi: {
     getDashboard: vi.fn(),
     getKpiCatalog: vi.fn(),
+    deleteKpi: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -218,5 +224,98 @@ describe('ResultsHub V8 runtime strip', () => {
 
     expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpis');
     expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpi-mappings');
+  });
+
+  it('deletes KPI from the hub through the governed V8 seam first', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'dbr77',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'North Star KPI',
+          owner: 'Ops',
+          category: 'delivery',
+          unit: '%',
+          targetValue: 90,
+          currentValue: 82,
+          linkedInitiatives: [],
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.deleteKpi).mockResolvedValue({ success: true } as any);
+
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('delete-first-kpi')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('delete-first-kpi'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.deleteKpi).toHaveBeenCalledWith('kpi-1');
+    });
+
+    expect(Api.delete).not.toHaveBeenCalledWith('/benefits/kpis/kpi-1');
+    confirmSpy.mockRestore();
+  });
+
+  it('falls back to legacy KPI delete from the hub only for bounded compatibility errors', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'dbr77',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'North Star KPI',
+          owner: 'Ops',
+          category: 'delivery',
+          unit: '%',
+          targetValue: 90,
+          currentValue: 82,
+          linkedInitiatives: [],
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.deleteKpi).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
+
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('delete-first-kpi')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('delete-first-kpi'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.deleteKpi).toHaveBeenCalledWith('kpi-1');
+      expect(Api.delete).toHaveBeenCalledWith('/benefits/kpis/kpi-1');
+    });
+
+    confirmSpy.mockRestore();
   });
 });

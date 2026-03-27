@@ -297,7 +297,14 @@ export const ResultsHub: React.FC = () => {
       );
       if (!ok) return;
       try {
-        await Api.delete(`/benefits/kpis/${kpiId}`);
+        try {
+          await V8ResultsApi.deleteKpi(kpiId);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          await Api.delete(`/benefits/kpis/${kpiId}`);
+        }
       } catch {
         // silent
       } finally {

@@ -68,9 +68,9 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 ### Current success metric
 
-- completed remaining themes: `7 / 13`
-- active lane: broader `Results / KPI / ROI` parity
-- landed packets in the active lane: `15`
+- completed remaining themes: `8 / 13`
+- active lane: `none`
+- landed packets in the active lane: `0`
 
 ---
 
@@ -85,7 +85,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `5` | broader canonical `/` and public marketing breadth | `Phase B` | `done` | accepted landing work plus the bounded canonical `/` packet chain now close the smallest honest homepage narrative residuals | public marketing breadth reached bounded acceptance without forcing a broader redesign program |
 | `6` | broader `Mobile` redesign | `Phase B` | `done` | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | broader mobile responsive/product breadth reached bounded acceptance |
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
-| `8` | broader `Results / KPI / ROI` parity | `Phase C` | `active` | accepted bounded read/runtime truth work did not cover broader write/operator breadth, so the broader residual is now explicitly promoted | results breadth is accepted beyond bounded reads/runtime truth |
+| `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `queued` | ingest, models, budgets, valuations, and wider writes remain | finance breadth is accepted beyond bounded analysis seams |
 | `10` | broader `Partner Program` parity | `Phase C` | `queued` | onboarding, client-access, statement sources, and payout-settings remain | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
@@ -163,16 +163,16 @@ No lane should jump directly from `queued` to `done`.
 
 ### Current lane
 
-- status: `active`
-- lane: broader `Results / KPI / ROI` parity
-- latest evidence: `deviation close V8 write seam` recorded in `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md`
-- reason: after deviation resolve continuity landed, the next smallest honest broader results packet was the visible `Close` workflow inside the open deviation-case panel of `KPITimeSeriesDrawer`, which still posted through the legacy benefits route with closure evidence payload
+- status: `held`
+- lane: `none`
+- latest evidence: broader `Results / KPI / ROI` parity accepted in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md` and hold restored in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`
+- reason: the last visible broader Results hub delete seam is now closed, and no next lane has been explicitly promoted yet
 
 ### Next three lanes
 
-1. broader `Results / KPI / ROI` parity
-2. broader `Finance` parity
-3. broader `Partner Program` parity
+1. broader `Finance` parity
+2. broader `Partner Program` parity
+3. broader `Sync` completion
 
 ### Active blockers
 
@@ -353,14 +353,14 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Results / KPI / ROI` parity
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
 - split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
-- current packet: `assess whether broader results is now ready for bounded acceptance after deviation close continuity`
-- last accepted packet: `deviation close V8 write seam`
+- current packet: `none`
+- last accepted packet: `ResultsHub delete V8 write seam`
 - blocker: `none`
-- next action: `assess whether any honest active mixed-truth mutation remains in the governed Results drawer and either accept the broader lane in bounded form or name the smallest residual without smuggling in wider results breadth`
-- acceptance evidence: `none`
+- next action: `hold bounded acceptance unless a new broader Results lane is explicitly promoted later`
+- acceptance evidence: `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`
 
 #### broader `Finance` parity
 

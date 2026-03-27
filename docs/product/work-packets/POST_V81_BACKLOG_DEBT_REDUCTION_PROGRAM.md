@@ -7,7 +7,7 @@
 > Last updated: 2026-03-27
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: active - broader `Results / KPI / ROI` parity
+> Current state: held - no active promoted lane
 
 ---
 
@@ -257,23 +257,24 @@ The following do **not** qualify as done:
 
 Current state:
 
-- broader `Results / KPI / ROI` parity is the active promoted lane
+- no lane is currently promoted
+- the program is held pending an explicit next promotion
 
 ### Slice name
 
-broader `Results / KPI / ROI` parity
+none
 
 ### Scope
 
-The accepted bounded `Results / KPI / ROI` lane now closes its scoped read/runtime-truth seams.
+The accepted bounded `Results / KPI / ROI` lane and the accepted broader results parity lane now close the smallest honest visible Results / KPI / ROI seams.
 
-The next broader results parity lane is now explicitly promoted from visible backlog into active execution.
+No follow-on lane is currently promoted, so the program is held until the next broader residual is explicitly selected.
 
 ### Three-agent assignment
 
-- `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Results / KPI / ROI` parity scope honest and assess the next bounded broader results packet after KPI time-series record continuity
-- `Agent B`: own runtime/surface closure for the active broader results lane packet-by-packet, now through the split-brain map, KPI create continuity, ROI drawer write continuity, KPI report creation continuity, and KPI time-series record continuity
+- `Manager`: maintain this program, tranche rules, and final execution board discipline while the queue is held
+- `Agent A`: do not reopen accepted lanes without an explicit broader promotion
+- `Agent B`: stay idle on new implementation until the next promoted lane is chosen
 
 ### Exit criteria
 
@@ -305,6 +306,9 @@ Current result:
 - the thirteenth real bounded broader results packet landed in `evidence/380-v81-broader-results-kpi-roi-deviation-action-status-v8-write-seam.md` by moving the visible deviation-action status-toggle workflow onto governed V8 results write routes with bounded compatibility fallback,
 - the fourteenth real bounded broader results packet landed in `evidence/381-v81-broader-results-kpi-roi-deviation-resolve-v8-write-seam.md` by moving the visible deviation-case resolve workflow onto governed V8 results write routes with bounded compatibility fallback,
 - the fifteenth real bounded broader results packet landed in `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md` by moving the visible deviation-case close workflow onto governed V8 results write routes with bounded compatibility fallback,
+- the sixteenth real bounded broader results packet landed in `evidence/383-v81-broader-results-kpi-roi-results-hub-delete-v8-write-seam.md` by moving the visible `ResultsHub` KPI-delete workflow onto the governed V8 results seam with bounded compatibility fallback,
+- broader `Results / KPI / ROI` parity is now accepted in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`,
+- the program is now held again in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`,
 - the previously accepted bounded `Results / KPI / ROI` lane stays capped rather than silently reopened into one unbounded results rewrite.
 
 ### Explicitly out of scope
@@ -335,7 +339,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the currently promoted scopes
 - the bounded `T4` unlock series is complete through the Anna broader voice UX / architecture acceptance
-- broader `Results / KPI / ROI` parity is the one active non-deferred lane
+- no broader lane is currently active
 - what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
 
 ### Remaining work to reach 100%
@@ -349,7 +353,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader canonical `/` and public marketing breadth | done | accepted landing shell/IA work plus five bounded canonical `/` narrative packets now close the smallest honest public-marketing seams; what remains is broader redesign work rather than another micro-packet | `5` | canonical `/` and public marketing breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
-| broader `Results / KPI / ROI` parity | active | accepted lane closed bounded read/runtime truth seams, and the first fifteen broader write seams have now landed; deviation-case mutation seams on the active drawer are now closed, so the next question is bounded acceptance rather than another obvious write packet | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
+| broader `Results / KPI / ROI` parity | done | accepted lane closed bounded read/runtime truth seams, and the sixteen broader write seams now close the smallest honest visible write residuals without broadening into a larger results redesign | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
@@ -466,6 +470,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the sixteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ResultsHub` KPI-delete flow onto the governed V8 results seam in `evidence/383-v81-broader-results-kpi-roi-results-hub-delete-v8-write-seam.md`, accepted the lane in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`, and returned the program to held bounded state in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`
 - 2026-03-27: landed the fifteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPITimeSeriesDrawer` deviation-case close flow onto governed V8 results routes in `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md`, so active deviation close no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: landed the fourteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPITimeSeriesDrawer` deviation-case resolve flow onto governed V8 results routes in `evidence/381-v81-broader-results-kpi-roi-deviation-resolve-v8-write-seam.md`, so active deviation resolve no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: landed the thirteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPITimeSeriesDrawer` deviation action status-toggle flow onto governed V8 results routes in `evidence/380-v81-broader-results-kpi-roi-deviation-action-status-v8-write-seam.md`, so active deviation action toggles no longer default to legacy benefits writes during normal operation
