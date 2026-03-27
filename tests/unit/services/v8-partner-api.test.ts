@@ -74,6 +74,27 @@ describe('V8PartnerApi', () => {
     expect(data.clients[0].id).toBe('org-1');
   });
 
+  it('requests partner projects from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      projects: [
+        {
+          id: 'project-1',
+          name: 'Digital Transformation',
+          clientId: 'org-1',
+          clientName: 'ACME GmbH',
+          framework: 'PMBOK',
+          progress: 35,
+          status: 'active',
+        },
+      ],
+    });
+
+    const data = await V8PartnerApi.getProjects();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/projects');
+    expect(data.projects[0].id).toBe('project-1');
+  });
+
   it('requests partner referral tools from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       tools: {

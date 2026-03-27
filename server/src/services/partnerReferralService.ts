@@ -147,6 +147,18 @@ export interface PartnerClientListItem {
   totalCommissionEarned?: number;
 }
 
+export interface PartnerProjectListItem {
+  id: string;
+  name: string;
+  clientId: string;
+  clientName: string;
+  framework: string;
+  progress: number;
+  status: string;
+  startDate?: string;
+  targetEndDate?: string;
+}
+
 export interface ReferralAnalytics {
   totalClicks: number;
   uniqueClicks: number;
@@ -878,6 +890,69 @@ export async function getPartnerClients(
   });
 }
 
+export async function getPartnerProjects(
+  partnerOrgId: string,
+  options: { limit?: number; offset?: number } = {}
+): Promise<PartnerProjectListItem[]> {
+  const { limit = 50, offset = 0 } = options;
+
+  try {
+    const rows = await DbPromise.all<
+      Record<string, unknown> & {
+        id: string;
+        name: string;
+        organization_id: string;
+        org_name?: string;
+        status?: string;
+        start_date?: string | null;
+        target_end_date?: string | null;
+        end_date?: string | null;
+        pmo_standard?: string | null;
+        phase?: string | null;
+      }
+    >(
+      db,
+      `SELECT p.*, o.name as org_name
+       FROM projects p
+       INNER JOIN (
+         SELECT DISTINCT organization_id
+         FROM partner_attributions
+         WHERE partner_org_id = ?
+       ) pa ON pa.organization_id = p.organization_id
+       LEFT JOIN organizations o ON o.id = p.organization_id
+       WHERE COALESCE(p.status, '') NOT IN ('deleted', 'DELETED', 'completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')
+       ORDER BY COALESCE(p.updated_at, p.created_at) DESC
+       LIMIT ? OFFSET ?`,
+      [partnerOrgId, limit, offset],
+    );
+
+    return rows.map((row) => ({
+      id: String(row.id),
+      name: String(row.name || 'Project'),
+      clientId: String(row.organization_id || ''),
+      clientName: String(row.org_name || 'Organization'),
+      framework: String(row.pmo_standard || row.phase || 'pmbok').toUpperCase(),
+      progress:
+        typeof row.progress === 'number'
+          ? row.progress
+          : typeof row.progress_pct === 'number'
+            ? row.progress_pct
+            : 0,
+      status: String(row.status || 'active'),
+      startDate: typeof row.start_date === 'string' ? row.start_date : undefined,
+      targetEndDate:
+        typeof row.target_end_date === 'string'
+          ? row.target_end_date
+          : typeof row.end_date === 'string'
+            ? row.end_date
+            : undefined,
+    }));
+  } catch (err: any) {
+    logger.error('[PartnerReferralService] Error getting partner projects:', err);
+    return [];
+  }
+}
+
 /**
  * Update attribution status (e.g., when first payment made)
  */
@@ -1278,6 +1353,7 @@ const PartnerReferralService = {
   getAttributionByOrganization,
   getPartnerAttributions,
   getPartnerClients,
+  getPartnerProjects,
   updateAttributionStatus,
   getReferralAnalytics,
   getPartnerByReferralCode,

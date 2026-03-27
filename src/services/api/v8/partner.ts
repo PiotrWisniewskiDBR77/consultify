@@ -136,6 +136,18 @@ export interface V8PartnerClient {
   totalCommissionEarned?: number;
 }
 
+export interface V8PartnerProject {
+  id: string;
+  name: string;
+  clientId: string;
+  clientName: string;
+  framework: string;
+  progress: number;
+  status: string;
+  startDate?: string;
+  targetEndDate?: string;
+}
+
 export interface V8PartnerOnboardingAcceptTermsPayload {
   termsVersion?: string;
   privacyVersion?: string;
@@ -242,6 +254,7 @@ export const V8PartnerApi = {
       days: String(days),
     }),
   getClients: () => v8Get<{ clients: V8PartnerClient[] }>('/partner/clients'),
+  getProjects: () => v8Get<{ projects: V8PartnerProject[] }>('/partner/projects'),
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>

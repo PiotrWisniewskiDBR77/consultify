@@ -9,6 +9,7 @@ const mockGetReferralAnalytics = vi.fn();
 const mockGetReferralTools = vi.fn();
 const mockGetPartnerAttributions = vi.fn();
 const mockGetPartnerClients = vi.fn();
+const mockGetPartnerProjects = vi.fn();
 const mockGetEarningsSummary = vi.fn();
 const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
@@ -33,6 +34,7 @@ vi.mock('../../../services/partnerReferralService.js', () => ({
     getReferralTools: (...args: unknown[]) => mockGetReferralTools(...args),
     getPartnerAttributions: (...args: unknown[]) => mockGetPartnerAttributions(...args),
     getPartnerClients: (...args: unknown[]) => mockGetPartnerClients(...args),
+    getPartnerProjects: (...args: unknown[]) => mockGetPartnerProjects(...args),
     createCampaignLink: (...args: unknown[]) => mockCreateCampaignLink(...args),
     deleteCampaignLink: (...args: unknown[]) => mockDeleteCampaignLink(...args),
   },
@@ -181,6 +183,18 @@ describe('V8 partner read bridge', () => {
         plan: null,
       },
     ]);
+    mockGetPartnerProjects.mockResolvedValue([
+      {
+        id: 'project-1',
+        name: 'Digital Transformation',
+        clientId: 'org-1',
+        clientName: 'ACME GmbH',
+        framework: 'PMBOK',
+        progress: 35,
+        status: 'active',
+        targetEndDate: '2026-06-30',
+      },
+    ]);
     mockGetReferralTools.mockResolvedValue({
       referralCode: 'PARTNER-123',
       referralLink: 'https://example.com/r/PARTNER-123',
@@ -297,6 +311,19 @@ describe('V8 partner read bridge', () => {
       offset: 5,
     });
     expect(res.body.data.clients[0].id).toBe('org-1');
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/projects returns partner project list with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/projects?limit=10&offset=5');
+
+    expect(res.status).toBe(200);
+    expect(mockGetPartnerProjects).toHaveBeenCalledWith('partner-org-resolved', {
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.body.data.projects[0].id).toBe('project-1');
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 

@@ -63,6 +63,7 @@ export type {
   V8PartnerOrganizationUpdateResult,
   V8PartnerPayoutRequestPayload,
   V8PartnerPayoutRequestResult,
+  V8PartnerProject,
   V8PartnerReferralAnalytics,
   V8PartnerReferralTools,
   V8PartnerReferralToolsCampaignLink,

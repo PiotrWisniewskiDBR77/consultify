@@ -55,4 +55,16 @@ describe('Clients endpoints (partners routes) - REAL integration', () => {
     const res = await request(app).get('/api/partners/clients/client-999');
     expect(res.status).toBe(503);
   });
+
+  it('GET /projects returns a real partner-scoped project list', async () => {
+    const app = await makePartnersApp();
+    const res = await request(app).get('/api/partners/projects');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: true,
+        data: expect.any(Array),
+      })
+    );
+  });
 });

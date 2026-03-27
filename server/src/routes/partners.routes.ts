@@ -1209,9 +1209,30 @@ router.post('/access-links', async (req: Request, res: Response, next: NextFunct
  */
 router.get('/projects', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner projects unavailable (no real implementation)');
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const projects = await PartnerReferralService.getPartnerProjects(partnerOrgId, {
+      limit,
+      offset,
+    });
+
+    return res.json({ success: true, data: projects });
   } catch (error: any) {
     logger.error('Error fetching projects:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner projects unavailable (database schema missing)');
+    }
     next(error);
   }
 });

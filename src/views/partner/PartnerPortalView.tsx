@@ -51,6 +51,7 @@ import {
   V8PartnerApi,
   type V8PartnerClient,
   type V8PartnerEarningsSummary,
+  type V8PartnerProject,
   type V8PartnerReferralAnalytics,
 } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
@@ -1007,6 +1008,23 @@ function normalizeClientOrganization(client: Partial<V8PartnerClient> | Record<s
   };
 }
 
+function normalizeClientProject(project: Partial<V8PartnerProject> | Record<string, any>): ClientProject {
+  return {
+    id: String(project.id || 'project'),
+    name: String(project.name || 'Project'),
+    clientId: String(project.clientId || project.organizationId || ''),
+    clientName: String(project.clientName || project.organizationName || 'Organization'),
+    framework: String(project.framework || 'PMBOK').toUpperCase(),
+    progress: typeof project.progress === 'number' ? project.progress : 0,
+    status: typeof project.status === 'string' ? project.status : 'active',
+    startDate: typeof project.startDate === 'string' ? project.startDate : undefined,
+    targetEndDate:
+      typeof project.targetEndDate === 'string'
+        ? project.targetEndDate
+        : undefined,
+  };
+}
+
 const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'users' }> = ({
   subsection,
 }) => {
@@ -1038,10 +1056,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       }
 
       if (subsection === 'projects') {
-        const response = await Api.get('/api/partners/projects');
-        const payload = response?.data;
-        if (response?.success && payload?.data) {
-          setProjects(payload.data);
+        try {
+          const response = await V8PartnerApi.getProjects();
+          setProjects((response?.projects || []).map(normalizeClientProject));
+        } catch (error) {
+          if (!shouldFallbackToLegacyPartner(error)) {
+            throw error;
+          }
+          const response = await Api.get('/api/partners/projects');
+          const payload = response?.data;
+          if (response?.success && Array.isArray(payload?.data)) {
+            setProjects(payload.data.map(normalizeClientProject));
+          }
         }
       }
     } catch (err: any) {

@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Partner Program` parity
-- landed packets in the active lane: `12`
+- landed packets in the active lane: `13`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: twelfth broader packet recorded in `evidence/430-v81-broader-partner-client-access-clients-list-read-v8-seam.md`
-- reason: after partner onboarding completion landed, `payout-settings` still remained placeholder-only save UI and `statement-source` still sat outside active partner-portal truth, so the next honest cut was the shared `client-access` client-organizations read seam used by both live partner client surfaces
+- latest evidence: thirteenth broader packet recorded in `evidence/431-v81-broader-partner-client-access-projects-read-v8-seam.md`
+- reason: after client-organizations list continuity landed, the next honest split inside `client-access` was the active partner projects read, because it had real project and attributed-organization truth while `employees` and `access-links` still remained heavier or less well-grounded residuals
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `client-access clients list read V8 seam`
-- last accepted packet: `client-access clients list read V8 seam`
+- current packet: `client-access projects read V8 seam`
+- last accepted packet: `client-access projects read V8 seam`
 - blocker: `none`
-- next action: `assess whether remaining client-access employee/access-link/project breadth can be split honestly before broader statement-source migration or payout-settings continuity`
+- next action: `assess whether remaining client-access employee or access-link breadth can be split honestly before broader statement-source migration or payout-settings continuity`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion
