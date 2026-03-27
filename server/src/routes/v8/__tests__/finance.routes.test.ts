@@ -6,6 +6,7 @@ import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockGetFinanceDashboard = vi.fn();
 const mockGetStatementPackDetail = vi.fn();
+const mockGetStatementDetail = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockListValuations = vi.fn();
@@ -40,6 +41,10 @@ vi.mock('../../../services/financialModelingService.js', () => ({
 vi.mock('../../../services/financialStatementPackService.js', () => ({
   getStatementPackDetail: (...args: unknown[]) => mockGetStatementPackDetail(...args),
   listStatementPacks: (...args: unknown[]) => mockListStatementPacks(...args),
+}));
+
+vi.mock('../../../services/financialStatementReadService.js', () => ({
+  getStatementDetail: (...args: unknown[]) => mockGetStatementDetail(...args),
 }));
 
 vi.mock('../../../services/valuationService.js', () => ({
@@ -150,6 +155,7 @@ describe('V8 finance read-only routes', () => {
       promotionGatePassRate: null,
     });
     mockGetStatementPackDetail.mockResolvedValue(null);
+    mockGetStatementDetail.mockResolvedValue(null);
     mockListStatementPacks.mockResolvedValue([]);
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
@@ -285,6 +291,25 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.pack?.entity_name).toBe('Acme Sp. z o.o.');
     expect(mockGetStatementPackDetail).toHaveBeenCalledWith(ORG, 'pack-1');
+  });
+
+  it('GET /api/v8/finance/statements/:id returns envelope and delegates to getStatementDetail', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'P&L',
+      period_label: 'Q1 2026',
+      values: [],
+      validationLedger: [],
+    });
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/statements/statement-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.statement?.id).toBe('statement-1');
+    expect(res.body.data?.statement?.statement_type).toBe('P&L');
+    expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
   });
 
   it('GET /api/v8/finance/valuations returns envelope and delegates to listValuations', async () => {

@@ -316,7 +316,16 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     setError(null);
     setStatementDetail(null);
     try {
-      const response = await Api.get(`/api/finance-statements/${statementId}`);
+      let response: unknown;
+      try {
+        const data = await V8FinanceApi.getStatement(statementId);
+        response = data?.statement ?? null;
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        response = await Api.get(`/api/finance-statements/${statementId}`);
+      }
       if (requestSeq !== statementRequestSeq.current) return;
       const mapped = mapStatementDetail(response);
       setStatementDetail(mapped);

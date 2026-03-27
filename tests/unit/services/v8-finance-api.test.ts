@@ -142,6 +142,24 @@ describe('V8FinanceApi', () => {
     expect(data.pack.entity_name).toBe('Acme Sp. z o.o.');
   });
 
+  it('requests governed finance child statement detail from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        values: [],
+        validationLedger: [],
+      },
+    });
+
+    const data = await V8FinanceApi.getStatement('statement-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1');
+    expect(data.statement.id).toBe('statement-1');
+    expect(data.statement.statement_type).toBe('P&L');
+  });
+
   it('requests governed finance valuations from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       valuations: [

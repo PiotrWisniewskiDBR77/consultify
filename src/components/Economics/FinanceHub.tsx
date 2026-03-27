@@ -1789,9 +1789,16 @@ export const FinanceHub: React.FC = () => {
             onClose={() => setShowImportWizard(false)}
             onComplete={async (statementId) => {
               setShowImportWizard(false);
-              const statementDetail = (await Api.get(
-                `/api/finance-statements/${statementId}`
-              )) as any;
+              let statementDetail: any = null;
+              try {
+                const data = await V8FinanceApi.getStatement(statementId);
+                statementDetail = data?.statement ?? null;
+              } catch (error) {
+                if (!shouldFallbackToLegacyFinance(error)) {
+                  throw error;
+                }
+                statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
+              }
               const statementPackId = String(
                 statementDetail.statement_pack_id || statementDetail.statementPackId || ''
               );

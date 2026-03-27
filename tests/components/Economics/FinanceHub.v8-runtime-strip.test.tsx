@@ -159,6 +159,7 @@ vi.mock('../../../src/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getDashboard: vi.fn(),
     getStatementPacks: vi.fn(),
+    getStatement: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -218,6 +219,9 @@ describe('FinanceHub V8 runtime strip', () => {
       statementPacks: [],
       count: 0,
     } as any);
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: { statement_pack_id: 'pack-1' },
+    } as any);
   });
 
   it('shows governed runtime pills and keeps them after switching tabs', async () => {
@@ -272,6 +276,48 @@ describe('FinanceHub V8 runtime strip', () => {
         updated_at: '2026-03-27T12:00:00.000Z',
       },
     ];
+    vi.mocked(V8FinanceApi.getStatementPacks).mockResolvedValue({
+      statementPacks: financeDataState.statements,
+      count: 1,
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <FinanceHub />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Importuj statement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.getStatementPacks).toHaveBeenCalled();
+    });
+
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs');
+    expect(financeDataState.loadStatements).toHaveBeenCalled();
+  });
+
+  it('falls back to legacy child statement detail during import-complete on bounded compatibility statuses', async () => {
+    financeDataState.statements = [
+      {
+        id: 'pack-1',
+        entity_name: 'Acme Sp. z o.o.',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        period_label: 'Q1 2026',
+        currency: 'PLN',
+        scaling: 'units',
+        pack_status: 'pending',
+        pack_readiness_status: 'recoverable',
+        source_statement_count: 2,
+        updated_at: '2026-03-27T12:00:00.000Z',
+      },
+    ];
+    vi.mocked(V8FinanceApi.getStatement).mockRejectedValue({ status: 404 });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/api/finance-statements/statement-1') {
         return { statement_pack_id: 'pack-1' } as any;
@@ -297,8 +343,7 @@ describe('FinanceHub V8 runtime strip', () => {
       expect(V8FinanceApi.getStatementPacks).toHaveBeenCalled();
     });
 
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
     expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1');
-    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs');
-    expect(financeDataState.loadStatements).toHaveBeenCalled();
   });
 });

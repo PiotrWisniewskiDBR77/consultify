@@ -21,6 +21,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getStatementPack: vi.fn(),
+    getStatement: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -66,8 +67,17 @@ describe('FinancialStatementPackWorkspace V8 read seam', () => {
         pack_status: 'pending',
         pack_readiness_status: 'recoverable',
         source_statement_count: 0,
-        statements: [],
+        statements: [{ id: 'statement-1', statement_type: 'P&L', source_file_name: 'acme-q1.csv' }],
         validations: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        values: [],
+        validationLedger: [],
       },
     } as any);
 
@@ -79,7 +89,9 @@ describe('FinancialStatementPackWorkspace V8 read seam', () => {
     });
 
     expect(V8FinanceApi.getStatementPack).toHaveBeenCalledWith('pack-1');
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs/pack-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1');
   });
 
   it('falls back to legacy statement-pack detail in the workspace on bounded compatibility statuses', async () => {
@@ -108,5 +120,47 @@ describe('FinancialStatementPackWorkspace V8 read seam', () => {
 
     expect(V8FinanceApi.getStatementPack).toHaveBeenCalledWith('pack-legacy-1');
     expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/packs/pack-legacy-1');
+  });
+
+  it('falls back to legacy child statement detail in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getStatementPack).mockResolvedValue({
+      pack: {
+        id: 'pack-1',
+        entity_name: 'Acme Sp. z o.o.',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        pack_status: 'pending',
+        pack_readiness_status: 'recoverable',
+        source_statement_count: 1,
+        statements: [{ id: 'statement-1', statement_type: 'P&L', source_file_name: 'acme-q1.csv' }],
+        validations: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements/statement-1') {
+        return {
+          id: 'statement-1',
+          statement_type: 'P&L',
+          period_label: 'Q1 2026',
+          values: [],
+          validationLedger: [],
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementPackWorkspace statementPackId="pack-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acme Sp. z o.o.')).toBeInTheDocument();
+      expect(screen.getByText('Q1 2026')).toBeInTheDocument();
+    });
+
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1');
   });
 });

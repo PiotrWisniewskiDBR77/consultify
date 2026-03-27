@@ -1,0 +1,189 @@
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import {
+  evaluateStatementReadiness,
+  loadLatestStatementVersionSnapshot,
+} from './financialStatementService.js';
+
+function isSchemaCompatError(error: unknown): boolean {
+  const message = String((error as Error)?.message || error || '').toLowerCase();
+  return (
+    message.includes('no such column') ||
+    message.includes('does not exist') ||
+    message.includes('unknown column') ||
+    message.includes('undefined column')
+  );
+}
+
+function parseValidationMessages(value: unknown) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(String(value));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getStatementDetail(
+  organizationId: string,
+  statementId: string
+): Promise<Record<string, unknown> | null> {
+  const stmt = await dbGet<any>(
+    `SELECT *
+       FROM financial_statements
+      WHERE id = ? AND organization_id = ?`,
+    [statementId, organizationId],
+  );
+
+  if (!stmt) {
+    return null;
+  }
+
+  let values: any[] = [];
+  let qualityRuns: any[] = [];
+  let ingestRuns: any[] = [];
+  let extractedSections: any[] = [];
+  let repairSessions: any[] = [];
+  let mappingCandidates: any[] = [];
+  let validationLedger: any[] = [];
+  let versions: any[] = [];
+
+  try {
+    values = await dbAll(
+      `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_page, fsv.source_row,
+              fsv.mapping_status, fsv.is_manually_corrected, fsv.is_non_financial, fsv.classification_reason,
+              fsv.value_origin, fsv.mapping_confidence, fsv.evidence_json, fsv.source_candidate_row_id,
+              fsv.selected_mapping_candidate_id, fsv.period_granularity,
+              fsl.line_code, fsl.line_name, fsl.line_name_en, fsl.line_name_pl, fsl.parent_line_id, fsl.aggregation_level, fsl.required_level,
+              fsl.sign_convention, fsl.is_total, fsl.is_subtotal, fsl.is_computed, fsl.formula_json, fsl.deaggregation_ready
+         FROM financial_statement_values fsv
+         LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+        WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
+      [statementId],
+      { fallback: false },
+    );
+    qualityRuns = await dbAll(
+      `SELECT stage, result_status, readiness_status, strategy, summary, reason_codes, created_at
+         FROM financial_statement_quality_runs
+        WHERE statement_id = ?
+        ORDER BY created_at DESC
+        LIMIT 8`,
+      [statementId],
+      { fallback: false },
+    );
+    ingestRuns = await dbAll(
+      `SELECT id, run_status, current_stage, source_file_name, parse_method, document_class, extraction_strategy,
+              template_family, raw_text_length, latest_reason_codes, started_at, completed_at, updated_at
+         FROM financial_statement_ingest_runs
+        WHERE statement_id = ?
+        ORDER BY started_at DESC
+        LIMIT 6`,
+      [statementId],
+      { fallback: false },
+    );
+    extractedSections = await dbAll(
+      `SELECT section_key, section_label, statement_type, line_start, line_end, confidence, text_excerpt, metadata_json, created_at
+         FROM financial_statement_extracted_sections
+        WHERE statement_id = ?
+        ORDER BY created_at DESC, confidence DESC
+        LIMIT 12`,
+      [statementId],
+      { fallback: false },
+    );
+    repairSessions = await dbAll(
+      `SELECT id, repair_status, summary, payload_json, started_by, created_at, updated_at
+         FROM financial_statement_repair_sessions
+        WHERE statement_id = ?
+        ORDER BY created_at DESC
+        LIMIT 6`,
+      [statementId],
+      { fallback: false },
+    );
+    mappingCandidates = await dbAll(
+      `SELECT candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json, created_at
+         FROM financial_statement_mapping_candidates
+        WHERE statement_id = ?
+        ORDER BY created_at DESC, score DESC
+        LIMIT 150`,
+      [statementId],
+      { fallback: false },
+    );
+    validationLedger = await dbAll(
+      `SELECT validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference,
+              tolerance, message, details_json, computed_at
+         FROM financial_statement_validations
+        WHERE statement_id = ?
+        ORDER BY computed_at DESC, check_code ASC`,
+      [statementId],
+      { fallback: false },
+    );
+    versions = await dbAll(
+      `SELECT version_no, version_kind, readiness_status, change_summary, created_at
+         FROM financial_statement_versions
+        WHERE statement_id = ?
+        ORDER BY version_no DESC
+        LIMIT 12`,
+      [statementId],
+      { fallback: false },
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) {
+      throw error;
+    }
+    values = await dbAll(
+      `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_row, fsv.mapping_status, fsv.is_manually_corrected,
+              FALSE as is_non_financial, NULL as classification_reason,
+              fsl.line_code, fsl.line_name, fsl.line_name_pl
+         FROM financial_statement_values fsv
+         LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+        WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
+      [statementId],
+    );
+  }
+
+  const { notes, ...stmtData } = stmt;
+  const activeValues = Array.isArray(values) ? values.filter((value: any) => !value?.is_non_financial) : [];
+  const totalLineCount = activeValues.length;
+  const mappedLineCount = activeValues.filter((value: any) => value?.line_code).length;
+  const unmappedLineCount = Math.max(0, totalLineCount - mappedLineCount);
+  const validationMessages = parseValidationMessages(stmt.validation_messages);
+  const latestVersionSnapshot = await loadLatestStatementVersionSnapshot(statementId);
+  const readiness = evaluateStatementReadiness({
+    rawStatus: stmt.status,
+    statementType: stmt.statement_type,
+    validationStatus: stmt.validation_status,
+    currency: stmt.currency,
+    scaling: stmt.scaling,
+    validationMessages,
+    values: (values || []).map((value: any) => ({
+      canonicalLineId: value.canonical_line_id,
+      value: Number(value.value || 0),
+      isNonFinancial: !!value.is_non_financial,
+    })),
+  });
+
+  return {
+    ...stmtData,
+    totalLineCount,
+    mappedLineCount,
+    unmappedLineCount,
+    nonFinancialLineCount: Array.isArray(values)
+      ? values.filter((value: any) => !!value?.is_non_financial).length
+      : 0,
+    isWorkable: readiness.isReady,
+    readinessStatus: readiness.readinessStatus,
+    readinessScore: readiness.readinessScore,
+    readinessSummary: readiness.summary,
+    readinessReasonCodes: readiness.reasonCodes,
+    validationMessages,
+    qualityRuns: qualityRuns || [],
+    ingestRuns: ingestRuns || [],
+    extractedSections: extractedSections || [],
+    repairSessions: repairSessions || [],
+    mappingCandidates: mappingCandidates || [],
+    validationLedger: validationLedger || [],
+    versions: versions || [],
+    latestVersionNo: Number(latestVersionSnapshot?.versionNo || stmt.values_version || 0),
+    values: values || [],
+  };
+}

@@ -38,6 +38,18 @@ async function getStatementPackDetailWithFallback(packId: string) {
   }
 }
 
+async function getStatementDetailWithFallback(statementId: string) {
+  try {
+    const data = await V8FinanceApi.getStatement(statementId);
+    return data?.statement ?? null;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/finance-statements/${statementId}`).catch(() => null);
+  }
+}
+
 const SCENARIO_PROFILES: Record<
   ScenarioVariant,
   {
@@ -416,7 +428,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         await Promise.all(
           packStatements
             .slice(0, 3)
-            .map(async (statement) => Api.get(`/api/finance-statements/${statement.id}`).catch(() => null))
+            .map(async (statement) => getStatementDetailWithFallback(String(statement.id)))
         )
       ).filter(Boolean) as StatementDetail[];
 

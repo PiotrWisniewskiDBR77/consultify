@@ -13,6 +13,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getStatementPack: vi.fn(),
+    getStatement: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -112,6 +113,56 @@ describe('useFinanceSelection V8 statement-pack detail seam', () => {
         validations: [],
       },
     } as any);
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        values: [],
+      },
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/financial-modeling/models/model-1') {
+        return {
+          id: 'model-1',
+          name: 'Working capital model',
+          source_statement_pack_id: 'pack-1',
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    const { result } = renderHook(() => useFinanceSelection('models'));
+
+    await act(async () => {
+      await result.current.loadModelPreview({
+        id: 'model-1',
+        title: 'Working capital model',
+        sourceStatementPackId: 'pack-1',
+      } as any);
+    });
+
+    await waitFor(() => {
+      expect(result.current.modelPreviewDetail?.sourceDocumentTitle).toBe('Acme Sp. z o.o.');
+    });
+
+    expect(V8FinanceApi.getStatementPack).toHaveBeenCalledWith('pack-1');
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs/pack-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1');
+  });
+
+  it('falls back to legacy child statement detail on bounded compatibility statuses during model preview hydration', async () => {
+    vi.mocked(V8FinanceApi.getStatementPack).mockResolvedValue({
+      pack: {
+        id: 'pack-1',
+        entity_name: 'Acme Sp. z o.o.',
+        period_label: 'Q1 2026',
+        statements: [{ id: 'statement-1' }],
+        validations: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatement).mockRejectedValue({ status: 404 });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/api/financial-modeling/models/model-1') {
         return {
@@ -145,7 +196,7 @@ describe('useFinanceSelection V8 statement-pack detail seam', () => {
       expect(result.current.modelPreviewDetail?.sourceDocumentTitle).toBe('Acme Sp. z o.o.');
     });
 
-    expect(V8FinanceApi.getStatementPack).toHaveBeenCalledWith('pack-1');
-    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs/pack-1');
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1');
   });
 });
