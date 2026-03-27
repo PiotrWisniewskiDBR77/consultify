@@ -63,6 +63,7 @@ import {
   getActiveEscalations,
   getCredentialHealth,
   resolveAuthEscalation,
+  resolveAuthEscalationsForConnector,
 } from '../pmSyncAuthService.js';
 
 // ==========================================
@@ -871,6 +872,35 @@ describe('credential and auth escalation health', () => {
     await expect(
       resolveAuthEscalation('00000000-0000-4000-8000-eeeeeeeeeeee', ACTOR_ID, ORG_ID),
     ).rejects.toThrow('already resolved');
+  });
+
+  it('resolveAuthEscalationsForConnector resolves all active escalations for connector and org', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      makeEscalationRow(),
+      makeEscalationRow({
+        escalation_id: '00000000-0000-4000-8000-ffffffffffff',
+        connector_id: CONNECTOR_ID,
+        organization_id: ORG_ID,
+      }),
+    ]);
+
+    const result = await resolveAuthEscalationsForConnector(CONNECTOR_ID, ACTOR_ID, ORG_ID);
+
+    expect(result).toHaveLength(2);
+    expect(result[0]?.resolvedBy).toBe(ACTOR_ID);
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL'),
+      expect.arrayContaining([ACTOR_ID, CONNECTOR_ID, ORG_ID]),
+    );
+  });
+
+  it('resolveAuthEscalationsForConnector returns empty array when connector has no active escalations', async () => {
+    mockDbAll.mockResolvedValueOnce([]);
+
+    const result = await resolveAuthEscalationsForConnector(CONNECTOR_ID, ACTOR_ID, ORG_ID);
+
+    expect(result).toEqual([]);
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 });
 

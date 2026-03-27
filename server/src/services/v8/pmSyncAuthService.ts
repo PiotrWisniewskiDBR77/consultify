@@ -747,3 +747,58 @@ export async function resolveAuthEscalation(
     resolvedBy: trimmedResolvedBy,
   };
 }
+
+/**
+ * Resolve all active auth escalations for a connector within an org.
+ * Used when governed recovery completes and auth truth returns to healthy.
+ */
+export async function resolveAuthEscalationsForConnector(
+  connectorId: string,
+  resolvedBy: string,
+  organizationId: string,
+): Promise<AuthEscalationRecord[]> {
+  const trimmedConnectorId = connectorId.trim();
+  const trimmedResolvedBy = resolvedBy.trim();
+  const trimmedOrganizationId = organizationId.trim();
+
+  if (!trimmedConnectorId) {
+    throw new Error('Connector id is required');
+  }
+  if (!trimmedResolvedBy) {
+    throw new Error('Resolved by is required');
+  }
+  if (!trimmedOrganizationId) {
+    throw new Error('Organization id is required');
+  }
+
+  const rows = await dbAll<EscalationRow>(
+    `SELECT * FROM v8_auth_escalations
+     WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL
+     ORDER BY escalated_at DESC`,
+    [trimmedConnectorId, trimmedOrganizationId],
+    { fallback: true },
+  );
+
+  if (!rows.length) {
+    return [];
+  }
+
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_auth_escalations
+     SET resolved_at = ?, resolved_by = ?
+     WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL`,
+    [now, trimmedResolvedBy, trimmedConnectorId, trimmedOrganizationId],
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Resolved ${rows.length} auth escalation(s) for connector ${trimmedConnectorId}`,
+  );
+
+  return rows.map((row) => ({
+    ...rowToAuthEscalation(row),
+    resolvedAt: now,
+    resolvedBy: trimmedResolvedBy,
+  }));
+}

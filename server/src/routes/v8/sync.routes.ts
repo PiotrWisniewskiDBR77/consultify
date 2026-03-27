@@ -16,6 +16,7 @@ import {
   getRefreshTimingPolicy,
   recordAuthEscalation,
   recordRefreshResult,
+  resolveAuthEscalationsForConnector,
   resolveAuthEscalation,
   setRefreshTimingPolicy,
   storeCredential,
@@ -732,9 +733,17 @@ router.post(
     }
 
     let escalationId: string | null = null;
+    let resolvedEscalationCount = 0;
     if (['credential_expired', 'scope_revoked'].includes(parsedBody.data.result)) {
       const escalation = await recordAuthEscalation(connector.id, organizationId, parsedBody.data.result);
       escalationId = escalation.escalationId;
+    } else if (parsedBody.data.result === 'success') {
+      const resolvedEscalations = await resolveAuthEscalationsForConnector(
+        connector.id,
+        actorId,
+        organizationId,
+      );
+      resolvedEscalationCount = resolvedEscalations.length;
     }
 
     await logIntegrationAudit(organizationId, integrationId, 'refresh_result_recorded', actorId, actorId, {
@@ -742,6 +751,7 @@ router.post(
       result: parsedBody.data.result,
       authTransition: authTransition?.targetState ?? null,
       escalationId,
+      resolvedEscalationCount,
     });
 
     return res.json({
@@ -1297,6 +1307,9 @@ router.post(
         transitionedBy,
         reason: parsed.data.reason ?? null,
       });
+      if (parsed.data.targetState === 'healthy') {
+        await resolveAuthEscalationsForConnector(connectorId, transitionedBy, organizationId);
+      }
       return res.json({
         data: { record },
         meta: syncMutationMeta(),

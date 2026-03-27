@@ -1000,6 +1000,25 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     };
 
     vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(pendingVerificationIntegrations as any);
+    vi.mocked(V8SyncApi.getAuthEscalations)
+      .mockResolvedValueOnce({
+        escalations: [
+          {
+            escalationId: 'esc-verify-1',
+            organizationId: 'org-sync-1',
+            connectorId: 'jira',
+            reason: 'credential_expired',
+            escalatedAt: '2026-03-27T19:00:00.000Z',
+            resolvedAt: null,
+            resolvedBy: null,
+          },
+        ],
+        count: 1,
+      } as any)
+      .mockResolvedValue({
+        escalations: [],
+        count: 0,
+      } as any);
     vi.mocked(V8SyncApi.setConnectorAuthState).mockResolvedValue({
       record: {
         connectorId: 'jira',
@@ -1033,6 +1052,12 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     await waitFor(() => {
       expect(screen.getByTitle('Run now')).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('credential_expired')).not.toBeInTheDocument();
     });
   });
 
