@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `7 / 13`
 - active lane: broader `Results / KPI / ROI` parity
-- landed packets in the active lane: `4`
+- landed packets in the active lane: `5`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Results / KPI / ROI` parity
-- latest evidence: `KPI report create V8 write seam` recorded in `evidence/371-v81-broader-results-kpi-roi-kpi-report-create-v8-write-seam.md`
-- reason: after KPI create plus both active ROI drawer writes landed, the next smallest honest broader results packet was the visible KPI report creation flow inside `ResultsKpiReportsView`, which still posted through the legacy report route even though the broader results lane had already begun closing visible write continuity on governed V8 seams
+- latest evidence: `KPI time-series record V8 write seam` recorded in `evidence/372-v81-broader-results-kpi-roi-kpi-time-series-record-v8-write-seam.md`
+- reason: after KPI create, ROI drawer writes, and KPI report creation continuity landed, the next smallest honest broader results packet was the visible `Record New Value` submit path inside `KPITimeSeriesDrawer`, which still posted through the legacy benefits route even though that drawer already had governed V8-first read continuity
 
 ### Next three lanes
 
@@ -356,10 +356,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
 - split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
-- current packet: `assess whether broader Results / KPI / ROI parity is ready for bounded acceptance review after the KPI report create closure`
-- last accepted packet: `KPI report create V8 write seam`
+- current packet: `assess the next bounded broader results packet after KPI time-series record continuity`
+- last accepted packet: `KPI time-series record V8 write seam`
 - blocker: `none`
-- next action: `decide whether any smaller honest broader results packet still remains after KPI create, ROI drawer writes, and KPI report create continuity, or move the lane into bounded acceptance review without smuggling in full report lifecycle or operator redesign work`
+- next action: `choose the next smallest honest broader results packet after KPI create, ROI drawer writes, KPI report create, and KPI time-series record continuity without smuggling in the whole KPI operator drawer mutation stack at once`
 - acceptance evidence: `none`
 
 #### broader `Finance` parity

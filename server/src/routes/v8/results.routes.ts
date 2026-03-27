@@ -19,9 +19,10 @@ import {
   getROIPortfolioSummary,
   getROIInitiativeDetail,
 } from '../../services/v8/resultsROIService.js';
+import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
 import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
-import { run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -36,6 +37,20 @@ function resultsMeta() {
 
 function resultsWriteMeta() {
   return { version: 'v8' as const, contract: V8_RESULTS_WRITE_CONTRACT };
+}
+
+function deriveKpiPeriodKey(periodStart?: string | null, measurementFrequency?: string | null): string | null {
+  const start = String(periodStart || '').slice(0, 10);
+  if (!start) return null;
+  const [year, month = '01', day = '01'] = start.split('-');
+  const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
+
+  if (frequency === 'DAILY') return start;
+  if (frequency === 'WEEKLY') {
+    return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
+  }
+  if (frequency === 'QUARTERLY') return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
+  return `${year}-${month}`;
 }
 
 /**
@@ -223,6 +238,109 @@ router.get(
     return res.json({
       data: detail,
       meta: resultsMeta(),
+    });
+  }),
+);
+
+/**
+ * POST /api/v8/results/kpis/:kpiId/time-series
+ * Bounded KPI time-series record seam for the active Results drawer surface.
+ */
+router.post(
+  '/kpis/:kpiId/time-series',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    const body = req.body || {};
+    const value = body.value;
+    const periodStartRaw = body.periodStart || body.period_start || body.measuredAt || body.measured_at;
+    const periodEndRaw = body.periodEnd || body.period_end;
+    const source = body.source;
+    const notes = body.notes;
+
+    const periodStart = periodStartRaw ? String(periodStartRaw).slice(0, 10) : '';
+    const periodEnd = periodEndRaw ? String(periodEndRaw).slice(0, 10) : null;
+
+    if (!kpiId) {
+      return res.status(400).json({
+        error: 'kpiId is required',
+        code: 'RESULTS_KPI_ID_REQUIRED',
+      });
+    }
+    if (value == null || value === '' || !Number.isFinite(Number(value))) {
+      return res.status(400).json({
+        error: 'value is required',
+        code: 'RESULTS_KPI_VALUE_REQUIRED',
+      });
+    }
+    if (!periodStart) {
+      return res.status(400).json({
+        error: 'periodStart (or measuredAt) is required',
+        code: 'RESULTS_KPI_PERIOD_START_REQUIRED',
+      });
+    }
+
+    const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
+      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
+      [kpiId],
+    ).catch(() => null);
+    const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
+
+    const id = uuidv4().replace(/-/g, '');
+    await dbRun(
+      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        kpiId,
+        organizationId,
+        Number(value),
+        periodStart,
+        periodEnd,
+        source || 'manual',
+        notes ? String(notes) : null,
+        userId || null,
+      ],
+    );
+
+    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(() => []);
+    const hasCurrentValue = (kpiCols || []).some((column) => column?.name === 'current_value');
+    if (hasCurrentValue) {
+      await dbRun(
+        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [Number(value), kpiId],
+      ).catch(() => null);
+    }
+
+    try {
+      await handleTimeSeriesRecorded({
+        db: {
+          get: (sql: string, params: any[]) => dbGet(sql, params),
+          all: (sql: string, params: any[]) => dbAll(sql, params),
+          run: (sql: string, params: any[]) => dbRun(sql, params),
+        } as any,
+        orgId: organizationId,
+        kpiId: String(kpiId),
+        value: Number(value),
+        periodStart,
+        periodEnd,
+        recordedByUserId: userId || null,
+      });
+    } catch {
+      // Do not fail the write on deviation side effects.
+    }
+
+    return res.json({
+      data: {
+        id,
+        kpiId,
+        value: Number(value),
+        measuredAt: periodStart,
+        periodStart,
+        periodEnd,
+        periodKey,
+      },
+      meta: resultsWriteMeta(),
     });
   }),
 );

@@ -115,6 +115,31 @@ describe('V8ResultsApi', () => {
     expect(data.kpiId).toBe('kpi-1');
   });
 
+  it('requests governed KPI time-series record from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      id: 'ts-1',
+      kpiId: 'kpi-1',
+      value: 24,
+      measuredAt: '2026-03-01',
+      periodStart: '2026-03-01',
+      periodKey: '2026-03',
+    });
+
+    const data = await V8ResultsApi.createKpiTimeSeriesValue('kpi-1', {
+      value: 24,
+      periodStart: '2026-03-01',
+      notes: 'March value',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/results/kpis/kpi-1/time-series', {
+      value: 24,
+      periodStart: '2026-03-01',
+      notes: 'March value',
+    });
+    expect(data.id).toBe('ts-1');
+    expect(data.periodKey).toBe('2026-03');
+  });
+
   it('requests the governed ROI initiative detail from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       organizationId: 'org-1',

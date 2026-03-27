@@ -228,6 +228,24 @@ export interface V8ResultsKpiDrawerDetail {
   } | null;
 }
 
+export interface V8ResultsCreateKpiTimeSeriesPayload {
+  value: number;
+  periodStart: string;
+  periodEnd?: string | null;
+  source?: string | null;
+  notes?: string | null;
+}
+
+export interface V8ResultsCreateKpiTimeSeriesResponse {
+  id: string;
+  kpiId: string;
+  value: number;
+  measuredAt: string;
+  periodStart: string;
+  periodEnd?: string | null;
+  periodKey?: string | null;
+}
+
 export interface V8ResultsCreateKpiPayload {
   name: string;
   description?: string;
@@ -324,6 +342,11 @@ export const V8ResultsApi = {
     ),
   getKpiDrawerDetail: (kpiId: string) =>
     v8Get<V8ResultsKpiDrawerDetail>(`/results/kpis/${encodeURIComponent(kpiId)}/drawer-detail`),
+  createKpiTimeSeriesValue: (kpiId: string, payload: V8ResultsCreateKpiTimeSeriesPayload) =>
+    v8Post<V8ResultsCreateKpiTimeSeriesResponse>(
+      `/results/kpis/${encodeURIComponent(kpiId)}/time-series`,
+      payload,
+    ),
   getRoiPortfolioSummary: () =>
     v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary'),
   getRoiInitiativeDetail: (initiativeId: string) =>

@@ -10,10 +10,13 @@ const mockGetROIInitiativeDetail = vi.fn();
 const mockGetResultsKpiCatalog = vi.fn();
 const mockGetResultsKpiDrawerDetail = vi.fn();
 const mockDbRun = vi.fn();
+const mockDbGet = vi.fn();
+const mockDbAll = vi.fn();
 const mockCreateKpiReportSnapshot = vi.fn();
 const mockCreateReport = vi.fn();
 const mockUpdateSectionContent = vi.fn();
 const mockUpdateReportStatus = vi.fn();
+const mockHandleTimeSeriesRecorded = vi.fn();
 
 vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
@@ -27,6 +30,10 @@ vi.mock('../../../services/results/kpiReportSnapshotService.js', () => ({
   createKpiReportSnapshot: (...args: unknown[]) => mockCreateKpiReportSnapshot(...args),
 }));
 
+vi.mock('../../../services/results/kpiDeviationService.js', () => ({
+  handleTimeSeriesRecorded: (...args: unknown[]) => mockHandleTimeSeriesRecorded(...args),
+}));
+
 vi.mock('../../../services/reportBuilderService.js', () => ({
   createReport: (...args: unknown[]) => mockCreateReport(...args),
   updateSectionContent: (...args: unknown[]) => mockUpdateSectionContent(...args),
@@ -34,6 +41,8 @@ vi.mock('../../../services/reportBuilderService.js', () => ({
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
+  all: (...args: unknown[]) => mockDbAll(...args),
+  get: (...args: unknown[]) => mockDbGet(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
 }));
 
@@ -189,6 +198,9 @@ describe('V8 results read-only routes', () => {
     mockCreateReport.mockResolvedValue({ report: { id: 'report-1' } });
     mockUpdateSectionContent.mockResolvedValue(undefined);
     mockUpdateReportStatus.mockResolvedValue(undefined);
+    mockHandleTimeSeriesRecorded.mockResolvedValue({ eval: { status: 'GREEN', severity: null } });
+    mockDbGet.mockResolvedValue({ measurement_frequency: 'MONTHLY' });
+    mockDbAll.mockResolvedValue([{ name: 'current_value' }]);
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
@@ -323,6 +335,44 @@ describe('V8 results read-only routes', () => {
     );
     expect(mockUpdateSectionContent).toHaveBeenCalledTimes(5);
     expect(mockUpdateReportStatus).toHaveBeenCalledWith('report-1', 'GENERATED', UID);
+  });
+
+  it('POST /api/v8/results/kpis/:kpiId/time-series records governed KPI measurement', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/kpis/kpi-1/time-series').send({
+      value: 24,
+      periodStart: '2026-03-01',
+      notes: 'March value',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        kpiId: 'kpi-1',
+        value: 24,
+        measuredAt: '2026-03-01',
+        periodStart: '2026-03-01',
+        periodKey: '2026-03',
+      }),
+    );
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
+      ['kpi-1'],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO kpi_time_series'),
+      expect.arrayContaining(['kpi-1', ORG, 24, '2026-03-01', 'manual', 'March value', UID]),
+    );
+    expect(mockHandleTimeSeriesRecorded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orgId: ORG,
+        kpiId: 'kpi-1',
+        value: 24,
+        periodStart: '2026-03-01',
+        recordedByUserId: UID,
+      }),
+    );
   });
 
   it('PUT /api/v8/results/roi/initiative/:initiativeId/assumptions saves governed ROI assumptions', async () => {

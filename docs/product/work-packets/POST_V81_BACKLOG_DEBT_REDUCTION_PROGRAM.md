@@ -272,8 +272,8 @@ The next broader results parity lane is now explicitly promoted from visible bac
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Results / KPI / ROI` parity scope honest and assess whether the lane is ready for bounded acceptance review after the KPI report create closure
-- `Agent B`: own runtime/surface closure for the active broader results lane packet-by-packet, now through the split-brain map, KPI create continuity, ROI drawer write continuity, and KPI report creation continuity
+- `Agent A`: keep broader `Results / KPI / ROI` parity scope honest and assess the next bounded broader results packet after KPI time-series record continuity
+- `Agent B`: own runtime/surface closure for the active broader results lane packet-by-packet, now through the split-brain map, KPI create continuity, ROI drawer write continuity, KPI report creation continuity, and KPI time-series record continuity
 
 ### Exit criteria
 
@@ -294,6 +294,7 @@ Current result:
 - the second real bounded broader results packet landed in `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md` by moving the visible ROI assumptions save workflow onto governed V8 results write routes with bounded compatibility fallback,
 - the third real bounded broader results packet landed in `evidence/370-v81-broader-results-kpi-roi-roi-realized-entry-v8-write-seam.md` by moving the visible ROI realized-entry submit workflow onto governed V8 results write routes with bounded compatibility fallback,
 - the fourth real bounded broader results packet landed in `evidence/371-v81-broader-results-kpi-roi-kpi-report-create-v8-write-seam.md` by moving the visible KPI report create workflow onto governed V8 results write routes with bounded compatibility fallback,
+- the fifth real bounded broader results packet landed in `evidence/372-v81-broader-results-kpi-roi-kpi-time-series-record-v8-write-seam.md` by moving the visible KPI time-series record workflow onto governed V8 results write routes with bounded compatibility fallback,
 - the previously accepted bounded `Results / KPI / ROI` lane stays capped rather than silently reopened into one unbounded results rewrite.
 
 ### Explicitly out of scope
@@ -338,7 +339,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader canonical `/` and public marketing breadth | done | accepted landing shell/IA work plus five bounded canonical `/` narrative packets now close the smallest honest public-marketing seams; what remains is broader redesign work rather than another micro-packet | `5` | canonical `/` and public marketing breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
-| broader `Results / KPI / ROI` parity | active | accepted lane closed bounded read/runtime truth seams, and the first four broader write seams have now landed, but acceptance still depends on whether any smaller honest residual remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
+| broader `Results / KPI / ROI` parity | active | accepted lane closed bounded read/runtime truth seams, and the first five broader write seams have now landed, but smaller KPI operator drawer mutations still remain | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
@@ -455,6 +456,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the fifth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPITimeSeriesDrawer` measurement-recording flow onto governed V8 results routes in `evidence/372-v81-broader-results-kpi-roi-kpi-time-series-record-v8-write-seam.md`, so active KPI value recording no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: landed the fourth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ResultsKpiReportsView` create flow onto governed V8 results routes in `evidence/371-v81-broader-results-kpi-roi-kpi-report-create-v8-write-seam.md`, so active KPI report creation no longer defaults to the legacy route during normal operation
 - 2026-03-27: landed the third real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ROIDetailDrawer` realized-entry submit flow onto governed V8 results routes in `evidence/370-v81-broader-results-kpi-roi-roi-realized-entry-v8-write-seam.md`, so active ROI actual-entry recording no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: landed the second real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ROIDetailDrawer` assumptions save flow onto governed V8 results routes in `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md`, so active ROI assumptions editing no longer defaults to legacy benefits writes during normal operation

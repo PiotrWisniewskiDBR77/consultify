@@ -252,11 +252,19 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       if (!newValue) return;
       setSubmitting(true);
       try {
-        await Api.post(`/benefits/kpis/${kpiId}/time-series`, {
+        const payload = {
           value: Number(newValue),
           periodStart: String(newDate).slice(0, 10),
           notes: newNotes.trim() || undefined,
-        });
+        };
+        try {
+          await V8ResultsApi.createKpiTimeSeriesValue(kpiId, payload);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          await Api.post(`/benefits/kpis/${kpiId}/time-series`, payload);
+        }
         setNewValue('');
         setNewNotes('');
         fetchData();

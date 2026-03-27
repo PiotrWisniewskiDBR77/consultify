@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -25,6 +25,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
   V8ResultsApi: {
     getKpiCatalog: vi.fn(),
     getKpiDrawerDetail: vi.fn(),
+    createKpiTimeSeriesValue: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -133,6 +134,92 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     await waitFor(() => {
       expect(Api.get).toHaveBeenCalledWith('/benefits/kpis/kpi-1/time-series');
       expect(Api.get).toHaveBeenCalledWith('/benefits/kpis/kpi-1/deviation-cases?openOnly=1');
+    });
+  });
+
+  it('records KPI time-series through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [{ id: 'kpi-1', name: 'KPI Alpha', measurementFrequency: 'MONTHLY', createdAt: '2026-01-01T00:00:00.000Z' }],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.createKpiTimeSeriesValue).mockResolvedValue({
+      id: 'ts-1',
+      kpiId: 'kpi-1',
+      value: 24,
+      measuredAt: '2026-03-01',
+      periodStart: '2026-03-01',
+      periodKey: '2026-03',
+    } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: '24' } });
+    fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
+      target: { value: '2026-03-01' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
+      target: { value: 'March value' },
+    });
+    fireEvent.click(screen.getByText('Record'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.createKpiTimeSeriesValue).toHaveBeenCalledWith('kpi-1', {
+        value: 24,
+        periodStart: '2026-03-01',
+        notes: 'March value',
+      });
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/benefits/kpis/kpi-1/time-series', expect.anything());
+  });
+
+  it('falls back to legacy KPI time-series record only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [{ id: 'kpi-1', name: 'KPI Alpha', measurementFrequency: 'MONTHLY', createdAt: '2026-01-01T00:00:00.000Z' }],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.createKpiTimeSeriesValue).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true, data: { id: 'ts-1' } } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: '24' } });
+    fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
+      target: { value: '2026-03-01' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
+      target: { value: 'March value' },
+    });
+    fireEvent.click(screen.getByText('Record'));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/benefits/kpis/kpi-1/time-series', {
+        value: 24,
+        periodStart: '2026-03-01',
+        notes: 'March value',
+      });
     });
   });
 });
