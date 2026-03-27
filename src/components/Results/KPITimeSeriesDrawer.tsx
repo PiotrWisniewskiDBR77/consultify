@@ -368,13 +368,21 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       if (!initiativeId) return;
       setMappingBusy(true);
       try {
-        await Api.post('/benefits/kpi-mappings', {
+        const payload = {
           initiativeId,
           kpiId,
           impactWeight: 1.0,
           impactDirection: settingsDirection === 'decrease' ? 'decrease' : 'increase',
           confidence: 'medium',
-        });
+        };
+        try {
+          await V8ResultsApi.createKpiMapping(payload);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          await Api.post('/benefits/kpi-mappings', payload);
+        }
         setInitiativeSearch('');
         fetchData();
         onValueRecorded?.();
