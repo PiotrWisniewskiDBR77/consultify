@@ -11,6 +11,7 @@ const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
+const mockGetOutputs = vi.fn();
 const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
@@ -79,6 +80,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 
 vi.mock('../../../services/financialModelingService.js', () => ({
   getModel: (...args: unknown[]) => mockGetModel(...args),
+  getOutputs: (...args: unknown[]) => mockGetOutputs(...args),
   getValidations: (...args: unknown[]) => mockGetValidations(...args),
   listEvents: (...args: unknown[]) => mockListEvents(...args),
   listModels: (...args: unknown[]) => mockListModels(...args),
@@ -503,6 +505,45 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.summary).toEqual({ total: 2, pass: 1, fail: 0, warning: 1 });
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
     expect(mockGetValidations).toHaveBeenCalledWith('model-1');
+  });
+
+  it('GET /api/v8/finance/models/:id/outputs returns envelope and delegates to getOutputs', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+    });
+    mockGetOutputs.mockResolvedValue([
+      {
+        period_label: '2026-01',
+        statement_type: 'P&L',
+        line_code: 'REV',
+        line_name: 'Revenue',
+        value: 100,
+      },
+      {
+        period_label: '2026-01',
+        statement_type: 'P&L',
+        line_code: 'COGS',
+        line_name: 'COGS',
+        value: -40,
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/finance/models/model-1/outputs')
+      .query({ scenario: 'base' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.raw).toHaveLength(2);
+    expect(res.body.data?.grouped?.['2026-01']?.['P&L']).toEqual([
+      { lineCode: 'REV', lineName: 'Revenue', value: 100 },
+      { lineCode: 'COGS', lineName: 'COGS', value: -40 },
+    ]);
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetOutputs).toHaveBeenCalledWith('model-1', 'base');
   });
 
   it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {

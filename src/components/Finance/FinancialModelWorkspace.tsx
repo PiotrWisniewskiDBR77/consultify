@@ -132,6 +132,17 @@ async function getModelValidationsWithFallback(modelId: string) {
   }
 }
 
+async function getModelOutputsWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.getModelOutputs(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/financial-modeling/models/${modelId}/outputs`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -296,7 +307,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       setAssumptions((model as any)?.assumptions_json || {});
       try {
         const [outData, valData] = await Promise.all([
-          Api.get(`/api/financial-modeling/models/${modelId}/outputs`).catch(() => null),
+          getModelOutputsWithFallback(modelId).catch(() => null),
           getModelValidationsWithFallback(modelId).catch(() => null),
         ]);
         setOutputs(((outData as any)?.grouped || {}) as Record<string, Record<string, OutputLine[]>>);
@@ -413,7 +424,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       await Api.post(`/api/financial-modeling/models/${selectedModel.id}/compute`, {});
 
       // Load outputs
-      const outData = await Api.get(`/api/financial-modeling/models/${selectedModel.id}/outputs`);
+      const outData = await getModelOutputsWithFallback(selectedModel.id);
       setOutputs((outData as any)?.grouped || {});
 
       // Load validations

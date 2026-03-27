@@ -140,6 +140,23 @@ describe('V8FinanceApi', () => {
     expect(data.summary.warning).toBe(1);
   });
 
+  it('requests governed finance model outputs from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      raw: [{ period_label: '2026-01', statement_type: 'P&L', line_code: 'REV', value: 100 }],
+      grouped: {
+        '2026-01': {
+          'P&L': [{ lineCode: 'REV', lineName: 'Revenue', value: 100 }],
+        },
+      },
+    });
+
+    const data = await V8FinanceApi.getModelOutputs('model-1', { scenario: 'base' });
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/models/model-1/outputs', { scenario: 'base' });
+    expect(data.grouped['2026-01']['P&L']).toHaveLength(1);
+    expect(data.grouped['2026-01']['P&L'][0].lineName).toBe('Revenue');
+  });
+
   it('requests governed finance statement packs from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statementPacks: [

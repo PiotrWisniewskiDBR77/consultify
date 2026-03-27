@@ -68,7 +68,13 @@ import {
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
-import { getModel, getValidations, listEvents, listModels } from '../../services/financialModelingService.js';
+import {
+  getModel,
+  getOutputs,
+  getValidations,
+  listEvents,
+  listModels,
+} from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
   getStatementPackDetail,
@@ -240,6 +246,44 @@ router.get(
 
     return res.json({
       data: { validations, summary },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/models/:modelId/outputs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const scenario =
+      typeof req.query.scenario === 'string' && req.query.scenario.trim()
+        ? String(req.query.scenario).trim()
+        : undefined;
+    const outputs = await getOutputs(modelId, scenario);
+    const grouped: Record<
+      string,
+      Record<string, Array<{ lineCode: string; lineName: string; value: number }>>
+    > = {};
+    for (const row of outputs as any[]) {
+      if (!grouped[row.period_label]) grouped[row.period_label] = {};
+      if (!grouped[row.period_label][row.statement_type]) {
+        grouped[row.period_label][row.statement_type] = [];
+      }
+      grouped[row.period_label][row.statement_type].push({
+        lineCode: row.line_code,
+        lineName: row.line_name,
+        value: row.value,
+      });
+    }
+
+    return res.json({
+      data: { raw: outputs, grouped },
       meta: financeMeta(),
     });
   }),

@@ -91,6 +91,17 @@ export interface V8FinanceModelValidationResult {
   };
 }
 
+export interface V8FinanceModelOutputLine {
+  lineCode: string;
+  lineName: string;
+  value: number;
+}
+
+export interface V8FinanceModelOutputsResult {
+  raw: Array<Record<string, unknown>>;
+  grouped: Record<string, Record<string, V8FinanceModelOutputLine[]>>;
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -346,6 +357,10 @@ export const V8FinanceApi = {
   getModel: (modelId: string) => v8Get<{ model: V8FinanceModelDetail }>(`/finance/models/${modelId}`),
   getModelValidations: (modelId: string) =>
     v8Get<V8FinanceModelValidationResult>(`/finance/models/${modelId}/validations`),
+  getModelOutputs: (modelId: string, params?: { scenario?: string }) =>
+    v8Get<V8FinanceModelOutputsResult>(`/finance/models/${modelId}/outputs`, {
+      ...(params?.scenario ? { scenario: params.scenario } : {}),
+    }),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>
