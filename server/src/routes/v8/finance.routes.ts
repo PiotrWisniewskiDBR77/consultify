@@ -10,6 +10,7 @@ import { Router } from 'express';
 import type { Response } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
 import {
@@ -22,10 +23,12 @@ import {
 } from '../../services/financialAnalysisService.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
+import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import {
   autoMapLines,
   classifyStatementDocument,
   confirmStatement as confirmFinancialStatement,
+  createStatement,
   detectStatementType,
   evaluateStatementReadiness,
   extractFinancialLines,
@@ -36,15 +39,19 @@ import {
   persistStatementCandidateRows,
   persistStatementExtractedSections,
   persistStatementMappingCandidates,
+  persistStatementValidationLedger,
   recordStatementQualityRun,
   recordStatementSourceArtifact,
   resolveStatementColumnSelection,
   resolveDuplicateSuggestedMappings,
+  saveStatementValues,
   snapshotCanonicalStatementVersion,
   startStatementIngestRun,
   updateStatementMetadata,
   updateStatementStatus,
   updateStatementIngestRun,
+  updateStatementReadinessState,
+  validateStatement,
 } from '../../services/financialStatementService.js';
 import type { DetectionResult } from '../../services/financialStatementService.js';
 import {
@@ -65,9 +72,11 @@ import {
   isNonFinancialByPolicy,
 } from '../../services/financeMappingPolicy.js';
 import {
+  analyzeAndExtractFullDocument,
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
+import PDFParserService from '../../services/pdfParserService.js';
 import {
   addEvent,
   approveModel,
@@ -86,6 +95,7 @@ import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
   getStatementPackDetail,
   listStatementPacks,
+  recomputeStatementPackForOrganization,
   syncStatementToPack,
 } from '../../services/financialStatementPackService.js';
 import { buildStatementAnalytics } from '../../services/financeStatementAnalyticsService.js';
@@ -146,6 +156,78 @@ function normalizeStatementTypeInput(value: unknown): 'P&L' | 'BS' | 'CF' | null
   if (normalized === 'BS') return 'BS';
   if (normalized === 'CF') return 'CF';
   return null;
+}
+
+const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
+
+async function extractTextFromFile(
+  filePath: string,
+  originalName: string
+): Promise<{ text: string; parseMethod: string }> {
+  const ext = (originalName || '').toLowerCase().split('.').pop() || '';
+  if (ext === 'pdf') {
+    const text = await PDFParserService.extractText(filePath);
+    return { text, parseMethod: 'text_extraction' };
+  }
+  if (ext === 'csv') {
+    const fs = await import('fs');
+    const text = fs.readFileSync(filePath, 'utf-8');
+    return { text, parseMethod: 'csv_import' };
+  }
+  if (ext === 'xlsx' || ext === 'xls') {
+    try {
+      const fs = await import('fs');
+      const XLSX = await import('xlsx');
+      const buffer = fs.readFileSync(filePath);
+      const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+
+      const skipSheetPattern =
+        /^(cover|okładka|spis\s+treści|table\s+of\s+contents|notes|noty|index|summary|disclaimer|info)$/i;
+
+      const financialSheetPattern =
+        /bilans|balance|p&l|profit|loss|income|zysk|strat|cash\s*flow|przepływ|rachunek|statement|sprawozdanie|bs\b|pl\b|cf\b|aktywa|pasywa|equity|kapitał/i;
+
+      const rankedSheets: Array<{ name: string; priority: number; csv: string }> = [];
+
+      for (const sheetName of wb.SheetNames) {
+        if (skipSheetPattern.test(sheetName.trim())) continue;
+
+        const ws = wb.Sheets[sheetName];
+        if (!ws || !ws['!ref']) continue;
+
+        const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t', blankrows: false });
+        const lineCount = csv.split('\n').filter((l: string) => l.trim().length > 0).length;
+        if (lineCount < 3) continue;
+
+        const numericPattern = /\d{1,3}[,. \u00A0]\d{3}/;
+        const numericLines = csv.split('\n').filter((l: string) => numericPattern.test(l)).length;
+
+        let priority = numericLines;
+        if (financialSheetPattern.test(sheetName)) priority += 200;
+        if (numericLines > 5) priority += 50;
+
+        rankedSheets.push({ name: sheetName, priority, csv });
+      }
+
+      rankedSheets.sort((a, b) => b.priority - a.priority);
+
+      const lines: string[] = [];
+      for (const sheet of rankedSheets) {
+        lines.push(`=== Sheet: ${sheet.name} ===`);
+        const cleanedLines = sheet.csv
+          .split('\n')
+          .filter((l: string) => l.trim().length > 0)
+          .filter((l: string) => !/^\t+$/.test(l));
+        lines.push(...cleanedLines);
+        lines.push('');
+      }
+
+      return { text: lines.join('\n').trim(), parseMethod: 'text_extraction' };
+    } catch {
+      return { text: '', parseMethod: 'manual' };
+    }
+  }
+  return { text: '', parseMethod: 'manual' };
 }
 
 /**
@@ -584,6 +666,278 @@ router.get(
     const statements = await listStatements(organizationId, readiness);
     return res.json({
       data: { statements, count: statements.length },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/statements/upload-and-analyze',
+  upload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
+    }
+    if (!userId || !organizationId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const traceId = getFinanceTraceId((req as any).correlationId);
+    await ensureCanonicalRegistryInDatabase();
+
+    let text: string;
+    let parseMethod: string;
+    try {
+      const result = await extractTextFromFile(file.path, file.originalname);
+      text = result.text.replace(/\0/g, '');
+      parseMethod = result.parseMethod;
+    } catch (error: any) {
+      return res.status(422).json({
+        error: 'File extraction failed',
+        detail: error?.message,
+      });
+    }
+
+    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod)
+      ? parseMethod
+      : 'manual';
+
+    logFinanceEvent('statement.smartUpload.started', {
+      traceId,
+      organizationId,
+      userId,
+      fileName: file.originalname,
+      sizeBytes: file.size,
+    });
+
+    const analysis = await analyzeAndExtractFullDocument({
+      filePath: file.path,
+      fileName: file.originalname,
+      traceId,
+    });
+
+    if (!analysis || analysis.sections.length === 0) {
+      const detection = detectStatementType(text);
+      const documentProfile = classifyStatementDocument({
+        fileName: file.originalname,
+        parseMethod: effectiveParseMethod,
+        text,
+      });
+      const statementId = await createStatement({
+        organizationId,
+        statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
+        periodStart: detection.periodStart || `${new Date().getFullYear()}-01-01`,
+        periodEnd: detection.periodEnd || `${new Date().getFullYear()}-12-31`,
+        periodLabel: detection.periodLabel || undefined,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: detection.confidence,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        createdBy: userId,
+      });
+      const statementPackId = await syncStatementToPack(statementId);
+      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [`${text.substring(0, 100000)}`, statementId], {
+        fallback: false,
+      });
+
+      return res.status(201).json({
+        data: {
+          success: true,
+          mode: 'fallback',
+          statementPackId,
+          statementIds: [statementId],
+          analysis: null,
+          message: 'LLM analysis unavailable — created single statement with heuristic detection.',
+        },
+        meta: financeMeta(),
+      });
+    }
+
+    const createdStatements: Array<{ statementId: string; statementType: string; lineCount: number }> = [];
+    let packId: string | null = null;
+
+    for (const section of analysis.sections) {
+      const statementId = await createStatement({
+        organizationId,
+        statementType: section.statementType,
+        periodStart: analysis.periodStart || `${new Date().getFullYear()}-01-01`,
+        periodEnd: analysis.periodEnd || `${new Date().getFullYear()}-12-31`,
+        periodLabel: analysis.periodLabel || undefined,
+        currency: analysis.currency,
+        scaling: analysis.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: 0.9,
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document',
+        templateFamily: null,
+        createdBy: userId,
+      });
+
+      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [`${text.substring(0, 100000)}`, statementId], {
+        fallback: false,
+      });
+
+      const thisPackId = await syncStatementToPack(statementId);
+      if (!packId && thisPackId) packId = thisPackId;
+
+      if (packId && analysis.entityName) {
+        await dbRun(
+          `UPDATE financial_statement_packs SET entity_name = ? WHERE id = ? AND (entity_name IS NULL OR entity_name = '')`,
+          [analysis.entityName, packId]
+        );
+      }
+
+      const ingestRunId = await startStatementIngestRun({
+        statementId,
+        organizationId,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document',
+        templateFamily: null,
+        rawTextLength: text.length,
+        summary: { analysis: { entityName: analysis.entityName, sectionType: section.statementType } },
+        createdBy: userId,
+      });
+
+      const extractedLines = section.lines.map((line, idx) => ({
+        originalLabel: line.originalLabel,
+        value: line.value,
+        confidence: line.confidence,
+        sourceRow: line.sourceRow ?? idx + 1,
+        suggestedCanonicalId: line.suggestedCanonicalId || undefined,
+        suggestedCanonicalLabel: undefined as string | undefined,
+        isNonFinancial: false,
+      }));
+
+      let mappedLines = extractedLines;
+      try {
+        const autoMapped = await autoMapLines(extractedLines as any, section.statementType, {
+          organizationId,
+        });
+        if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
+      } catch (mapError) {
+        logger.warn('[V8 SmartUpload] Auto-map failed, saving raw lines', {
+          statementId,
+          statementType: section.statementType,
+          error: String(mapError),
+        });
+      }
+
+      const valuesToSave = mappedLines.map((line) => ({
+        canonicalLineId: (line as any).suggestedCanonicalId || null,
+        originalLabel: line.originalLabel,
+        value: line.value,
+        confidence: line.confidence,
+        sourceRow: line.sourceRow,
+        mappingStatus: ((line as any).suggestedCanonicalId ? 'auto' : 'unmapped') as 'auto' | 'unmapped',
+        isNonFinancial: !!(line as any).isNonFinancial,
+      }));
+
+      await saveStatementValues(statementId, valuesToSave);
+      await updateStatementStatus(statementId, 'imported');
+
+      try {
+        const validationResult = validateStatement(valuesToSave, section.statementType);
+        if (validationResult) {
+          await persistStatementValidationLedger({
+            statementId,
+            statementType: section.statementType,
+            messages: validationResult.messages || [],
+            values: valuesToSave.map((value) => ({
+              canonicalLineId: value.canonicalLineId,
+              value: Number(value.value || 0),
+              isNonFinancial: value.isNonFinancial,
+            })),
+          });
+          const readinessResult = evaluateStatementReadiness({
+            rawStatus: 'imported',
+            statementType: section.statementType,
+            validationStatus: validationResult.status,
+            currency: analysis.currency,
+            scaling: analysis.scaling,
+            validationMessages: validationResult.messages,
+            values: valuesToSave,
+          });
+          if (readinessResult) {
+            await updateStatementReadinessState(statementId, readinessResult);
+          }
+        }
+      } catch (validationError) {
+        logger.warn('[V8 SmartUpload] Validation/readiness failed, continuing', {
+          statementId,
+          error: String(validationError),
+        });
+      }
+
+      await updateStatementIngestRun({
+        ingestRunId,
+        currentStage: 'complete',
+        runStatus: 'completed',
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document',
+        templateFamily: null,
+        rawTextLength: text.length,
+      });
+
+      createdStatements.push({
+        statementId,
+        statementType: section.statementType,
+        lineCount: section.lines.length,
+      });
+    }
+
+    if (packId) {
+      try {
+        await recomputeStatementPackForOrganization(organizationId, packId);
+      } catch (recomputeError) {
+        logger.warn('[V8 SmartUpload] Pack recompute failed', {
+          packId,
+          error: String(recomputeError),
+        });
+      }
+    }
+
+    logFinanceEvent('statement.smartUpload.completed', {
+      traceId,
+      packId,
+      entityName: analysis.entityName,
+      sectionCount: analysis.sections.length,
+      statementIds: createdStatements.map((statement) => statement.statementId),
+    });
+
+    return res.status(201).json({
+      data: {
+        success: true,
+        mode: 'smart',
+        statementPackId: packId,
+        statementIds: createdStatements.map((statement) => statement.statementId),
+        statements: createdStatements,
+        analysis: {
+          entityName: analysis.entityName,
+          periodLabel: analysis.periodLabel,
+          periodStart: analysis.periodStart,
+          periodEnd: analysis.periodEnd,
+          currency: analysis.currency,
+          scaling: analysis.scaling,
+          language: analysis.language,
+          documentDescription: analysis.documentDescription,
+          sectionTypes: analysis.sections.map((section) => section.statementType),
+          totalLines: analysis.sections.reduce((sum, section) => sum + section.lines.length, 0),
+          warnings: analysis.warnings,
+        },
+      },
       meta: financeMeta(),
     });
   }),

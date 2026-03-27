@@ -28,6 +28,7 @@ vi.mock('@/services/api', () => {
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    uploadAndAnalyzeStatement: vi.fn(),
     detectStatement: vi.fn(),
     extractStatement: vi.fn(),
     mapStatement: vi.fn(),
@@ -56,6 +57,10 @@ import { FinancialStatementImportWizard } from '../../../src/components/Finance/
 describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockResolvedValue({
+      mode: 'legacy',
+      statementIds: ['statement-1'],
+    } as any);
     vi.mocked(Api.postMultipart).mockResolvedValue({
       mode: 'legacy',
       statementIds: ['statement-1'],
@@ -85,6 +90,38 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       expect(screen.getByText('financial-statement-mapping-editor')).toBeTruthy();
     });
   }
+
+  it('prefers governed upload-and-analyze before legacy fallback in the wizard', async () => {
+    const view = render(<FinancialStatementImportWizard />);
+    const fileInput = view.container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['revenue'], 'statement.csv', { type: 'text/csv' });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.uploadAndAnalyzeStatement).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Detection Results')).toBeTruthy();
+    });
+
+    expect(Api.postMultipart).not.toHaveBeenCalledWith('/api/finance-statements/upload-and-analyze', expect.any(FormData));
+  });
+
+  it('falls back to legacy upload-and-analyze in the wizard on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockRejectedValue({ status: 404 });
+
+    const view = render(<FinancialStatementImportWizard />);
+    const fileInput = view.container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['revenue'], 'statement.csv', { type: 'text/csv' });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+
+    await waitFor(() => {
+      expect(Api.postMultipart).toHaveBeenCalledWith('/api/finance-statements/upload-and-analyze', expect.any(FormData));
+      expect(screen.getByText('Detection Results')).toBeTruthy();
+    });
+  });
 
   it('prefers governed detect/extract/map and canonical lines before legacy fallback in the wizard manual flow', async () => {
     vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);

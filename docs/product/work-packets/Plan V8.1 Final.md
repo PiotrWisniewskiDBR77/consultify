@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `statement analytics V8 seam` recorded in `evidence/415-v81-broader-finance-statement-analytics-v8-seam.md`
-- reason: after model assumptions-save continuity landed, the next smallest honest residual was the statement analytics read still defaulting to the legacy finance-statements endpoint in the active statement-pack workspace
+- latest evidence: `import upload V8 seam` recorded in `evidence/416-v81-broader-finance-import-upload-v8-seam.md`
+- reason: after statement analytics continuity landed, the next smallest honest residual was the `Upload & Analyze` entrypoint in `FinancialStatementImportWizard` still defaulting to the legacy finance-statements upload route
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `active finance statement analytics continuity`
-- last accepted packet: `statement analytics V8 seam`
+- current packet: `active finance import upload continuity`
+- last accepted packet: `import upload V8 seam`
 - blocker: `none`
-- next action: `assess whether import upload continuity is the next smallest broader Finance packet after statement analytics closure`
+- next action: `assess whether broader Finance parity is now ready for bounded acceptance after import upload continuity closure`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

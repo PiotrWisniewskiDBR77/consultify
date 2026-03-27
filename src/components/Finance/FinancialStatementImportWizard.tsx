@@ -179,6 +179,17 @@ async function confirmStatementWithFallback(statementId: string) {
   }
 }
 
+async function uploadAndAnalyzeWithFallback(formData: FormData) {
+  try {
+    return await V8FinanceApi.uploadAndAnalyzeStatement(formData);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.postMultipart('/api/finance-statements/upload-and-analyze', formData);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -286,7 +297,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       formData.append('file', file);
 
       // Try smart upload first (LLM analyzes entire document)
-      const data = await Api.postMultipart('/api/finance-statements/upload-and-analyze', formData);
+      const data = await uploadAndAnalyzeWithFallback(formData);
 
       if (data.mode === 'smart' && data.analysis) {
         // LLM successfully analyzed the document — skip detect/extract steps

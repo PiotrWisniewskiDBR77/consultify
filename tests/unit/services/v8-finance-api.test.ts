@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
   v8Post: vi.fn(),
+  v8PostMultipart: vi.fn(),
   v8Delete: vi.fn(),
   v8Put: vi.fn(),
 }));
 
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
-import { v8Delete, v8Get, v8Post, v8Put } from '@/services/api/v8/client';
+import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from '@/services/api/v8/client';
 
 describe('V8FinanceApi', () => {
   beforeEach(() => {
@@ -378,6 +379,23 @@ describe('V8FinanceApi', () => {
     });
     expect(data.count).toBe(1);
     expect(data.statements[0].id).toBe('statement-1');
+  });
+
+  it('uploads and analyzes finance statements through the V8 namespace', async () => {
+    vi.mocked(v8PostMultipart).mockResolvedValue({
+      success: true,
+      mode: 'legacy',
+      statementIds: ['statement-1'],
+    } as any);
+
+    const formData = new FormData();
+    formData.append('file', new Blob(['revenue']), 'statement.csv');
+
+    const data = await V8FinanceApi.uploadAndAnalyzeStatement(formData);
+
+    expect(v8PostMultipart).toHaveBeenCalledWith('/finance/statements/upload-and-analyze', formData);
+    expect(data.mode).toBe('legacy');
+    expect(data.statementIds).toEqual(['statement-1']);
   });
 
   it('requests governed finance statement ratios from the V8 namespace', async () => {

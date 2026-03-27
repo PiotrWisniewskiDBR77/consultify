@@ -31,6 +31,19 @@ export async function v8Post<T>(path: string, body?: unknown): Promise<T> {
   return json.data;
 }
 
+export async function v8PostMultipart<T>(path: string, formData: FormData): Promise<T> {
+  const headers = getHeaders();
+  delete headers['Content-Type'];
+  const res = await fetchWithRetry(`${V8_BASE}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+    skipDefaultHeaders: true,
+  });
+  const json = await handleResponse<{ data: T }>(res, `V8 POST MULTIPART ${path}`);
+  return json.data;
+}
+
 export async function v8Put<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetchWithRetry(`${V8_BASE}${path}`, {
     method: 'PUT',

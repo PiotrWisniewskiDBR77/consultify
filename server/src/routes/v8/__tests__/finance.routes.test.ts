@@ -32,9 +32,12 @@ const mockBuildStatementAnalytics = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
 const mockClassifyStatementDocument = vi.fn();
 const mockConfirmStatement = vi.fn();
+const mockCreateStatement = vi.fn();
 const mockDetectStatementType = vi.fn();
 const mockEvaluateStatementReadiness = vi.fn();
+const mockEnsureCanonicalRegistryInDatabase = vi.fn();
 const mockExtractFinancialLines = vi.fn();
+const mockAnalyzeAndExtractFullDocument = vi.fn();
 const mockGetLatestStatementIngestRun = vi.fn();
 const mockLoadPersistedStatementCandidateRows = vi.fn();
 const mockLoadStatementSourceText = vi.fn();
@@ -42,15 +45,20 @@ const mockLocateStatementSections = vi.fn();
 const mockPersistStatementCandidateRows = vi.fn();
 const mockPersistStatementExtractedSections = vi.fn();
 const mockPersistStatementMappingCandidates = vi.fn();
+const mockPersistStatementValidationLedger = vi.fn();
 const mockRecordStatementQualityRun = vi.fn();
 const mockRecordStatementSourceArtifact = vi.fn();
 const mockResolveStatementColumnSelection = vi.fn();
 const mockResolveDuplicateSuggestedMappings = vi.fn();
+const mockRecomputeStatementPackForOrganization = vi.fn();
+const mockSaveStatementValues = vi.fn();
 const mockSnapshotCanonicalStatementVersion = vi.fn();
 const mockStartStatementIngestRun = vi.fn();
 const mockUpdateStatementMetadata = vi.fn();
+const mockUpdateStatementReadinessState = vi.fn();
 const mockUpdateStatementStatus = vi.fn();
 const mockUpdateStatementIngestRun = vi.fn();
+const mockValidateStatement = vi.fn();
 const mockSaveStatementValuesFlow = vi.fn();
 const mockRunFullAnalysis = vi.fn();
 const mockGetFinanceTraceId = vi.fn();
@@ -66,6 +74,7 @@ const mockIsLikelySubtotalOrAggregate = vi.fn();
 const mockIsNonFinancialByPolicy = vi.fn();
 const mockExtractFinancialLinesWithAnthropic = vi.fn();
 const mockExtractFinancialLinesWithOpenAI = vi.fn();
+const mockPdfExtractText = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
@@ -104,6 +113,8 @@ vi.mock('../../../services/financialModelingService.js', () => ({
 vi.mock('../../../services/financialStatementPackService.js', () => ({
   getStatementPackDetail: (...args: unknown[]) => mockGetStatementPackDetail(...args),
   listStatementPacks: (...args: unknown[]) => mockListStatementPacks(...args),
+  recomputeStatementPackForOrganization: (...args: unknown[]) =>
+    mockRecomputeStatementPackForOrganization(...args),
   syncStatementToPack: (...args: unknown[]) => mockSyncStatementToPack(...args),
 }));
 
@@ -120,6 +131,7 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   autoMapLines: (...args: unknown[]) => mockAutoMapLines(...args),
   classifyStatementDocument: (...args: unknown[]) => mockClassifyStatementDocument(...args),
   confirmStatement: (...args: unknown[]) => mockConfirmStatement(...args),
+  createStatement: (...args: unknown[]) => mockCreateStatement(...args),
   detectStatementType: (...args: unknown[]) => mockDetectStatementType(...args),
   evaluateStatementReadiness: (...args: unknown[]) => mockEvaluateStatementReadiness(...args),
   extractFinancialLines: (...args: unknown[]) => mockExtractFinancialLines(...args),
@@ -130,15 +142,26 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   persistStatementCandidateRows: (...args: unknown[]) => mockPersistStatementCandidateRows(...args),
   persistStatementExtractedSections: (...args: unknown[]) => mockPersistStatementExtractedSections(...args),
   persistStatementMappingCandidates: (...args: unknown[]) => mockPersistStatementMappingCandidates(...args),
+  persistStatementValidationLedger: (...args: unknown[]) =>
+    mockPersistStatementValidationLedger(...args),
   recordStatementQualityRun: (...args: unknown[]) => mockRecordStatementQualityRun(...args),
   recordStatementSourceArtifact: (...args: unknown[]) => mockRecordStatementSourceArtifact(...args),
   resolveStatementColumnSelection: (...args: unknown[]) => mockResolveStatementColumnSelection(...args),
   resolveDuplicateSuggestedMappings: (...args: unknown[]) => mockResolveDuplicateSuggestedMappings(...args),
+  saveStatementValues: (...args: unknown[]) => mockSaveStatementValues(...args),
   snapshotCanonicalStatementVersion: (...args: unknown[]) => mockSnapshotCanonicalStatementVersion(...args),
   startStatementIngestRun: (...args: unknown[]) => mockStartStatementIngestRun(...args),
   updateStatementMetadata: (...args: unknown[]) => mockUpdateStatementMetadata(...args),
+  updateStatementReadinessState: (...args: unknown[]) =>
+    mockUpdateStatementReadinessState(...args),
   updateStatementStatus: (...args: unknown[]) => mockUpdateStatementStatus(...args),
   updateStatementIngestRun: (...args: unknown[]) => mockUpdateStatementIngestRun(...args),
+  validateStatement: (...args: unknown[]) => mockValidateStatement(...args),
+}));
+
+vi.mock('../../../services/financeCanonicalRegistrySyncService.js', () => ({
+  ensureCanonicalRegistryInDatabase: (...args: unknown[]) =>
+    mockEnsureCanonicalRegistryInDatabase(...args),
 }));
 
 vi.mock('../../../services/financeDiagnosticsService.js', () => ({
@@ -162,8 +185,15 @@ vi.mock('../../../services/financeMappingPolicy.js', () => ({
 }));
 
 vi.mock('../../../services/openAIFinancialExtractionService.js', () => ({
+  analyzeAndExtractFullDocument: (...args: unknown[]) => mockAnalyzeAndExtractFullDocument(...args),
   extractFinancialLinesWithAnthropic: (...args: unknown[]) => mockExtractFinancialLinesWithAnthropic(...args),
   extractFinancialLinesWithOpenAI: (...args: unknown[]) => mockExtractFinancialLinesWithOpenAI(...args),
+}));
+
+vi.mock('../../../services/pdfParserService.js', () => ({
+  default: {
+    extractText: (...args: unknown[]) => mockPdfExtractText(...args),
+  },
 }));
 
 vi.mock('../../../services/valuationService.js', () => ({
@@ -321,6 +351,7 @@ describe('V8 finance read-only routes', () => {
       templateFamily: 'standard',
     });
     mockConfirmStatement.mockResolvedValue(undefined);
+    mockCreateStatement.mockResolvedValue('statement-1');
     mockDetectStatementType.mockReturnValue({
       statementType: 'P&L',
       periodStart: '2026-01-01',
@@ -372,8 +403,15 @@ describe('V8 finance read-only routes', () => {
       readiness: { readinessStatus: 'recoverable' },
       validation: { status: 'warnings', messages: [] },
     });
+    mockEnsureCanonicalRegistryInDatabase.mockResolvedValue(undefined);
+    mockAnalyzeAndExtractFullDocument.mockResolvedValue(null);
+    mockPersistStatementValidationLedger.mockResolvedValue(undefined);
+    mockRecomputeStatementPackForOrganization.mockResolvedValue(undefined);
+    mockSaveStatementValues.mockResolvedValue(undefined);
     mockSyncStatementToPack.mockResolvedValue('pack-1');
+    mockUpdateStatementReadinessState.mockResolvedValue(undefined);
     mockRunFullAnalysis.mockResolvedValue({ ratios: [] });
+    mockValidateStatement.mockReturnValue({ status: 'warnings', messages: [] });
     mockApplyLlmProposals.mockReturnValue({ applied: 0, skipped: 0 });
     mockApplySecondPassProposals.mockReturnValue({ applied: 0, skipped: 0 });
     mockMapDuplicateConflictLinesWithLLM.mockResolvedValue({ proposals: [], provider: 'openai', durationMs: 0 });
@@ -384,6 +422,7 @@ describe('V8 finance read-only routes', () => {
     mockIsNonFinancialByPolicy.mockReturnValue(false);
     mockExtractFinancialLinesWithAnthropic.mockResolvedValue(null);
     mockExtractFinancialLinesWithOpenAI.mockResolvedValue(null);
+    mockPdfExtractText.mockResolvedValue('Revenue 100');
     mockDbGet.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
     mockDbRun.mockResolvedValue(undefined);
@@ -877,6 +916,44 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.statements?.[0]?.id).toBe('statement-1');
     expect(mockListStatements).toHaveBeenCalledWith(ORG, 'recoverable');
+  });
+
+  it('POST /api/v8/finance/statements/upload-and-analyze returns envelope and delegates to the governed upload seam', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/statements/upload-and-analyze')
+      .attach('file', Buffer.from('%PDF-1.4 mock'), {
+        filename: 'statement.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        success: true,
+        mode: 'fallback',
+        statementPackId: 'pack-1',
+        statementIds: ['statement-1'],
+      })
+    );
+    expect(mockEnsureCanonicalRegistryInDatabase).toHaveBeenCalled();
+    expect(mockPdfExtractText).toHaveBeenCalled();
+    expect(mockAnalyzeAndExtractFullDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileName: 'statement.pdf',
+        traceId: 'trace-1',
+      })
+    );
+    expect(mockDetectStatementType).toHaveBeenCalledWith('Revenue 100');
+    expect(mockCreateStatement).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        sourceFileName: 'statement.pdf',
+        createdBy: UID,
+      })
+    );
+    expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
   });
 
   it('GET /api/v8/finance/statements/:id/ratios returns envelope and delegates to computeRatios', async () => {

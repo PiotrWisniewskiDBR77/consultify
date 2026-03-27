@@ -1,4 +1,4 @@
-import { v8Delete, v8Get, v8Post, v8Put } from './client';
+import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from './client';
 
 export const shouldFallbackToLegacyFinance = (error: any) => {
   const status = Number(error?.status);
@@ -367,6 +367,16 @@ export interface V8FinanceStatementAnalyticsResult {
   rows?: Array<Record<string, unknown>>;
 }
 
+export interface V8FinanceStatementUploadAnalyzeResult {
+  success: boolean;
+  mode: 'smart' | 'fallback' | 'legacy';
+  statementPackId?: string | null;
+  statementIds: string[];
+  analysis?: Record<string, unknown> | null;
+  statements?: Array<Record<string, unknown>>;
+  message?: string;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -444,6 +454,11 @@ export const V8FinanceApi = {
     v8Get<{ statements: V8FinanceStatementSummary[]; count: number }>('/finance/statements', {
       ...(params?.readiness ? { readiness: params.readiness } : {}),
     }),
+  uploadAndAnalyzeStatement: (formData: FormData) =>
+    v8PostMultipart<V8FinanceStatementUploadAnalyzeResult>(
+      '/finance/statements/upload-and-analyze',
+      formData
+    ),
   getStatement: (statementId: string) =>
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
   getStatementAnalytics: (statementId: string, params?: { level?: 1 | 2 | 3 }) =>
