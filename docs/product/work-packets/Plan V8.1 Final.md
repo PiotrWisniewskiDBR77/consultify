@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `5 / 13`
 - active lane: broader `Mobile` redesign
-- landed packets in the active lane: `3`
+- landed packets in the active lane: `4`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Mobile` redesign
-- latest evidence: `main layout mobile LLM compact seam` recorded in `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`
-- reason: the next honest broader-mobile seam was the full-width `LLMSelector` footprint inside the shared mobile header row, which is now reduced through the existing compact contract without changing topbar order
+- latest evidence: `main layout global rail mobile anchor seam` recorded in `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`
+- reason: the next honest broader-mobile seam was the shared right-edge global action rail anchoring, which now follows the mobile bottom-nav and safe-area geometry instead of desktop percentage positioning
 
 ### Next three lanes
 
@@ -334,10 +334,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`
 - split-brain map: `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
-- current packet: `assess the next bounded broader-mobile packet after shared mobile header compact LLM continuity`
-- last accepted packet: `main layout mobile LLM compact seam`
+- current packet: `assess the next bounded broader-mobile packet after shared global rail mobile anchoring continuity`
+- last accepted packet: `main layout global rail mobile anchor seam`
 - blocker: `none`
-- next action: `choose the next shared or module-level narrow-viewport packet beyond the compact model-selector seam, without silently broadening into a full responsive rewrite`
+- next action: `choose the next shared or module-level narrow-viewport packet beyond the compact header and global-rail seams, without silently broadening into a full responsive rewrite`
 - acceptance evidence: `none`
 
 #### broader `Chat / AI core` parity expansion

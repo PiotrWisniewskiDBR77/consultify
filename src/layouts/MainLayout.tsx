@@ -56,7 +56,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const chatPanelWidth = useAppStore((s) => s.chatPanelWidth);
   const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
-  const { isMobile } = useDeviceType();
+  const { isMobile, safeAreaInsets } = useDeviceType();
 
   const { t } = useTranslation();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
@@ -145,11 +145,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   // Only show sidebar/header for actual app views, not Welcome/Auth
   const isSessionView = true; // MainLayout is only used for session views
+  const mobileGlobalRailBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
 
   return (
     <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
-      <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-1 items-end pointer-events-none">
+      <div
+        data-testid="global-fab-rail"
+        className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-2' : 'right-0 top-[70%]'}`}
+        style={mobileGlobalRailBottomOffset ? { bottom: `${mobileGlobalRailBottomOffset}px` } : undefined}
+      >
         <div className="pointer-events-auto">
           <HelpToggleButton />
         </div>

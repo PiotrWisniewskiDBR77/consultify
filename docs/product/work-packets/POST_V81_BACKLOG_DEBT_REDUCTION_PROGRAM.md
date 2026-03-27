@@ -272,8 +272,8 @@ The next broader mobile lane is now explicitly promoted from visible backlog int
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Mobile` redesign scope honest and assess the next bounded broader-mobile packet after the first three shared-surface closures
-- `Agent B`: own runtime/surface closure for the active broader-mobile lane packet-by-packet, starting from shared table-preview, bulk-action, and compact-header mobile continuity
+- `Agent A`: keep broader `Mobile` redesign scope honest and assess the next bounded broader-mobile packet after the first four shared-surface closures
+- `Agent B`: own runtime/surface closure for the active broader-mobile lane packet-by-packet, starting from shared table-preview, bulk-action, compact-header, and global-rail mobile continuity
 
 ### Exit criteria
 
@@ -293,6 +293,7 @@ Current result:
 - the first real bounded broader-mobile packet landed in `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md` by moving shared `TableWithPreviewLayout` preview content onto a phone-width overlay seam,
 - the second bounded broader-mobile packet landed in `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md` by lifting shared `BulkActionBar` above the fixed `BottomNavigation` strip on phone widths,
 - the third bounded broader-mobile packet landed in `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md` by switching the shared `LLMSelector` into its existing compact mode inside `MainLayout` on mobile,
+- the fourth bounded broader-mobile packet landed in `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md` by moving the shared right-edge global action rail onto a mobile bottom-nav-aware anchor inside `MainLayout`,
 - broader module-level responsive and interaction breadth still remains, but accepted shell/mobile-nav continuity stays capped rather than silently reopened.
 
 ### Explicitly out of scope
@@ -336,7 +337,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | `Landing Anna backend analytics / dashboard breadth` | done | current Anna telemetry has been closed into bounded backend ingest plus operator readback continuity without broadening into full dashboard productization | `3` | agreed Anna analytics surface and data contract exist, are used, and are evidenced, or the need is explicitly retired |
 | `Landing Anna` broader voice UX / architecture | done | the bounded same-session continuity, channel truth, and public voice-config authority cuts are complete; remaining productization is broader architecture work that should not be smuggled into one more pseudo-small packet | `4` | live voice UX/architecture is either deliberately productized as a broader redesign or formally capped at the accepted bounded state |
 | broader canonical `/` and public marketing breadth | done | accepted landing shell/IA work plus five bounded canonical `/` narrative packets now close the smallest honest public-marketing seams; what remains is broader redesign work rather than another micro-packet | `5` | canonical `/` and public marketing breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
-| broader `Mobile` redesign | active | bounded mobile entry and overlay continuity are done and three shared mobile-surface packets have landed, but broader module-level responsive/product breadth still remains | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
+| broader `Mobile` redesign | active | bounded mobile entry and overlay continuity are done and four shared mobile-surface packets have landed, but broader module-level responsive/product breadth still remains | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
 | broader `Chat` / `AI core` parity expansion | visible, not promoted | current bounded work closed the active seam, not the full product/runtime breadth | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | visible, not promoted | accepted lane closed bounded read/runtime truth seams; broader write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
@@ -455,6 +456,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the fourth bounded packet inside broader `Mobile` redesign by anchoring the shared right-edge global action rail above the mobile bottom-nav strip in `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`, so the active lane now has a fourth shared-surface mobile closure without touching frozen layout order
 - 2026-03-27: landed the third bounded packet inside broader `Mobile` redesign by switching shared `LLMSelector` into its existing compact mode from `MainLayout` on mobile in `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`, so the active lane now has a third shared-surface mobile closure without changing topbar order
 - 2026-03-27: landed the second bounded packet inside broader `Mobile` redesign by lifting shared `BulkActionBar` above the fixed `BottomNavigation` strip on phone widths in `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`, so the active lane now has a second shared-surface mobile closure without reopening shell authority
 - 2026-03-27: landed the first real bounded packet inside broader `Mobile` redesign by moving shared `TableWithPreviewLayout` preview content onto a mobile overlay seam in `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`, so the active lane now has a code-backed shared-surface closure after the split-brain map

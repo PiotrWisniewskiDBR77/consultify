@@ -9,6 +9,7 @@ import { AppView } from '../../../src/types';
 
 const deviceState = {
   isMobile: true,
+  safeAreaInsets: { top: 0, bottom: 0, left: 0, right: 0 },
 };
 
 const llmSelectorMock = vi.fn(({ compact }: { compact?: boolean }) => (
@@ -133,6 +134,7 @@ import { MainLayout } from '../../../src/layouts/MainLayout';
 describe('MainLayout mobile LLM selector compact continuity', () => {
   beforeEach(() => {
     deviceState.isMobile = true;
+    deviceState.safeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
     llmSelectorMock.mockClear();
     appState.setIsSidebarOpen.mockReset();
     appState.toggleChatCollapse.mockReset();
@@ -155,5 +157,27 @@ describe('MainLayout mobile LLM selector compact continuity', () => {
     render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
 
     expect(screen.getByTestId('llm-selector-prop')).toHaveTextContent('regular');
+  });
+
+  it('anchors the global action rail above the mobile bottom navigation strip', () => {
+    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+
+    expect(screen.getByTestId('global-fab-rail')).toHaveStyle({ bottom: '76px' });
+  });
+
+  it('includes safe-area inset in the mobile global action rail offset', () => {
+    deviceState.safeAreaInsets = { top: 0, bottom: 10, left: 0, right: 0 };
+
+    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+
+    expect(screen.getByTestId('global-fab-rail')).toHaveStyle({ bottom: '86px' });
+  });
+
+  it('keeps desktop global action rail positioning outside mobile breakpoints', () => {
+    deviceState.isMobile = false;
+
+    render(<MainLayout breadcrumbs={['Home']}><div>content</div></MainLayout>);
+
+    expect(screen.getByTestId('global-fab-rail').style.bottom).toBe('');
   });
 });
