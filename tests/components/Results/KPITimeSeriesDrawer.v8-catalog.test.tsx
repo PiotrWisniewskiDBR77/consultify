@@ -28,6 +28,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     createKpiTimeSeriesValue: vi.fn(),
     updateKpi: vi.fn(),
     createKpiMapping: vi.fn(),
+    deleteKpiMapping: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -433,6 +434,91 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
         impactDirection: 'increase',
         confidence: 'medium',
       });
+    });
+  });
+
+  it('unlinks initiatives through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [
+        {
+          id: 'map-1',
+          kpiId: 'kpi-1',
+          initiativeId: 'init-1',
+          initiativeName: 'Initiative Alpha',
+        },
+      ],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.deleteKpiMapping).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle('Remove'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.deleteKpiMapping).toHaveBeenCalledWith('map-1');
+    });
+
+    expect(Api.delete).not.toHaveBeenCalledWith('/benefits/kpi-mappings/map-1');
+  });
+
+  it('falls back to legacy initiative unlink only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [
+        {
+          id: 'map-1',
+          kpiId: 'kpi-1',
+          initiativeId: 'init-1',
+          initiativeName: 'Initiative Alpha',
+        },
+      ],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.deleteKpiMapping).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle('Remove'));
+
+    await waitFor(() => {
+      expect(Api.delete).toHaveBeenCalledWith('/benefits/kpi-mappings/map-1');
     });
   });
 });

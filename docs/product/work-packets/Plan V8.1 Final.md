@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `7 / 13`
 - active lane: broader `Results / KPI / ROI` parity
-- landed packets in the active lane: `7`
+- landed packets in the active lane: `8`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Results / KPI / ROI` parity
-- latest evidence: `KPI initiative link V8 write seam` recorded in `evidence/374-v81-broader-results-kpi-roi-kpi-initiative-link-v8-write-seam.md`
-- reason: after KPI create, ROI drawer writes, KPI report creation, KPI time-series record, and KPI settings save continuity landed, the next smallest honest broader results packet was the visible initiative-link action inside `KPITimeSeriesDrawer`, which still posted through the legacy benefits mapping route even though the governed V8 mapping-create seam already existed
+- latest evidence: `KPI initiative unlink V8 write seam` recorded in `evidence/375-v81-broader-results-kpi-roi-kpi-initiative-unlink-v8-write-seam.md`
+- reason: after KPI create, ROI drawer writes, KPI report creation, KPI time-series record, KPI settings save, and KPI initiative link continuity landed, the next smallest honest broader results packet was the visible initiative-unlink action inside `KPITimeSeriesDrawer`, which still deleted through the legacy benefits mapping route because no governed V8 remove seam existed yet
 
 ### Next three lanes
 
@@ -356,10 +356,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
 - split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader results packet after KPI initiative link continuity`
-- last accepted packet: `KPI initiative link V8 write seam`
+- current packet: `assess the next bounded broader results packet after KPI initiative unlink continuity`
+- last accepted packet: `KPI initiative unlink V8 write seam`
 - blocker: `none`
-- next action: `choose the next smallest honest broader results packet after KPI initiative link continuity, likely among KPI unlink, KPI delete, or a single deviation-case mutation seam, without smuggling in the whole KPI operator drawer mutation stack at once`
+- next action: `choose the next smallest honest broader results packet after KPI initiative unlink continuity, likely KPI delete or a single deviation-case mutation seam, without smuggling in the whole KPI operator drawer mutation stack at once`
 - acceptance evidence: `none`
 
 #### broader `Finance` parity

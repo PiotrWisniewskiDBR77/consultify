@@ -4,10 +4,11 @@ vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
   v8Post: vi.fn(),
   v8Put: vi.fn(),
+  v8Delete: vi.fn(),
 }));
 
 import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
-import { v8Get, v8Post, v8Put } from '@/services/api/v8/client';
+import { v8Delete, v8Get, v8Post, v8Put } from '@/services/api/v8/client';
 
 describe('V8ResultsApi', () => {
   beforeEach(() => {
@@ -230,6 +231,15 @@ describe('V8ResultsApi', () => {
     });
     expect(data.id).toBe('map-1');
     expect(data.initiativeId).toBe('init-1');
+  });
+
+  it('requests governed KPI mapping delete from the V8 namespace', async () => {
+    vi.mocked(v8Delete).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.deleteKpiMapping('map-1');
+
+    expect(v8Delete).toHaveBeenCalledWith('/results/kpi-mappings/map-1');
+    expect(data.success).toBe(true);
   });
 
   it('requests governed KPI report create from the V8 namespace', async () => {

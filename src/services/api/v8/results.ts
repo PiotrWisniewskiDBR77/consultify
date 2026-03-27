@@ -1,4 +1,4 @@
-import { v8Get, v8Post, v8Put } from './client';
+import { v8Delete, v8Get, v8Post, v8Put } from './client';
 
 export const shouldFallbackToLegacyResults = (error: any) => {
   const status = Number(error?.status);
@@ -308,6 +308,10 @@ export interface V8ResultsCreateKpiMappingResponse {
   kpiId: string;
 }
 
+export interface V8ResultsDeleteKpiMappingResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiReportPayload {
   periodStart: string;
   periodEnd?: string | null;
@@ -381,6 +385,10 @@ export const V8ResultsApi = {
     v8Put<V8ResultsUpdateKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`, payload),
   createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
     v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
+  deleteKpiMapping: (mappingId: string) =>
+    v8Delete<V8ResultsDeleteKpiMappingResponse>(
+      `/results/kpi-mappings/${encodeURIComponent(mappingId)}`,
+    ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
   updateRoiInitiativeAssumptions: (

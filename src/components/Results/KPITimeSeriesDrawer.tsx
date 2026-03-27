@@ -400,7 +400,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       if (!mappingId) return;
       setMappingBusy(true);
       try {
-        await Api.delete(`/benefits/kpi-mappings/${mappingId}`);
+        try {
+          await V8ResultsApi.deleteKpiMapping(mappingId);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          await Api.delete(`/benefits/kpi-mappings/${mappingId}`);
+        }
         fetchData();
         onValueRecorded?.();
       } catch {

@@ -319,6 +319,34 @@ router.post(
 );
 
 /**
+ * DELETE /api/v8/results/kpi-mappings/:mappingId
+ * Bounded initiative <-> KPI mapping remove seam for the active Results surfaces.
+ */
+router.delete(
+  '/kpi-mappings/:mappingId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const mappingId = typeof req.params.mappingId === 'string' ? req.params.mappingId.trim() : '';
+    if (!mappingId) {
+      return res.status(400).json({
+        error: 'mappingId is required',
+        code: 'RESULTS_KPI_MAPPING_ID_REQUIRED',
+      });
+    }
+
+    await dbRun(`DELETE FROM initiative_kpi_mappings WHERE id = ? AND organization_id = ?`, [
+      mappingId,
+      organizationId,
+    ]);
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/results/kpis/:kpiId/drawer-detail
  * Bounded KPI drawer bridge for time-series and open deviation-case continuity.
  */

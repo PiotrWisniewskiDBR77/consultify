@@ -342,6 +342,19 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('DELETE /api/v8/results/kpi-mappings/:mappingId removes a governed KPI mapping', async () => {
+    const app = createApp();
+    const res = await request(app).delete('/api/v8/results/kpi-mappings/map-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM initiative_kpi_mappings'),
+      ['map-1', ORG],
+    );
+  });
+
   it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-reports').send({
