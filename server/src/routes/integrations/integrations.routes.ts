@@ -10,7 +10,10 @@ import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.j
 import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
 import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
 import { SlackServiceClass } from '../../services/slackService.js';
+import { CONNECTORS } from '../../services/integrationHubService.js';
+import { issueSyncExternalAuthSession } from '../../services/syncExternalAuthSessionService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
+import { setConnectorAuthState } from '../../services/v8/pmSyncTruthService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
@@ -21,6 +24,12 @@ const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
+
+const CONNECTOR_ALIAS_MAP: Record<string, string> = {
+  microsoft_teams: 'teams',
+  google_workspace: 'gmail',
+  google: 'gmail',
+};
 
 type ConnectorSchemaIntegrationRow = {
   id: string;
@@ -104,6 +113,131 @@ async function tryGetColumns(table: string): Promise<Set<string>> {
   } catch {
     return new Set();
   }
+}
+
+function normalizeConnectorId(provider: string): string {
+  const normalized = String(provider || '')
+    .trim()
+    .toLowerCase();
+  return CONNECTOR_ALIAS_MAP[normalized] || normalized;
+}
+
+function buildExternalAuthCallbackUrl(req: Request, state: string): string {
+  const forwardedProto = req.get('x-forwarded-proto');
+  const forwardedHost = req.get('x-forwarded-host');
+  if (forwardedProto && forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
+  }
+
+  return `${req.protocol}://${req.get('host')}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
+}
+
+function getConfiguredFields(
+  configFields: string[],
+  config: Record<string, unknown>
+): string[] {
+  return configFields.filter((field) => {
+    const value = config[field];
+    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+  });
+}
+
+function getPendingOnboardingStatus(
+  authType: string,
+  configFields: string[],
+  configuredFields: string[]
+) {
+  const hasAllRequiredFields =
+    configFields.length === 0 || configuredFields.length >= configFields.length;
+
+  if (authType === 'oauth2') {
+    return hasAllRequiredFields
+      ? ('pending_external_auth' as const)
+      : ('pending_external_auth_or_configuration' as const);
+  }
+
+  return hasAllRequiredFields
+    ? ('configuration_submitted_pending_validation' as const)
+    : ('pending_configuration' as const);
+}
+
+async function connectGovernedConnectorIntegration(input: {
+  req: Request;
+  organizationId: string;
+  actorId: string;
+  provider: string;
+  name?: string;
+  config?: Record<string, unknown>;
+}): Promise<{
+  success: true;
+  id: string;
+  onboardingStatus:
+    | 'pending_external_auth_or_configuration'
+    | 'pending_external_auth'
+    | 'pending_configuration'
+    | 'configuration_submitted_pending_validation';
+  authUrl: string | null;
+}> {
+  const connectorId = normalizeConnectorId(input.provider);
+  const connector = CONNECTORS[connectorId];
+  if (!connector) {
+    throw new Error(`Unknown connector: ${input.provider}`);
+  }
+
+  const integrationId = uuidv4();
+  const integrationName = input.name?.trim() || connector.name;
+  const config = input.config || {};
+  const configuredFields = getConfiguredFields(connector.configFields, config);
+  const onboardingStatus = getPendingOnboardingStatus(
+    connector.authType,
+    connector.configFields,
+    configuredFields
+  );
+  const scopes = connector.capabilities.map((capability) => `read:${capability}`);
+
+  await dbRun(
+    `INSERT INTO integrations (
+      id, organization_id, connector_id, name, category,
+      status, config, capabilities, auth_type, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    [
+      integrationId,
+      input.organizationId,
+      connector.id,
+      integrationName,
+      connector.category,
+      'pending',
+      JSON.stringify(config),
+      JSON.stringify(scopes),
+      connector.authType,
+    ]
+  );
+
+  let authUrl: string | null = null;
+
+  if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+    await setConnectorAuthState({
+      connectorId: connector.id,
+      organizationId: input.organizationId,
+      targetState: 'connecting',
+      transitionedBy: input.actorId,
+      reason: 'canonical_integrations_connect_initiated',
+    });
+    const session = issueSyncExternalAuthSession({
+      integrationId,
+      organizationId: input.organizationId,
+      connectorId: connector.id,
+      mode: 'connect',
+    });
+    authUrl = buildExternalAuthCallbackUrl(input.req, session.state);
+  }
+
+  return {
+    success: true,
+    id: integrationId,
+    onboardingStatus,
+    authUrl,
+  };
 }
 
 async function connectIntegrationRow(input: {
@@ -566,6 +700,27 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const provider = String(req.params.provider || '').trim();
     if (!provider) return res.status(400).json({ error: 'Provider is required' });
+
+    const cols = await tryGetColumns('integrations');
+    if (cols.has('connector_id') && cols.has('config')) {
+      try {
+        const result = await connectGovernedConnectorIntegration({
+          req,
+          organizationId: orgId,
+          actorId: req.user?.id || 'system',
+          provider,
+          name: req.body?.name,
+          config: (req.body?.config || {}) as Record<string, unknown>,
+        });
+        return res.status(201).json(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to connect';
+        if (message.includes('Unknown connector:')) {
+          return res.status(404).json({ error: message });
+        }
+        throw error;
+      }
+    }
 
     const { config, name, type } = req.body || {};
     const result = await connectIntegrationRow({

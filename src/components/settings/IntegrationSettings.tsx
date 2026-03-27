@@ -519,11 +519,20 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         await (Api as any).updateIntegrationSettings?.(editingIntegrationId, config);
         toast.success('Integration settings updated!');
       } else {
-        // Use connectIntegration API method (provider slug/name)
-        await Api.connectIntegration(selectedProvider, config);
-        toast.success(
-          `${providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider} connected successfully!`
-        );
+        const result = await Api.connectIntegration(selectedProvider, config);
+        if (result?.authUrl) {
+          window.open(result.authUrl, '_blank', 'width=600,height=700');
+          toast.success('Authorization started. Finish the external auth step to complete setup.');
+        } else if (
+          result?.onboardingStatus === 'pending_external_auth_or_configuration' ||
+          result?.onboardingStatus === 'pending_configuration'
+        ) {
+          toast.success('Setup started. Complete the required configuration fields to continue.');
+        } else if (result?.onboardingStatus === 'configuration_submitted_pending_validation') {
+          toast.success('Configuration submitted. Validation is still pending.');
+        } else {
+          toast.success('Integration setup started.');
+        }
       }
 
       await fetchIntegrations();

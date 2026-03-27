@@ -10,12 +10,16 @@ const {
   mockDbRun,
   mockGetTableColumns,
   mockListGovernedIntegrations,
+  mockIssueSyncExternalAuthSession,
+  mockSetConnectorAuthState,
 } = vi.hoisted(() => ({
   mockDbAll: vi.fn(),
   mockDbGet: vi.fn(),
   mockDbRun: vi.fn(),
   mockGetTableColumns: vi.fn(),
   mockListGovernedIntegrations: vi.fn(),
+  mockIssueSyncExternalAuthSession: vi.fn(),
+  mockSetConnectorAuthState: vi.fn(),
 }));
 
 vi.mock('../../utils/DbPromise.js', () => ({
@@ -30,6 +34,14 @@ vi.mock('../../utils/dbSchema.js', () => ({
 
 vi.mock('../../services/v8/pmSyncInventoryService.js', () => ({
   listGovernedIntegrations: (...args: unknown[]) => mockListGovernedIntegrations(...args),
+}));
+
+vi.mock('../../services/syncExternalAuthSessionService.js', () => ({
+  issueSyncExternalAuthSession: (...args: unknown[]) => mockIssueSyncExternalAuthSession(...args),
+}));
+
+vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
+  setConnectorAuthState: (...args: unknown[]) => mockSetConnectorAuthState(...args),
 }));
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
@@ -103,6 +115,25 @@ describe('canonical integrations readback continuity', () => {
         },
       },
     ]);
+    mockIssueSyncExternalAuthSession.mockReturnValue({
+      state: 'state-1',
+      integrationId: 'int-created',
+      organizationId: 'org-1',
+      connectorId: 'jira',
+      mode: 'connect',
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 60_000,
+    });
+    mockSetConnectorAuthState.mockResolvedValue({
+      recordId: 'auth-1',
+      connectorId: 'jira',
+      organizationId: 'org-1',
+      authState: 'connecting',
+      previousState: null,
+      transitionedAt: '2026-03-27T20:10:00.000Z',
+      transitionedBy: 'user-1',
+      reason: 'canonical_integrations_connect_initiated',
+    });
   });
 
   it('GET /api/integrations exposes governed pending sync truth on canonical org surface', async () => {
@@ -124,5 +155,40 @@ describe('canonical integrations readback continuity', () => {
         config: { site_url: 'https://acme.atlassian.net' },
       }),
     ]);
+  });
+
+  it('POST /api/integrations/connect/:provider creates governed pending connect truth on canonical entrypoint', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/integrations', integrationsRoutes);
+
+    const res = await request(app).post('/api/integrations/connect/jira').send({
+      config: {
+        site_url: 'https://acme.atlassian.net',
+        cloud_id: 'cloud-1',
+      },
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.authUrl).toContain('/api/sync-hub/external-auth/callback?state=');
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: 'org-1',
+      targetState: 'connecting',
+      transitionedBy: 'user-1',
+      reason: 'canonical_integrations_connect_initiated',
+    });
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO integrations'),
+      expect.arrayContaining([
+        'org-1',
+        'jira',
+        'Jira',
+        'project_management',
+        'pending',
+      ])
+    );
   });
 });
