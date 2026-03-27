@@ -25,6 +25,7 @@ import { FeatureFlagsDevToolsToggleButton } from '../components/settings/Feature
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
+import { useDeviceType } from '../hooks/useDeviceType';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { AppView } from '../types';
@@ -55,6 +56,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const chatPanelWidth = useAppStore((s) => s.chatPanelWidth);
   const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
+  const { isMobile } = useDeviceType();
 
   const { t } = useTranslation();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
@@ -235,7 +237,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="flex items-center gap-4">
               <SystemHealth />
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-              <LLMSelector />
+              <LLMSelector compact={isMobile} />
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
 
               <TaskDropdown />
