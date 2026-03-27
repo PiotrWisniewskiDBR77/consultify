@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: sixteenth broader sync packet recorded in `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`
-- reason: after canonical connect initiation continuity landed, older settings surfaces still used the alias connect route and therefore kept a second org-level authority seam open for governed sync initiation
+- latest evidence: residual assessment recorded in `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md`
+- reason: after both org-level connect entrypoints were aligned, no thinner honest authority packet remained before real governed refresh execution continuity
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`
+- current packet: `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether real governed refresh execution continuity or deeper authority alignment is now the next smallest honest broader-sync packet`
+- next action: `promote real governed refresh execution continuity as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

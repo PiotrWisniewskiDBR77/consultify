@@ -437,7 +437,9 @@ Current status: `active`
 - [x] assessed whether legacy alias /api/integrations/:provider/connect authority continuity or real governed refresh execution continuity is now the next smallest honest broader-sync packet
 - [x] sixteenth real bounded packet landed around legacy alias /api/integrations/:provider/connect authority continuity on the governed connector path
 - [x] focused regression added for legacy alias connect authority continuity across route and older settings surfaces
-- [ ] assess whether real governed refresh execution continuity or deeper authority alignment is now the next smallest honest broader-sync packet
+- [x] assessed whether real governed refresh execution continuity or deeper authority alignment is now the next smallest honest broader-sync packet
+- [x] recorded post-org-surface alignment residual assessment confirming no thinner honest authority packet remains before real governed refresh execution continuity
+- [ ] promote real governed refresh execution continuity as the next honest broader-sync implementation step
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1257,6 +1259,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: recorded the broader `Sync` post-org-surface alignment residual assessment in `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md`, confirming that no thinner honest authority packet remains before real governed refresh execution continuity
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Sync` completion by moving alias `/api/integrations/:provider/connect` initiation onto the same governed connector path in `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`, so older settings surfaces no longer reopen a second org-level authority seam for starting broader sync setup
 - 2026-03-27: landed the fifteenth real bounded packet inside broader `Sync` completion by moving canonical `/api/integrations/connect/:provider` initiation onto the governed connector path in `evidence/459-v81-broader-sync-canonical-connect-initiation-authority-continuity-seam.md`, so the main org-level connect surface no longer claims immediate connection where governed broader-sync truth is still only pending or awaiting external authorization
 - 2026-03-27: landed the fourteenth real bounded packet inside broader `Sync` completion by teaching canonical org-level `/api/integrations` readback to surface governed connector-schema pending truth in `evidence/458-v81-broader-sync-canonical-integrations-readback-continuity-seam.md`, so older org settings surfaces no longer label governed pending setup rows as if they were already connected and ready
