@@ -156,8 +156,17 @@ export function useFinanceData(
 
   const loadValuations = useCallback(async () => {
     try {
-      const data = await Api.get('/api/economics/valuations');
-      const arr = Array.isArray((data as any)?.valuations) ? (data as any).valuations : [];
+      let arr: any[] = [];
+      try {
+        const data = await V8FinanceApi.getValuations();
+        arr = Array.isArray(data?.valuations) ? data.valuations : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/economics/valuations');
+        arr = Array.isArray((data as any)?.valuations) ? (data as any).valuations : [];
+      }
       setLoadError(null);
       setIsUsingDemoData(false);
       setValuations(arr);

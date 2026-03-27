@@ -94,6 +94,29 @@ describe('V8FinanceApi', () => {
     expect(data.models[0].name).toBe('Revenue forecast');
   });
 
+  it('requests governed finance valuations from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      valuations: [
+        {
+          id: 'valuation-1',
+          title: 'DCF valuation',
+          status: 'draft',
+          source_type: 'financial_model',
+          currency: 'PLN',
+          horizon_years: 5,
+          updated_at: '2026-03-27T10:00:00.000Z',
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8FinanceApi.getValuations();
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/valuations');
+    expect(data.count).toBe(1);
+    expect(data.valuations[0].title).toBe('DCF valuation');
+  });
+
   it('requests governed finance analysis ratios from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       ratios: [

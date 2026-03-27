@@ -291,6 +291,7 @@ Current result:
 - the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`,
 - the active lane split-brain map is recorded in `evidence/386-v81-broader-finance-parity-split-brain-map.md`,
 - the first real bounded broader finance packet landed in `evidence/387-v81-broader-finance-models-list-read-v8-seam.md` by moving visible finance models list/read continuity onto the governed V8 seam with bounded compatibility fallback,
+- the second real bounded broader finance packet landed in `evidence/388-v81-broader-finance-valuations-list-read-v8-seam.md` by moving visible finance valuations list/read continuity onto the governed V8 seam with bounded compatibility fallback,
 - the previously accepted bounded `Finance` lane stays capped rather than silently reopened into one unbounded finance rewrite.
 
 ### Explicitly out of scope
@@ -336,7 +337,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | done | accepted lane closed bounded read/runtime truth seams, and the sixteen broader write seams now close the smallest honest visible write residuals without broadening into a larger results redesign | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
-| broader `Finance` parity | active | accepted lane closed active analysis seams, and the first broader packet now closes visible models list/read continuity while statements, budgets, valuations, and wider writes remain | `9` | remaining finance breadth is closed or explicitly retired |
+| broader `Finance` parity | active | accepted lane closed active analysis seams, and the first two broader packets now close visible models and valuations list/read continuity while statements, budgets, and wider writes remain | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | visible, not promoted | accepted lane closed presence + lock indicators only; deeper realtime collaboration was never promoted | `12` | remaining collaboration breadth is closed or explicitly retired |
@@ -452,6 +453,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the second real bounded packet inside broader `Finance` parity by moving visible finance valuations list/read continuity onto the governed V8 seam in `evidence/388-v81-broader-finance-valuations-list-read-v8-seam.md`, so the active valuation surface no longer defaults to legacy economics reads during normal operation
 - 2026-03-27: landed the first real bounded packet inside broader `Finance` parity by moving visible finance models list/read continuity onto the governed V8 seam in `evidence/387-v81-broader-finance-models-list-read-v8-seam.md`, so the active models surface no longer defaults to legacy financial-modeling reads during normal operation
 - 2026-03-27: promoted broader `Finance` parity with charter `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`, recorded the split-brain map in `evidence/386-v81-broader-finance-parity-split-brain-map.md`, and selected visible finance models list/read continuity as the first bounded packet candidate
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ResultsHub` KPI-delete flow onto the governed V8 results seam in `evidence/383-v81-broader-results-kpi-roi-results-hub-delete-v8-write-seam.md`, accepted the lane in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`, and returned the program to held bounded state in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`

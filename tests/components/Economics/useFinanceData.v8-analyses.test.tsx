@@ -30,6 +30,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getModels: vi.fn(),
+    getValuations: vi.fn(),
     getAnalyses: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -173,5 +174,61 @@ describe('useFinanceData V8 analyses seam', () => {
     expect(V8FinanceApi.getModels).toHaveBeenCalled();
     expect(Api.get).toHaveBeenCalledWith('/api/financial-modeling/models');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy forecast');
+  });
+
+  it('prefers governed finance valuations before legacy economics fallback', async () => {
+    vi.mocked(V8FinanceApi.getValuations).mockResolvedValue({
+      valuations: [
+        {
+          id: 'valuation-1',
+          title: 'DCF valuation',
+          status: 'draft',
+          source_type: 'financial_model',
+          currency: 'PLN',
+          horizon_years: 5,
+          updated_at: '2026-03-27T10:00:00.000Z',
+        },
+      ],
+      count: 1,
+    } as any);
+
+    const { result } = renderHook(() => useFinanceData('valuation', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.valuations).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getValuations).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/economics/valuations');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('DCF valuation');
+  });
+
+  it('falls back to legacy finance valuations when V8 seam returns a bounded compatibility status', async () => {
+    vi.mocked(V8FinanceApi.getValuations).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockResolvedValue({
+      valuations: [
+        {
+          id: 'valuation-legacy-1',
+          title: 'Legacy valuation',
+          status: 'draft',
+          source_type: 'manual',
+          currency: 'PLN',
+          horizon_years: 4,
+          updated_at: '2026-03-27T10:05:00.000Z',
+        },
+      ],
+    } as any);
+
+    const { result } = renderHook(() => useFinanceData('valuation', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.valuations).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getValuations).toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/economics/valuations');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy valuation');
   });
 });

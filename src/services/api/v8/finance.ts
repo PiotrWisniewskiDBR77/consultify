@@ -60,6 +60,19 @@ export interface V8FinanceModelSummary {
   updated_at?: string | null;
 }
 
+export interface V8FinanceValuationSummary {
+  id: string;
+  title: string;
+  description?: string | null;
+  status?: string | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  horizon_years?: number | null;
+  currency?: string | null;
+  approved_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -99,6 +112,8 @@ export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
   getModels: () =>
     v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
+  getValuations: () =>
+    v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),
