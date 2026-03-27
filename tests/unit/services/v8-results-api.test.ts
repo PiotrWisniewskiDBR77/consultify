@@ -260,6 +260,19 @@ describe('V8ResultsApi', () => {
     expect(data.success).toBe(true);
   });
 
+  it('requests governed deviation-case RCA save from the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.updateDeviationCaseRca('case-1', {
+      rcaText: 'Root cause analysis details',
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/results/deviation-cases/case-1/rca', {
+      rcaText: 'Root cause analysis details',
+    });
+    expect(data.success).toBe(true);
+  });
+
   it('requests governed KPI report create from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       snapshotId: 'snap-1',

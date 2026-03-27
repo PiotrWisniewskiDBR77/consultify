@@ -320,6 +320,14 @@ export interface V8ResultsAcknowledgeDeviationCaseResponse {
   success: boolean;
 }
 
+export interface V8ResultsUpdateDeviationCaseRcaPayload {
+  rcaText?: string | null;
+}
+
+export interface V8ResultsUpdateDeviationCaseRcaResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiReportPayload {
   periodStart: string;
   periodEnd?: string | null;
@@ -403,6 +411,11 @@ export const V8ResultsApi = {
     v8Post<V8ResultsAcknowledgeDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/acknowledge`,
       {},
+    ),
+  updateDeviationCaseRca: (caseId: string, payload: V8ResultsUpdateDeviationCaseRcaPayload) =>
+    v8Put<V8ResultsUpdateDeviationCaseRcaResponse>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/rca`,
+      payload,
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),

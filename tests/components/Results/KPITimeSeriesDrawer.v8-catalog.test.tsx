@@ -31,6 +31,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     createKpiMapping: vi.fn(),
     deleteKpiMapping: vi.fn(),
     acknowledgeDeviationCase: vi.fn(),
+    updateDeviationCaseRca: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -696,6 +697,105 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
 
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/acknowledge', {});
+    });
+  });
+
+  it('saves deviation RCA through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        rcaText: '',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.updateDeviationCaseRca).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Explain the root cause...'), {
+      target: { value: 'Root cause analysis details' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.updateDeviationCaseRca).toHaveBeenCalledWith('case-1', {
+        rcaText: 'Root cause analysis details',
+      });
+    });
+
+    expect(Api.put).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/rca', expect.anything());
+  });
+
+  it('falls back to legacy deviation RCA save only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        rcaText: '',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.updateDeviationCaseRca).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Explain the root cause...'), {
+      target: { value: 'Root cause analysis details' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/rca', {
+        rcaText: 'Root cause analysis details',
+      });
     });
   });
 });

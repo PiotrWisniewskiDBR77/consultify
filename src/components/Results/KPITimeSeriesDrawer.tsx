@@ -498,7 +498,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     if (!openCase?.id) return;
     setCaseBusy(true);
     try {
-      await Api.put(`/benefits/deviation-cases/${openCase.id}/rca`, { rcaText: rcaDraft });
+      const payload = { rcaText: rcaDraft };
+      try {
+        await V8ResultsApi.updateDeviationCaseRca(openCase.id, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        await Api.put(`/benefits/deviation-cases/${openCase.id}/rca`, payload);
+      }
       fetchData();
     } finally {
       setCaseBusy(false);

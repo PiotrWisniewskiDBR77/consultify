@@ -399,6 +399,27 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('PUT /api/v8/results/deviation-cases/:caseId/rca saves governed deviation RCA', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
+
+    const app = createApp();
+    const res = await request(app).put('/api/v8/results/deviation-cases/case-1/rca').send({
+      rcaText: 'Root cause analysis details',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
+      ['case-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('SET rca_text = ?, status = CASE WHEN status = \'OPEN\' THEN \'IN_PROGRESS\' ELSE status END'),
+      ['Root cause analysis details', 'case-1', ORG],
+    );
+  });
+
   it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-reports').send({
