@@ -160,6 +160,23 @@ describe('V8FinanceApi', () => {
     expect(data.statement.statement_type).toBe('P&L');
   });
 
+  it('requests governed finance statement ratios from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [{ code: 'CURRENT_RATIO', name: 'Current Ratio', value: 1.42, status: 'ok' }],
+        coverageSummary: { total: 1, computed: 1, na: 0, coveragePct: 100 },
+      },
+    });
+
+    const data = await V8FinanceApi.getStatementRatios('statement-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1/ratios');
+    expect(data.ratios.statementId).toBe('statement-1');
+    expect(data.ratios.coverageSummary?.coveragePct).toBe(100);
+  });
+
   it('requests governed finance canonical lines from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       canonicalLines: [

@@ -22,6 +22,7 @@ import {
 } from '../../services/financialAnalysisService.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { listModels } from '../../services/financialModelingService.js';
+import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
   getStatementPackDetail,
   listStatementPacks,
@@ -137,6 +138,23 @@ router.get(
       data: { statement },
       meta: financeMeta(),
     });
+  }),
+);
+
+router.get(
+  '/statements/:statementId/ratios',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const statementId = String(req.params.statementId || '');
+    try {
+      const ratios = await computeRatios(statementId, organizationId);
+      return res.json({
+        data: { ratios },
+        meta: financeMeta(),
+      });
+    } catch (error: any) {
+      return res.status(404).json({ error: error?.message || 'Statement not found' });
+    }
   }),
 );
 

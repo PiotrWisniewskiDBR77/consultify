@@ -152,6 +152,29 @@ export interface V8FinanceCanonicalLineOption {
   taxonomy_version?: string | null;
 }
 
+export interface V8FinanceStatementRatio {
+  code: string;
+  name: string;
+  namePl?: string | null;
+  value: number | null;
+  status: string;
+  category?: string | null;
+  formula?: string | null;
+  formulaDescription?: string | null;
+  formulaDescriptionPl?: string | null;
+  unit?: string | null;
+  coveragePct?: number | null;
+  missingLines?: string[] | null;
+}
+
+export interface V8FinanceStatementRatioResult {
+  statementId: string;
+  periodLabel: string;
+  ratios: V8FinanceStatementRatio[];
+  coverageSummary?: { total: number; computed: number; na?: number; coveragePct: number };
+  compositeScores?: Record<string, unknown> | null;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -206,6 +229,8 @@ export const V8FinanceApi = {
     v8Get<{ pack: V8FinanceStatementPackDetail }>(`/finance/statement-packs/${packId}`),
   getStatement: (statementId: string) =>
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
+  getStatementRatios: (statementId: string) =>
+    v8Get<{ ratios: V8FinanceStatementRatioResult }>(`/finance/statements/${statementId}/ratios`),
   getCanonicalLines: () =>
     v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>('/finance/canonical-lines'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>

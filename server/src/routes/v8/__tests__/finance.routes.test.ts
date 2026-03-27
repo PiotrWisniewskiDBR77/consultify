@@ -16,6 +16,7 @@ const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
 const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
+const mockComputeRatios = vi.fn();
 const mockRunFullAnalysis = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
@@ -53,6 +54,10 @@ vi.mock('../../../services/valuationService.js', () => ({
 
 vi.mock('../../../services/budgetingService.js', () => ({
   listBudgets: (...args: unknown[]) => mockListBudgets(...args),
+}));
+
+vi.mock('../../../services/ratioAnalysisService.js', () => ({
+  computeRatios: (...args: unknown[]) => mockComputeRatios(...args),
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -174,6 +179,12 @@ describe('V8 finance read-only routes', () => {
       sourceStatementIds: [],
       createdAt: '2026-03-26T10:00:00.000Z',
       updatedAt: '2026-03-26T10:00:00.000Z',
+    });
+    mockComputeRatios.mockResolvedValue({
+      statementId: 'statement-1',
+      periodLabel: 'Q1 2026',
+      ratios: [],
+      coverageSummary: { total: 0, computed: 0, na: 0, coveragePct: 0 },
     });
     mockRunFullAnalysis.mockResolvedValue({ ratios: [] });
     mockDbGet.mockResolvedValue(null);
@@ -310,6 +321,24 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.statement?.id).toBe('statement-1');
     expect(res.body.data?.statement?.statement_type).toBe('P&L');
     expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
+  });
+
+  it('GET /api/v8/finance/statements/:id/ratios returns envelope and delegates to computeRatios', async () => {
+    mockComputeRatios.mockResolvedValue({
+      statementId: 'statement-1',
+      periodLabel: 'Q1 2026',
+      ratios: [{ code: 'CURRENT_RATIO', name: 'Current Ratio', value: 1.42, status: 'ok' }],
+      coverageSummary: { total: 1, computed: 1, na: 0, coveragePct: 100 },
+    });
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/statements/statement-1/ratios');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.ratios?.statementId).toBe('statement-1');
+    expect(res.body.data?.ratios?.coverageSummary?.coveragePct).toBe(100);
+    expect(mockComputeRatios).toHaveBeenCalledWith('statement-1', ORG);
   });
 
   it('GET /api/v8/finance/canonical-lines returns envelope and delegates to the canonical line query', async () => {
