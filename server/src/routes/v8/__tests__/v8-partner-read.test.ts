@@ -6,6 +6,7 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 
 const mockGetReferralAnalytics = vi.fn();
+const mockGetPartnerAttributions = vi.fn();
 const mockGetEarningsSummary = vi.fn();
 const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
@@ -25,6 +26,7 @@ vi.mock('../../../services/partnerOrgResolution.js', () => ({
 vi.mock('../../../services/partnerReferralService.js', () => ({
   default: {
     getReferralAnalytics: (...args: unknown[]) => mockGetReferralAnalytics(...args),
+    getPartnerAttributions: (...args: unknown[]) => mockGetPartnerAttributions(...args),
     createCampaignLink: (...args: unknown[]) => mockCreateCampaignLink(...args),
     deleteCampaignLink: (...args: unknown[]) => mockDeleteCampaignLink(...args),
   },
@@ -137,6 +139,17 @@ describe('V8 partner read bridge', () => {
       clicksByDay: [],
       clicksBySource: [],
     });
+    mockGetPartnerAttributions.mockResolvedValue([
+      {
+        id: 'attr-1',
+        organizationId: 'org-1',
+        organizationName: 'ACME GmbH',
+        attributionType: 'REFERRAL_LINK',
+        totalCommissionEarned: 120,
+        status: 'ACTIVE',
+        attributedAt: '2026-03-10',
+      },
+    ]);
     mockGetEarningsSummary.mockResolvedValue({
       totalEarned: 100,
       totalPending: 10,
@@ -211,6 +224,20 @@ describe('V8 partner read bridge', () => {
     const lo = await request(app).get('/api/v8/partner/referral-analytics?days=0');
     expect(lo.status).toBe(200);
     expect(mockGetReferralAnalytics).toHaveBeenCalledWith('partner-org-resolved', 1);
+  });
+
+  it('GET /api/v8/partner/attributions returns customer attributions with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/attributions?status=ACTIVE&limit=10&offset=5');
+
+    expect(res.status).toBe(200);
+    expect(mockGetPartnerAttributions).toHaveBeenCalledWith('partner-org-resolved', {
+      status: 'ACTIVE',
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.body.data.attributions[0].id).toBe('attr-1');
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
   it('GET /api/v8/partner/earnings-summary returns earnings with partner meta', async () => {

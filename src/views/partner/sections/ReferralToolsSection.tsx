@@ -21,6 +21,7 @@ import {
   Share2,
   Trash2,
   TrendingUp,
+  Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -28,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
+  type V8PartnerAttribution,
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerReferralAnalytics,
@@ -57,6 +59,17 @@ interface ReferralTools {
   campaignLinks: CampaignLink[];
 }
 
+interface ReferredCustomer {
+  id: string;
+  organizationId: string;
+  organizationName?: string;
+  attributionType: string;
+  referralCodeUsed?: string;
+  status: string;
+  totalCommissionEarned: number;
+  attributedAt: string;
+}
+
 interface ReferralToolsSectionProps {
   subsection?: 'referral-tools' | 'referral-analytics' | 'referred-organizations';
 }
@@ -67,6 +80,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const { t } = useTranslation();
   const [tools, setTools] = useState<ReferralTools | null>(null);
   const [v8Analytics, setV8Analytics] = useState<V8PartnerReferralAnalytics | null>(null);
+  const [referredCustomers, setReferredCustomers] = useState<ReferredCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showNewCampaign, setShowNewCampaign] = useState(false);
@@ -80,6 +94,20 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  const normalizeAttribution = useCallback(
+    (payload: any): ReferredCustomer => ({
+      id: String(payload?.id ?? ''),
+      organizationId: String(payload?.organizationId ?? ''),
+      organizationName: payload?.organizationName ? String(payload.organizationName) : undefined,
+      attributionType: String(payload?.attributionType ?? 'UNKNOWN'),
+      referralCodeUsed: payload?.referralCodeUsed ? String(payload.referralCodeUsed) : undefined,
+      status: String(payload?.status ?? 'PENDING'),
+      totalCommissionEarned: Number(payload?.totalCommissionEarned ?? 0),
+      attributedAt: String(payload?.attributedAt ?? ''),
+    }),
+    []
+  );
 
   const pageCopy = {
     'referral-tools': {
@@ -155,10 +183,39 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     }
   }, []);
 
+  const fetchReferredCustomers = useCallback(async () => {
+    if (subsection !== 'referred-organizations') {
+      setReferredCustomers([]);
+      return;
+    }
+
+    try {
+      const response = await V8PartnerApi.getAttributions();
+      setReferredCustomers(
+        Array.isArray(response?.attributions)
+          ? response.attributions.map((item: V8PartnerAttribution) => normalizeAttribution(item))
+          : []
+      );
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        setReferredCustomers([]);
+        return;
+      }
+      const response = await Api.get('/api/partners/attributions');
+      const legacyItems = Array.isArray(response?.data?.items)
+        ? response.data.items
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      setReferredCustomers(legacyItems.map((item: ReferredCustomer) => normalizeAttribution(item)));
+    }
+  }, [normalizeAttribution, subsection]);
+
   useEffect(() => {
     fetchTools();
     void fetchV8Analytics();
-  }, [fetchTools, fetchV8Analytics]);
+    void fetchReferredCustomers();
+  }, [fetchReferredCustomers, fetchTools, fetchV8Analytics]);
 
   // Copy to clipboard
   const copyToClipboard = useCallback(
@@ -359,6 +416,72 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {subsection === 'referred-organizations' && (
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-5 h-5 text-violet-400" />
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {t('partner.referrals.referredCustomersList', 'Referred customers')}
+              </h3>
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                {t(
+                  'partner.referrals.referredCustomersListDesc',
+                  'A governed customer list from partner attribution records.'
+                )}
+              </p>
+            </div>
+          </div>
+
+          {referredCustomers.length > 0 ? (
+            <div className="space-y-3">
+              {referredCustomers.map((customer) => (
+                <div
+                  key={customer.id}
+                  className="rounded-lg border border-white/5 bg-slate-50 dark:bg-navy-900/50 p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {customer.organizationName || customer.organizationId}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+                        {customer.attributionType.toLowerCase().replaceAll('_', ' ')}
+                        {customer.referralCodeUsed ? ` · ${customer.referralCodeUsed}` : ''}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-violet-500/15 px-2 py-1 text-xs font-medium text-violet-300">
+                      {customer.status.toLowerCase()}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm text-slate-400 dark:text-slate-500">
+                    <span>
+                      {t('partner.referrals.customerAttributedAt', 'Attributed')} {customer.attributedAt}
+                    </span>
+                    <span>
+                      {t('partner.referrals.customerCommissionEarned', 'Commission earned')} €
+                      {customer.totalCommissionEarned.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-white/10 p-6 text-center">
+              <p className="text-slate-400 dark:text-slate-500">
+                {t('partner.referrals.noReferredCustomers', 'No referred customers yet')}
+              </p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t(
+                  'partner.referrals.noReferredCustomersDesc',
+                  'When attributed organizations appear, they will be listed here.'
+                )}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

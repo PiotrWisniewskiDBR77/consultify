@@ -112,6 +112,7 @@ export interface Attribution {
   id: string;
   partnerOrgId: string;
   organizationId: string;
+  organizationName?: string;
   attributionType: AttributionType;
   referralCodeUsed?: string;
   signupCompletedAt?: string;
@@ -795,6 +796,7 @@ export async function getPartnerAttributions(
       id: row.id,
       partnerOrgId: row.partner_org_id,
       organizationId: row.organization_id,
+      organizationName: row.org_name || undefined,
       attributionType: row.attribution_type as AttributionType,
       referralCodeUsed: row.referral_code_used || undefined,
       signupCompletedAt: row.signup_completed_at || undefined,

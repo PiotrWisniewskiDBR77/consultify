@@ -43,6 +43,7 @@ export type {
 export { V8MultiplayerApi } from './multiplayer';
 export { V8MyWorkApi } from './my-work';
 export type {
+  V8PartnerAttribution,
   V8PartnerCommissionTransaction,
   V8PartnerCampaignCreatePayload,
   V8PartnerCampaignDeleteResult,

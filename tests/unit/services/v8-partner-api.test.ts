@@ -36,6 +36,24 @@ describe('V8PartnerApi', () => {
     expect(data.analytics.totalClicks).toBe(12);
   });
 
+  it('requests partner attributions from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      attributions: [
+        {
+          id: 'attr-1',
+          organizationId: 'org-1',
+          organizationName: 'ACME GmbH',
+          status: 'ACTIVE',
+        },
+      ],
+    });
+
+    const data = await V8PartnerApi.getAttributions();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/attributions');
+    expect(data.attributions[0].id).toBe('attr-1');
+  });
+
   it('requests partner earnings summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       earnings: {

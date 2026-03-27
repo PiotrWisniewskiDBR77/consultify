@@ -31,6 +31,7 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
+    getAttributions: vi.fn(),
     deleteCampaignLink: vi.fn(),
     getReferralAnalytics: vi.fn(),
     createCampaignLink: vi.fn(),
@@ -82,6 +83,80 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
       },
       days: 30,
     } as any);
+    vi.mocked(V8PartnerApi.getAttributions).mockResolvedValue({
+      attributions: [],
+    } as any);
+  });
+
+  it('prefers governed referred-customer list before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getAttributions).mockResolvedValue({
+      attributions: [
+        {
+          id: 'attr-1',
+          organizationId: 'org-1',
+          organizationName: 'ACME GmbH',
+          attributionType: 'REFERRAL_LINK',
+          totalCommissionEarned: 120,
+          status: 'ACTIVE',
+          attributedAt: '2026-03-10',
+        },
+      ],
+    } as any);
+
+    render(<ReferralToolsSection subsection="referred-organizations" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('ACME GmbH')).toBeInTheDocument();
+      expect(screen.getByText('active')).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.getAttributions).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/attributions');
+  });
+
+  it('falls back to legacy referred-customer list on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.getAttributions).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/referral-tools') {
+        return {
+          success: true,
+          data: {
+            referralCode: 'PARTNER-123',
+            referralLink: 'https://example.com/r/PARTNER-123',
+            referralLinkSlug: 'PARTNER-123',
+            campaignLinks: [],
+          },
+        } as any;
+      }
+      if (url === '/api/partners/attributions') {
+        return {
+          success: true,
+          data: {
+            items: [
+              {
+                id: 'attr-legacy-1',
+                organizationId: 'org-legacy-1',
+                organizationName: 'Legacy Customer',
+                attributionType: 'PROMO_CODE',
+                totalCommissionEarned: 0,
+                status: 'PENDING',
+                attributedAt: '2026-02-20',
+              },
+            ],
+          },
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<ReferralToolsSection subsection="referred-organizations" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Legacy Customer')).toBeInTheDocument();
+      expect(screen.getByText('pending')).toBeInTheDocument();
+    });
+
+    expect(Api.get).toHaveBeenCalledWith('/api/partners/attributions');
   });
 
   it('prefers governed campaign creation before legacy fallback', async () => {

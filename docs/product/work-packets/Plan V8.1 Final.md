@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Partner Program` parity
-- landed packets in the active lane: `2`
+- landed packets in the active lane: `3`
 
 ---
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `statement history read V8 seam`
-- last accepted packet: `statement history read V8 seam`
+- current packet: `referred customers list V8 seam`
+- last accepted packet: `referred customers list V8 seam`
 - blocker: `none`
-- next action: `assess whether referred-customer lifecycle/drill-down continuity is now the next smallest honest broader-partner packet or whether only heavier partner breadth remains`
+- next action: `assess whether referral-tools read continuity is now the next smallest honest broader-partner packet before deeper referred-customer lifecycle breadth`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

@@ -66,6 +66,24 @@ export interface V8PartnerCommissionTransaction {
   createdAt?: string;
 }
 
+export interface V8PartnerAttribution {
+  id: string;
+  partnerOrgId: string;
+  organizationId: string;
+  organizationName?: string;
+  attributionType: string;
+  referralCodeUsed?: string;
+  signupCompletedAt?: string;
+  firstPaymentAt?: string;
+  lifetimeValue?: number;
+  totalCommissionEarned?: number;
+  commissionRatePercent?: number;
+  commissionDurationMonths?: number;
+  status: string;
+  attributedAt: string;
+  createdAt?: string;
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -147,6 +165,7 @@ export const V8PartnerApi = {
       days: String(days),
     }),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
+  getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),
   getCommissionTransactions: () =>
     v8Get<{ transactions: V8PartnerCommissionTransaction[] }>('/partner/commission-transactions'),
   getPayouts: () => v8Get<{ payouts: V8PartnerPayoutHistoryItem[] }>('/partner/payouts'),
