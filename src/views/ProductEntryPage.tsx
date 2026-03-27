@@ -14,6 +14,7 @@ import { HowItWorksSection } from '../components/Landing/HowItWorksSection';
 import { InfoSections } from '../components/Landing/InfoSections';
 import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
 import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
+import { ProblemPlatformSection } from '../components/Landing/ProblemPlatformSection';
 import { TrustStrip } from '../components/Landing/TrustStrip';
 import { WhereItHappensSection } from '../components/Landing/WhereItHappensSection';
 import { LANDING_FILMS } from '../config/landingFilms';
@@ -111,6 +112,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
           onLaunchTrial={handleTrialClick}
           variant={landingVariant}
         />
+
+        <ProblemPlatformSection />
 
         <WhereItHappensSection />
 

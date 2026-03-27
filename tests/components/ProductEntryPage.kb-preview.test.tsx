@@ -33,6 +33,10 @@ vi.mock('@/components/Landing/TrustStrip', () => ({
   TrustStrip: () => <div>trust-strip</div>,
 }));
 
+vi.mock('@/components/Landing/ProblemPlatformSection', () => ({
+  ProblemPlatformSection: () => <div>problem-platform-section</div>,
+}));
+
 vi.mock('@/components/Landing/WhereItHappensSection', () => ({
   WhereItHappensSection: () => <div>where-it-happens-section</div>,
 }));
@@ -116,6 +120,7 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     );
 
     const hero = screen.getByText('epic-hero-section');
+    const problemPlatform = screen.getByText('problem-platform-section');
     const whereItHappens = screen.getByText('where-it-happens-section');
     const howItWorks = screen.getByText('how-it-works-section');
     const forWhom = screen.getByText('for-whom-section');
@@ -124,6 +129,10 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     const infoSections = screen.getByText('info-sections');
     const trustStrip = screen.getByText('trust-strip');
 
+    expect(hero.compareDocumentPosition(problemPlatform)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(problemPlatform.compareDocumentPosition(whereItHappens)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     expect(hero.compareDocumentPosition(whereItHappens)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(whereItHappens.compareDocumentPosition(howItWorks)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(howItWorks.compareDocumentPosition(forWhom)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);

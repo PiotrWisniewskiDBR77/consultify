@@ -273,7 +273,7 @@ The next broader public lane is now explicitly promoted from visible backlog int
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader canonical `/` and public marketing breadth scope honest and prepare the next bounded public-marketing packet after hero messaging and trust-strip order authority
+- `Agent A`: keep broader canonical `/` and public marketing breadth scope honest and prepare the next bounded public-marketing packet after hero, trust-strip, and problem-platform-pattern authority
 - `Agent B`: own runtime/surface closure for the active public-marketing lane now that the first bounded packet has landed
 
 ### Exit criteria
@@ -335,7 +335,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | `Landing Anna multilingual expansion` | done | accepted work now covers the full bounded public app-locale language set through Spanish, German, Japanese, and Arabic continuity packets | `2` | Anna supports the chosen target language set on the live public surface, or the scope is explicitly capped and retired |
 | `Landing Anna backend analytics / dashboard breadth` | done | current Anna telemetry has been closed into bounded backend ingest plus operator readback continuity without broadening into full dashboard productization | `3` | agreed Anna analytics surface and data contract exist, are used, and are evidenced, or the need is explicitly retired |
 | `Landing Anna` broader voice UX / architecture | done | the bounded same-session continuity, channel truth, and public voice-config authority cuts are complete; remaining productization is broader architecture work that should not be smuggled into one more pseudo-small packet | `4` | live voice UX/architecture is either deliberately productized as a broader redesign or formally capped at the accepted bounded state |
-| broader canonical `/` and public marketing breadth | active | accepted landing packets closed authority and bounded IA seams, and the first broader packets now align canonical `/` hero messaging plus trust-strip order to the SSOT, but broader copy / section-order / visual-system redesign still remains | `5` | canonical `/` and public marketing breadth is either completed as a deliberate redesign lane or retired from this program |
+| broader canonical `/` and public marketing breadth | active | accepted landing packets closed authority and bounded IA seams, and the first broader packets now align canonical `/` hero messaging, trust-strip order, and the missing problem/platform-pattern narrative to the SSOT, but broader copy / section-order / visual-system redesign still remains | `5` | canonical `/` and public marketing breadth is either completed as a deliberate redesign lane or retired from this program |
 | broader `Mobile` redesign | visible, not promoted | bounded mobile entry and overlay continuity are done, but full mobile product breadth was never promoted | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
 | broader `Chat` / `AI core` parity expansion | visible, not promoted | current bounded work closed the active seam, not the full product/runtime breadth | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | visible, not promoted | accepted lane closed bounded read/runtime truth seams; broader write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
@@ -455,6 +455,8 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: assessed the next smallest broader public-marketing packet in `evidence/350-v81-broader-canonical-public-marketing-next-packet-assessment-after-problem-pattern.md` and selected the missing canonical `/` value-layers / consulting-journey narrative seam as the next honest packet after the problem/platform-pattern closure
+- 2026-03-27: landed the third bounded packet inside broader canonical `/` and public marketing breadth by adding the missing canonical `/` problem / platform-pattern narrative layer and recording the closure in `evidence/349-v81-broader-canonical-public-marketing-problem-platform-pattern-seam.md`
 - 2026-03-27: assessed the next smallest broader public-marketing packet in `evidence/348-v81-broader-canonical-public-marketing-next-packet-assessment.md` and selected the missing canonical `/` problem / platform-pattern narrative seam as the next honest packet after hero messaging and trust-strip order authority
 - 2026-03-27: landed the second bounded packet inside broader canonical `/` and public marketing breadth by moving `TrustStrip` later in the canonical `/` funnel and recording the section-order closure in `evidence/347-v81-broader-canonical-public-marketing-trust-strip-order-authority-seam.md`
 - 2026-03-27: landed the first real bounded packet inside broader canonical `/` and public marketing breadth by aligning canonical `/` hero messaging to `docs/product/LANDING_V8_SSOT.md` and recording the closure in `evidence/346-v81-broader-canonical-public-marketing-hero-messaging-authority-seam.md`

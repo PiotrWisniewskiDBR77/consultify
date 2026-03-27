@@ -71,6 +71,32 @@
       "eyebrow": "Consulting Intelligence Platform",
       "sub": "Structured consulting workflow for diagnosis, planning, execution, and impact."
     },
+    "problemPlatform": {
+      "badge": "Why this category matters",
+      "heading": "Consulting intelligence should be accessible, not locked behind elite access.",
+      "sub": "This is the missing narrative layer between the hero promise and the product surface: why access matters and why platform patterns win.",
+      "problem": {
+        "badge": "Problem",
+        "title": "Business knowledge is valuable, but access is still limited.",
+        "body": "For decades, the best consulting methods, decision frameworks, and transformation guidance were effectively reserved for the companies that could afford elite firms.",
+        "points": [
+          "World-class consulting knowledge is still expensive, fragmented, and unevenly distributed.",
+          "Most teams never get structured access to the methods used by top advisory firms.",
+          "That leaves critical business decisions dependent on guesswork, slides, and one-off advice."
+        ]
+      },
+      "pattern": {
+        "badge": "Platform pattern",
+        "title": "Great platforms win by transforming access, not only by adding software.",
+        "body": "The strongest category-defining platforms made scarce value simple to reach. Consultify applies that same pattern to consulting intelligence.",
+        "examples": [
+          "Spotify simplified access to music.",
+          "Uber simplified access to transport.",
+          "Consultify simplifies access to consulting intelligence."
+        ],
+        "summary": "Consultify is the Consulting Intelligence Platform: Spotify for consulting knowledge, delivered as a structured consulting workflow."
+      }
+    },
     "profitHero": {
       "h1": {
         "line1": "Consultify is the",
