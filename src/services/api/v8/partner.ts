@@ -148,6 +148,18 @@ export interface V8PartnerProject {
   targetEndDate?: string;
 }
 
+export interface V8PartnerEmployee {
+  id: string;
+  employeeName: string;
+  email: string;
+  accessType: string;
+  permissionSet?: string;
+  clients?: string[];
+  clientCount?: number | null;
+  status: string;
+  lastActive?: string;
+}
+
 export interface V8PartnerOnboardingAcceptTermsPayload {
   termsVersion?: string;
   privacyVersion?: string;
@@ -255,6 +267,7 @@ export const V8PartnerApi = {
     }),
   getClients: () => v8Get<{ clients: V8PartnerClient[] }>('/partner/clients'),
   getProjects: () => v8Get<{ projects: V8PartnerProject[] }>('/partner/projects'),
+  getEmployees: () => v8Get<{ employees: V8PartnerEmployee[] }>('/partner/employees'),
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>

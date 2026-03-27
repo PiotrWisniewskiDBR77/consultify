@@ -159,6 +159,18 @@ export interface PartnerProjectListItem {
   targetEndDate?: string;
 }
 
+export interface PartnerEmployeeListItem {
+  id: string;
+  employeeName: string;
+  email: string;
+  accessType: string;
+  permissionSet?: string;
+  clients?: string[];
+  clientCount?: number | null;
+  status: string;
+  lastActive?: string;
+}
+
 export interface ReferralAnalytics {
   totalClicks: number;
   uniqueClicks: number;
@@ -953,6 +965,101 @@ export async function getPartnerProjects(
   }
 }
 
+function mapPartnerUserStatusToEmployeeStatus(status: string | undefined): string {
+  switch (String(status || '').toLowerCase()) {
+    case 'active':
+      return 'ACTIVE';
+    case 'pending':
+      return 'PENDING';
+    default:
+      return 'DEACTIVATED';
+  }
+}
+
+function humanizePartnerUserRole(role: string | undefined): string {
+  switch (String(role || '').toLowerCase()) {
+    case 'owner':
+      return 'Owner';
+    case 'admin':
+      return 'Admin';
+    case 'viewer':
+      return 'Viewer';
+    default:
+      return 'Member';
+  }
+}
+
+export async function getPartnerEmployees(
+  partnerOrgId: string,
+  options: { status?: string; limit?: number; offset?: number } = {}
+): Promise<PartnerEmployeeListItem[]> {
+  const { status, limit = 50, offset = 0 } = options;
+  const statusFilter = typeof status === 'string' && status.trim().length > 0 ? status.trim().toLowerCase() : null;
+
+  try {
+    const rows = await DbPromise.all<
+      Record<string, unknown> & {
+        user_id: string;
+        email?: string | null;
+        first_name?: string | null;
+        last_name?: string | null;
+        role?: string | null;
+        partner_status?: string | null;
+        last_login?: string | null;
+        last_active_at?: string | null;
+      }
+    >(
+      db,
+      `SELECT
+         pu.user_id,
+         pu.role,
+         pu.status as partner_status,
+         u.email,
+         u.first_name,
+         u.last_name,
+         u.last_login,
+         sessions.last_active_at
+       FROM partner_users pu
+       LEFT JOIN users u ON u.id = pu.user_id
+       LEFT JOIN (
+         SELECT user_id, MAX(last_active_at) as last_active_at
+         FROM user_sessions
+         GROUP BY user_id
+       ) sessions ON sessions.user_id = pu.user_id
+       WHERE pu.partner_org_id = ?
+         AND (? IS NULL OR LOWER(COALESCE(pu.status, '')) = ?)
+       ORDER BY COALESCE(sessions.last_active_at, u.last_login, pu.updated_at, pu.joined_at) DESC
+       LIMIT ? OFFSET ?`,
+      [partnerOrgId, statusFilter, statusFilter, limit, offset],
+    );
+
+    return rows.map((row) => {
+      const name = [row.first_name, row.last_name].filter((value) => typeof value === 'string' && value.trim().length > 0).join(' ');
+      return {
+        id: String(row.user_id),
+        employeeName: name || String(row.email || 'Team Member'),
+        email: String(row.email || ''),
+        accessType: humanizePartnerUserRole(typeof row.role === 'string' ? row.role : undefined),
+        permissionSet: humanizePartnerUserRole(typeof row.role === 'string' ? row.role : undefined),
+        clients: undefined,
+        clientCount: null,
+        status: mapPartnerUserStatusToEmployeeStatus(
+          typeof row.partner_status === 'string' ? row.partner_status : undefined,
+        ),
+        lastActive:
+          typeof row.last_active_at === 'string'
+            ? row.last_active_at
+            : typeof row.last_login === 'string'
+              ? row.last_login
+              : undefined,
+      };
+    });
+  } catch (err: any) {
+    logger.error('[PartnerReferralService] Error getting partner employees:', err);
+    return [];
+  }
+}
+
 /**
  * Update attribution status (e.g., when first payment made)
  */
@@ -1354,6 +1461,7 @@ const PartnerReferralService = {
   getPartnerAttributions,
   getPartnerClients,
   getPartnerProjects,
+  getPartnerEmployees,
   updateAttributionStatus,
   getReferralAnalytics,
   getPartnerByReferralCode,

@@ -67,4 +67,16 @@ describe('Clients endpoints (partners routes) - REAL integration', () => {
       })
     );
   });
+
+  it('GET /employees returns a real partner-scoped employee roster', async () => {
+    const app = await makePartnersApp();
+    const res = await request(app).get('/api/partners/employees');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: true,
+        data: expect.any(Array),
+      })
+    );
+  });
 });

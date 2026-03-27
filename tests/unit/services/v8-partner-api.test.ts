@@ -95,6 +95,27 @@ describe('V8PartnerApi', () => {
     expect(data.projects[0].id).toBe('project-1');
   });
 
+  it('requests partner employees from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      employees: [
+        {
+          id: 'user-1',
+          employeeName: 'Alice Admin',
+          email: 'alice@example.com',
+          accessType: 'Admin',
+          permissionSet: 'Admin',
+          clientCount: null,
+          status: 'ACTIVE',
+        },
+      ],
+    });
+
+    const data = await V8PartnerApi.getEmployees();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/employees');
+    expect(data.employees[0].id).toBe('user-1');
+  });
+
   it('requests partner referral tools from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       tools: {

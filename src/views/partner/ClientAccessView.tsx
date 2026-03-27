@@ -29,6 +29,7 @@ import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerClient,
+  type V8PartnerEmployee,
 } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 
@@ -49,8 +50,8 @@ interface Employee {
   email: string;
   accessType: string;
   permissionSet?: string;
-  clients: string[];
-  clientCount?: number;
+  clients?: string[];
+  clientCount?: number | null;
   status: string;
   lastActive?: string;
 }
@@ -75,6 +76,35 @@ function normalizeClient(client: Partial<V8PartnerClient> | Record<string, any>)
         : typeof client.users === 'number'
           ? client.users
           : undefined,
+  };
+}
+
+function normalizeEmployee(employee: Partial<V8PartnerEmployee> | Record<string, any>): Employee {
+  const firstName = typeof employee.first_name === 'string' ? employee.first_name : '';
+  const lastName = typeof employee.last_name === 'string' ? employee.last_name : '';
+  const combinedName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+  return {
+    id: String(employee.id || employee.userId || employee.email || 'employee'),
+    employeeName:
+      typeof employee.employeeName === 'string' && employee.employeeName.trim().length > 0
+        ? employee.employeeName
+        : combinedName || String(employee.email || 'Team Member'),
+    email: String(employee.email || ''),
+    accessType: String(employee.accessType || employee.role || 'Member'),
+    permissionSet:
+      typeof employee.permissionSet === 'string'
+        ? employee.permissionSet
+        : typeof employee.accessType === 'string'
+          ? employee.accessType
+          : undefined,
+    clients: Array.isArray(employee.clients) ? employee.clients.map(String) : undefined,
+    clientCount:
+      typeof employee.clientCount === 'number' || employee.clientCount === null
+        ? employee.clientCount
+        : undefined,
+    status: typeof employee.status === 'string' ? employee.status.toUpperCase() : 'ACTIVE',
+    lastActive: typeof employee.lastActive === 'string' ? employee.lastActive : undefined,
   };
 }
 
@@ -112,9 +142,17 @@ export const ClientAccessView: React.FC = () => {
       }
 
       // Fetch employees
-      const employeesResponse = await Api.get('/api/partners/employees');
-      if (employeesResponse?.success && employeesResponse?.data) {
-        setEmployees(employeesResponse.data);
+      try {
+        const employeesResponse = await V8PartnerApi.getEmployees();
+        setEmployees((employeesResponse?.employees || []).map(normalizeEmployee));
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        const employeesResponse = await Api.get('/api/partners/employees');
+        if (employeesResponse?.success && Array.isArray(employeesResponse?.data)) {
+          setEmployees(employeesResponse.data.map(normalizeEmployee));
+        }
       }
     } catch (err: any) {
       console.error('Error fetching client access data:', err);
@@ -422,7 +460,11 @@ export const ClientAccessView: React.FC = () => {
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span className="text-slate-900 dark:text-white">
-                          {employee.clientCount ?? employee.clients?.length ?? 0}
+                          {typeof employee.clientCount === 'number'
+                            ? employee.clientCount
+                            : Array.isArray(employee.clients)
+                              ? employee.clients.length
+                              : '--'}
                         </span>
                       </td>
                       <td className="px-3 py-3">

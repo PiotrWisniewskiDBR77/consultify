@@ -50,6 +50,7 @@ export type {
   V8PartnerCampaignLink,
   V8PartnerClient,
   V8PartnerEarningsSummary,
+  V8PartnerEmployee,
   V8PartnerListingUpdatePayload,
   V8PartnerListingUpdateResult,
   V8PartnerOnboardingAcceptTermsPayload,

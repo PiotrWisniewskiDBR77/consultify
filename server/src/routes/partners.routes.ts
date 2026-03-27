@@ -1142,9 +1142,32 @@ router.get('/clients/:clientId', async (req: Request, res: Response, next: NextF
  */
 router.get('/employees', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner employees unavailable (no real implementation)');
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const employees = await PartnerReferralService.getPartnerEmployees(partnerOrgId, {
+      status,
+      limit,
+      offset,
+    });
+
+    return res.json({ success: true, data: employees });
   } catch (error: any) {
     logger.error('Error fetching employees:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner employees unavailable (database schema missing)');
+    }
     next(error);
   }
 });

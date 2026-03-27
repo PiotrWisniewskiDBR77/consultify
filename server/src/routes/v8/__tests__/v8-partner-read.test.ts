@@ -10,6 +10,7 @@ const mockGetReferralTools = vi.fn();
 const mockGetPartnerAttributions = vi.fn();
 const mockGetPartnerClients = vi.fn();
 const mockGetPartnerProjects = vi.fn();
+const mockGetPartnerEmployees = vi.fn();
 const mockGetEarningsSummary = vi.fn();
 const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
@@ -35,6 +36,7 @@ vi.mock('../../../services/partnerReferralService.js', () => ({
     getPartnerAttributions: (...args: unknown[]) => mockGetPartnerAttributions(...args),
     getPartnerClients: (...args: unknown[]) => mockGetPartnerClients(...args),
     getPartnerProjects: (...args: unknown[]) => mockGetPartnerProjects(...args),
+    getPartnerEmployees: (...args: unknown[]) => mockGetPartnerEmployees(...args),
     createCampaignLink: (...args: unknown[]) => mockCreateCampaignLink(...args),
     deleteCampaignLink: (...args: unknown[]) => mockDeleteCampaignLink(...args),
   },
@@ -195,6 +197,18 @@ describe('V8 partner read bridge', () => {
         targetEndDate: '2026-06-30',
       },
     ]);
+    mockGetPartnerEmployees.mockResolvedValue([
+      {
+        id: 'user-1',
+        employeeName: 'Alice Admin',
+        email: 'alice@example.com',
+        accessType: 'Admin',
+        permissionSet: 'Admin',
+        clientCount: null,
+        status: 'ACTIVE',
+        lastActive: '2026-03-27T10:00:00Z',
+      },
+    ]);
     mockGetReferralTools.mockResolvedValue({
       referralCode: 'PARTNER-123',
       referralLink: 'https://example.com/r/PARTNER-123',
@@ -324,6 +338,20 @@ describe('V8 partner read bridge', () => {
       offset: 5,
     });
     expect(res.body.data.projects[0].id).toBe('project-1');
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/employees returns partner employee list with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/employees?limit=10&offset=5');
+
+    expect(res.status).toBe(200);
+    expect(mockGetPartnerEmployees).toHaveBeenCalledWith('partner-org-resolved', {
+      status: undefined,
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.body.data.employees[0].id).toBe('user-1');
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
