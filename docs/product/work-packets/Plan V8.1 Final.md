@@ -68,9 +68,9 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 ### Current success metric
 
-- completed remaining themes: `6 / 13`
-- active lane: broader `Chat / AI core` parity expansion
-- landed packets in the active lane: `4`
+- completed remaining themes: `7 / 13`
+- active lane: broader `Results / KPI / ROI` parity
+- landed packets in the active lane: `0`
 
 ---
 
@@ -84,8 +84,8 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `4` | `Landing Anna` broader voice UX / architecture | `Phase A` | `done` | bounded continuity/config/channel truth work is now complete; the remaining residual is broader productization that should not be smuggled into one more pseudo-small packet | voice lane reached bounded acceptance without forcing a full public voice redesign |
 | `5` | broader canonical `/` and public marketing breadth | `Phase B` | `done` | accepted landing work plus the bounded canonical `/` packet chain now close the smallest honest homepage narrative residuals | public marketing breadth reached bounded acceptance without forcing a broader redesign program |
 | `6` | broader `Mobile` redesign | `Phase B` | `done` | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | broader mobile responsive/product breadth reached bounded acceptance |
-| `7` | broader `Chat / AI core` parity expansion | `Phase C` | `active` | current bounded seams do not cover the wider product/runtime breadth, so the broader parity residual is now explicitly promoted | broader chat and AI operator parity is accepted |
-| `8` | broader `Results / KPI / ROI` parity | `Phase C` | `queued` | wider write/operator breadth still remains | results breadth is accepted beyond bounded reads/runtime truth |
+| `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
+| `8` | broader `Results / KPI / ROI` parity | `Phase C` | `active` | accepted bounded read/runtime truth work did not cover broader write/operator breadth, so the broader residual is now explicitly promoted | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `queued` | ingest, models, budgets, valuations, and wider writes remain | finance breadth is accepted beyond bounded analysis seams |
 | `10` | broader `Partner Program` parity | `Phase C` | `queued` | onboarding, client-access, statement sources, and payout-settings remain | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
@@ -164,15 +164,15 @@ No lane should jump directly from `queued` to `done`.
 ### Current lane
 
 - status: `active`
-- lane: broader `Chat / AI core` parity expansion
-- latest evidence: `legacy chat private mode indicator seam` recorded in `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`
-- reason: the next honest broader chat/ai-core packet was a bounded active-surface status seam that aligned private-mode visibility across the two live chat surfaces
+- lane: broader `Results / KPI / ROI` parity
+- latest evidence: `broader Results / KPI / ROI parity split-brain map` recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
+- reason: accepted bounded results reads/runtime truth did not close broader KPI/ROI write and operator breadth, so that residual is now explicitly promoted instead of being smuggled into the old accepted lane
 
 ### Next three lanes
 
-1. broader `Chat / AI core` parity expansion
-2. broader `Results / KPI / ROI` parity
-3. broader `Finance` parity
+1. broader `Results / KPI / ROI` parity
+2. broader `Finance` parity
+3. broader `Partner Program` parity
 
 ### Active blockers
 
@@ -342,24 +342,24 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Chat / AI core` parity expansion
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`
 - split-brain map: `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`
-- current packet: `assess the next bounded broader chat/ai-core packet after legacy full-screen chat private-mode status continuity`
+- current packet: `bounded acceptance review`
 - last accepted packet: `legacy chat private mode indicator seam`
 - blocker: `none`
-- next action: `choose the next smallest honest broader chat/ai-core packet after the legacy full-screen chat private-mode status closure without silently broadening into a full chat/ai-platform redesign`
-- acceptance evidence: `none`
+- next action: `keep the accepted chat/ai-core lane capped unless a new broader explicit promotion is created later`
+- acceptance evidence: `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md`
 
 #### broader `Results / KPI / ROI` parity
 
-- status: `queued`
-- charter: `not written yet`
-- split-brain map: `not written yet`
-- current packet: `not defined yet`
-- last accepted packet: `none`
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
+- split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
+- current packet: `assess the first bounded broader results packet after the split-brain map`
+- last accepted packet: `broader Results / KPI / ROI parity split-brain map`
 - blocker: `none`
-- next action: `wait for prior platform parity lanes`
+- next action: `choose the next smallest honest broader results packet, likely around visible KPI create continuity on a governed V8-first seam`
 - acceptance evidence: `none`
 
 #### broader `Finance` parity

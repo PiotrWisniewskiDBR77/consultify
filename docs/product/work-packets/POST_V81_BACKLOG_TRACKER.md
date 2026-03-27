@@ -78,7 +78,8 @@ Status vocabulary:
 | `Landing Anna` broader voice UX / architecture | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_LANDING_ANNA_BROADER_VOICE_UX_ARCHITECTURE_CHARTER.md`; split-brain map recorded in `evidence/337-v81-landing-anna-broader-voice-ux-architecture-split-brain-map.md`; landed packets: `evidence/338-v81-landing-anna-voice-transcript-continuity-seam.md`, `evidence/339-v81-landing-anna-voice-history-bootstrap-continuity-seam.md`, `evidence/340-v81-landing-anna-voice-channel-truth-continuity-seam.md`, `evidence/341-v81-landing-anna-voice-config-authority-continuity-seam.md`, `evidence/342-v81-landing-anna-voice-enabled-authority-continuity-seam.md`, `evidence/343-v81-landing-anna-voice-surface-status-authority-continuity-seam.md`; accepted in `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md` |
 | broader canonical `/` and public marketing breadth | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`; landed packets: `evidence/346-v81-broader-canonical-public-marketing-hero-messaging-authority-seam.md`, `evidence/347-v81-broader-canonical-public-marketing-trust-strip-order-authority-seam.md`, `evidence/349-v81-broader-canonical-public-marketing-problem-platform-pattern-seam.md`, `evidence/351-v81-broader-canonical-public-marketing-value-journey-seam.md`, `evidence/353-v81-broader-canonical-public-marketing-extended-scope-seam.md`; accepted in `evidence/354-v81-broader-canonical-public-marketing-t4-acceptance.md` |
 | broader `Mobile` redesign | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`; split-brain map recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`; landed packets: `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`, `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`, `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`, `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`; accepted in `evidence/360-v81-broader-mobile-redesign-t4-acceptance.md` |
-| broader `Chat / AI core` parity expansion | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`; split-brain map recorded in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`; landed packets: `evidence/362-v81-broader-chat-ai-core-stream-session-metadata-continuity-seam.md`, `evidence/363-v81-broader-chat-ai-core-trust-provenance-readback-seam.md`, `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`, `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`; next move is to assess the next honest broader chat/ai-core packet |
+| broader `Chat / AI core` parity expansion | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`; split-brain map recorded in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`; landed packets: `evidence/362-v81-broader-chat-ai-core-stream-session-metadata-continuity-seam.md`, `evidence/363-v81-broader-chat-ai-core-trust-provenance-readback-seam.md`, `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`, `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`; accepted in `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md` |
+| broader `Results / KPI / ROI` parity | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`; split-brain map recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`; next move is to assess the first honest broader results packet |
 
 ---
 
@@ -147,7 +148,7 @@ Current status: `done`
 
 ### broader `Chat / AI core` parity expansion
 
-Current status: `active`
+Current status: `done`
 
 - [x] explicit follow-on promotion granted after broader `Mobile` redesign acceptance
 - [x] broader `Chat / AI core` parity expansion charter written
@@ -165,6 +166,18 @@ Current status: `active`
 - [x] assess the next bounded broader chat/ai-core packet after legacy full-screen chat governed V8 controls continuity
 - [x] fourth real bounded packet landed around private-mode status visibility on the legacy full-screen chat surface
 - [x] focused regression extended for legacy chat private-mode status continuity
+- [x] assessed whether any smaller honest broader chat/ai-core packet remains after the four bounded closures
+- [x] lane accepted and moved to `done`
+
+### broader `Results / KPI / ROI` parity
+
+Current status: `active`
+
+- [x] explicit follow-on promotion granted after broader `Chat / AI core` parity expansion acceptance
+- [x] broader `Results / KPI / ROI` parity charter written
+- [x] split-brain map captured for the broader results residual after accepted bounded `Results / KPI / ROI` reads/runtime truth
+- [x] first evidence-first packet defined around the broader results parity split-brain map
+- [ ] assess the first real bounded broader results packet after the split-brain map
 - [ ] lane accepted and moved to `done`
 
 ### `Landing Anna backend analytics / dashboard breadth`
@@ -985,6 +998,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: accepted broader `Chat / AI core` parity expansion in `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md` after four bounded packets landed, then promoted broader `Results / KPI / ROI` parity into `active`, added charter `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`, and recorded the initial split-brain map in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
 - 2026-03-27: landed the fourth bounded packet inside broader `Chat / AI core` parity expansion by mirroring the shared `Private mode` runtime indicator onto `AIChatWelcomeView` in `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`, so the two live chat surfaces no longer diverge on visible private-mode state
 - 2026-03-27: landed the third bounded packet inside broader `Chat / AI core` parity expansion by extending the existing governed `V8ContextIndicator` and `V8ArtifactRunControl` onto `AIChatWelcomeView` in `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`, so the legacy full-screen chat surface no longer trails the shared chat panel on visible governed V8 controls
 - 2026-03-27: landed the second bounded packet inside broader `Chat / AI core` parity expansion by wiring governed trust and provenance readback into the active `AICoreRuntimePanel` in `evidence/363-v81-broader-chat-ai-core-trust-provenance-readback-seam.md`, so the visible operator surface now exposes the same bounded V8 trust authority that already existed in runtime contract space
