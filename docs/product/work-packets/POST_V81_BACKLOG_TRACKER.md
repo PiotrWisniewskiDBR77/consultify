@@ -479,6 +479,8 @@ Current status: `active`
 - [x] assessed whether one more thinner settings-lifecycle continuity seam remains after settings readback/connect alignment
 - [x] recorded post-settings connect/readback authority residual assessment confirming that settings disconnect is now the next thinner authority seam
 - [x] promoted settings disconnect authority continuity on the governed sync path as the next honest broader-sync implementation step
+- [x] twenty-fifth real bounded packet landed around settings disconnect authority continuity on the governed sync path
+- [x] focused regression added for settings disconnect authority continuity on the settings surface
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1298,6 +1300,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: landed the twenty-fifth real bounded packet inside broader `Sync` completion by aligning settings disconnect with the governed sync path in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md`, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow
 - 2026-03-27: recorded the broader `Sync` post-settings connect/readback authority residual assessment in `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md`, confirming that settings disconnect authority continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fourth real bounded packet inside broader `Sync` completion by aligning user-level settings integrations readback and connect initiation with the governed sync seam in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md`, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path
 - 2026-03-27: recorded the broader `Sync` post-Asana provider-round-trip residual assessment in `evidence/475-v81-broader-sync-post-asana-provider-round-trip-residual-assessment.md`, confirming that deeper authority alignment is now the next honest broader-sync step

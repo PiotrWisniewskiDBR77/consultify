@@ -8,6 +8,7 @@ const {
   mockDbAll,
   mockDbGet,
   mockDbRun,
+  mockDisconnectIntegration,
   mockGetTableColumns,
   mockListGovernedIntegrations,
   mockBuildGovernedExternalAuthSession,
@@ -16,6 +17,7 @@ const {
   mockDbAll: vi.fn(),
   mockDbGet: vi.fn(),
   mockDbRun: vi.fn(),
+  mockDisconnectIntegration: vi.fn(),
   mockGetTableColumns: vi.fn(),
   mockListGovernedIntegrations: vi.fn(),
   mockBuildGovernedExternalAuthSession: vi.fn(),
@@ -59,6 +61,14 @@ vi.mock('../../services/gdprService.js', () => ({
   createAccountDeletionRequest: vi.fn(),
   createDataExportRequest: vi.fn(),
 }));
+
+vi.mock('../../services/integrationHubService.js', async () => {
+  const actual = await vi.importActual<any>('../../services/integrationHubService.js');
+  return {
+    ...actual,
+    disconnectIntegration: (...args: unknown[]) => mockDisconnectIntegration(...args),
+  };
+});
 
 vi.mock('../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -123,6 +133,7 @@ describe('settings integrations authority continuity', () => {
       transitionedBy: 'user-1',
       reason: 'settings_integrations_connect_initiated',
     });
+    mockDisconnectIntegration.mockResolvedValue({ success: true });
   });
 
   it('GET /api/settings/integrations exposes governed pending sync truth on the settings surface', async () => {
@@ -207,6 +218,39 @@ describe('settings integrations authority continuity', () => {
         'project_management',
         'pending',
       ]),
+    );
+  });
+
+  it('DELETE /api/settings/integrations/:provider reuses governed disconnect authority', async () => {
+    mockDbAll.mockResolvedValueOnce([{ id: 'int-1' }]);
+    mockDbGet.mockResolvedValueOnce({
+      preferences_data: JSON.stringify([
+        {
+          id: 'jira-user-1',
+          userId: 'user-1',
+          provider: 'jira',
+          providerName: 'Jira',
+          status: 'active',
+          config: {},
+          capabilities: ['sync'],
+          createdAt: '2026-03-27T20:00:00.000Z',
+          updatedAt: '2026-03-27T20:05:00.000Z',
+        },
+      ]),
+    });
+
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).delete('/api/settings/integrations/jira');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(mockDisconnectIntegration).toHaveBeenCalledWith('int-1');
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT OR REPLACE INTO user_preferences'),
+      ['user-1', 'settings:integrations', '[]'],
+      { fallback: false },
     );
   });
 });

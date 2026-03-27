@@ -8,6 +8,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
+import { disconnectIntegration } from '../services/integrationHubService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -1027,8 +1028,26 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const connectorId = normalizeConnectorId(provider);
+    const connector = organizationId ? CONNECTORS[connectorId] : undefined;
+    if (organizationId && connector) {
+      const rows = await dbAll<{ id: string }>(
+        `SELECT id
+         FROM integrations
+         WHERE organization_id = ? AND connector_id = ? AND status != ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [organizationId, connector.id, 'disconnected']
+      );
+      const activeIntegration = rows[0];
+      if (activeIntegration) {
+        await disconnectIntegration(activeIntegration.id);
+      }
+    }
 
     const integrations = await loadIntegrations(userId);
     const filtered = integrations.filter((i) => i.provider !== provider);
