@@ -136,6 +136,8 @@ interface CredentialDraft {
   tokenExpiresAt: string;
 }
 
+type RefreshResultDraft = 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked';
+
 interface CatalogConnector extends ConnectorInfo {
   isV2Ready: boolean;
   comingSoon: boolean;
@@ -364,6 +366,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
   const [savingCredentialId, setSavingCredentialId] = useState<string | null>(null);
   const [credentialDrafts, setCredentialDrafts] = useState<Record<string, CredentialDraft>>({});
+  const [editingRefreshResultId, setEditingRefreshResultId] = useState<string | null>(null);
+  const [savingRefreshResultId, setSavingRefreshResultId] = useState<string | null>(null);
+  const [refreshResultDrafts, setRefreshResultDrafts] = useState<Record<string, RefreshResultDraft>>({});
 
   const v8ConnectorHealthTargets = useMemo<V8ConnectorHealthTarget[]>(() => {
     const byConnectorId = new Map<string, V8ConnectorHealthTarget>();
@@ -1129,6 +1134,43 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   };
 
+  const handleRefreshResultDraftChange = (integrationId: string, value: RefreshResultDraft) => {
+    setRefreshResultDrafts((current) => ({
+      ...current,
+      [integrationId]: value,
+    }));
+  };
+
+  const handleSaveRefreshResult = async (integration: IntegrationItem) => {
+    const result = refreshResultDrafts[integration.id] || 'success';
+    setSavingRefreshResultId(integration.id);
+    try {
+      const data = await V8SyncApi.recordRefreshResult(integration.id, { result });
+      toast.success(
+        data.authTransition === 'degraded_reauth_needed'
+          ? t(
+              'integrations.syncHub.refreshResultRecordedNeedsReauth',
+              'Governed refresh result recorded and reauthorization is now required',
+            )
+          : t(
+              'integrations.syncHub.refreshResultRecorded',
+              'Governed refresh result recorded',
+            ),
+      );
+      setEditingRefreshResultId(null);
+      await loadAll();
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.refreshResultRecordFailed',
+          'Failed to record governed refresh result',
+        ),
+      );
+    } finally {
+      setSavingRefreshResultId(null);
+    }
+  };
+
   const handleResolveV8AuthEscalation = async (escalationId: string) => {
     setResolvingAuthEscalationId(escalationId);
     try {
@@ -1268,12 +1310,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const providerFamily = getProviderFamily(int.connectorId);
     const canMaterializeCredential =
       int.status === 'connected' && int.connector?.authType === 'oauth2' && providerFamily !== null;
+    const canRecordRefreshResult =
+      int.credential !== null && int.connector?.authType === 'oauth2' && providerFamily !== null;
     const credentialDraft = credentialDrafts[int.id] || {
       providerAccountId: int.credential?.providerAccountId || '',
       workspaceOrTenantId: int.credential?.workspaceOrTenantId || '',
       scopesGranted: int.credential?.scopesGranted?.join(', ') || '',
       tokenExpiresAt: int.credential?.tokenExpiresAt || '',
     };
+    const refreshResultDraft = refreshResultDrafts[int.id] || 'success';
     const pendingSetupDescription =
       int.onboardingStatus === 'pending_external_auth'
         ? t(
@@ -1644,6 +1689,23 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             ))}
                           </div>
                         </div>
+                        <div>
+                          <div className="text-violet-200/60">
+                            {t('integrations.syncHub.lastRefreshResult', 'Last refresh result')}
+                          </div>
+                          <div className="mt-1 break-all">
+                            {int.credential.lastRefreshResult ||
+                              t('integrations.syncHub.refreshNeverRecorded', 'never recorded')}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-violet-200/60">
+                            {t('integrations.syncHub.lastRefreshAt', 'Last refresh at')}
+                          </div>
+                          <div className="mt-1 break-all">
+                            {int.credential.lastRefreshAt || t('common.never', 'Never')}
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -1724,6 +1786,66 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             {t('common.cancel', 'Cancel')}
                           </button>
                         </div>
+                      </div>
+                    )}
+
+                    {canRecordRefreshResult && !isEditingCredential && (
+                      <div className="mt-3 border-t border-violet-500/10 pt-3">
+                        {!editingRefreshResultId || editingRefreshResultId !== int.id ? (
+                          <button
+                            type="button"
+                            onClick={() => setEditingRefreshResultId(int.id)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-200 hover:bg-violet-500/15 transition-colors"
+                          >
+                            <RefreshCw size={12} />
+                            {t(
+                              'integrations.syncHub.recordRefreshResult',
+                              'Record refresh result',
+                            )}
+                          </button>
+                        ) : (
+                          <div className="space-y-2 rounded-lg border border-violet-500/20 bg-navy-950/30 p-3">
+                            <label className="block">
+                              <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                                {t('integrations.syncHub.refreshResult', 'Refresh result')}
+                              </div>
+                              <select
+                                value={refreshResultDraft}
+                                onChange={(e) =>
+                                  handleRefreshResultDraftChange(
+                                    int.id,
+                                    e.target.value as RefreshResultDraft,
+                                  )
+                                }
+                                className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white focus:border-violet-500/40 focus:outline-none"
+                              >
+                                <option value="success">success</option>
+                                <option value="transient_failure">transient_failure</option>
+                                <option value="credential_expired">credential_expired</option>
+                                <option value="scope_revoked">scope_revoked</option>
+                              </select>
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void handleSaveRefreshResult(int)}
+                                disabled={savingRefreshResultId === int.id}
+                                className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-100 hover:bg-violet-500/25 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                {savingRefreshResultId === int.id
+                                  ? t('common.saving', 'Saving...')
+                                  : t('integrations.syncHub.saveRefreshResult', 'Save refresh result')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingRefreshResultId(null)}
+                                className="px-3 py-1.5 text-xs text-slate-300 hover:text-white rounded-lg transition-colors"
+                              >
+                                {t('common.cancel', 'Cancel')}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

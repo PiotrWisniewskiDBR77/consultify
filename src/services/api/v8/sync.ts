@@ -282,6 +282,14 @@ export const V8SyncApi = {
       `/sync/integrations/${encodeURIComponent(integrationId)}/credential`,
       payload,
     ),
+  recordRefreshResult: (
+    integrationId: string,
+    payload: { result: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' },
+  ) =>
+    v8Post<{
+      credential: V8SyncConnectionCredentialRef;
+      authTransition: 'healthy' | 'degraded_reauth_needed' | null;
+    }>(`/sync/integrations/${encodeURIComponent(integrationId)}/refresh-result`, payload),
   disconnectIntegration: (integrationId: string) =>
     v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/disconnect`, {}),
   pauseIntegration: (integrationId: string) =>

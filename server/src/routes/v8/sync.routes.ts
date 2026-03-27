@@ -14,6 +14,7 @@ import {
   getCredential,
   getCredentialHealth,
   getRefreshTimingPolicy,
+  recordRefreshResult,
   resolveAuthEscalation,
   setRefreshTimingPolicy,
   storeCredential,
@@ -41,7 +42,7 @@ import {
   resolveError,
 } from '../../services/syncGuardrailsService.js';
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
-import { ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
+import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
@@ -130,6 +131,10 @@ const StoreIntegrationCredentialBodySchema = z.object({
   workspaceOrTenantId: z.string().trim().min(1),
   scopesGranted: z.array(z.string().trim().min(1)).min(1),
   tokenExpiresAt: z.string().trim().min(1).nullable().optional(),
+});
+
+const RecordIntegrationRefreshResultBodySchema = z.object({
+  result: z.enum(LastRefreshResultValues),
 });
 
 function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
@@ -597,6 +602,116 @@ router.post(
     return res.json({
       data: {
         credential: refreshedCredential ?? credential,
+      },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/refresh-result',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const parsedBody = RecordIntegrationRefreshResultBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        error: parsedBody.error.issues[0]?.message ?? 'Invalid refresh result payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    const rows = await dbAll<{
+      id: string;
+      connector_id: string;
+      status: string;
+    }>(
+      `SELECT id, connector_id, status
+       FROM integrations
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [integrationId, organizationId],
+    );
+    const integration = rows[0];
+    if (!integration) {
+      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+    }
+
+    const connector = CONNECTORS[integration.connector_id];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+    if (connector.authType !== 'oauth2') {
+      return res.status(409).json({
+        error: 'Refresh-result continuity is only supported for governed oauth2 connectors',
+        code: 'REFRESH_RESULT_UNSUPPORTED',
+      });
+    }
+
+    const credential = await recordRefreshResult({
+      connectorId: connector.id,
+      organizationId,
+      result: parsedBody.data.result,
+    });
+
+    const connectorHealth = await getConnectorHealth(connector.id, organizationId);
+    let authTransition:
+      | {
+          targetState: 'healthy' | 'degraded_reauth_needed';
+          reason: string;
+        }
+      | null = null;
+
+    if (parsedBody.data.result === 'success' && connectorHealth.authState !== 'healthy') {
+      authTransition = {
+        targetState: 'healthy',
+        reason: 'refresh_succeeded',
+      };
+    } else if (
+      ['credential_expired', 'scope_revoked'].includes(parsedBody.data.result) &&
+      connectorHealth.authState !== 'degraded_reauth_needed'
+    ) {
+      authTransition = {
+        targetState: 'degraded_reauth_needed',
+        reason: 'refresh_auth_break',
+      };
+    }
+
+    if (authTransition) {
+      await setConnectorAuthState({
+        connectorId: connector.id,
+        organizationId,
+        targetState: authTransition.targetState,
+        transitionedBy: actorId,
+        reason: authTransition.reason,
+      });
+    }
+
+    await logIntegrationAudit(organizationId, integrationId, 'refresh_result_recorded', actorId, actorId, {
+      connectorId: connector.id,
+      result: parsedBody.data.result,
+      authTransition: authTransition?.targetState ?? null,
+    });
+
+    return res.json({
+      data: {
+        credential,
+        authTransition: authTransition?.targetState ?? null,
       },
       meta: syncMutationMeta(),
     });

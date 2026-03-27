@@ -197,6 +197,36 @@ describe('V8SyncApi', () => {
     expect(data.credential.providerAccountId).toBe('acct-123');
   });
 
+  it('posts governed refresh result recording to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      credential: {
+        credentialId: 'cred-1',
+        connectorId: 'jira',
+        organizationId: 'org-1',
+        providerAccountId: 'acct-123',
+        workspaceOrTenantId: 'tenant-456',
+        scopesGranted: ['read:jira-work'],
+        tokenExpiresAt: null,
+        lastVerificationAt: '2026-03-27T18:00:00.000Z',
+        lastRefreshAt: '2026-03-27T19:00:00.000Z',
+        lastRefreshResult: 'credential_expired',
+        createdAt: '2026-03-27T18:00:00.000Z',
+        updatedAt: '2026-03-27T19:00:00.000Z',
+      },
+      authTransition: 'degraded_reauth_needed',
+    });
+
+    const data = await V8SyncApi.recordRefreshResult('int-1', {
+      result: 'credential_expired',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/refresh-result', {
+      result: 'credential_expired',
+    });
+    expect(data.credential.lastRefreshResult).toBe('credential_expired');
+    expect(data.authTransition).toBe('degraded_reauth_needed');
+  });
+
   it('requests governed hub health summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       summary: { total: 2, healthy: 1, degraded: 1, unhealthy: 0 },

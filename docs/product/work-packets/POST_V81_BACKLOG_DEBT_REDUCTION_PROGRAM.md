@@ -301,6 +301,7 @@ Current result:
 - the seventh real bounded broader sync packet landed in `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md` by promoting callback-received integrations to connected truth on the active hub once governed verification is explicitly completed, without smuggling broader refresh / recovery lifecycle work into the same packet,
 - the post-verification residual assessment recorded in `evidence/451-v81-broader-sync-post-verification-residual-assessment.md` confirmed there is no thinner honest broader-sync packet left before broader post-auth credential / refresh continuity,
 - the eighth real bounded broader sync packet landed in `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md` by materializing governed credential baseline truth onto the active sync hub and governed inventory, so the runtime path can now see real credential metadata before broader refresh execution is attempted,
+- the ninth real bounded broader sync packet landed in `evidence/453-v81-broader-sync-refresh-result-continuity-seam.md` by recording governed refresh-result truth on the active sync hub and reflecting auth-break outcomes back into integration state, without pretending real refresh execution already exists,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -463,6 +464,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the ninth real bounded packet inside broader `Sync` completion by recording governed refresh-result truth on the active sync hub in `evidence/453-v81-broader-sync-refresh-result-continuity-seam.md`, so auth-break refresh outcomes now push the active governed runtime path into honest `requires_reauth` state without pretending real token refresh execution already exists
 - 2026-03-27: landed the eighth real bounded packet inside broader `Sync` completion by materializing governed credential baseline truth on the active sync hub in `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md`, so operators can now record credential metadata on the governed runtime path before broader refresh execution continuity exists
 - 2026-03-27: recorded the broader `Sync` post-verification residual assessment in `evidence/451-v81-broader-sync-post-verification-residual-assessment.md`, confirming that no thinner honest broader-sync packet remains before broader post-auth credential / refresh continuity
 - 2026-03-27: landed the seventh real bounded packet inside broader `Sync` completion by promoting callback-received integrations to connected truth on the active hub in `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md`, so operators can now complete ready-state promotion from the active onboarding surface without switching to the lower connector-health panel

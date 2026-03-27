@@ -13,6 +13,7 @@ const mockResolveAuthEscalation = vi.fn();
 const mockGetRefreshTimingPolicy = vi.fn();
 const mockSetRefreshTimingPolicy = vi.fn();
 const mockGetCredential = vi.fn();
+const mockRecordRefreshResult = vi.fn();
 const mockStoreCredential = vi.fn();
 const mockGetConnectorHealth = vi.fn();
 const mockGetIntegrationHealth = vi.fn();
@@ -39,6 +40,7 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getRefreshTimingPolicy: (...args: unknown[]) => mockGetRefreshTimingPolicy(...args),
   setRefreshTimingPolicy: (...args: unknown[]) => mockSetRefreshTimingPolicy(...args),
   getCredential: (...args: unknown[]) => mockGetCredential(...args),
+  recordRefreshResult: (...args: unknown[]) => mockRecordRefreshResult(...args),
   storeCredential: (...args: unknown[]) => mockStoreCredential(...args),
 }));
 
@@ -515,6 +517,58 @@ describe('V8 sync read-only routes', () => {
       expect.stringContaining('INSERT INTO integration_audit_log'),
       expect.arrayContaining([ORG, 'int-1', 'credential_materialized', UID, UID]),
     );
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/refresh-result records auth-break refresh outcome', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        id: 'int-1',
+        connector_id: 'jira',
+        status: 'connected',
+      },
+    ]);
+    mockRecordRefreshResult.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: null,
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: '2026-03-27T19:00:00.000Z',
+      lastRefreshResult: 'credential_expired',
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T19:00:00.000Z',
+    });
+    mockGetConnectorHealth.mockResolvedValue({
+      healthy: true,
+      syncStatus: 'unknown',
+      conflictCount: 0,
+      lastSyncAt: null,
+      authState: 'healthy',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/refresh-result').send({
+      result: 'credential_expired',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.credential?.lastRefreshResult).toBe('credential_expired');
+    expect(res.body.data?.authTransition).toBe('degraded_reauth_needed');
+    expect(mockRecordRefreshResult).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      result: 'credential_expired',
+    });
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      targetState: 'degraded_reauth_needed',
+      transitionedBy: UID,
+      reason: 'refresh_auth_break',
+    });
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/disconnect disconnects through the governed mutation seam', async () => {

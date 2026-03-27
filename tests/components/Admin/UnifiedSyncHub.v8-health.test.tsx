@@ -52,6 +52,7 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
     connectIntegration: vi.fn(),
     configureIntegration: vi.fn(),
     materializeCredential: vi.fn(),
+    recordRefreshResult: vi.fn(),
     getHubHealth: vi.fn(),
     getErrors: vi.fn(),
     resolveError: vi.fn(),
@@ -1044,5 +1045,131 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(screen.getByText('acct-123')).toBeInTheDocument();
     expect(screen.getByText('tenant-456')).toBeInTheDocument();
     expect(screen.getByText('read:jira-work')).toBeInTheDocument();
+  });
+
+  it('records auth-break refresh result and shifts the active hub to requires reauth', async () => {
+    const connectedWithCredential = {
+      integrations: [
+        {
+          id: 'int-connected-2',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          credential: {
+            providerAccountId: 'acct-123',
+            workspaceOrTenantId: 'tenant-456',
+            scopesGranted: ['read:jira-work'],
+            tokenExpiresAt: null,
+            lastVerificationAt: '2026-03-27T18:00:00.000Z',
+            lastRefreshAt: null,
+            lastRefreshResult: null,
+          },
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+    const requiresReauth = {
+      integrations: [
+        {
+          id: 'int-connected-2',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'requires_reauth',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 25,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          credential: {
+            providerAccountId: 'acct-123',
+            workspaceOrTenantId: 'tenant-456',
+            scopesGranted: ['read:jira-work'],
+            tokenExpiresAt: null,
+            lastVerificationAt: '2026-03-27T18:00:00.000Z',
+            lastRefreshAt: '2026-03-27T19:00:00.000Z',
+            lastRefreshResult: 'credential_expired',
+          },
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(connectedWithCredential as any);
+    vi.mocked(V8SyncApi.recordRefreshResult).mockResolvedValue({
+      credential: {
+        credentialId: 'cred-1',
+        connectorId: 'jira',
+        organizationId: 'org-sync-1',
+        providerAccountId: 'acct-123',
+        workspaceOrTenantId: 'tenant-456',
+        scopesGranted: ['read:jira-work'],
+        tokenExpiresAt: null,
+        lastVerificationAt: '2026-03-27T18:00:00.000Z',
+        lastRefreshAt: '2026-03-27T19:00:00.000Z',
+        lastRefreshResult: 'credential_expired',
+        createdAt: '2026-03-27T18:00:00.000Z',
+        updatedAt: '2026-03-27T19:00:00.000Z',
+      },
+      authTransition: 'degraded_reauth_needed',
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Record refresh result/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Record refresh result/i }));
+    fireEvent.change(screen.getByDisplayValue('success'), {
+      target: { value: 'credential_expired' },
+    });
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(requiresReauth as any);
+    fireEvent.click(screen.getByRole('button', { name: /Save refresh result/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.recordRefreshResult).toHaveBeenCalledWith('int-connected-2', {
+        result: 'credential_expired',
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Re-authorization required')).toBeInTheDocument();
+    });
   });
 });

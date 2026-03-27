@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `8`
+- landed packets in the current active lane: `9`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: eighth broader sync packet recorded in `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md`
-- reason: after post-verification assessment promoted broader post-auth continuity, the active sync hub still could not materialize governed credential baseline truth onto the runtime path that already used governed refresh primitives
+- latest evidence: ninth broader sync packet recorded in `evidence/453-v81-broader-sync-refresh-result-continuity-seam.md`
+- reason: after credential baseline readback landed, the active governed runtime path still could not record refresh outcomes or reflect auth-break refresh truth back into active integration status
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md`
+- current packet: `evidence/453-v81-broader-sync-refresh-result-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether governed refresh execution / refresh-result continuity or auth-break escalation / recovery continuity is now the next smallest honest broader-sync packet`
+- next action: `assess whether real governed refresh execution continuity or auth-break escalation / recovery continuity is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
