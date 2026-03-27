@@ -34,6 +34,7 @@ vi.mock('@/services/api/v8', () => ({
     getAttributions: vi.fn(),
     deleteCampaignLink: vi.fn(),
     getReferralAnalytics: vi.fn(),
+    getReferralTools: vi.fn(),
     createCampaignLink: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
@@ -86,6 +87,64 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     vi.mocked(V8PartnerApi.getAttributions).mockResolvedValue({
       attributions: [],
     } as any);
+    vi.mocked(V8PartnerApi.getReferralTools).mockResolvedValue({
+      tools: {
+        referralCode: 'PARTNER-123',
+        referralLink: 'https://example.com/r/PARTNER-123',
+        referralLinkSlug: 'PARTNER-123',
+        campaignLinks: [
+          {
+            id: 'campaign-1',
+            name: 'Spring launch',
+            slug: 'spring-launch',
+            fullUrl: 'https://example.com/?c=spring-launch',
+            clickCount: 0,
+            signupCount: 0,
+            conversionCount: 0,
+            isActive: true,
+            createdAt: '2026-03-26T10:00:00.000Z',
+          },
+        ],
+      },
+    } as any);
+  });
+
+  it('prefers governed referral-tools read before legacy fallback', async () => {
+    render(<ReferralToolsSection subsection="referral-tools" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('PARTNER-123')).toBeInTheDocument();
+      expect(screen.getByText('Spring launch')).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.getReferralTools).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/referral-tools');
+  });
+
+  it('falls back to legacy referral-tools read on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.getReferralTools).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/referral-tools') {
+        return {
+          success: true,
+          data: {
+            referralCode: 'LEGACY-456',
+            referralLink: 'https://example.com/r/LEGACY-456',
+            referralLinkSlug: 'LEGACY-456',
+            campaignLinks: [],
+          },
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<ReferralToolsSection subsection="referral-tools" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('LEGACY-456')).toBeInTheDocument();
+    });
+
+    expect(Api.get).toHaveBeenCalledWith('/api/partners/referral-tools');
   });
 
   it('prefers governed referred-customer list before legacy fallback', async () => {

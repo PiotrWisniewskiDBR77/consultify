@@ -84,6 +84,29 @@ export interface V8PartnerAttribution {
   createdAt?: string;
 }
 
+export interface V8PartnerReferralToolsCampaignLink {
+  id: string;
+  name: string;
+  slug: string;
+  fullUrl: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  clickCount?: number;
+  signupCount?: number;
+  conversionCount?: number;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+export interface V8PartnerReferralTools {
+  referralCode: string;
+  referralLink: string;
+  referralLinkSlug: string;
+  qrCodeUrl?: string | null;
+  campaignLinks: V8PartnerReferralToolsCampaignLink[];
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -164,6 +187,7 @@ export const V8PartnerApi = {
     v8Get<{ analytics: V8PartnerReferralAnalytics; days: number }>('/partner/referral-analytics', {
       days: String(days),
     }),
+  getReferralTools: () => v8Get<{ tools: V8PartnerReferralTools }>('/partner/referral-tools'),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
   getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),
   getCommissionTransactions: () =>

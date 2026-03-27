@@ -33,6 +33,7 @@ import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerReferralAnalytics,
+  type V8PartnerReferralTools,
 } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
@@ -95,6 +96,32 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const normalizeTools = useCallback(
+    (payload: any): ReferralTools => ({
+      referralCode: String(payload?.referralCode ?? ''),
+      referralLink: String(payload?.referralLink ?? ''),
+      referralLinkSlug: String(payload?.referralLinkSlug ?? ''),
+      qrCodeUrl: payload?.qrCodeUrl ? String(payload.qrCodeUrl) : undefined,
+      campaignLinks: Array.isArray(payload?.campaignLinks)
+        ? payload.campaignLinks.map((item: any) => ({
+            id: String(item?.id ?? ''),
+            name: String(item?.name ?? ''),
+            slug: String(item?.slug ?? ''),
+            fullUrl: String(item?.fullUrl ?? ''),
+            utmSource: item?.utmSource ? String(item.utmSource) : undefined,
+            utmMedium: item?.utmMedium ? String(item.utmMedium) : undefined,
+            utmCampaign: item?.utmCampaign ? String(item.utmCampaign) : undefined,
+            clickCount: Number(item?.clickCount ?? 0),
+            signupCount: Number(item?.signupCount ?? 0),
+            conversionCount: Number(item?.conversionCount ?? 0),
+            isActive: Boolean(item?.isActive),
+            createdAt: String(item?.createdAt ?? ''),
+          }))
+        : [],
+    }),
+    []
+  );
+
   const normalizeAttribution = useCallback(
     (payload: any): ReferredCustomer => ({
       id: String(payload?.id ?? ''),
@@ -156,13 +183,25 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const response = await Api.get('/api/partners/referral-tools');
-
-      if (response?.success && response?.data) {
-        setTools(response.data);
-      } else {
-        setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
+      try {
+        const response = await V8PartnerApi.getReferralTools();
+        if (response?.tools) {
+          setTools(normalizeTools(response.tools as V8PartnerReferralTools));
+          return;
+        }
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
+          return;
+        }
       }
+
+      const response = await Api.get('/api/partners/referral-tools');
+      if (response?.success && response?.data) {
+        setTools(normalizeTools(response.data));
+        return;
+      }
+      setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
     } catch (err: any) {
       console.error('Error fetching referral tools:', err);
       setError(
@@ -172,7 +211,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [normalizeTools, t]);
 
   const fetchV8Analytics = useCallback(async () => {
     try {

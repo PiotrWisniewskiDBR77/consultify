@@ -37,6 +37,47 @@ function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
   };
 }
 
+function buildReferralToolsFallback() {
+  const appUrl = process.env.APP_URL || 'https://app.consultify.com';
+  return {
+    referralCode: 'ACME-2024',
+    referralLink: `${appUrl}/ref/acme-consulting`,
+    referralLinkSlug: 'acme-consulting',
+    qrCodeUrl: null,
+    campaignLinks: [],
+  };
+}
+
+/**
+ * GET /api/v8/partner/referral-tools
+ */
+router.get(
+  '/referral-tools',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    let tools = null;
+    try {
+      tools = await PartnerReferralService.getReferralTools(partnerOrgId);
+    } catch {
+      tools = null;
+    }
+    return res.json({
+      data: { tools: tools || buildReferralToolsFallback() },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
 /**
  * GET /api/v8/partner/referral-analytics?days=
  */

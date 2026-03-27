@@ -6,6 +6,7 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 
 const mockGetReferralAnalytics = vi.fn();
+const mockGetReferralTools = vi.fn();
 const mockGetPartnerAttributions = vi.fn();
 const mockGetEarningsSummary = vi.fn();
 const mockGetCommissions = vi.fn();
@@ -26,6 +27,7 @@ vi.mock('../../../services/partnerOrgResolution.js', () => ({
 vi.mock('../../../services/partnerReferralService.js', () => ({
   default: {
     getReferralAnalytics: (...args: unknown[]) => mockGetReferralAnalytics(...args),
+    getReferralTools: (...args: unknown[]) => mockGetReferralTools(...args),
     getPartnerAttributions: (...args: unknown[]) => mockGetPartnerAttributions(...args),
     createCampaignLink: (...args: unknown[]) => mockCreateCampaignLink(...args),
     deleteCampaignLink: (...args: unknown[]) => mockDeleteCampaignLink(...args),
@@ -150,6 +152,13 @@ describe('V8 partner read bridge', () => {
         attributedAt: '2026-03-10',
       },
     ]);
+    mockGetReferralTools.mockResolvedValue({
+      referralCode: 'PARTNER-123',
+      referralLink: 'https://example.com/r/PARTNER-123',
+      referralLinkSlug: 'PARTNER-123',
+      qrCodeUrl: null,
+      campaignLinks: [],
+    });
     mockGetEarningsSummary.mockResolvedValue({
       totalEarned: 100,
       totalPending: 10,
@@ -238,6 +247,26 @@ describe('V8 partner read bridge', () => {
     });
     expect(res.body.data.attributions[0].id).toBe('attr-1');
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/referral-tools returns tools with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/referral-tools');
+
+    expect(res.status).toBe(200);
+    expect(mockGetReferralTools).toHaveBeenCalledWith('partner-org-resolved');
+    expect(res.body.data.tools.referralCode).toBe('PARTNER-123');
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/referral-tools preserves legacy fallback shape when service returns null', async () => {
+    mockGetReferralTools.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/referral-tools');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.tools.referralCode).toBe('ACME-2024');
+    expect(res.body.data.tools.campaignLinks).toEqual([]);
   });
 
   it('GET /api/v8/partner/earnings-summary returns earnings with partner meta', async () => {

@@ -54,6 +54,23 @@ describe('V8PartnerApi', () => {
     expect(data.attributions[0].id).toBe('attr-1');
   });
 
+  it('requests partner referral tools from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      tools: {
+        referralCode: 'PARTNER-123',
+        referralLink: 'https://example.com/r/PARTNER-123',
+        referralLinkSlug: 'PARTNER-123',
+        qrCodeUrl: null,
+        campaignLinks: [],
+      },
+    });
+
+    const data = await V8PartnerApi.getReferralTools();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/referral-tools');
+    expect(data.tools.referralCode).toBe('PARTNER-123');
+  });
+
   it('requests partner earnings summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       earnings: {
