@@ -17,9 +17,11 @@ import type { Response } from 'express';
 import { getDatabase } from '../../database/Database.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import legalService from '../../services/legalService.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
 import PartnerReferralService from '../../services/partnerReferralService.js';
+import logger from '../../utils/Logger.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -89,6 +91,68 @@ router.get(
           completed: Boolean(row?.completed),
         },
       },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
+ * POST /api/v8/partner/onboarding/accept-terms
+ */
+router.post(
+  '/onboarding/accept-terms',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+
+    const { termsVersion = 'v1.0', privacyVersion = 'v1.0' } = req.body ?? {};
+
+    await DbPromise.run(
+      getDatabase(),
+      `INSERT INTO user_onboarding_status (
+         user_id, terms_accepted, terms_accepted_at, terms_version,
+         privacy_accepted, privacy_accepted_at, privacy_version, updated_at
+       ) VALUES (?, TRUE, NOW(), ?, TRUE, NOW(), ?, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         terms_accepted = TRUE,
+         terms_accepted_at = NOW(),
+         terms_version = excluded.terms_version,
+         privacy_accepted = TRUE,
+         privacy_accepted_at = NOW(),
+         privacy_version = excluded.privacy_version,
+         updated_at = NOW()`,
+      [userId, termsVersion, privacyVersion],
+    );
+
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket?.remoteAddress || '';
+    const userAgent = (req.headers['user-agent'] as string) || '';
+    const organizationId = req.organizationId || req.user?.organizationId;
+
+    try {
+      await legalService.acceptDocuments(
+        userId,
+        ['TOS', 'PRIVACY'],
+        'USER',
+        ipAddress,
+        userAgent,
+        organizationId,
+      );
+    } catch (legalErr) {
+      logger.warn('[V8 Partner Onboarding] Legal acceptance sync failed (non-blocking):', legalErr);
+    }
+
+    return res.status(201).json({
+      data: { success: true, message: 'Terms accepted' },
       meta: partnerReadMeta(req, partnerOrgId),
     });
   }),

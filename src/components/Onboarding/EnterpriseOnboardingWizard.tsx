@@ -103,10 +103,20 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
     setLoading(true);
     try {
-      await Api.post('/onboarding/accept-terms', {
-        termsVersion: 'v1.0',
-        privacyVersion: 'v1.0',
-      });
+      try {
+        await V8PartnerApi.acceptOnboardingTerms({
+          termsVersion: 'v1.0',
+          privacyVersion: 'v1.0',
+        });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        await Api.post('/onboarding/accept-terms', {
+          termsVersion: 'v1.0',
+          privacyVersion: 'v1.0',
+        });
+      }
       toast.success(t('onboarding.toast.termsAccepted', 'Regulamin zaakceptowany'));
       setStep(2);
     } catch (error) {

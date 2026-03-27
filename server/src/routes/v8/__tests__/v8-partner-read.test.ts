@@ -14,6 +14,7 @@ const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
 const mockCreateCampaignLink = vi.fn();
 const mockDeleteCampaignLink = vi.fn();
+const mockAcceptDocuments = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbTransaction = vi.fn();
@@ -41,6 +42,12 @@ vi.mock('../../../services/partnerCommissionService.js', () => ({
     getCommissions: (...args: unknown[]) => mockGetCommissions(...args),
     getPayouts: (...args: unknown[]) => mockGetPayouts(...args),
     requestPayout: (...args: unknown[]) => mockRequestPayout(...args),
+  },
+}));
+
+vi.mock('../../../services/legalService.js', () => ({
+  default: {
+    acceptDocuments: (...args: unknown[]) => mockAcceptDocuments(...args),
   },
 }));
 
@@ -210,6 +217,7 @@ describe('V8 partner read bridge', () => {
       fullUrl: 'https://example.com/?c=spring-launch',
     });
     mockDeleteCampaignLink.mockResolvedValue(true);
+    mockAcceptDocuments.mockResolvedValue(undefined);
     mockDbGet.mockResolvedValue({
       terms_accepted: 1,
       privacy_accepted: 1,
@@ -291,6 +299,27 @@ describe('V8 partner read bridge', () => {
       paymentSetup: false,
       completed: false,
     });
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('POST /api/v8/partner/onboarding/accept-terms records legal acceptance with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/partner/onboarding/accept-terms').send({
+      termsVersion: 'v2.0',
+      privacyVersion: 'v3.0',
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockDbRun).toHaveBeenCalled();
+    expect(mockAcceptDocuments).toHaveBeenCalledWith(
+      'user-partner-1',
+      ['TOS', 'PRIVACY'],
+      'USER',
+      expect.any(String),
+      '',
+      'tenant-org-v8',
+    );
+    expect(res.body.data).toEqual({ success: true, message: 'Terms accepted' });
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 

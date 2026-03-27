@@ -115,6 +115,16 @@ export interface V8PartnerOnboardingStatus {
   completed: boolean;
 }
 
+export interface V8PartnerOnboardingAcceptTermsPayload {
+  termsVersion?: string;
+  privacyVersion?: string;
+}
+
+export interface V8PartnerOnboardingAcceptTermsResult {
+  success: boolean;
+  message: string;
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -197,6 +207,8 @@ export const V8PartnerApi = {
     }),
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
+  acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>
+    v8Post<V8PartnerOnboardingAcceptTermsResult>('/partner/onboarding/accept-terms', body),
   getReferralTools: () => v8Get<{ tools: V8PartnerReferralTools }>('/partner/referral-tools'),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
   getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),

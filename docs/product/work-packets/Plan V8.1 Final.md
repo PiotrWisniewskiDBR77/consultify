@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Partner Program` parity
-- landed packets in the active lane: `8`
+- landed packets in the active lane: `9`
 
 ---
 
@@ -87,7 +87,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
-| `10` | broader `Partner Program` parity | `Phase C` | `active` | accepted partner payout/campaign/profile seams are already closed, and eight broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, and enterprise onboarding wizard status restoration while deeper onboarding writes, client-access, statement-source, and payout-settings breadth still remain | broader partner breadth is accepted |
+| `10` | broader `Partner Program` parity | `Phase C` | `active` | accepted partner payout/campaign/profile seams are already closed, and nine broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, and enterprise onboarding legal acceptance while deeper pricing-tier/completion writes, client-access, statement-source, and payout-settings breadth still remain | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
 | `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: eighth broader packet recorded in `evidence/426-v81-broader-partner-enterprise-onboarding-wizard-status-readback-seam.md`
-- reason: after partner-home CTA authority moved onto the partner-specific onboarding entry, the active `EnterpriseOnboardingWizard` still resumed from legacy onboarding status even though the governed partner V8 status seam already existed, while `client-access` remained broader placeholder-only breadth, so the next smallest honest cut was enterprise onboarding wizard status readback
+- latest evidence: ninth broader packet recorded in `evidence/427-v81-broader-partner-enterprise-onboarding-accept-terms-v8-seam.md`
+- reason: after enterprise onboarding status restoration moved onto the governed partner seam, the first active wizard write still posted legal acceptance through legacy onboarding routes, while `client-access` remained broader placeholder-only breadth, so the next smallest honest cut was enterprise onboarding legal acceptance continuity
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `enterprise onboarding wizard status readback seam`
-- last accepted packet: `enterprise onboarding wizard status readback seam`
+- current packet: `enterprise onboarding accept-terms V8 seam`
+- last accepted packet: `enterprise onboarding accept-terms V8 seam`
 - blocker: `none`
-- next action: `assess whether deeper onboarding wizard write continuity or client-access breadth now contains the next smallest honest broader-partner packet after enterprise onboarding wizard status readback continuity`
+- next action: `assess whether enterprise onboarding pricing-tier selection continuity or client-access breadth now contains the next smallest honest broader-partner packet after enterprise onboarding accept-terms continuity`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

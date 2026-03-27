@@ -51,6 +51,8 @@ export type {
   V8PartnerEarningsSummary,
   V8PartnerListingUpdatePayload,
   V8PartnerListingUpdateResult,
+  V8PartnerOnboardingAcceptTermsPayload,
+  V8PartnerOnboardingAcceptTermsResult,
   V8PartnerOnboardingStatus,
   V8PartnerPayoutHistoryItem,
   V8PartnerOrganizationUpdatePayload,

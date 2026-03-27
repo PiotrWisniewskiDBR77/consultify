@@ -88,6 +88,24 @@ describe('V8PartnerApi', () => {
     expect(data.status.pricingTier).toBe('professional');
   });
 
+  it('requests partner onboarding legal acceptance from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      message: 'Terms accepted',
+    });
+
+    const data = await V8PartnerApi.acceptOnboardingTerms({
+      termsVersion: 'v1.0',
+      privacyVersion: 'v1.0',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/partner/onboarding/accept-terms', {
+      termsVersion: 'v1.0',
+      privacyVersion: 'v1.0',
+    });
+    expect(data.success).toBe(true);
+  });
+
   it('requests partner earnings summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       earnings: {

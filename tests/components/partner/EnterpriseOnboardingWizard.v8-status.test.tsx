@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -24,7 +24,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('react-hot-toast', () => ({
-  toast: vi.fn(),
+  toast: Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+  }),
 }));
 
 vi.mock('@/services/api', () => ({
@@ -38,6 +41,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getOnboardingStatus: vi.fn(),
+    acceptOnboardingTerms: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status);
@@ -54,7 +58,23 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
     vi.clearAllMocks();
     navigateMock.mockReset();
     vi.mocked(Api.getSubscriptionPlans).mockResolvedValue([]);
+    vi.mocked(V8PartnerApi.acceptOnboardingTerms).mockResolvedValue({
+      success: true,
+      message: 'Terms accepted',
+    } as any);
     vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
+      status: {
+        termsAccepted: false,
+        privacyAccepted: false,
+        pricingTier: null,
+        paymentSetup: false,
+        completed: false,
+      },
+    } as any);
+  });
+
+  it('prefers governed partner onboarding status before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValueOnce({
       status: {
         termsAccepted: true,
         privacyAccepted: true,
@@ -63,9 +83,7 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
         completed: false,
       },
     } as any);
-  });
 
-  it('prefers governed partner onboarding status before legacy fallback', async () => {
     render(
       <MemoryRouter>
         <EnterpriseOnboardingWizard />
@@ -107,5 +125,64 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
     });
 
     expect(Api.get).toHaveBeenCalledWith('/onboarding/status');
+  });
+
+  it('prefers governed partner legal acceptance before legacy fallback', async () => {
+    render(
+      <MemoryRouter>
+        <EnterpriseOnboardingWizard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText('I have read and accept the Terms & Conditions'));
+    fireEvent.click(screen.getByLabelText('I have read and accept the Privacy Policy'));
+    fireEvent.click(screen.getByRole('button', { name: 'Accept & Continue' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.acceptOnboardingTerms).toHaveBeenCalledWith({
+      termsVersion: 'v1.0',
+      privacyVersion: 'v1.0',
+    });
+    expect(Api.post).not.toHaveBeenCalledWith('/onboarding/accept-terms', expect.anything());
+  });
+
+  it('falls back to legacy legal acceptance on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.acceptOnboardingTerms).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
+      if (url === '/onboarding/accept-terms') {
+        return { success: true, message: 'Terms accepted' } as any;
+      }
+      throw new Error(`Unexpected POST ${url}`);
+    });
+
+    render(
+      <MemoryRouter>
+        <EnterpriseOnboardingWizard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText('I have read and accept the Terms & Conditions'));
+    fireEvent.click(screen.getByLabelText('I have read and accept the Privacy Policy'));
+    fireEvent.click(screen.getByRole('button', { name: 'Accept & Continue' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
+    });
+
+    expect(Api.post).toHaveBeenCalledWith('/onboarding/accept-terms', {
+      termsVersion: 'v1.0',
+      privacyVersion: 'v1.0',
+    });
   });
 });
