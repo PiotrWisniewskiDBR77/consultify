@@ -135,6 +135,8 @@ const AppConfigSchema = JWTConfigSchema.merge(ServerConfigSchema)
     MICROSOFT_CLIENT_ID: z.string().optional(),
     MICROSOFT_CLIENT_SECRET: z.string().optional(),
     MICROSOFT_CALLBACK_URL: z.string().url().optional(),
+    SLACK_CLIENT_ID: z.string().optional(),
+    SLACK_CLIENT_SECRET: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -158,6 +160,10 @@ const AppConfigSchema = JWTConfigSchema.merge(ServerConfigSchema)
       const microsoftHasAll =
         data.MICROSOFT_CLIENT_ID && data.MICROSOFT_CLIENT_SECRET && data.MICROSOFT_CALLBACK_URL;
       if (microsoftHasAny && !microsoftHasAll) return false;
+
+      const slackHasAny = data.SLACK_CLIENT_ID || data.SLACK_CLIENT_SECRET;
+      const slackHasAll = data.SLACK_CLIENT_ID && data.SLACK_CLIENT_SECRET;
+      if (slackHasAny && !slackHasAll) return false;
 
       return true;
     },
@@ -200,6 +206,8 @@ export function validateConfig(): ValidatedConfig {
     MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
     MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
     MICROSOFT_CALLBACK_URL: process.env.MICROSOFT_CALLBACK_URL,
+    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
+    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
 
     // Frontend
     FRONTEND_URL: process.env.FRONTEND_URL,

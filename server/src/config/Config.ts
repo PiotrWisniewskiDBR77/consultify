@@ -46,6 +46,10 @@ const AppConfigSchema = z.object({
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_CALLBACK_URL: z.string().url().optional(),
 
+  // OAuth: Slack
+  SLACK_CLIENT_ID: z.string().optional(),
+  SLACK_CLIENT_SECRET: z.string().optional(),
+
   // Frontend URL
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
 
@@ -118,6 +122,8 @@ function loadConfig(): AppConfig {
     MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
     MICROSOFT_CALLBACK_URL:
       process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:3005/api/auth/microsoft/callback',
+    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
+    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
     FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
     SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || undefined,
     DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL || undefined,

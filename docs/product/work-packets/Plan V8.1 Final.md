@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `21`
+- landed packets in the current active lane: `22`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: post-Teams provider-round-trip residual assessment recorded in `evidence/471-v81-broader-sync-post-teams-provider-round-trip-residual-assessment.md`
-- reason: after shared governed provider round-trip coverage reached Teams, one more provider seam still remains thinner than deeper authority alignment, with Slack now standing out as the next bounded extension
+- latest evidence: Slack governed provider round-trip coverage landed in `evidence/472-v81-broader-sync-slack-governed-provider-round-trip-coverage-seam.md`
+- reason: the shared governed provider round-trip seam now covers Jira, Gmail, Teams, and Slack, so the active Slack path no longer falls back to a callback placeholder instead of a real provider authorization round-trip
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/471-v81-broader-sync-post-teams-provider-round-trip-residual-assessment.md`
+- current packet: `evidence/472-v81-broader-sync-slack-governed-provider-round-trip-coverage-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote Slack governed provider round-trip coverage on the shared governed oauth2 seam as the next honest broader-sync implementation step`
+- next action: `assess whether one more provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

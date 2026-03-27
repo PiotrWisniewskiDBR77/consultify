@@ -40,6 +40,12 @@ const DEFAULT_GMAIL_SCOPES = [
   'profile',
   'https://www.googleapis.com/auth/gmail.readonly',
 ];
+const SlackMaterializationConfigSchema = z.object({
+  workspace_id: z.string().trim().min(1),
+});
+const DEFAULT_SLACK_SCOPES = ['channels:read', 'users:read', 'chat:write'];
+const SLACK_TOKEN_ENDPOINT = 'https://slack.com/api/oauth.v2.access';
+const SLACK_AUTHORIZE_ENDPOINT = 'https://slack.com/oauth/v2/authorize';
 const TeamsMaterializationConfigSchema = z.object({
   tenant_id: z.string().trim().min(1),
 });
@@ -99,6 +105,20 @@ function getMicrosoftAuthConfig(): { clientId: string; clientSecret: string } {
   };
 }
 
+function getSlackAuthConfig(): { clientId: string; clientSecret: string } {
+  if (!config.SLACK_CLIENT_ID) {
+    throw new Error('Governed Slack external auth client id is unavailable');
+  }
+  if (!config.SLACK_CLIENT_SECRET) {
+    throw new Error('Governed Slack external auth client secret is unavailable');
+  }
+
+  return {
+    clientId: config.SLACK_CLIENT_ID,
+    clientSecret: config.SLACK_CLIENT_SECRET,
+  };
+}
+
 function getMicrosoftAuthorizeEndpoint(tenantId: string): string {
   return `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
 }
@@ -110,7 +130,7 @@ function getMicrosoftTokenEndpoint(tenantId: string): string {
 function parseGrantedScopes(rawScope: string | undefined, fallback: string[]): string[] {
   return typeof rawScope === 'string' && rawScope.trim().length > 0
     ? rawScope
-        .split(/\s+/)
+        .split(/[\s,]+/)
         .map((scope) => scope.trim())
         .filter(Boolean)
     : fallback;
@@ -200,6 +220,25 @@ export function buildGovernedExternalAuthSession(
     };
   }
 
+  if (normalizeConnectorId(context.connectorId) === 'slack') {
+    SlackMaterializationConfigSchema.parse(context.config);
+    const slackConfig = getSlackAuthConfig();
+    const params = new URLSearchParams({
+      client_id: slackConfig.clientId,
+      redirect_uri: callbackUrl,
+      scope: DEFAULT_SLACK_SCOPES.join(','),
+      state: session.state,
+      user_scope: '',
+    });
+
+    return {
+      authUrl: `${SLACK_AUTHORIZE_ENDPOINT}?${params.toString()}`,
+      callbackUrl,
+      state: session.state,
+      expiresAt: new Date(session.expiresAt).toISOString(),
+    };
+  }
+
   return {
     authUrl: callbackUrl,
     callbackUrl,
@@ -209,7 +248,7 @@ export function buildGovernedExternalAuthSession(
 }
 
 export function shouldMaterializeCallbackDrivenAuth(connectorId: string): boolean {
-  return ['jira', 'gmail', 'teams'].includes(normalizeConnectorId(connectorId));
+  return ['jira', 'gmail', 'teams', 'slack'].includes(normalizeConnectorId(connectorId));
 }
 
 export async function materializeGovernedExternalAuthCallback(params: {
@@ -469,6 +508,86 @@ export async function materializeGovernedExternalAuthCallback(params: {
     };
   }
 
+  if (normalizedConnectorId === 'slack') {
+    const slackConfig = getSlackAuthConfig();
+    const parsed = SlackMaterializationConfigSchema.parse(params.config);
+    const response = await fetch(SLACK_TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: slackConfig.clientId,
+        client_secret: slackConfig.clientSecret,
+        code: params.code,
+        redirect_uri: callbackUrl,
+      }).toString(),
+    });
+
+    const payload = (await response.json()) as {
+      ok?: boolean;
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      scope?: string;
+      error?: string;
+      team?: { id?: string; name?: string };
+      authed_user?: { id?: string };
+    };
+
+    if (
+      !response.ok ||
+      payload.ok === false ||
+      typeof payload.access_token !== 'string' ||
+      payload.access_token.length === 0
+    ) {
+      throw new Error(payload.error || 'Failed to exchange external auth code');
+    }
+
+    const tokenExpiresAt =
+      typeof payload.expires_in === 'number' && payload.expires_in > 0
+        ? new Date(Date.now() + payload.expires_in * 1000).toISOString()
+        : null;
+    const scopesGranted = parseGrantedScopes(payload.scope, DEFAULT_SLACK_SCOPES);
+    const teamId =
+      typeof payload.team?.id === 'string' && payload.team.id.trim().length > 0
+        ? payload.team.id.trim()
+        : parsed.workspace_id;
+    const providerAccountId =
+      typeof payload.authed_user?.id === 'string' && payload.authed_user.id.trim().length > 0
+        ? payload.authed_user.id.trim()
+        : teamId;
+
+    await storeCredential({
+      connectorId: params.session.connectorId,
+      organizationId: params.session.organizationId,
+      providerAccountId,
+      workspaceOrTenantId: teamId,
+      scopesGranted,
+      tokenExpiresAt,
+    });
+
+    let refreshSecretStored = false;
+    if (typeof payload.refresh_token === 'string' && payload.refresh_token.trim().length > 0) {
+      await storeRefreshExecutionSecret({
+        connectorId: params.session.connectorId,
+        organizationId: params.session.organizationId,
+        clientId: slackConfig.clientId,
+        clientSecret: slackConfig.clientSecret,
+        refreshToken: payload.refresh_token,
+        tokenEndpoint: SLACK_TOKEN_ENDPOINT,
+      });
+      refreshSecretStored = true;
+    }
+
+    return {
+      credentialStored: true,
+      refreshSecretStored,
+      tokenExpiresAt,
+      scopesGranted,
+    };
+  }
+
   throw new Error(`Unsupported callback materialization connector: ${params.session.connectorId}`);
 }
 
@@ -479,6 +598,9 @@ export function hasGovernedExternalAuthEnvConfig(connectorId: string): boolean {
   }
   if (normalized === 'teams') {
     return Boolean(config.MICROSOFT_CLIENT_ID && config.MICROSOFT_CLIENT_SECRET);
+  }
+  if (normalized === 'slack') {
+    return Boolean(config.SLACK_CLIENT_ID && config.SLACK_CLIENT_SECRET);
   }
   return false;
 }

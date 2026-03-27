@@ -463,7 +463,10 @@ Current status: `active`
 - [x] focused regression added for Teams governed provider round-trip coverage across shared materialization service and active `v8` configure route
 - [x] assessed whether one more provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync packet
 - [x] recorded post-Teams provider-round-trip residual assessment confirming that Slack is now the next thinner provider-coverage seam before deeper authority alignment
-- [ ] promote Slack governed provider round-trip coverage on the shared governed oauth2 seam as the next honest broader-sync implementation step
+- [x] promoted Slack governed provider round-trip coverage on the shared governed oauth2 seam as the next honest broader-sync implementation step
+- [x] twenty-second real bounded packet landed around Slack governed provider round-trip coverage on the shared governed oauth2 seam
+- [x] focused regression added for Slack governed provider round-trip coverage across shared materialization service and active `v8` configure route
+- [ ] assess whether one more provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync packet
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1283,6 +1286,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: landed the twenty-second real bounded packet inside broader `Sync` completion by extending the shared governed provider round-trip seam to Slack in `evidence/472-v81-broader-sync-slack-governed-provider-round-trip-coverage-seam.md`, so the active Slack path now produces a real Slack authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder
 - 2026-03-27: recorded the broader `Sync` post-Teams provider-round-trip residual assessment in `evidence/471-v81-broader-sync-post-teams-provider-round-trip-residual-assessment.md`, confirming that Slack is now the next honest provider-coverage packet before deeper authority alignment
 - 2026-03-27: landed the twenty-first real bounded packet inside broader `Sync` completion by extending the shared governed provider round-trip seam to Teams in `evidence/470-v81-broader-sync-teams-governed-provider-round-trip-coverage-seam.md`, so the active Teams path now produces a real Microsoft authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder
 - 2026-03-27: recorded the broader `Sync` post-Gmail provider-round-trip residual assessment in `evidence/469-v81-broader-sync-post-gmail-provider-round-trip-residual-assessment.md`, confirming that Teams is now the next honest provider-coverage packet before deeper authority alignment

@@ -10,6 +10,8 @@ vi.mock('../../../config/Config.js', () => ({
     GOOGLE_CLIENT_SECRET: 'google-client-secret',
     MICROSOFT_CLIENT_ID: 'microsoft-client-id',
     MICROSOFT_CLIENT_SECRET: 'microsoft-client-secret',
+    SLACK_CLIENT_ID: 'slack-client-id',
+    SLACK_CLIENT_SECRET: 'slack-client-secret',
   },
 }));
 
@@ -274,5 +276,100 @@ describe('pmSyncExternalAuthMaterializationService', () => {
 
   it('marks teams as eligible for callback-driven materialization', () => {
     expect(shouldMaterializeCallbackDrivenAuth('teams')).toBe(true);
+  });
+
+  it('builds a real Slack provider authorization URL on the governed path', () => {
+    const session = buildGovernedExternalAuthSession(
+      {
+        protocol: 'https',
+        get: (header: string) => {
+          if (header === 'host') return 'consultify.test';
+          return undefined;
+        },
+      },
+      {
+        integrationId: 'int-3',
+        organizationId: '00000000-0000-4000-8000-000000000099',
+        connectorId: 'slack',
+        mode: 'connect',
+        config: { workspace_id: 'workspace-123' },
+      },
+    );
+
+    expect(session.authUrl).toContain('https://slack.com/oauth/v2/authorize?');
+    expect(session.authUrl).toContain('client_id=slack-client-id');
+    expect(session.authUrl).toContain('channels%3Aread%2Cusers%3Aread%2Cchat%3Awrite');
+  });
+
+  it('materializes Slack governed callback auth truth and stores refresh material', async () => {
+    mockStoreRefreshExecutionSecret.mockResolvedValueOnce({
+      connectorId: 'slack',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      clientId: 'slack-client-id',
+      tokenEndpoint: 'https://slack.com/api/oauth.v2.access',
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        access_token: 'slack-access-1',
+        refresh_token: 'slack-refresh-1',
+        expires_in: 3600,
+        scope: 'channels:read,users:read,chat:write',
+        team: { id: 'T123', name: 'Acme' },
+        authed_user: { id: 'U123' },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await materializeGovernedExternalAuthCallback({
+      req: {
+        protocol: 'https',
+        get: (header: string) => {
+          if (header === 'host') return 'consultify.test';
+          return undefined;
+        },
+      },
+      session: {
+        state: 'state-1',
+        connectorId: 'slack',
+        organizationId: '00000000-0000-4000-8000-000000000099',
+      },
+      config: {
+        workspace_id: 'workspace-123',
+      },
+      code: 'slack-code-1',
+    });
+
+    expect(result.credentialStored).toBe(true);
+    expect(result.refreshSecretStored).toBe(true);
+    expect(result.scopesGranted).toEqual(['channels:read', 'users:read', 'chat:write']);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://slack.com/api/oauth.v2.access',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      }),
+    );
+    expect(mockStoreCredential).toHaveBeenCalledWith({
+      connectorId: 'slack',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      providerAccountId: 'U123',
+      workspaceOrTenantId: 'T123',
+      scopesGranted: ['channels:read', 'users:read', 'chat:write'],
+      tokenExpiresAt: expect.any(String),
+    });
+    expect(mockStoreRefreshExecutionSecret).toHaveBeenCalledWith({
+      connectorId: 'slack',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      clientId: 'slack-client-id',
+      clientSecret: 'slack-client-secret',
+      refreshToken: 'slack-refresh-1',
+      tokenEndpoint: 'https://slack.com/api/oauth.v2.access',
+    });
+  });
+
+  it('marks slack as eligible for callback-driven materialization', () => {
+    expect(shouldMaterializeCallbackDrivenAuth('slack')).toBe(true);
   });
 });
