@@ -748,6 +748,27 @@ router.post(
     const provider = String(req.params.provider || '').trim();
     if (!provider) return res.status(400).json({ error: 'Provider is required' });
 
+    const cols = await tryGetColumns('integrations');
+    if (cols.has('connector_id') && cols.has('config')) {
+      try {
+        const result = await connectGovernedConnectorIntegration({
+          req,
+          organizationId: orgId,
+          actorId: req.user?.id || 'system',
+          provider,
+          name: req.body?.name,
+          config: (req.body?.config || {}) as Record<string, unknown>,
+        });
+        return res.status(201).json(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to connect';
+        if (message.includes('Unknown connector:')) {
+          return res.status(404).json({ error: message });
+        }
+        throw error;
+      }
+    }
+
     const { config, name, type } = req.body || {};
     const result = await connectIntegrationRow({
       orgId,

@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `15`
+- landed packets in the current active lane: `16`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: fifteenth broader sync packet recorded in `evidence/459-v81-broader-sync-canonical-connect-initiation-authority-continuity-seam.md`
-- reason: after canonical readback continuity landed, the org-level integrations surface could see governed pending truth but the canonical connect entrypoint still did not create that truth on the same governed path
+- latest evidence: sixteenth broader sync packet recorded in `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`
+- reason: after canonical connect initiation continuity landed, older settings surfaces still used the alias connect route and therefore kept a second org-level authority seam open for governed sync initiation
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/459-v81-broader-sync-canonical-connect-initiation-authority-continuity-seam.md`
+- current packet: `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether legacy alias /api/integrations/:provider/connect authority continuity or real governed refresh execution continuity is now the next smallest honest broader-sync packet`
+- next action: `assess whether real governed refresh execution continuity or deeper authority alignment is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

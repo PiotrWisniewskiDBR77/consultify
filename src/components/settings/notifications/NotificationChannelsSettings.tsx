@@ -126,6 +126,14 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       if (response.success) {
         if (response.authUrl) {
           window.open(response.authUrl, '_blank', 'width=600,height=700');
+          toast.success('Authorization started. Finish the external auth step to complete setup.');
+        } else if (
+          response.onboardingStatus === 'pending_external_auth_or_configuration' ||
+          response.onboardingStatus === 'pending_configuration'
+        ) {
+          toast.success('Setup started. Complete the required configuration fields to continue.');
+        } else if (response.onboardingStatus === 'configuration_submitted_pending_validation') {
+          toast.success('Configuration submitted. Validation is still pending.');
         } else {
           setChannels({
             ...channels,

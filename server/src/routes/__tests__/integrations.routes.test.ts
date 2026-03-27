@@ -191,4 +191,29 @@ describe('canonical integrations readback continuity', () => {
       ])
     );
   });
+
+  it('POST /api/integrations/:provider/connect reuses governed connect authority on alias entrypoint', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/integrations', integrationsRoutes);
+
+    const res = await request(app).post('/api/integrations/jira/connect').send({
+      config: {
+        site_url: 'https://acme.atlassian.net',
+        cloud_id: 'cloud-1',
+      },
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.authUrl).toContain('/api/sync-hub/external-auth/callback?state=');
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: 'org-1',
+      targetState: 'connecting',
+      transitionedBy: 'user-1',
+      reason: 'canonical_integrations_connect_initiated',
+    });
+  });
 });
