@@ -32,6 +32,30 @@ type AICoreToolPolicy = {
   } | null;
 };
 
+type AICoreAuditTrail = {
+  supportTraces?: Array<{
+    id?: string;
+    toolName?: string;
+    stage?: string;
+    status?: string;
+  }>;
+  provenanceEntries?: Array<{
+    id?: string;
+    sourceType?: string;
+    sourceRef?: string;
+    summary?: string;
+  }>;
+};
+
+type AICoreProvenanceLedger = {
+  snapshotId?: string;
+  lineage?: Array<{
+    id?: string;
+    kind?: string;
+    label?: string;
+  }>;
+};
+
 export const AICoreRuntimePanel: React.FC = () => {
   const { t } = useTranslation();
   const [environment, setEnvironment] = useState<AICoreEnvironment | null>(null);
@@ -42,6 +66,11 @@ export const AICoreRuntimePanel: React.FC = () => {
   const [policy, setPolicy] = useState<AICoreToolPolicy | null>(null);
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
+  const [snapshotId, setSnapshotId] = useState('');
+  const [trustLoading, setTrustLoading] = useState(false);
+  const [trustError, setTrustError] = useState<string | null>(null);
+  const [auditTrail, setAuditTrail] = useState<AICoreAuditTrail | null>(null);
+  const [provenanceLedger, setProvenanceLedger] = useState<AICoreProvenanceLedger | null>(null);
 
   const loadToolPolicy = useCallback(async (toolId: string) => {
     setSelectedToolId(toolId);
@@ -89,6 +118,29 @@ export const AICoreRuntimePanel: React.FC = () => {
       setLoading(false);
     }
   }, [loadToolPolicy]);
+
+  const loadTrustReadback = useCallback(async () => {
+    const nextSnapshotId = snapshotId.trim();
+    if (!nextSnapshotId) return;
+
+    setTrustLoading(true);
+    setTrustError(null);
+    try {
+      const [auditData, provenanceData] = await Promise.all([
+        V8AICoreApi.getAuditTrail(nextSnapshotId),
+        V8AICoreApi.getProvenance(nextSnapshotId),
+      ]);
+      setAuditTrail((auditData ?? null) as AICoreAuditTrail | null);
+      setProvenanceLedger((provenanceData ?? null) as AICoreProvenanceLedger | null);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setAuditTrail(null);
+      setProvenanceLedger(null);
+      setTrustError(message);
+    } finally {
+      setTrustLoading(false);
+    }
+  }, [snapshotId]);
 
   useEffect(() => {
     void load();
@@ -361,6 +413,132 @@ export const AICoreRuntimePanel: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              {t('superadmin.aiCoreRuntime.trustTitle', {
+                defaultValue: 'Trust and provenance readback',
+              })}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {t('superadmin.aiCoreRuntime.trustSubtitle', {
+                defaultValue:
+                  'Read-only audit trail and provenance ledger from the governed V8 trust endpoints for one snapshot/output id.',
+              })}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={snapshotId}
+              onChange={(event) => setSnapshotId(event.target.value)}
+              placeholder={t('superadmin.aiCoreRuntime.snapshotPlaceholder', {
+                defaultValue: 'Enter snapshot id',
+              })}
+              className="h-9 min-w-[220px] rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-white/10 dark:bg-navy-950 dark:text-white"
+              aria-label={t('superadmin.aiCoreRuntime.snapshotLabel', {
+                defaultValue: 'Snapshot id',
+              })}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void loadTrustReadback()}
+              disabled={trustLoading || !snapshotId.trim()}
+            >
+              {trustLoading
+                ? t('superadmin.aiCoreRuntime.trustLoading', { defaultValue: 'Loading trust…' })
+                : t('superadmin.aiCoreRuntime.loadTrust', { defaultValue: 'Load trust' })}
+            </Button>
+          </div>
+        </div>
+
+        {trustError && (
+          <div
+            className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
+            role="alert"
+          >
+            {t('superadmin.aiCoreRuntime.trustLoadError', {
+              defaultValue: 'Could not load trust readback: {{message}}',
+              message: trustError,
+            })}
+          </div>
+        )}
+
+        {!trustError && !auditTrail && !provenanceLedger && (
+          <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            {t('superadmin.aiCoreRuntime.noTrust', {
+              defaultValue: 'Enter a snapshot id to read governed trust and provenance.',
+            })}
+          </div>
+        )}
+
+        {(auditTrail || provenanceLedger) && (
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+            <div className="rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3">
+              <div className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
+                {t('superadmin.aiCoreRuntime.auditTrailTitle', { defaultValue: 'Audit trail' })}
+              </div>
+              <div className="mt-3 space-y-2">
+                {(auditTrail?.supportTraces?.length || 0) > 0 ? (
+                  auditTrail!.supportTraces!.map((trace, index) => (
+                    <div
+                      key={trace.id || `${trace.toolName || 'trace'}-${index}`}
+                      className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2"
+                    >
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                        {trace.toolName || trace.id || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {[trace.stage, trace.status].filter(Boolean).join(' · ') ||
+                          t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('superadmin.aiCoreRuntime.noAuditTrail', {
+                      defaultValue: 'No support traces returned for this snapshot.',
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3">
+              <div className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
+                {t('superadmin.aiCoreRuntime.provenanceTitle', { defaultValue: 'Provenance ledger' })}
+              </div>
+              <div className="mt-3 space-y-2">
+                {(provenanceLedger?.lineage?.length || 0) > 0 ? (
+                  provenanceLedger!.lineage!.map((entry, index) => (
+                    <div
+                      key={entry.id || `${entry.label || 'lineage'}-${index}`}
+                      className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2"
+                    >
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                        {entry.label || entry.id || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {entry.kind || t('superadmin.aiCoreRuntime.none', { defaultValue: '—' })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('superadmin.aiCoreRuntime.noProvenance', {
+                      defaultValue: 'No provenance ledger returned for this snapshot.',
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

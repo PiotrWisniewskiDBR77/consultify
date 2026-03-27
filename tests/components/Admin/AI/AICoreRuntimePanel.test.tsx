@@ -13,6 +13,8 @@ vi.mock('../../../../src/services/api/v8/ai-core', () => ({
     getEnvironment: vi.fn(),
     getTools: vi.fn(),
     getToolPolicy: vi.fn(),
+    getAuditTrail: vi.fn(),
+    getProvenance: vi.fn(),
   },
 }));
 
@@ -106,5 +108,41 @@ describe('AICoreRuntimePanel', () => {
     });
     expect(screen.getByText('requires_human_approval')).toBeInTheDocument();
     expect(screen.getByText('force_human_approval')).toBeInTheDocument();
+  });
+
+  it('loads governed trust and provenance readback for a snapshot id', async () => {
+    vi.mocked(V8AICoreApi.getEnvironment).mockResolvedValue({
+      healthy: true,
+      contract: 'ai_core_v1',
+      layers: {},
+    } as any);
+    vi.mocked(V8AICoreApi.getTools).mockResolvedValue([] as any);
+    vi.mocked(V8AICoreApi.getToolPolicy).mockResolvedValue(null as any);
+    vi.mocked(V8AICoreApi.getAuditTrail).mockResolvedValue({
+      supportTraces: [{ id: 'trace-1', toolName: 'ChatTurn', stage: 'execution', status: 'done' }],
+      provenanceEntries: [],
+    } as any);
+    vi.mocked(V8AICoreApi.getProvenance).mockResolvedValue({
+      snapshotId: 'snapshot-123',
+      lineage: [{ id: 'prov-1', kind: 'artifact', label: 'Generated summary' }],
+    } as any);
+
+    render(<AICoreRuntimePanel />);
+
+    fireEvent.change(await screen.findByLabelText('Snapshot id'), {
+      target: { value: 'snapshot-123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Load trust' }));
+
+    await waitFor(() => {
+      expect(V8AICoreApi.getAuditTrail).toHaveBeenCalledWith('snapshot-123');
+      expect(V8AICoreApi.getProvenance).toHaveBeenCalledWith('snapshot-123');
+    });
+
+    expect(screen.getByText('Trust and provenance readback')).toBeInTheDocument();
+    expect(screen.getByText('ChatTurn')).toBeInTheDocument();
+    expect(screen.getByText('execution · done')).toBeInTheDocument();
+    expect(screen.getByText('Generated summary')).toBeInTheDocument();
+    expect(screen.getByText('artifact')).toBeInTheDocument();
   });
 });
