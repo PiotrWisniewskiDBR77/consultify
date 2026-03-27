@@ -22,7 +22,10 @@ import {
 } from '../../services/financialAnalysisService.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { listModels } from '../../services/financialModelingService.js';
-import { listStatementPacks } from '../../services/financialStatementPackService.js';
+import {
+  getStatementPackDetail,
+  listStatementPacks,
+} from '../../services/financialStatementPackService.js';
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -99,6 +102,22 @@ router.get(
     const statementPacks = await listStatementPacks(organizationId, readiness);
     return res.json({
       data: { statementPacks, count: statementPacks.length },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/statement-packs/:packId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const packId = String(req.params.packId || '');
+    const pack = await getStatementPackDetail(organizationId, packId);
+    if (!pack) {
+      return res.status(404).json({ error: 'Statement pack not found' });
+    }
+    return res.json({
+      data: { pack },
       meta: financeMeta(),
     });
   }),

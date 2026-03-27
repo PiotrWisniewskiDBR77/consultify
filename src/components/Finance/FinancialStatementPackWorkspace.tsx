@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import {
   type FinanceStatementDetailV1,
@@ -261,8 +262,17 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      const data = await Api.get(`/api/finance-statements/packs/${statementPackId}`);
-      setDetail((data as PackDetail) || null);
+      let data: PackDetail | null = null;
+      try {
+        const response = await V8FinanceApi.getStatementPack(statementPackId);
+        data = (response?.pack as PackDetail) || null;
+      } catch (error: any) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        data = ((await Api.get(`/api/finance-statements/packs/${statementPackId}`)) as PackDetail) || null;
+      }
+      setDetail(data);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     } finally {

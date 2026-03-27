@@ -26,6 +26,18 @@ type StatementDetail = {
 
 const SCENARIO_VARIANTS: ScenarioVariant[] = ['base', 'optimistic', 'conservative'];
 
+async function getStatementPackDetailWithFallback(packId: string) {
+  try {
+    const data = await V8FinanceApi.getStatementPack(packId);
+    return data?.pack ?? null;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/finance-statements/packs/${packId}`).catch(() => null);
+  }
+}
+
 const SCENARIO_PROFILES: Record<
   ScenarioVariant,
   {
@@ -395,9 +407,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       const model = (await Api.get(`/api/financial-modeling/models/${row.id}`)) as any;
       const packId =
         model?.source_statement_pack_id || model?.source_statement_pack?.id || row.sourceStatementPackId || null;
-      const packDetail = packId
-        ? await Api.get(`/api/finance-statements/packs/${packId}`).catch(() => null)
-        : null;
+      const packDetail = packId ? await getStatementPackDetailWithFallback(String(packId)) : null;
       const packStatements = Array.isArray((packDetail as any)?.statements)
         ? ((packDetail as any).statements as Array<{ id: string }>)
         : [];
@@ -418,7 +428,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
 
   const loadStatementPreview = useCallback(async (statementId: string) => {
     try {
-      const detail = await Api.get(`/api/finance-statements/packs/${statementId}`);
+      const detail = await getStatementPackDetailWithFallback(statementId);
       const statements = Array.isArray((detail as any)?.statements) ? (detail as any).statements : [];
       setStatementPreviewDetail({
         entityName: String((detail as any)?.entity_name || ''),

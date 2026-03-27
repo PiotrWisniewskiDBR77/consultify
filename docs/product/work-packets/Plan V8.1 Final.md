@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `4`
+- landed packets in the active lane: `5`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `statement packs list/read V8 seam` recorded in `evidence/390-v81-broader-finance-statement-packs-list-read-v8-seam.md`
-- reason: after budgets continuity landed, the next smallest honest packet was the shared statement-pack list/read seam still used by the `statements` tab and import-complete pack lookup on the active Finance hub surfaces
+- latest evidence: `statement-pack detail read V8 seam` recorded in `evidence/391-v81-broader-finance-statement-pack-detail-read-v8-seam.md`
+- reason: after statement-pack list continuity landed, the next smallest honest packet was the shared statement-pack detail read still used by active preview and workspace surfaces
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after statement packs list/read continuity`
-- last accepted packet: `statement packs list/read V8 seam`
+- current packet: `assess the next bounded broader finance packet after statement-pack detail read continuity`
+- last accepted packet: `statement-pack detail read V8 seam`
 - blocker: `none`
-- next action: `assess whether statement-pack detail read continuity is the next smallest broader finance packet without broadening into confirm/delete/import writes`
+- next action: `assess whether child statement detail read continuity is the next smallest broader finance packet without broadening into analytics or statement-pack writes`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

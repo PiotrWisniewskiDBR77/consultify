@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockGetFinanceDashboard = vi.fn();
+const mockGetStatementPackDetail = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockListValuations = vi.fn();
@@ -37,6 +38,7 @@ vi.mock('../../../services/financialModelingService.js', () => ({
 }));
 
 vi.mock('../../../services/financialStatementPackService.js', () => ({
+  getStatementPackDetail: (...args: unknown[]) => mockGetStatementPackDetail(...args),
   listStatementPacks: (...args: unknown[]) => mockListStatementPacks(...args),
 }));
 
@@ -147,6 +149,7 @@ describe('V8 finance read-only routes', () => {
       staleSourceRefreshesCount: 0,
       promotionGatePassRate: null,
     });
+    mockGetStatementPackDetail.mockResolvedValue(null);
     mockListStatementPacks.mockResolvedValue([]);
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
@@ -262,6 +265,26 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.statementPacks?.[0]?.entity_name).toBe('Acme Sp. z o.o.');
     expect(mockListStatementPacks).toHaveBeenCalledWith(ORG, 'recoverable');
+  });
+
+  it('GET /api/v8/finance/statement-packs/:id returns envelope and delegates to getStatementPackDetail', async () => {
+    mockGetStatementPackDetail.mockResolvedValue({
+      id: 'pack-1',
+      entity_name: 'Acme Sp. z o.o.',
+      period_label: 'Q1 2026',
+      pack_status: 'pending',
+      pack_readiness_status: 'recoverable',
+      statements: [],
+      validations: [],
+    });
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/statement-packs/pack-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.pack?.entity_name).toBe('Acme Sp. z o.o.');
+    expect(mockGetStatementPackDetail).toHaveBeenCalledWith(ORG, 'pack-1');
   });
 
   it('GET /api/v8/finance/valuations returns envelope and delegates to listValuations', async () => {

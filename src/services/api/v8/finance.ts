@@ -110,6 +110,11 @@ export interface V8FinanceStatementPackSummary {
   updated_at?: string | null;
 }
 
+export interface V8FinanceStatementPackDetail extends V8FinanceStatementPackSummary {
+  validations?: Array<Record<string, unknown>>;
+  statements?: Array<Record<string, unknown>>;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -160,6 +165,8 @@ export const V8FinanceApi = {
         ...(params?.readiness ? { readiness: params.readiness } : {}),
       },
     ),
+  getStatementPack: (packId: string) =>
+    v8Get<{ pack: V8FinanceStatementPackDetail }>(`/finance/statement-packs/${packId}`),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),
