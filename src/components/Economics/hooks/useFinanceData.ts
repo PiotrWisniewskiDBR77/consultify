@@ -184,8 +184,17 @@ export function useFinanceData(
 
   const loadBudgets = useCallback(async () => {
     try {
-      const data = await Api.get('/api/economics/budgets');
-      const arr = Array.isArray((data as any)?.budgets) ? (data as any).budgets : [];
+      let arr: any[] = [];
+      try {
+        const data = await V8FinanceApi.getBudgets();
+        arr = Array.isArray(data?.budgets) ? data.budgets : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/economics/budgets');
+        arr = Array.isArray((data as any)?.budgets) ? (data as any).budgets : [];
+      }
       setLoadError(null);
       setIsUsingDemoData(false);
       setBudgets(arr);

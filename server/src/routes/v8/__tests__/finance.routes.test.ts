@@ -7,6 +7,7 @@ import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 const mockGetFinanceDashboard = vi.fn();
 const mockListModels = vi.fn();
 const mockListValuations = vi.fn();
+const mockListBudgets = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -36,6 +37,10 @@ vi.mock('../../../services/financialModelingService.js', () => ({
 
 vi.mock('../../../services/valuationService.js', () => ({
   listValuations: (...args: unknown[]) => mockListValuations(...args),
+}));
+
+vi.mock('../../../services/budgetingService.js', () => ({
+  listBudgets: (...args: unknown[]) => mockListBudgets(...args),
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -139,6 +144,7 @@ describe('V8 finance read-only routes', () => {
     });
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
+    mockListBudgets.mockResolvedValue([]);
     mockListAnalyses.mockResolvedValue([]);
     mockGetAnalysisRatios.mockResolvedValue([]);
     mockGetAnalysisInsights.mockResolvedValue([]);
@@ -245,6 +251,30 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.valuations?.[0]?.title).toBe('DCF valuation');
     expect(mockListValuations).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/finance/budgets returns envelope and delegates to listBudgets', async () => {
+    mockListBudgets.mockResolvedValue([
+      {
+        id: 'budget-1',
+        title: 'FY26 operating budget',
+        status: 'draft',
+        currency: 'PLN',
+        granularity: 'monthly',
+        period_start: '2026-01-01',
+        period_end: '2026-12-31',
+        updated_at: '2026-03-27T11:00:00.000Z',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/budgets');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.budgets?.[0]?.title).toBe('FY26 operating budget');
+    expect(mockListBudgets).toHaveBeenCalledWith(ORG);
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

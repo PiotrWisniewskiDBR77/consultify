@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `2`
+- landed packets in the active lane: `3`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `valuations list/read V8 seam` recorded in `evidence/388-v81-broader-finance-valuations-list-read-v8-seam.md`
-- reason: after models continuity landed, the next smallest honest packet was the dedicated valuation-tab list/read seam in `useFinanceData`, which still defaulted to legacy economics reads
+- latest evidence: `budgets list/read V8 seam` recorded in `evidence/389-v81-broader-finance-budgets-list-read-v8-seam.md`
+- reason: after valuations continuity landed, the next smallest honest packet was the dedicated budgets list/read seam used by the `prediction` tab in `useFinanceData`, which still defaulted to legacy economics reads
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after valuations list/read continuity`
-- last accepted packet: `valuations list/read V8 seam`
+- current packet: `assess the next bounded broader finance packet after budgets list/read continuity`
+- last accepted packet: `budgets list/read V8 seam`
 - blocker: `none`
-- next action: `assess the next smallest broader finance packet after valuations list/read continuity without broadening into statements, budgets, and wider mutations at once`
+- next action: `assess whether statement packs list/read continuity is the next smallest broader finance packet without broadening into budget detail or wider finance mutations`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

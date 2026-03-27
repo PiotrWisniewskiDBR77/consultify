@@ -31,6 +31,7 @@ vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getModels: vi.fn(),
     getValuations: vi.fn(),
+    getBudgets: vi.fn(),
     getAnalyses: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -230,5 +231,76 @@ describe('useFinanceData V8 analyses seam', () => {
     expect(V8FinanceApi.getValuations).toHaveBeenCalled();
     expect(Api.get).toHaveBeenCalledWith('/api/economics/valuations');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy valuation');
+  });
+
+  it('prefers governed finance budgets before legacy economics fallback', async () => {
+    vi.mocked(V8FinanceApi.getBudgets).mockResolvedValue({
+      budgets: [
+        {
+          id: 'budget-1',
+          title: 'FY26 operating budget',
+          status: 'draft',
+          currency: 'PLN',
+          granularity: 'monthly',
+          period_start: '2026-01-01',
+          period_end: '2026-12-31',
+          updated_at: '2026-03-27T11:00:00.000Z',
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.getModels).mockResolvedValue({
+      models: [],
+      count: 0,
+    } as any);
+
+    const { result } = renderHook(() => useFinanceData('prediction', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.budgets).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getBudgets).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/economics/budgets');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('FY26 operating budget');
+  });
+
+  it('falls back to legacy finance budgets when V8 seam returns a bounded compatibility status', async () => {
+    vi.mocked(V8FinanceApi.getBudgets).mockRejectedValue({ status: 404 });
+    vi.mocked(V8FinanceApi.getModels).mockResolvedValue({
+      models: [],
+      count: 0,
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/economics/budgets') {
+        return {
+          budgets: [
+            {
+              id: 'budget-legacy-1',
+              title: 'Legacy operating budget',
+              status: 'approved',
+              currency: 'PLN',
+              granularity: 'quarterly',
+              period_start: '2026-01-01',
+              period_end: '2026-12-31',
+              updated_at: '2026-03-27T11:05:00.000Z',
+            },
+          ],
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    const { result } = renderHook(() => useFinanceData('prediction', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.budgets).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getBudgets).toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/economics/budgets');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy operating budget');
   });
 });

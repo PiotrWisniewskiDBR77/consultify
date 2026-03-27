@@ -73,6 +73,20 @@ export interface V8FinanceValuationSummary {
   updated_at?: string | null;
 }
 
+export interface V8FinanceBudgetSummary {
+  id: string;
+  title: string;
+  status?: string | null;
+  currency?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  granularity?: string | null;
+  version?: number | null;
+  scenario?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -114,6 +128,8 @@ export const V8FinanceApi = {
     v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
+  getBudgets: () =>
+    v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),

@@ -117,6 +117,30 @@ describe('V8FinanceApi', () => {
     expect(data.valuations[0].title).toBe('DCF valuation');
   });
 
+  it('requests governed finance budgets from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      budgets: [
+        {
+          id: 'budget-1',
+          title: 'FY26 operating budget',
+          status: 'draft',
+          currency: 'PLN',
+          granularity: 'monthly',
+          period_start: '2026-01-01',
+          period_end: '2026-12-31',
+          updated_at: '2026-03-27T11:00:00.000Z',
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8FinanceApi.getBudgets();
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/budgets');
+    expect(data.count).toBe(1);
+    expect(data.budgets[0].title).toBe('FY26 operating budget');
+  });
+
   it('requests governed finance analysis ratios from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       ratios: [
