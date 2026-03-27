@@ -168,6 +168,17 @@ async function saveStatementValuesWithFallback(statementId: string, values: Arra
   }
 }
 
+async function confirmStatementWithFallback(statementId: string) {
+  try {
+    return await V8FinanceApi.confirmStatement(statementId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/confirm`, {});
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -464,7 +475,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     if (!statementId) return;
     setLoading(true);
     try {
-      await Api.post(`/api/finance-statements/${statementId}/confirm`, {});
+      await confirmStatementWithFallback(statementId);
       onComplete?.(statementId);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));

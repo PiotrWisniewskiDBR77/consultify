@@ -32,6 +32,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     extractStatement: vi.fn(),
     mapStatement: vi.fn(),
     putStatementValues: vi.fn(),
+    confirmStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -322,5 +323,131 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
       values: expect.any(Array),
     });
+  });
+
+  it('prefers governed confirm before legacy fallback in the wizard manual flow', async () => {
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.9,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      statementId: 'statement-1',
+      savedCount: 1,
+      readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
+      validation: { status: 'pass', messages: [] },
+    } as any);
+    vi.mocked(V8FinanceApi.confirmStatement).mockResolvedValue({
+      success: true,
+      statementId: 'statement-1',
+      status: 'confirmed',
+    } as any);
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected POST ${url}`);
+    });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+    vi.mocked(Api.put).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected PUT ${url}`);
+    });
+
+    const onComplete = vi.fn();
+    render(<FinancialStatementImportWizard onComplete={onComplete} />);
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['revenue'], 'statement.csv', { type: 'text/csv' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Extract Financial Lines' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
+    await screen.findByRole('button', { name: 'Confirm & Save' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm & Save' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/confirm', {});
+    expect(onComplete).toHaveBeenCalledWith('statement-1');
+  });
+
+  it('falls back to legacy confirm in the wizard manual flow on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.9,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      statementId: 'statement-1',
+      savedCount: 1,
+      readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
+      validation: { status: 'pass', messages: [] },
+    } as any);
+    vi.mocked(V8FinanceApi.confirmStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockImplementation(async (url: string, body?: any) => {
+      if (url === '/api/finance-statements/statement-1/confirm') {
+        expect(body).toEqual({});
+        return { success: true } as any;
+      }
+      throw new Error(`Unexpected POST ${url}`);
+    });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+    vi.mocked(Api.put).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected PUT ${url}`);
+    });
+
+    const onComplete = vi.fn();
+    render(<FinancialStatementImportWizard onComplete={onComplete} />);
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['revenue'], 'statement.csv', { type: 'text/csv' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Extract Financial Lines' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
+    await screen.findByRole('button', { name: 'Confirm & Save' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm & Save' }));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/confirm', {});
+    });
+
+    expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
+    expect(onComplete).toHaveBeenCalledWith('statement-1');
   });
 });
