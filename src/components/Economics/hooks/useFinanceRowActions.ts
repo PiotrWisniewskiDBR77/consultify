@@ -65,6 +65,17 @@ export function useFinanceRowActions({
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
+  const deleteModelWithFallback = useCallback(async (modelId: string) => {
+    try {
+      await V8FinanceApi.deleteModel(modelId);
+    } catch (error) {
+      if (!shouldFallbackToLegacyFinance(error)) {
+        throw error;
+      }
+      await Api.delete(`/api/financial-modeling/models/${modelId}`);
+    }
+  }, []);
+
   const handleDelete = useCallback(
     async (row: FinanceRow) => {
       const confirmMsg = isPl
@@ -80,7 +91,7 @@ export function useFinanceRowActions({
           row.kind === 'models' ||
           (row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'model')
         ) {
-          await Api.delete(`/api/financial-modeling/models/${row.id}`);
+          await deleteModelWithFallback(row.id);
           await loadModels();
         } else if (
           row.kind === 'prediction' &&
@@ -110,7 +121,17 @@ export function useFinanceRowActions({
         );
       }
     },
-    [isPl, loadStatements, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId, t]
+    [
+      deleteModelWithFallback,
+      isPl,
+      loadStatements,
+      loadModels,
+      loadAnalyses,
+      loadBudgets,
+      loadValuations,
+      getBudgetRawId,
+      t,
+    ]
   );
 
   const handleDuplicate = useCallback(

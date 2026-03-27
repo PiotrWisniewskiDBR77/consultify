@@ -607,6 +607,43 @@ describe('V8 finance read-only routes', () => {
     expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID);
   });
 
+  it('DELETE /api/v8/finance/models/:id returns envelope and deletes model rows', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+      status: 'draft',
+    });
+    mockDbRun.mockResolvedValue({ changes: 1 });
+
+    const app = createApp();
+    const res = await request(app).delete('/api/v8/finance/models/model-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, deleted: 'model-1' });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockDbRun).toHaveBeenCalledTimes(4);
+    expect(mockDbRun).toHaveBeenNthCalledWith(
+      1,
+      'DELETE FROM financial_model_outputs WHERE model_id = ?',
+      ['model-1'],
+    );
+    expect(mockDbRun).toHaveBeenNthCalledWith(
+      2,
+      'DELETE FROM financial_model_validations WHERE model_id = ?',
+      ['model-1'],
+    );
+    expect(mockDbRun).toHaveBeenNthCalledWith(
+      3,
+      'DELETE FROM financial_model_events WHERE model_id = ?',
+      ['model-1'],
+    );
+    expect(mockDbRun).toHaveBeenNthCalledWith(4, 'DELETE FROM financial_models WHERE id = ?', [
+      'model-1',
+    ]);
+  });
+
   it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {
     mockListStatementPacks.mockResolvedValue([
       {

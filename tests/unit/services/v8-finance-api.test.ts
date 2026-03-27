@@ -186,6 +186,19 @@ describe('V8FinanceApi', () => {
     expect(data.status).toBe('approved');
   });
 
+  it('deletes governed finance models through the V8 namespace', async () => {
+    vi.mocked(v8Delete).mockResolvedValue({
+      success: true,
+      deleted: 'model-1',
+    });
+
+    const data = await V8FinanceApi.deleteModel('model-1');
+
+    expect(v8Delete).toHaveBeenCalledWith('/finance/models/model-1');
+    expect(data.success).toBe(true);
+    expect(data.deleted).toBe('model-1');
+  });
+
   it('requests governed finance statement packs from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statementPacks: [

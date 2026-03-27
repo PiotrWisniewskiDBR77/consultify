@@ -350,6 +350,31 @@ router.post(
   }),
 );
 
+router.delete(
+  '/models/:modelId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+    if (model.status === 'approved') {
+      return res.status(400).json({ error: 'Cannot delete approved model. Archive it instead.' });
+    }
+
+    await dbRun(`DELETE FROM financial_model_outputs WHERE model_id = ?`, [modelId]);
+    await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [modelId]);
+    await dbRun(`DELETE FROM financial_model_events WHERE model_id = ?`, [modelId]);
+    await dbRun(`DELETE FROM financial_models WHERE id = ?`, [modelId]);
+
+    return res.json({
+      data: { success: true, deleted: modelId },
+      meta: financeMeta(),
+    });
+  }),
+);
+
 router.get(
   '/valuations',
   asyncHandler(async (req: AuthRequest, res: Response) => {

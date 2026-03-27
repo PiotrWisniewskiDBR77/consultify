@@ -27,6 +27,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     deleteAnalysis: vi.fn(),
+    deleteModel: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -60,6 +61,13 @@ const analysisRow = {
   title: 'Working capital analysis',
   status: 'DRAFT',
   analysisType: 'financial',
+} as any;
+
+const modelRow = {
+  id: 'model-1',
+  kind: 'models',
+  title: 'FY26 Operating Model',
+  status: 'draft',
 } as any;
 
 describe('useFinanceRowActions V8 analysis delete seam', () => {
@@ -99,5 +107,38 @@ describe('useFinanceRowActions V8 analysis delete seam', () => {
     });
 
     expect(Api.delete).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1');
+  });
+
+  it('prefers governed model deletion before legacy fallback', async () => {
+    vi.mocked(V8FinanceApi.deleteModel).mockResolvedValue({
+      success: true,
+      deleted: 'model-1',
+    } as any);
+
+    const { result } = renderHook(() => useFinanceRowActions(baseParams));
+    const actions = result.current.getRowActions(modelRow);
+    const deleteAction = actions.find((action) => action.id === 'delete');
+
+    await act(async () => {
+      await deleteAction?.onClick();
+    });
+
+    expect(V8FinanceApi.deleteModel).toHaveBeenCalledWith('model-1');
+    expect(Api.delete).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1');
+  });
+
+  it('falls back to legacy model deletion on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.deleteModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
+
+    const { result } = renderHook(() => useFinanceRowActions(baseParams));
+    const actions = result.current.getRowActions(modelRow);
+    const deleteAction = actions.find((action) => action.id === 'delete');
+
+    await act(async () => {
+      await deleteAction?.onClick();
+    });
+
+    expect(Api.delete).toHaveBeenCalledWith('/api/financial-modeling/models/model-1');
   });
 });

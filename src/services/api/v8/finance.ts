@@ -382,6 +382,8 @@ export const V8FinanceApi = {
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
   approveModel: (modelId: string) =>
     v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
+  deleteModel: (modelId: string) =>
+    v8Delete<{ success: boolean; deleted: string }>(`/finance/models/${modelId}`),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>
