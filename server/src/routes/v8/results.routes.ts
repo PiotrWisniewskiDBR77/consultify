@@ -503,6 +503,58 @@ router.put(
 );
 
 /**
+ * POST /api/v8/results/deviation-cases/:caseId/actions
+ * Bounded deviation-case action-create seam for the active Results drawer surface.
+ */
+router.post(
+  '/deviation-cases/:caseId/actions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    const { title, ownerUserId, dueDate } = req.body || {};
+    const safeTitle = typeof title === 'string' ? title.trim() : '';
+
+    if (!caseId) {
+      return res.status(400).json({
+        error: 'caseId is required',
+        code: 'RESULTS_DEVIATION_CASE_ID_REQUIRED',
+      });
+    }
+    if (!safeTitle) {
+      return res.status(400).json({
+        error: 'title is required',
+        code: 'RESULTS_DEVIATION_ACTION_TITLE_REQUIRED',
+      });
+    }
+
+    const row = await dbGet<any>(
+      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, organizationId],
+    );
+    if (!row?.id) {
+      return res.status(404).json({
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+      });
+    }
+
+    const id = uuidv4().replace(/-/g, '');
+    await dbRun(
+      `
+      INSERT INTO kpi_deviation_actions (id, case_id, title, owner_user_id, due_date)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [id, caseId, safeTitle, ownerUserId || null, dueDate ? String(dueDate).slice(0, 10) : null],
+    );
+
+    return res.json({
+      data: { id, caseId },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/results/kpis/:kpiId/drawer-detail
  * Bounded KPI drawer bridge for time-series and open deviation-case continuity.
  */

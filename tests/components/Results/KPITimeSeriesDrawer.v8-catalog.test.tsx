@@ -32,6 +32,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     deleteKpiMapping: vi.fn(),
     acknowledgeDeviationCase: vi.fn(),
     updateDeviationCaseRca: vi.fn(),
+    createDeviationAction: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -795,6 +796,114 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     await waitFor(() => {
       expect(Api.put).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/rca', {
         rcaText: 'Root cause analysis details',
+      });
+    });
+  });
+
+  it('adds deviation actions through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.createDeviationAction).mockResolvedValue({
+      id: 'action-1',
+      caseId: 'case-1',
+    } as any);
+
+    const { container } = render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Add action')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('New action'), {
+      target: { value: 'Create mitigation plan' },
+    });
+    fireEvent.change(container.querySelector('input[type="date"]') as HTMLInputElement, {
+      target: { value: '2026-03-31' },
+    });
+    fireEvent.click(screen.getByText('Add action'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.createDeviationAction).toHaveBeenCalledWith('case-1', {
+        title: 'Create mitigation plan',
+        dueDate: '2026-03-31',
+      });
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/actions', expect.anything());
+  });
+
+  it('falls back to legacy deviation action create only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.createDeviationAction).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true, data: { id: 'action-1' } } as any);
+
+    const { container } = render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Add action')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('New action'), {
+      target: { value: 'Create mitigation plan' },
+    });
+    fireEvent.change(container.querySelector('input[type="date"]') as HTMLInputElement, {
+      target: { value: '2026-03-31' },
+    });
+    fireEvent.click(screen.getByText('Add action'));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/actions', {
+        title: 'Create mitigation plan',
+        dueDate: '2026-03-31',
       });
     });
   });

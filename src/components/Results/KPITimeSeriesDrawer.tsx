@@ -517,10 +517,18 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     if (!openCase?.id || !newActionTitle.trim()) return;
     setCaseBusy(true);
     try {
-      await Api.post(`/benefits/deviation-cases/${openCase.id}/actions`, {
+      const payload = {
         title: newActionTitle.trim(),
         dueDate: newActionDue ? String(newActionDue).slice(0, 10) : undefined,
-      });
+      };
+      try {
+        await V8ResultsApi.createDeviationAction(openCase.id, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        await Api.post(`/benefits/deviation-cases/${openCase.id}/actions`, payload);
+      }
       setNewActionTitle('');
       setNewActionDue('');
       fetchData();
