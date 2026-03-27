@@ -15,6 +15,8 @@ const mockGetEarningsSummary = vi.fn();
 const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
+const mockGetPartnerPayoutSettings = vi.fn();
+const mockUpdatePartnerPayoutSettings = vi.fn();
 const mockCreateCampaignLink = vi.fn();
 const mockDeleteCampaignLink = vi.fn();
 const mockAcceptDocuments = vi.fn();
@@ -49,6 +51,11 @@ vi.mock('../../../services/partnerCommissionService.js', () => ({
     getPayouts: (...args: unknown[]) => mockGetPayouts(...args),
     requestPayout: (...args: unknown[]) => mockRequestPayout(...args),
   },
+}));
+
+vi.mock('../../../services/partnerPayoutSettingsService.js', () => ({
+  getPartnerPayoutSettings: (...args: unknown[]) => mockGetPartnerPayoutSettings(...args),
+  updatePartnerPayoutSettings: (...args: unknown[]) => mockUpdatePartnerPayoutSettings(...args),
 }));
 
 vi.mock('../../../services/legalService.js', () => ({
@@ -233,6 +240,18 @@ describe('V8 partner read bridge', () => {
       grossAmount: 150,
       netAmount: 148.5,
       currency: 'EUR',
+    });
+    mockGetPartnerPayoutSettings.mockResolvedValue({
+      minimumThreshold: 100,
+      payoutMethod: 'BANK_TRANSFER',
+      autoPayoutEnabled: false,
+      payoutAccount: null,
+    });
+    mockUpdatePartnerPayoutSettings.mockResolvedValue({
+      minimumThreshold: 250,
+      payoutMethod: 'PAYPAL',
+      autoPayoutEnabled: true,
+      payoutAccount: null,
     });
     mockGetCommissions.mockResolvedValue([
       {
@@ -651,6 +670,46 @@ describe('V8 partner read bridge', () => {
       [true, 'partner-org-resolved'],
     );
     expect(res.body.data).toEqual({ success: true, publicListingEnabled: true });
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('GET /api/v8/partner/payout-settings resolves partnerOrgId and returns governed settings', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/payout-settings');
+
+    expect(res.status).toBe(200);
+    expect(mockGetPartnerPayoutSettings).toHaveBeenCalledWith('partner-org-resolved');
+    expect(res.body.data.settings.minimumThreshold).toBe(100);
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('PUT /api/v8/partner/payout-settings updates settings with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/partner/payout-settings').send({
+      minimumThreshold: 250,
+      payoutMethod: 'PAYPAL',
+      autoPayoutEnabled: true,
+      payoutAccount: {
+        accountHolderName: 'Partner Co',
+        iban: 'DE123',
+        bicSwift: 'COBADEFF',
+        bankName: 'Commerzbank',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockUpdatePartnerPayoutSettings).toHaveBeenCalledWith('partner-org-resolved', {
+      minimumThreshold: 250,
+      payoutMethod: 'PAYPAL',
+      autoPayoutEnabled: true,
+      payoutAccount: {
+        accountHolderName: 'Partner Co',
+        iban: 'DE123',
+        bicSwift: 'COBADEFF',
+        bankName: 'Commerzbank',
+      },
+    });
+    expect(res.body.data.success).toBe(true);
     expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
   });
 });

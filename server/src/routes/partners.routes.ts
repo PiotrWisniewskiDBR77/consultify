@@ -32,6 +32,10 @@ import {
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
+import {
+  getPartnerPayoutSettings,
+  updatePartnerPayoutSettings,
+} from '../services/partnerPayoutSettingsService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -557,6 +561,46 @@ router.put('/organization/listing', async (req: Request, res: Response, next: Ne
     return res.json({ success: true, message: 'Listing updated successfully' });
   } catch (error: any) {
     logger.error('Error updating listing:', error);
+    next(error);
+  }
+});
+
+/**
+ * GET /api/partners/payout-settings
+ * Get partner-owned payout settings
+ */
+router.get('/payout-settings', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
+
+    const settings = await getPartnerPayoutSettings(partnerOrgId);
+    return res.json({ success: true, data: settings });
+  } catch (error: any) {
+    logger.error('Error fetching partner payout settings:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner payout settings unavailable (database schema missing)');
+    }
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/partners/payout-settings
+ * Update partner-owned payout settings
+ */
+router.put('/payout-settings', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
+
+    const settings = await updatePartnerPayoutSettings(partnerOrgId, req.body || {});
+    return res.json({ success: true, data: settings });
+  } catch (error: any) {
+    logger.error('Error updating partner payout settings:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner payout settings unavailable (database schema missing)');
+    }
     next(error);
   }
 });

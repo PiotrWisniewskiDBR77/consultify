@@ -369,7 +369,10 @@ Current status: `active`
 - [x] assess whether commission intelligence / trust progression placeholder breadth still contains one more honest governed runtime cut before returning to partner `payout-settings` save ownership
 - [x] eighteenth real bounded packet landed around visible `PartnerDashboardView` trust progression continuity on a bounded governed runtime snapshot built from existing partner connection, onboarding, client, referral, and earnings seams
 - [x] focused regression added for governed partner trust progression derivation and active dashboard loader integration
-- [ ] assess whether broader partner execution should now return directly to explicit partner `payout-settings` save ownership because `CommissionIntelligence` still lacks a governed deal-pipeline runtime contract
+- [x] assess whether broader partner execution should now return directly to explicit partner `payout-settings` save ownership because `CommissionIntelligence` still lacks a governed deal-pipeline runtime contract
+- [x] nineteenth real bounded packet landed around visible partner `payout-settings` ownership continuity on partner-authenticated V8-first read/write seams with bounded compatibility fallback
+- [x] focused regression added for governed partner payout-settings route, client, and active `EarningsSection` surface continuity
+- [ ] assess whether broader partner parity is now ready for bounded acceptance with `CommissionIntelligence` left explicitly out of scope until a real partner deal-pipeline contract exists
 
 ### `Landing Anna backend analytics / dashboard breadth`
 

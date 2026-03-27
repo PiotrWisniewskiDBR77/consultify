@@ -20,6 +20,10 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
+import {
+  getPartnerPayoutSettings,
+  updatePartnerPayoutSettings,
+} from '../../services/partnerPayoutSettingsService.js';
 import PartnerReferralService from '../../services/partnerReferralService.js';
 import logger from '../../utils/Logger.js';
 import * as DbPromise from '../../utils/DbPromise.js';
@@ -875,6 +879,58 @@ router.put(
 
     return res.json({
       data: { success: true, publicListingEnabled },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
+ * GET /api/v8/partner/payout-settings
+ */
+router.get(
+  '/payout-settings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+
+    const settings = await getPartnerPayoutSettings(partnerOrgId);
+    return res.json({
+      data: { settings },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
+ * PUT /api/v8/partner/payout-settings
+ */
+router.put(
+  '/payout-settings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+
+    const settings = await updatePartnerPayoutSettings(partnerOrgId, req.body ?? {});
+    return res.json({
+      data: { success: true, settings },
       meta: partnerReadMeta(req, partnerOrgId),
     });
   }),

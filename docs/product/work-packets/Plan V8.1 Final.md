@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: eighteenth broader packet recorded in `evidence/437-v81-broader-partner-dashboard-trust-progression-runtime-seam.md`
-- reason: after the shared dashboard runtime-summary seam landed, the smallest remaining honest placeholder cut on the active partner dashboard was replacing static trust progression hook state with a bounded milestone snapshot derived from existing partner runtime seams, while `CommissionIntelligence` remained heavier placeholder breadth
+- latest evidence: nineteenth broader packet recorded in `evidence/438-v81-broader-partner-payout-settings-ownership-seam.md`
+- reason: after the dashboard placeholder cuts landed, the next honest active partner residual was returning `payout-settings` ownership to a real partner-authenticated contract instead of leaving the active surface on hard-coded bank and preference placeholders
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `PartnerDashboard trust progression runtime seam`
-- last accepted packet: `PartnerDashboard trust progression runtime seam`
+- current packet: `Partner payout-settings ownership seam`
+- last accepted packet: `Partner payout-settings ownership seam`
 - blocker: `none`
-- next action: `assess whether broader partner execution should now return directly to explicit partner payout-settings save ownership because CommissionIntelligence still lacks a governed deal-pipeline runtime contract`
+- next action: `assess whether broader partner parity is now ready for bounded acceptance with CommissionIntelligence left explicitly out of scope until a real partner deal-pipeline contract exists`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

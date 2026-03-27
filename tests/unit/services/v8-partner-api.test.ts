@@ -272,6 +272,54 @@ describe('V8PartnerApi', () => {
     expect(data.payout.id).toBe('payout-1');
   });
 
+  it('requests payout-settings reads from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      settings: {
+        minimumThreshold: 250,
+        payoutMethod: 'BANK_TRANSFER',
+        autoPayoutEnabled: true,
+        payoutAccount: {
+          accountHolderName: 'Partner Co',
+          iban: 'DE123',
+          bicSwift: 'COBADEFF',
+          bankName: 'Commerzbank',
+        },
+      },
+    });
+
+    const data = await V8PartnerApi.getPayoutSettings();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/payout-settings');
+    expect(data.settings.minimumThreshold).toBe(250);
+  });
+
+  it('requests payout-settings updates from the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({
+      success: true,
+      settings: {
+        minimumThreshold: 500,
+        payoutMethod: 'PAYPAL',
+        autoPayoutEnabled: false,
+        payoutAccount: null,
+      },
+    });
+
+    const data = await V8PartnerApi.updatePayoutSettings({
+      minimumThreshold: 500,
+      payoutMethod: 'PAYPAL',
+      autoPayoutEnabled: false,
+      payoutAccount: null,
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/partner/payout-settings', {
+      minimumThreshold: 500,
+      payoutMethod: 'PAYPAL',
+      autoPayoutEnabled: false,
+      payoutAccount: null,
+    });
+    expect(data.settings.payoutMethod).toBe('PAYPAL');
+  });
+
   it('requests campaign-link creation from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       campaignLink: {

@@ -33,10 +33,12 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import {
   type V8PartnerCommissionTransaction,
+  type V8PartnerPayoutAccount,
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerEarningsSummary,
   type V8PartnerPayoutHistoryItem,
+  type V8PartnerPayoutSettings,
 } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
@@ -83,6 +85,13 @@ interface Payout {
   payoutReference?: string;
   requestedAt: string;
   completedAt?: string;
+}
+
+interface PayoutSettings {
+  minimumThreshold: number;
+  payoutMethod: 'BANK_TRANSFER' | 'PAYPAL' | 'STRIPE' | 'WISE';
+  autoPayoutEnabled: boolean;
+  payoutAccount: V8PartnerPayoutAccount | null;
 }
 
 interface EarningsSectionProps {
@@ -139,6 +148,38 @@ const normalizePayout = (payload: any): Payout => ({
   completedAt: payload?.completedAt ? String(payload.completedAt) : undefined,
 });
 
+const defaultPayoutSettings: PayoutSettings = {
+  minimumThreshold: 100,
+  payoutMethod: 'BANK_TRANSFER',
+  autoPayoutEnabled: false,
+  payoutAccount: {
+    accountHolderName: '',
+    iban: '',
+    bicSwift: '',
+    bankName: '',
+  },
+};
+
+const normalizePayoutSettings = (payload: any): PayoutSettings => {
+  const data =
+    payload?.settings ??
+    (payload?.data && payload.data !== payload ? payload.data : payload) ??
+    defaultPayoutSettings;
+  const payoutAccount = data?.payoutAccount ?? {};
+
+  return {
+    minimumThreshold: Number(data?.minimumThreshold ?? 100),
+    payoutMethod: String(data?.payoutMethod ?? 'BANK_TRANSFER').toUpperCase() as PayoutSettings['payoutMethod'],
+    autoPayoutEnabled: Boolean(data?.autoPayoutEnabled),
+    payoutAccount: {
+      accountHolderName: String(payoutAccount?.accountHolderName ?? ''),
+      iban: String(payoutAccount?.iban ?? ''),
+      bicSwift: String(payoutAccount?.bicSwift ?? ''),
+      bankName: String(payoutAccount?.bankName ?? ''),
+    },
+  };
+};
+
 export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = 'earnings' }) => {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<EarningsSummary | null>(null);
@@ -151,6 +192,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const [activeTab, setActiveTab] = useState<'statements' | 'payments'>('statements');
   const [bankInfoComplete, setBankInfoComplete] = useState(true);
   const [nextPaymentDate, setNextPaymentDate] = useState<string | null>(null);
+  const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(defaultPayoutSettings);
+  const [savingPayoutSettings, setSavingPayoutSettings] = useState(false);
 
   const getCommissionTransactionsWithFallback = useCallback(
     async (): Promise<CommissionTransaction[]> => {
@@ -190,6 +233,35 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         : [];
     }
   }, []);
+
+  const getPayoutSettingsWithFallback = useCallback(async (): Promise<PayoutSettings> => {
+    try {
+      const response = await V8PartnerApi.getPayoutSettings();
+      return normalizePayoutSettings(response?.settings);
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        throw error;
+      }
+      const response = await Api.get('/api/partners/payout-settings');
+      return normalizePayoutSettings(response?.data ?? response);
+    }
+  }, []);
+
+  const savePayoutSettingsWithFallback = useCallback(
+    async (settings: PayoutSettings) => {
+      try {
+        const response = await V8PartnerApi.updatePayoutSettings(settings);
+        return normalizePayoutSettings(response?.settings);
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        const response = await Api.put('/api/partners/payout-settings', settings);
+        return normalizePayoutSettings(response?.data ?? response);
+      }
+    },
+    []
+  );
 
   // Fetch earnings data from API
   const fetchEarnings = useCallback(async () => {
@@ -266,6 +338,33 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       setActiveTab('statements');
     }
   }, [subsection]);
+
+  useEffect(() => {
+    if (subsection !== 'payout-settings') {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPayoutSettings = async () => {
+      try {
+        const settings = await getPayoutSettingsWithFallback();
+        if (!cancelled) {
+          setPayoutSettings(settings);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Error fetching payout settings:', err);
+        }
+      }
+    };
+
+    void loadPayoutSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getPayoutSettingsWithFallback, subsection]);
 
   const renderV8SummaryBlock = () => {
     if (!v8Summary) return null;
@@ -373,6 +472,33 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       );
     } finally {
       setRequestingPayout(false);
+    }
+  };
+
+  const updatePayoutAccountField = (
+    field: keyof NonNullable<PayoutSettings['payoutAccount']>,
+    value: string
+  ) => {
+    setPayoutSettings((prev) => ({
+      ...prev,
+      payoutAccount: {
+        ...(prev.payoutAccount || defaultPayoutSettings.payoutAccount!),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSavePayoutSettings = async () => {
+    try {
+      setSavingPayoutSettings(true);
+      const saved = await savePayoutSettingsWithFallback(payoutSettings);
+      setPayoutSettings(saved);
+      toast.success(t('partner.payoutSettings.saved', 'Payout settings updated'));
+    } catch (err: any) {
+      console.error('Error saving payout settings:', err);
+      toast.error(t('partner.payoutSettings.saveFailed', 'Failed to update payout settings'));
+    } finally {
+      setSavingPayoutSettings(false);
     }
   };
 
@@ -860,19 +986,43 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Method</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 rounded-xl border-2 border-violet-500 bg-violet-500/10 text-left">
+          <button
+            onClick={() => setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'BANK_TRANSFER' }))}
+            className={cn(
+              'p-4 rounded-xl border-2 text-left',
+              payoutSettings.payoutMethod === 'BANK_TRANSFER'
+                ? 'border-violet-500 bg-violet-500/10'
+                : 'border-white/10 hover:border-white/20'
+            )}
+          >
             <Wallet className="w-6 h-6 text-violet-400 mb-2" />
             <p className="font-medium text-slate-900 dark:text-white">Bank Transfer</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               Direct to your bank account
             </p>
           </button>
-          <button className="p-4 rounded-xl border border-white/10 hover:border-white/20 text-left">
+          <button
+            onClick={() => setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'PAYPAL' }))}
+            className={cn(
+              'p-4 rounded-xl border text-left',
+              payoutSettings.payoutMethod === 'PAYPAL'
+                ? 'border-violet-500 bg-violet-500/10'
+                : 'border-white/10 hover:border-white/20'
+            )}
+          >
             <DollarSign className="w-6 h-6 text-slate-400 dark:text-slate-500 mb-2" />
             <p className="font-medium text-slate-600 dark:text-slate-300">PayPal</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">PayPal business account</p>
           </button>
-          <button className="p-4 rounded-xl border border-white/10 hover:border-white/20 text-left">
+          <button
+            onClick={() => setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'STRIPE' }))}
+            className={cn(
+              'p-4 rounded-xl border text-left',
+              payoutSettings.payoutMethod === 'STRIPE'
+                ? 'border-violet-500 bg-violet-500/10'
+                : 'border-white/10 hover:border-white/20'
+            )}
+          >
             <ExternalLink className="w-6 h-6 text-slate-400 dark:text-slate-500 mb-2" />
             <p className="font-medium text-slate-600 dark:text-slate-300">Stripe</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Stripe Connect</p>
@@ -892,7 +1042,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </label>
             <input
               type="text"
-              defaultValue="Acme Consulting GmbH"
+              value={payoutSettings.payoutAccount?.accountHolderName ?? ''}
+              onChange={(e) => updatePayoutAccountField('accountHolderName', e.target.value)}
               className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
@@ -900,7 +1051,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <label className="text-sm text-slate-400 dark:text-slate-500 mb-1 block">IBAN</label>
             <input
               type="text"
-              defaultValue="DE89 3704 0044 0532 0130 00"
+              value={payoutSettings.payoutAccount?.iban ?? ''}
+              onChange={(e) => updatePayoutAccountField('iban', e.target.value)}
               className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
@@ -910,7 +1062,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </label>
             <input
               type="text"
-              defaultValue="COBADEFFXXX"
+              value={payoutSettings.payoutAccount?.bicSwift ?? ''}
+              onChange={(e) => updatePayoutAccountField('bicSwift', e.target.value)}
               className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
@@ -920,14 +1073,19 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </label>
             <input
               type="text"
-              defaultValue="Commerzbank AG"
+              value={payoutSettings.payoutAccount?.bankName ?? ''}
+              onChange={(e) => updatePayoutAccountField('bankName', e.target.value)}
               className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
         </div>
         <div className="flex justify-end mt-4">
-          <button className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">
-            Save Changes
+          <button
+            onClick={handleSavePayoutSettings}
+            disabled={savingPayoutSettings}
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+          >
+            {savingPayoutSettings ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -945,7 +1103,16 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 Minimum amount before requesting payout
               </p>
             </div>
-            <select className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white">
+            <select
+              value={String(payoutSettings.minimumThreshold)}
+              onChange={(e) =>
+                setPayoutSettings((prev) => ({
+                  ...prev,
+                  minimumThreshold: Number(e.target.value),
+                }))
+              }
+              className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+            >
               <option value="100">€100</option>
               <option value="250">€250</option>
               <option value="500">€500</option>
@@ -959,8 +1126,25 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 Automatically request payout when threshold is reached
               </p>
             </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-violet-600">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition translate-x-6" />
+            <button
+              onClick={() =>
+                setPayoutSettings((prev) => ({
+                  ...prev,
+                  autoPayoutEnabled: !prev.autoPayoutEnabled,
+                }))
+              }
+              aria-label="Toggle auto-request payout"
+              className={cn(
+                'relative inline-flex h-6 w-11 items-center rounded-full',
+                payoutSettings.autoPayoutEnabled ? 'bg-violet-600' : 'bg-slate-300 dark:bg-navy-600'
+              )}
+            >
+              <span
+                className={cn(
+                  'inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition',
+                  payoutSettings.autoPayoutEnabled ? 'translate-x-6' : 'translate-x-1'
+                )}
+              />
             </button>
           </div>
         </div>

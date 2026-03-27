@@ -255,6 +255,27 @@ export interface V8PartnerListingUpdateResult {
   publicListingEnabled: boolean;
 }
 
+export interface V8PartnerPayoutAccount {
+  accountHolderName: string;
+  iban: string;
+  bicSwift: string;
+  bankName: string;
+}
+
+export interface V8PartnerPayoutSettings {
+  minimumThreshold: number;
+  payoutMethod: 'BANK_TRANSFER' | 'PAYPAL' | 'STRIPE' | 'WISE';
+  autoPayoutEnabled: boolean;
+  payoutAccount: V8PartnerPayoutAccount | null;
+}
+
+export interface V8PartnerPayoutSettingsUpdatePayload {
+  minimumThreshold: number;
+  payoutMethod: 'BANK_TRANSFER' | 'PAYPAL' | 'STRIPE' | 'WISE';
+  autoPayoutEnabled: boolean;
+  payoutAccount: V8PartnerPayoutAccount | null;
+}
+
 export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
   const status = Number((error as { status?: number })?.status);
   return [400, 404, 405, 501].includes(status);
@@ -296,4 +317,7 @@ export const V8PartnerApi = {
     v8Put<V8PartnerRegionsUpdateResult>('/partner/organization/regions', body),
   updateOrganizationListing: (body: V8PartnerListingUpdatePayload) =>
     v8Put<V8PartnerListingUpdateResult>('/partner/organization/listing', body),
+  getPayoutSettings: () => v8Get<{ settings: V8PartnerPayoutSettings }>('/partner/payout-settings'),
+  updatePayoutSettings: (body: V8PartnerPayoutSettingsUpdatePayload) =>
+    v8Put<{ success: boolean; settings: V8PartnerPayoutSettings }>('/partner/payout-settings', body),
 };
