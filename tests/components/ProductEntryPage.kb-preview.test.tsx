@@ -41,6 +41,10 @@ vi.mock('@/components/Landing/WhereItHappensSection', () => ({
   WhereItHappensSection: () => <div>where-it-happens-section</div>,
 }));
 
+vi.mock('@/components/Landing/ValueJourneySection', () => ({
+  ValueJourneySection: () => <div>value-journey-section</div>,
+}));
+
 vi.mock('@/components/Landing/HowItWorksSection', () => ({
   HowItWorksSection: () => <div>how-it-works-section</div>,
 }));
@@ -122,6 +126,7 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     const hero = screen.getByText('epic-hero-section');
     const problemPlatform = screen.getByText('problem-platform-section');
     const whereItHappens = screen.getByText('where-it-happens-section');
+    const valueJourney = screen.getByText('value-journey-section');
     const howItWorks = screen.getByText('how-it-works-section');
     const forWhom = screen.getByText('for-whom-section');
     const documentation = screen.getByText('documentation-section');
@@ -131,6 +136,12 @@ describe('ProductEntryPage knowledge preview continuity', () => {
 
     expect(hero.compareDocumentPosition(problemPlatform)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(problemPlatform.compareDocumentPosition(whereItHappens)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(whereItHappens.compareDocumentPosition(valueJourney)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(valueJourney.compareDocumentPosition(howItWorks)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(hero.compareDocumentPosition(whereItHappens)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);

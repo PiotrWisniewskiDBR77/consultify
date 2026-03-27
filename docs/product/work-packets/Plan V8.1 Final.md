@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `4 / 13`
 - active lane: broader canonical `/` and public marketing breadth
-- landed packets in the active lane: `3`
+- landed packets in the active lane: `4`
 
 ---
 
@@ -165,7 +165,7 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader canonical `/` and public marketing breadth
-- latest evidence: `broader canonical / problem-platform-pattern seam` recorded in `evidence/349-v81-broader-canonical-public-marketing-problem-platform-pattern-seam.md`
+- latest evidence: `broader canonical / value-journey seam` recorded in `evidence/351-v81-broader-canonical-public-marketing-value-journey-seam.md`
 - reason: the Anna voice lane is now boundedly accepted, and the next honest residual is broader canonical `/` and public marketing breadth rather than another hidden Anna micro-packet
 
 ### Next three lanes
@@ -323,10 +323,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`
 - split-brain map: `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`
-- current packet: `canonical / value-layers and consulting-journey narrative seam`
+- current packet: `canonical / extended-scope narrative seam`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `land the missing canonical / value-layers and consulting-journey narrative seam without silently broadening into a full public rebrand`
+- next action: `land the missing canonical / extended-scope narrative seam without silently broadening into a full public rebrand`
 - acceptance evidence: `none`
 
 #### broader `Mobile` redesign

@@ -2390,6 +2390,59 @@
         "summary": "Consultify to platforma konsultingowej inteligencji: Spotify dla wiedzy konsultingowej, dostarczone jako ustrukturyzowany workflow konsultingowy."
       }
     },
+    "valueJourney": {
+      "badge": "Jak platforma tworzy wartość",
+      "heading": "Consultify zamienia konsultingową inteligencję w uporządkowaną drogę od insightu do wyniku.",
+      "sub": "To architektura wartości i ścieżka operacyjna stojąca za tą kategorią: pięć warstw wartości i pełna podróż konsultingowa w jednym środowisku pracy.",
+      "layersBadge": "Warstwy wartości",
+      "layersTitle": "Pięć warstw wartości: Inspiration -> Knowledge -> Frameworks -> Guidance -> Execution.",
+      "journeyBadge": "Podróż konsultingowa",
+      "journeyTitle": "Jedna platforma dla całej podróży konsultingowej: understanding -> diagnosis -> design -> execution -> results.",
+      "layers": [
+        {
+          "title": "Inspiration",
+          "description": "Pokazuje użytkownikom nowe idee, kierunki i możliwości."
+        },
+        {
+          "title": "Knowledge",
+          "description": "Daje dostęp do wiedzy konsultingowej, którą normalnie trudno zdobyć."
+        },
+        {
+          "title": "Frameworks",
+          "description": "Dostarcza strategiczne i analityczne narzędzia do uporządkowanego myślenia."
+        },
+        {
+          "title": "Guidance",
+          "description": "Prowadzi użytkownika przez proces budowania i ulepszania biznesu."
+        },
+        {
+          "title": "Execution",
+          "description": "Zamienia myślenie w wdrożenie, pomiar i realne efekty."
+        }
+      ],
+      "journey": [
+        {
+          "title": "Understanding",
+          "description": "Wywiad, zbieranie kontekstu i zrozumienie organizacji."
+        },
+        {
+          "title": "Diagnosis",
+          "description": "Frameworki, assessmenty i analiza oparta na dowodach."
+        },
+        {
+          "title": "Designing initiatives",
+          "description": "Projekt programu transformacji, priorytety i roadmapa."
+        },
+        {
+          "title": "Execution",
+          "description": "Delivery, governance i operacyjne dowiezienie zmian."
+        },
+        {
+          "title": "Results",
+          "description": "Śledzenie KPI, value capture, ROI i dowód wpływu."
+        }
+      ]
+    },
     "profitHero": {
       "h1": {
         "line1": "Consultify to",

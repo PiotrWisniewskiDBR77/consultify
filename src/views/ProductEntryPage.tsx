@@ -16,6 +16,7 @@ import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewS
 import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
 import { ProblemPlatformSection } from '../components/Landing/ProblemPlatformSection';
 import { TrustStrip } from '../components/Landing/TrustStrip';
+import { ValueJourneySection } from '../components/Landing/ValueJourneySection';
 import { WhereItHappensSection } from '../components/Landing/WhereItHappensSection';
 import { LANDING_FILMS } from '../config/landingFilms';
 import { ROUTES } from '../routes/routeConfig';
@@ -116,6 +117,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <ProblemPlatformSection />
 
         <WhereItHappensSection />
+
+        <ValueJourneySection />
 
         <HowItWorksSection />
 

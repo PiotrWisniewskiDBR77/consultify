@@ -97,6 +97,59 @@
         "summary": "Consultify is the Consulting Intelligence Platform: Spotify for consulting knowledge, delivered as a structured consulting workflow."
       }
     },
+    "valueJourney": {
+      "badge": "How the platform creates value",
+      "heading": "Consultify turns consulting intelligence into a structured journey from insight to results.",
+      "sub": "This is the value architecture and operating path behind the category: five value layers and the full consulting journey in one working environment.",
+      "layersBadge": "Value layers",
+      "layersTitle": "Five layers of value: Inspiration -> Knowledge -> Frameworks -> Guidance -> Execution.",
+      "journeyBadge": "Consulting journey",
+      "journeyTitle": "One platform for the full consulting journey: understanding -> diagnosis -> design -> execution -> results.",
+      "layers": [
+        {
+          "title": "Inspiration",
+          "description": "Shows users new ideas, directions, and possibilities."
+        },
+        {
+          "title": "Knowledge",
+          "description": "Provides access to consulting knowledge that would otherwise be hard to obtain."
+        },
+        {
+          "title": "Frameworks",
+          "description": "Provides strategic and analytical tools for structured thinking."
+        },
+        {
+          "title": "Guidance",
+          "description": "Guides users through the process of building and improving a business."
+        },
+        {
+          "title": "Execution",
+          "description": "Turns thinking into implementation, measurement, and results."
+        }
+      ],
+      "journey": [
+        {
+          "title": "Understanding",
+          "description": "Interview, context capture, and organizational understanding."
+        },
+        {
+          "title": "Diagnosis",
+          "description": "Frameworks, assessments, and evidence-based analysis."
+        },
+        {
+          "title": "Designing initiatives",
+          "description": "Transformation program design, priorities, and roadmap."
+        },
+        {
+          "title": "Execution",
+          "description": "Delivery, governance, and operational follow-through."
+        },
+        {
+          "title": "Results",
+          "description": "KPI tracking, value capture, ROI, and proof of impact."
+        }
+      ]
+    },
     "profitHero": {
       "h1": {
         "line1": "Consultify is the",
