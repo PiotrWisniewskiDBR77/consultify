@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Partner Program` parity
-- landed packets in the active lane: `15`
+- landed packets in the active lane: `16`
 
 ---
 
@@ -87,7 +87,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
-| `10` | broader `Partner Program` parity | `Phase C` | `active` | accepted partner payout/campaign/profile seams are already closed, and fifteen broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, and employee roster continuity while broader statement-source migration and payout-settings breadth still remain | broader partner breadth is accepted |
+| `10` | broader `Partner Program` parity | `Phase C` | `active` | accepted partner payout/campaign/profile seams are already closed, and sixteen broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, and `CommissionView` statement continuity while deeper statement-source migration and payout-settings breadth still remain | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
 | `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: fifteenth broader packet recorded in `evidence/433-v81-broader-partner-client-access-employees-read-v8-seam.md`
-- reason: after access-link continuity landed, the remaining active `client-access` residual could still be split honestly as a bounded employee roster read by reusing `partner_users` plus user/session activity while leaving unknown client assignment counts explicitly unclaimed
+- latest evidence: sixteenth broader packet recorded in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md`
+- reason: after employee roster continuity landed, a thinner active residual still existed inside the broader statement-source breadth because `CommissionView` continued to read placeholder statement data even though governed partner payout and commission seams were already available
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `client-access employees roster read V8 seam`
-- last accepted packet: `client-access employees roster read V8 seam`
+- current packet: `CommissionView statement continuity seam`
+- last accepted packet: `CommissionView statement continuity seam`
 - blocker: `none`
-- next action: `assess whether broader statement-source migration or placeholder-only payout-settings save continuity is now the next smallest honest partner packet`
+- next action: `assess whether any thinner honest statement-source residual remains after CommissionView continuity before revisiting placeholder-only payout-settings save ownership`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

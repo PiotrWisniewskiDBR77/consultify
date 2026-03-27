@@ -6,25 +6,172 @@
  */
 
 import { ChartBar, FileText, HelpCircle, Send } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { CommissionIntelligence } from '../../components/Partner/CommissionIntelligence';
 import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
+import { Api } from '../../services/api';
+import {
+  shouldFallbackToLegacyPartner,
+  V8PartnerApi,
+  type V8PartnerCommissionTransaction,
+  type V8PartnerPayoutHistoryItem,
+} from '../../services/api/v8';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
-import { PARTNER_PMO_MAPPING } from './types';
+import { type CommissionStatement, PARTNER_PMO_MAPPING } from './types';
 
 const inquiryTypes = ['Commission inquiry', 'Payment update', 'Statement question', 'Other'];
 
+function formatStatementPeriod(start?: string, end?: string): string {
+  const startLabel = typeof start === 'string' ? start.slice(0, 10) : '';
+  const endLabel = typeof end === 'string' ? end.slice(0, 10) : '';
+
+  if (startLabel && endLabel) {
+    return `${startLabel} - ${endLabel}`;
+  }
+
+  return startLabel || endLabel || 'Commission statement';
+}
+
+function mapStatementStatus(status?: string): CommissionStatement['status'] {
+  switch (String(status || '').toUpperCase()) {
+    case 'COMPLETED':
+    case 'PAID':
+      return 'PAID';
+    case 'PROCESSING':
+    case 'APPROVED':
+      return 'APPROVED';
+    default:
+      return 'PENDING';
+  }
+}
+
+function buildLiveStatements(
+  payouts: V8PartnerPayoutHistoryItem[],
+  transactions: V8PartnerCommissionTransaction[],
+): CommissionStatement[] {
+  const payoutStatements: CommissionStatement[] = payouts.map((payout) => ({
+    id: `payout:${payout.id}`,
+    partnerId: 'partner-runtime',
+    period: formatStatementPeriod(payout.periodStart, payout.periodEnd),
+    totalAmount: Number(payout.netAmount ?? payout.grossAmount ?? 0),
+    status: mapStatementStatus(payout.status),
+    paidAt: payout.completedAt || undefined,
+    paymentReference: payout.id,
+    deals: [],
+  }));
+
+  const unsettledBuckets = new Map<
+    string,
+    {
+      id: string;
+      period: string;
+      totalAmount: number;
+      status: CommissionStatement['status'];
+    }
+  >();
+
+  for (const tx of transactions) {
+    if (tx.payoutId) continue;
+
+    const period = typeof tx.transactionDate === 'string' ? tx.transactionDate.slice(0, 7) : 'Unscheduled';
+    const status = mapStatementStatus(tx.status);
+    const key = `${status}:${period}`;
+    const bucket = unsettledBuckets.get(key);
+
+    if (bucket) {
+      bucket.totalAmount += Number(tx.commissionAmount ?? 0);
+      continue;
+    }
+
+    unsettledBuckets.set(key, {
+      id: `tx:${key}`,
+      period,
+      totalAmount: Number(tx.commissionAmount ?? 0),
+      status,
+    });
+  }
+
+  const unsettledStatements: CommissionStatement[] = Array.from(unsettledBuckets.values()).map(
+    (bucket) => ({
+      id: bucket.id,
+      partnerId: 'partner-runtime',
+      period: bucket.period,
+      totalAmount: bucket.totalAmount,
+      status: bucket.status,
+      deals: [],
+    }),
+  );
+
+  return [...payoutStatements, ...unsettledStatements];
+}
+
 export const CommissionView: React.FC = () => {
   const { setCurrentView } = useAppStore();
-  const { deals, statements, loading, submitCommissionInquiry } = usePartnerEcosystem();
+  const { deals, loading, submitCommissionInquiry } = usePartnerEcosystem();
   const [selectedType, setSelectedType] = useState(inquiryTypes[0]);
   const [inquiryMessage, setInquiryMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statements, setStatements] = useState<CommissionStatement[]>([]);
+  const [statementsLoading, setStatementsLoading] = useState(true);
 
   const navigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStatements = async () => {
+      setStatementsLoading(true);
+      try {
+        const [payouts, transactions] = await Promise.all([
+          (async () => {
+            try {
+              const response = await V8PartnerApi.getPayouts();
+              return Array.isArray(response?.payouts) ? response.payouts : [];
+            } catch (error) {
+              if (!shouldFallbackToLegacyPartner(error)) {
+                throw error;
+              }
+              const response = await Api.get('/api/partners/payouts');
+              return response?.success && Array.isArray(response?.data) ? response.data : [];
+            }
+          })(),
+          (async () => {
+            try {
+              const response = await V8PartnerApi.getCommissionTransactions();
+              return Array.isArray(response?.transactions) ? response.transactions : [];
+            } catch (error) {
+              if (!shouldFallbackToLegacyPartner(error)) {
+                throw error;
+              }
+              const response = await Api.get('/api/partners/commission-transactions');
+              return response?.success && Array.isArray(response?.data) ? response.data : [];
+            }
+          })(),
+        ]);
+
+        if (!cancelled) {
+          setStatements(buildLiveStatements(payouts, transactions));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('[Partner] Failed to load commission statements:', error);
+          setStatements([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setStatementsLoading(false);
+        }
+      }
+    };
+
+    loadStatements();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmitInquiry = useCallback(async () => {
     if (!inquiryMessage.trim()) return;
@@ -77,6 +224,12 @@ export const CommissionView: React.FC = () => {
           </div>
 
           <div className="space-y-3">
+            {statementsLoading && (
+              <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-400">
+                Loading commission statements...
+              </div>
+            )}
+
             {statements.map((statement) => (
               <div
                 key={statement.id}
@@ -87,7 +240,11 @@ export const CommissionView: React.FC = () => {
                     {statement.period}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {statement.deals.length} deal{statement.deals.length !== 1 ? 's' : ''}
+                    {statement.paymentReference
+                      ? `Ref ${statement.paymentReference}`
+                      : statement.deals.length > 0
+                        ? `${statement.deals.length} deal${statement.deals.length !== 1 ? 's' : ''}`
+                        : 'Historical statement'}
                     {statement.paidAt &&
                       ` · Paid ${new Date(statement.paidAt).toLocaleDateString()}`}
                   </div>
@@ -116,7 +273,7 @@ export const CommissionView: React.FC = () => {
               </div>
             ))}
 
-            {statements.length === 0 && (
+            {!statementsLoading && statements.length === 0 && (
               <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-400">
                 No commission statements yet
               </div>
