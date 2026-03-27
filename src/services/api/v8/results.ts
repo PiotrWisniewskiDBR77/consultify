@@ -290,6 +290,10 @@ export interface V8ResultsUpdateKpiResponse {
   success: boolean;
 }
 
+export interface V8ResultsDeleteKpiResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiMappingPayload {
   initiativeId: string;
   kpiId: string;
@@ -383,6 +387,8 @@ export const V8ResultsApi = {
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
   updateKpi: (kpiId: string, payload: V8ResultsUpdateKpiPayload) =>
     v8Put<V8ResultsUpdateKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`, payload),
+  deleteKpi: (kpiId: string) =>
+    v8Delete<V8ResultsDeleteKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`),
   createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
     v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
   deleteKpiMapping: (mappingId: string) =>

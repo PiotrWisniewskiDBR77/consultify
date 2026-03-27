@@ -211,6 +211,15 @@ describe('V8ResultsApi', () => {
     expect(data.success).toBe(true);
   });
 
+  it('requests governed KPI delete from the V8 namespace', async () => {
+    vi.mocked(v8Delete).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.deleteKpi('kpi-1');
+
+    expect(v8Delete).toHaveBeenCalledWith('/results/kpis/kpi-1');
+    expect(data.success).toBe(true);
+  });
+
   it('requests governed KPI mapping create from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       id: 'map-1',

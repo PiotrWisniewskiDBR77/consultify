@@ -27,6 +27,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     getKpiDrawerDetail: vi.fn(),
     createKpiTimeSeriesValue: vi.fn(),
     updateKpi: vi.fn(),
+    deleteKpi: vi.fn(),
     createKpiMapping: vi.fn(),
     deleteKpiMapping: vi.fn(),
   },
@@ -520,5 +521,93 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     await waitFor(() => {
       expect(Api.delete).toHaveBeenCalledWith('/benefits/kpi-mappings/map-1');
     });
+  });
+
+  it('deletes KPI through the governed V8 route before legacy fallback', async () => {
+    const onClose = vi.fn();
+    const onValueRecorded = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.deleteKpi).mockResolvedValue({ success: true } as any);
+
+    render(
+      <KPITimeSeriesDrawer kpiId="kpi-1" onClose={onClose} onValueRecorded={onValueRecorded} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Delete'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.deleteKpi).toHaveBeenCalledWith('kpi-1');
+      expect(onValueRecorded).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    expect(Api.delete).not.toHaveBeenCalledWith('/benefits/kpis/kpi-1');
+    confirmSpy.mockRestore();
+  });
+
+  it('falls back to legacy KPI delete only for bounded compatibility errors', async () => {
+    const onClose = vi.fn();
+    const onValueRecorded = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.deleteKpi).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
+
+    render(
+      <KPITimeSeriesDrawer kpiId="kpi-1" onClose={onClose} onValueRecorded={onValueRecorded} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Delete'));
+
+    await waitFor(() => {
+      expect(Api.delete).toHaveBeenCalledWith('/benefits/kpis/kpi-1');
+      expect(onValueRecorded).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    confirmSpy.mockRestore();
   });
 });

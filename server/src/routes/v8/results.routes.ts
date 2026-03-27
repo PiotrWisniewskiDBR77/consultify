@@ -264,6 +264,74 @@ router.put(
 );
 
 /**
+ * DELETE /api/v8/results/kpis/:kpiId
+ * Bounded KPI delete seam for the active Results drawer surface.
+ */
+router.delete(
+  '/kpis/:kpiId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    if (!kpiId) {
+      return res.status(400).json({
+        error: 'kpiId is required',
+        code: 'RESULTS_KPI_ID_REQUIRED',
+      });
+    }
+
+    const row = await dbGet<any>(
+      `
+      SELECT k.id
+      FROM initiative_kpis k
+      LEFT JOIN initiatives i ON i.id = k.initiative_id
+      WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
+      `,
+      [kpiId, organizationId],
+    );
+    if (!row?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+
+    await dbRun(`DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?`, [
+      kpiId,
+      organizationId,
+    ]).catch(() => null);
+
+    await dbRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
+      kpiId,
+      organizationId,
+    ]).catch(() => null);
+
+    const cases = await dbAll<any>(
+      `SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`,
+      [organizationId, kpiId],
+    ).catch(() => []);
+    const caseIds = (cases || []).map((c: any) => String(c.id)).filter(Boolean);
+    if (caseIds.length) {
+      await dbRun(
+        `DELETE FROM kpi_deviation_actions WHERE case_id IN (${caseIds.map(() => '?').join(',')})`,
+        caseIds,
+      ).catch(() => null);
+    }
+
+    await dbRun(`DELETE FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`, [
+      organizationId,
+      kpiId,
+    ]).catch(() => null);
+
+    await dbRun(`DELETE FROM initiative_kpis WHERE id = ?`, [kpiId]);
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * POST /api/v8/results/kpi-mappings
  * Bounded initiative <-> KPI mapping create seam for the active Results surfaces.
  */

@@ -353,7 +353,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     if (!ok) return;
     setDeleting(true);
     try {
-      await Api.delete(`/benefits/kpis/${kpiId}`);
+      try {
+        await V8ResultsApi.deleteKpi(kpiId);
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        await Api.delete(`/benefits/kpis/${kpiId}`);
+      }
       onValueRecorded?.();
       onClose();
     } catch {

@@ -315,6 +315,31 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('DELETE /api/v8/results/kpis/:kpiId removes a governed KPI with bounded cleanup', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
+    mockDbAll.mockResolvedValueOnce([{ id: 'case-1' }]);
+
+    const app = createApp();
+    const res = await request(app).delete('/api/v8/results/kpis/kpi-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT k.id'),
+      ['kpi-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      'DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?',
+      ['kpi-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM kpi_deviation_actions WHERE case_id IN'),
+      ['case-1'],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith('DELETE FROM initiative_kpis WHERE id = ?', ['kpi-1']);
+  });
+
   it('POST /api/v8/results/kpi-mappings creates a governed KPI mapping', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-mappings').send({
