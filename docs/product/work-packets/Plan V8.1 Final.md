@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `7`
+- landed packets in the current active lane: `8`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: post-verification residual assessment recorded in `evidence/451-v81-broader-sync-post-verification-residual-assessment.md`
-- reason: after the active sync hub reached connected truth, no thinner honest packet remained before broader post-auth credential / refresh continuity
+- latest evidence: eighth broader sync packet recorded in `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md`
+- reason: after post-verification assessment promoted broader post-auth continuity, the active sync hub still could not materialize governed credential baseline truth onto the runtime path that already used governed refresh primitives
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/451-v81-broader-sync-post-verification-residual-assessment.md`
+- current packet: `evidence/452-v81-broader-sync-credential-materialization-readback-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote broader post-auth credential / refresh continuity as the next honest broader sync packet because no thinner post-verification residual remains`
+- next action: `assess whether governed refresh execution / refresh-result continuity or auth-break escalation / recovery continuity is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

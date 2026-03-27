@@ -1,5 +1,6 @@
 import { all as dbAll } from '../../utils/DbPromise.js';
 import { CONNECTORS } from '../integrationHubService.js';
+import { getCredential } from './pmSyncAuthService.js';
 import { getConnectorHealth } from './pmSyncTruthService.js';
 
 interface IntegrationRow {
@@ -49,6 +50,15 @@ export interface V8SyncIntegrationInventoryRow {
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation'
     | null;
+  credential: {
+    providerAccountId: string;
+    workspaceOrTenantId: string;
+    scopesGranted: string[];
+    tokenExpiresAt: string | null;
+    lastVerificationAt: string | null;
+    lastRefreshAt: string | null;
+    lastRefreshResult: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' | null;
+  } | null;
   connector: {
     id: string;
     name: string;
@@ -178,6 +188,7 @@ export async function listGovernedIntegrations(
         [row.id],
       );
       const connector = CONNECTORS[row.connector_id];
+      const credential = await getCredential(row.connector_id, organizationId);
       const capabilities = safeJsonParse<string[]>(row.capabilities, connector?.capabilities ?? []);
       const parsedConfig = safeJsonParse<Record<string, unknown>>(row.config, {});
       const derivedStatus = mapIntegrationStatus(row.status, health.authState);
@@ -209,6 +220,17 @@ export async function listGovernedIntegrations(
         lastRun: lastRunRows[0] ?? null,
         configuredFields,
         onboardingStatus,
+        credential: credential
+          ? {
+              providerAccountId: credential.providerAccountId,
+              workspaceOrTenantId: credential.workspaceOrTenantId,
+              scopesGranted: credential.scopesGranted,
+              tokenExpiresAt: credential.tokenExpiresAt,
+              lastVerificationAt: credential.lastVerificationAt,
+              lastRefreshAt: credential.lastRefreshAt,
+              lastRefreshResult: credential.lastRefreshResult,
+            }
+          : null,
         connector: connector
           ? {
               id: connector.id,

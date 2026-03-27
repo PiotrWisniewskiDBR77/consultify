@@ -51,6 +51,7 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
     getConnectors: vi.fn(),
     connectIntegration: vi.fn(),
     configureIntegration: vi.fn(),
+    materializeCredential: vi.fn(),
     getHubHealth: vi.fn(),
     getErrors: vi.fn(),
     resolveError: vi.fn(),
@@ -914,5 +915,134 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     await waitFor(() => {
       expect(screen.getByTitle('Run now')).not.toBeDisabled();
     });
+  });
+
+  it('records governed credential baseline on the active hub after verification completes', async () => {
+    const connectedWithoutCredential = {
+      integrations: [
+        {
+          id: 'int-connected-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          credential: null,
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+    const connectedWithCredential = {
+      integrations: [
+        {
+          id: 'int-connected-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          credential: {
+            providerAccountId: 'acct-123',
+            workspaceOrTenantId: 'tenant-456',
+            scopesGranted: ['read:jira-work'],
+            tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+            lastVerificationAt: '2026-03-27T18:00:00.000Z',
+            lastRefreshAt: null,
+            lastRefreshResult: null,
+          },
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(connectedWithoutCredential as any);
+    vi.mocked(V8SyncApi.materializeCredential).mockResolvedValue({
+      credential: {
+        credentialId: 'cred-1',
+        connectorId: 'jira',
+        organizationId: 'org-sync-1',
+        providerAccountId: 'acct-123',
+        workspaceOrTenantId: 'tenant-456',
+        scopesGranted: ['read:jira-work'],
+        tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+        lastVerificationAt: '2026-03-27T18:00:00.000Z',
+        lastRefreshAt: null,
+        lastRefreshResult: null,
+        createdAt: '2026-03-27T18:00:00.000Z',
+        updatedAt: '2026-03-27T18:00:00.000Z',
+      },
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Add governed credential/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Add governed credential/i }));
+    fireEvent.change(screen.getByPlaceholderText('acct-123'), { target: { value: 'acct-123' } });
+    fireEvent.change(screen.getByPlaceholderText('tenant-456'), { target: { value: 'tenant-456' } });
+    fireEvent.change(screen.getByPlaceholderText('read:jira-work, write:jira-work'), {
+      target: { value: 'read:jira-work' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('2026-03-27T19:00:00.000Z'), {
+      target: { value: '2026-03-27T19:00:00.000Z' },
+    });
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(connectedWithCredential as any);
+    fireEvent.click(screen.getByRole('button', { name: /Save governed credential/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.materializeCredential).toHaveBeenCalledWith('int-connected-1', {
+        providerAccountId: 'acct-123',
+        workspaceOrTenantId: 'tenant-456',
+        scopesGranted: ['read:jira-work'],
+        tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Credential metadata is recorded for governed refresh and recovery readback.')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('acct-123')).toBeInTheDocument();
+    expect(screen.getByText('tenant-456')).toBeInTheDocument();
+    expect(screen.getByText('read:jira-work')).toBeInTheDocument();
   });
 });

@@ -111,6 +111,15 @@ interface IntegrationItem {
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation'
     | null;
+  credential: {
+    providerAccountId: string;
+    workspaceOrTenantId: string;
+    scopesGranted: string[];
+    tokenExpiresAt: string | null;
+    lastVerificationAt: string | null;
+    lastRefreshAt: string | null;
+    lastRefreshResult: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' | null;
+  } | null;
   connector: ConnectorInfo | null;
 }
 
@@ -118,6 +127,13 @@ interface ExternalAuthSessionInfo {
   callbackUrl: string;
   state: string;
   expiresAt: string;
+}
+
+interface CredentialDraft {
+  providerAccountId: string;
+  workspaceOrTenantId: string;
+  scopesGranted: string;
+  tokenExpiresAt: string;
 }
 
 interface CatalogConnector extends ConnectorInfo {
@@ -345,6 +361,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [savingPendingConfigId, setSavingPendingConfigId] = useState<string | null>(null);
   const [pendingConfigDrafts, setPendingConfigDrafts] = useState<Record<string, Record<string, string>>>({});
   const [externalAuthSessions, setExternalAuthSessions] = useState<Record<string, ExternalAuthSessionInfo>>({});
+  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(null);
+  const [savingCredentialId, setSavingCredentialId] = useState<string | null>(null);
+  const [credentialDrafts, setCredentialDrafts] = useState<Record<string, CredentialDraft>>({});
 
   const v8ConnectorHealthTargets = useMemo<V8ConnectorHealthTarget[]>(() => {
     const byConnectorId = new Map<string, V8ConnectorHealthTarget>();
@@ -1043,6 +1062,73 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     );
   };
 
+  const handleCredentialDraftChange = (
+    integrationId: string,
+    field: keyof CredentialDraft,
+    value: string,
+  ) => {
+    setCredentialDrafts((current) => ({
+      ...current,
+      [integrationId]: {
+        providerAccountId: current[integrationId]?.providerAccountId || '',
+        workspaceOrTenantId: current[integrationId]?.workspaceOrTenantId || '',
+        scopesGranted: current[integrationId]?.scopesGranted || '',
+        tokenExpiresAt: current[integrationId]?.tokenExpiresAt || '',
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveCredential = async (integration: IntegrationItem) => {
+    const draft = credentialDrafts[integration.id] || {
+      providerAccountId: '',
+      workspaceOrTenantId: '',
+      scopesGranted: '',
+      tokenExpiresAt: '',
+    };
+    const scopesGranted = draft.scopesGranted
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (!draft.providerAccountId.trim() || !draft.workspaceOrTenantId.trim() || scopesGranted.length === 0) {
+      toast.error(
+        t(
+          'integrations.syncHub.credentialMaterializationFieldsRequired',
+          'Provider account, workspace or tenant, and at least one scope are required.',
+        ),
+      );
+      return;
+    }
+
+    setSavingCredentialId(integration.id);
+    try {
+      await V8SyncApi.materializeCredential(integration.id, {
+        providerAccountId: draft.providerAccountId.trim(),
+        workspaceOrTenantId: draft.workspaceOrTenantId.trim(),
+        scopesGranted,
+        tokenExpiresAt: draft.tokenExpiresAt.trim() || null,
+      });
+      toast.success(
+        t(
+          'integrations.syncHub.credentialMaterialized',
+          'Governed credential baseline recorded',
+        ),
+      );
+      setEditingCredentialId(null);
+      await loadAll();
+    } catch {
+      toast.error(
+        t(
+          'integrations.syncHub.credentialMaterializationFailed',
+          'Failed to record governed credential baseline',
+        ),
+      );
+    } finally {
+      setSavingCredentialId(null);
+    }
+  };
+
   const handleResolveV8AuthEscalation = async (escalationId: string) => {
     setResolvingAuthEscalationId(escalationId);
     try {
@@ -1177,7 +1263,17 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       (field) => !configuredFieldSet.has(field),
     );
     const isEditingPendingConfig = editingPendingConfigId === int.id;
+    const isEditingCredential = editingCredentialId === int.id;
     const externalAuthSession = externalAuthSessions[int.id] || null;
+    const providerFamily = getProviderFamily(int.connectorId);
+    const canMaterializeCredential =
+      int.status === 'connected' && int.connector?.authType === 'oauth2' && providerFamily !== null;
+    const credentialDraft = credentialDrafts[int.id] || {
+      providerAccountId: int.credential?.providerAccountId || '',
+      workspaceOrTenantId: int.credential?.workspaceOrTenantId || '',
+      scopesGranted: int.credential?.scopesGranted?.join(', ') || '',
+      tokenExpiresAt: int.credential?.tokenExpiresAt || '',
+    };
     const pendingSetupDescription =
       int.onboardingStatus === 'pending_external_auth'
         ? t(
@@ -1480,6 +1576,156 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         </span>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {canMaterializeCredential && (
+                  <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 text-xs">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium text-violet-200">
+                          {t(
+                            'integrations.syncHub.governedCredentialBaseline',
+                            'Governed credential baseline',
+                          )}
+                        </div>
+                        <div className="mt-1 text-violet-100/70">
+                          {int.credential
+                            ? t(
+                                'integrations.syncHub.governedCredentialBaselineSaved',
+                                'Credential metadata is recorded for governed refresh and recovery readback.',
+                              )
+                            : t(
+                                'integrations.syncHub.governedCredentialBaselineMissing',
+                                'Record credential metadata here before broader governed refresh and recovery continuity can become real.',
+                              )}
+                        </div>
+                      </div>
+                      {!isEditingCredential && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingCredentialId(int.id)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-200 hover:bg-violet-500/15 transition-colors"
+                        >
+                          <CheckCircle2 size={12} />
+                          {int.credential
+                            ? t('integrations.syncHub.editGovernedCredential', 'Edit governed credential')
+                            : t('integrations.syncHub.addGovernedCredential', 'Add governed credential')}
+                        </button>
+                      )}
+                    </div>
+
+                    {int.credential && !isEditingCredential && (
+                      <div className="mt-3 grid gap-2 md:grid-cols-2 text-[11px] text-violet-100/80">
+                        <div>
+                          <div className="text-violet-200/60">
+                            {t('integrations.syncHub.providerAccountId', 'Provider account')}
+                          </div>
+                          <div className="mt-1 break-all">{int.credential.providerAccountId}</div>
+                        </div>
+                        <div>
+                          <div className="text-violet-200/60">
+                            {t('integrations.syncHub.workspaceTenantId', 'Workspace or tenant')}
+                          </div>
+                          <div className="mt-1 break-all">{int.credential.workspaceOrTenantId}</div>
+                        </div>
+                        <div className="md:col-span-2">
+                          <div className="text-violet-200/60">
+                            {t('integrations.syncHub.governedScopes', 'Governed scopes')}
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {int.credential.scopesGranted.map((scope) => (
+                              <span
+                                key={scope}
+                                className="px-2 py-0.5 rounded-full border border-violet-500/20 bg-violet-500/10 text-[11px] text-violet-100"
+                              >
+                                {scope}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {isEditingCredential && (
+                      <div className="mt-3 space-y-2 rounded-lg border border-violet-500/20 bg-navy-950/30 p-3">
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                            {t('integrations.syncHub.providerAccountId', 'Provider account')}
+                          </div>
+                          <input
+                            type="text"
+                            value={credentialDraft.providerAccountId}
+                            onChange={(e) =>
+                              handleCredentialDraftChange(int.id, 'providerAccountId', e.target.value)
+                            }
+                            placeholder="acct-123"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                            {t('integrations.syncHub.workspaceTenantId', 'Workspace or tenant')}
+                          </div>
+                          <input
+                            type="text"
+                            value={credentialDraft.workspaceOrTenantId}
+                            onChange={(e) =>
+                              handleCredentialDraftChange(int.id, 'workspaceOrTenantId', e.target.value)
+                            }
+                            placeholder="tenant-456"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                            {t('integrations.syncHub.governedScopes', 'Governed scopes')}
+                          </div>
+                          <input
+                            type="text"
+                            value={credentialDraft.scopesGranted}
+                            onChange={(e) =>
+                              handleCredentialDraftChange(int.id, 'scopesGranted', e.target.value)
+                            }
+                            placeholder="read:jira-work, write:jira-work"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                            {t('integrations.syncHub.tokenExpiresAt', 'Token expires at')}
+                          </div>
+                          <input
+                            type="text"
+                            value={credentialDraft.tokenExpiresAt}
+                            onChange={(e) =>
+                              handleCredentialDraftChange(int.id, 'tokenExpiresAt', e.target.value)
+                            }
+                            placeholder="2026-03-27T19:00:00.000Z"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                          />
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleSaveCredential(int)}
+                            disabled={savingCredentialId === int.id}
+                            className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-100 hover:bg-violet-500/25 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {savingCredentialId === int.id
+                              ? t('common.saving', 'Saving...')
+                              : t('integrations.syncHub.saveGovernedCredential', 'Save governed credential')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCredentialId(null)}
+                            className="px-3 py-1.5 text-xs text-slate-300 hover:text-white rounded-lg transition-colors"
+                          >
+                            {t('common.cancel', 'Cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

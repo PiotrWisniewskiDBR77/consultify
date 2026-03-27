@@ -11,10 +11,12 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getActiveEscalations,
+  getCredential,
   getCredentialHealth,
   getRefreshTimingPolicy,
   resolveAuthEscalation,
   setRefreshTimingPolicy,
+  storeCredential,
 } from '../../services/v8/pmSyncAuthService.js';
 import {
   getConnectorHealth,
@@ -121,6 +123,13 @@ const InitiateConnectorConnectionBodySchema = z.object({
 
 const ConfigurePendingIntegrationBodySchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
+});
+
+const StoreIntegrationCredentialBodySchema = z.object({
+  providerAccountId: z.string().trim().min(1),
+  workspaceOrTenantId: z.string().trim().min(1),
+  scopesGranted: z.array(z.string().trim().min(1)).min(1),
+  tokenExpiresAt: z.string().trim().min(1).nullable().optional(),
 });
 
 function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
@@ -506,6 +515,88 @@ router.post(
           state: session.state,
           expiresAt: new Date(session.expiresAt).toISOString(),
         },
+      },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/credential',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const parsedBody = StoreIntegrationCredentialBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        error: parsedBody.error.issues[0]?.message ?? 'Invalid credential payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    const rows = await dbAll<{
+      id: string;
+      connector_id: string;
+      status: string;
+    }>(
+      `SELECT id, connector_id, status
+       FROM integrations
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [integrationId, organizationId],
+    );
+    const integration = rows[0];
+    if (!integration) {
+      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+    }
+
+    const connector = CONNECTORS[integration.connector_id];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+    if (connector.authType !== 'oauth2') {
+      return res.status(409).json({
+        error: 'Credential materialization is only supported for governed oauth2 connectors',
+        code: 'CREDENTIAL_UNSUPPORTED',
+      });
+    }
+
+    const credential = await storeCredential({
+      connectorId: connector.id,
+      organizationId,
+      providerAccountId: parsedBody.data.providerAccountId,
+      workspaceOrTenantId: parsedBody.data.workspaceOrTenantId,
+      scopesGranted: parsedBody.data.scopesGranted,
+      tokenExpiresAt: parsedBody.data.tokenExpiresAt ?? null,
+    });
+
+    await logIntegrationAudit(organizationId, integrationId, 'credential_materialized', actorId, actorId, {
+      connectorId: connector.id,
+      providerAccountId: credential.providerAccountId,
+      workspaceOrTenantId: credential.workspaceOrTenantId,
+      scopesGranted: credential.scopesGranted,
+    });
+
+    const refreshedCredential = await getCredential(connector.id, organizationId);
+
+    return res.json({
+      data: {
+        credential: refreshedCredential ?? credential,
       },
       meta: syncMutationMeta(),
     });

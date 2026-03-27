@@ -12,6 +12,8 @@ const mockGetActiveEscalations = vi.fn();
 const mockResolveAuthEscalation = vi.fn();
 const mockGetRefreshTimingPolicy = vi.fn();
 const mockSetRefreshTimingPolicy = vi.fn();
+const mockGetCredential = vi.fn();
+const mockStoreCredential = vi.fn();
 const mockGetConnectorHealth = vi.fn();
 const mockGetIntegrationHealth = vi.fn();
 const mockGetUnresolvedErrors = vi.fn();
@@ -36,6 +38,8 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   resolveAuthEscalation: (...args: unknown[]) => mockResolveAuthEscalation(...args),
   getRefreshTimingPolicy: (...args: unknown[]) => mockGetRefreshTimingPolicy(...args),
   setRefreshTimingPolicy: (...args: unknown[]) => mockSetRefreshTimingPolicy(...args),
+  getCredential: (...args: unknown[]) => mockGetCredential(...args),
+  storeCredential: (...args: unknown[]) => mockStoreCredential(...args),
 }));
 
 vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
@@ -449,6 +453,68 @@ describe('V8 sync read-only routes', () => {
       transitionedBy: UID,
       reason: 'reauth_started',
     });
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/credential stores governed credential baseline', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        id: 'int-1',
+        connector_id: 'jira',
+        status: 'connected',
+      },
+    ]);
+    mockStoreCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+    mockGetCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/credential').send({
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.credential?.providerAccountId).toBe('acct-123');
+    expect(mockStoreCredential).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+    });
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO integration_audit_log'),
+      expect.arrayContaining([ORG, 'int-1', 'credential_materialized', UID, UID]),
+    );
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/disconnect disconnects through the governed mutation seam', async () => {

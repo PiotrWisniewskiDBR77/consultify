@@ -163,6 +163,40 @@ describe('V8SyncApi', () => {
     expect(data.externalAuth?.state).toBe('reauth');
   });
 
+  it('posts governed credential materialization to the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      credential: {
+        credentialId: 'cred-1',
+        connectorId: 'jira',
+        organizationId: 'org-1',
+        providerAccountId: 'acct-123',
+        workspaceOrTenantId: 'tenant-456',
+        scopesGranted: ['read:jira-work'],
+        tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+        lastVerificationAt: '2026-03-27T18:00:00.000Z',
+        lastRefreshAt: null,
+        lastRefreshResult: null,
+        createdAt: '2026-03-27T18:00:00.000Z',
+        updatedAt: '2026-03-27T18:00:00.000Z',
+      },
+    });
+
+    const data = await V8SyncApi.materializeCredential('int-1', {
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/credential', {
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2026-03-27T19:00:00.000Z',
+    });
+    expect(data.credential.providerAccountId).toBe('acct-123');
+  });
+
   it('requests governed hub health summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       summary: { total: 2, healthy: 1, degraded: 1, unhealthy: 0 },

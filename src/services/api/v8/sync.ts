@@ -117,6 +117,7 @@ export interface V8SyncIntegrationInventoryRow {
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation'
     | null;
+  credential: V8SyncConnectionCredentialRef | null;
   connector: {
     id: string;
     name: string;
@@ -125,6 +126,21 @@ export interface V8SyncIntegrationInventoryRow {
     authType: string;
     configFields: string[];
   } | null;
+}
+
+export interface V8SyncConnectionCredentialRef {
+  credentialId: string;
+  connectorId: string;
+  organizationId: string;
+  providerAccountId: string;
+  workspaceOrTenantId: string;
+  scopesGranted: string[];
+  tokenExpiresAt: string | null;
+  lastVerificationAt: string | null;
+  lastRefreshAt: string | null;
+  lastRefreshResult: 'success' | 'transient_failure' | 'credential_expired' | 'scope_revoked' | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface V8SyncCatalogConnector {
@@ -252,6 +268,19 @@ export const V8SyncApi = {
     }>(
       `/sync/integrations/${encodeURIComponent(integrationId)}/reauth`,
       {},
+    ),
+  materializeCredential: (
+    integrationId: string,
+    payload: {
+      providerAccountId: string;
+      workspaceOrTenantId: string;
+      scopesGranted: string[];
+      tokenExpiresAt?: string | null;
+    },
+  ) =>
+    v8Post<{ credential: V8SyncConnectionCredentialRef }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/credential`,
+      payload,
     ),
   disconnectIntegration: (integrationId: string) =>
     v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/disconnect`, {}),
