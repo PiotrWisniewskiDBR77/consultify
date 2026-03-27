@@ -134,7 +134,14 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
     setLoading(true);
     try {
-      await Api.post('/onboarding/select-tier', { tier: selectedTier });
+      try {
+        await V8PartnerApi.selectOnboardingTier({ tier: selectedTier });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        await Api.post('/onboarding/select-tier', { tier: selectedTier });
+      }
       toast.success(t('onboarding.toast.tierSelected', 'Plan cenowy wybrany'));
       setStep(3);
     } catch (error) {

@@ -125,6 +125,16 @@ export interface V8PartnerOnboardingAcceptTermsResult {
   message: string;
 }
 
+export interface V8PartnerOnboardingSelectTierPayload {
+  tier: 'starter' | 'professional' | 'enterprise';
+}
+
+export interface V8PartnerOnboardingSelectTierResult {
+  success: boolean;
+  tier: string;
+  message: string;
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -209,6 +219,8 @@ export const V8PartnerApi = {
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>
     v8Post<V8PartnerOnboardingAcceptTermsResult>('/partner/onboarding/accept-terms', body),
+  selectOnboardingTier: (body: V8PartnerOnboardingSelectTierPayload) =>
+    v8Post<V8PartnerOnboardingSelectTierResult>('/partner/onboarding/select-tier', body),
   getReferralTools: () => v8Get<{ tools: V8PartnerReferralTools }>('/partner/referral-tools'),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
   getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),

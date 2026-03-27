@@ -106,6 +106,23 @@ describe('V8PartnerApi', () => {
     expect(data.success).toBe(true);
   });
 
+  it('requests partner onboarding pricing-tier selection from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      tier: 'professional',
+      message: 'Pricing tier selected',
+    });
+
+    const data = await V8PartnerApi.selectOnboardingTier({
+      tier: 'professional',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/partner/onboarding/select-tier', {
+      tier: 'professional',
+    });
+    expect(data.tier).toBe('professional');
+  });
+
   it('requests partner earnings summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       earnings: {

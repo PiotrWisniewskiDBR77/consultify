@@ -323,6 +323,22 @@ describe('V8 partner read bridge', () => {
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
+  it('POST /api/v8/partner/onboarding/select-tier records pricing-tier selection with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/partner/onboarding/select-tier').send({
+      tier: 'professional',
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDbRun).toHaveBeenCalled();
+    expect(res.body.data).toEqual({
+      success: true,
+      tier: 'professional',
+      message: 'Pricing tier selected',
+    });
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
   it('GET /api/v8/partner/earnings-summary returns earnings with partner meta', async () => {
     const app = createApp();
     const res = await request(app).get('/api/v8/partner/earnings-summary');

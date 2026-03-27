@@ -159,6 +159,51 @@ router.post(
 );
 
 /**
+ * POST /api/v8/partner/onboarding/select-tier
+ */
+router.post(
+  '/onboarding/select-tier',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+
+    const tier = typeof req.body?.tier === 'string' ? req.body.tier : '';
+    const validTiers = ['starter', 'professional', 'enterprise'];
+    if (!validTiers.includes(tier)) {
+      return res.status(400).json({
+        error: 'Invalid pricing tier',
+        code: 'INVALID_PRICING_TIER',
+      });
+    }
+
+    await DbPromise.run(
+      getDatabase(),
+      `INSERT INTO user_onboarding_status (user_id, pricing_tier, pricing_tier_selected_at, updated_at)
+       VALUES (?, ?, NOW(), NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         pricing_tier = excluded.pricing_tier,
+         pricing_tier_selected_at = NOW(),
+         updated_at = NOW()`,
+      [userId, tier],
+    );
+
+    return res.json({
+      data: { success: true, tier, message: 'Pricing tier selected' },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/partner/referral-tools
  */
 router.get(

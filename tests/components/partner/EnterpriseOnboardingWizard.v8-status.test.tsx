@@ -42,6 +42,7 @@ vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getOnboardingStatus: vi.fn(),
     acceptOnboardingTerms: vi.fn(),
+    selectOnboardingTier: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status);
@@ -61,6 +62,11 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
     vi.mocked(V8PartnerApi.acceptOnboardingTerms).mockResolvedValue({
       success: true,
       message: 'Terms accepted',
+    } as any);
+    vi.mocked(V8PartnerApi.selectOnboardingTier).mockResolvedValue({
+      success: true,
+      tier: 'professional',
+      message: 'Pricing tier selected',
     } as any);
     vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
       status: {
@@ -183,6 +189,80 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
     expect(Api.post).toHaveBeenCalledWith('/onboarding/accept-terms', {
       termsVersion: 'v1.0',
       privacyVersion: 'v1.0',
+    });
+  });
+
+  it('prefers governed partner pricing-tier selection before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValueOnce({
+      status: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        pricingTier: null,
+        paymentSetup: false,
+        completed: false,
+      },
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <EnterpriseOnboardingWizard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Professional'));
+    fireEvent.click(screen.getByRole('button', { name: /Continue with Professional/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.selectOnboardingTier).toHaveBeenCalledWith({
+      tier: 'professional',
+    });
+    expect(Api.post).not.toHaveBeenCalledWith('/onboarding/select-tier', expect.anything());
+  });
+
+  it('falls back to legacy pricing-tier selection on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValueOnce({
+      status: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        pricingTier: null,
+        paymentSetup: false,
+        completed: false,
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.selectOnboardingTier).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockImplementation(async (url: string, body?: any) => {
+      if (url === '/onboarding/select-tier') {
+        return { success: true, tier: body?.tier, message: 'Pricing tier selected' } as any;
+      }
+      throw new Error(`Unexpected POST ${url}`);
+    });
+
+    render(
+      <MemoryRouter>
+        <EnterpriseOnboardingWizard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Enterprise'));
+    fireEvent.click(screen.getByRole('button', { name: /Continue with Enterprise/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
+    });
+
+    expect(Api.post).toHaveBeenCalledWith('/onboarding/select-tier', {
+      tier: 'enterprise',
     });
   });
 });
