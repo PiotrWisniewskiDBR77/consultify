@@ -415,22 +415,51 @@ router.post(
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
 
-    await updateIntegrationStatus(integrationId, 'pending');
-    setTimeout(async () => {
-      try {
-        await updateIntegrationStatus(integrationId, 'connected');
-        await dbRun(`UPDATE integrations SET error_count = 0, last_healthy_at = NOW() WHERE id = ?`, [
-          integrationId,
-        ]);
-      } catch {
-        /* non-blocking */
-      }
-    }, 2000);
+    const integrationRows = await dbAll<{ connector_id: string; config: string | null }>(
+      `SELECT connector_id, config
+       FROM integrations
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [integrationId, organizationId],
+    );
+    const integration = integrationRows[0];
+    if (!integration) {
+      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+    }
 
-    await logIntegrationAudit(organizationId, integrationId, 'reauth_started', actorId, actorId, {});
+    const connector = CONNECTORS[integration.connector_id];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+
+    const config = safeJsonParse<Record<string, unknown>>(integration.config, {});
+    const configuredFields = getConfiguredFields(connector.configFields, config);
+    const onboardingStatus = getPendingOnboardingStatus(
+      connector.authType,
+      connector.configFields,
+      configuredFields,
+    );
+
+    await updateIntegrationStatus(integrationId, 'pending');
+    await setConnectorAuthState({
+      connectorId: connector.id,
+      organizationId,
+      targetState: 'connecting',
+      transitionedBy: actorId,
+      reason: 'reauth_started',
+    });
+
+    await logIntegrationAudit(organizationId, integrationId, 'reauth_started', actorId, actorId, {
+      connectorId: connector.id,
+      onboardingStatus,
+    });
 
     return res.json({
-      data: { success: true as const, message: 'Re-authorization initiated' },
+      data: {
+        success: true as const,
+        message: 'Re-authorization initiated',
+        onboardingStatus,
+      },
       meta: syncMutationMeta(),
     });
   }),

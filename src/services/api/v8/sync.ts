@@ -230,7 +230,15 @@ export const V8SyncApi = {
   resolveError: (errorId: string) =>
     v8Post<{ success: true }>(`/sync/errors/${encodeURIComponent(errorId)}/resolve`, {}),
   reauthIntegration: (integrationId: string) =>
-    v8Post<{ success: true; message: string }>(
+    v8Post<{
+      success: true;
+      message: string;
+      onboardingStatus:
+        | 'pending_external_auth_or_configuration'
+        | 'pending_external_auth'
+        | 'pending_configuration'
+        | 'configuration_submitted_pending_validation';
+    }>(
       `/sync/integrations/${encodeURIComponent(integrationId)}/reauth`,
       {},
     ),

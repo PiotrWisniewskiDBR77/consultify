@@ -418,19 +418,27 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/reauth starts a governed reauth flow', async () => {
-    vi.useFakeTimers();
+    mockDbAll.mockResolvedValueOnce([
+      {
+        connector_id: 'jira',
+        config: '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123"}',
+      },
+    ]);
     const app = createApp();
     const res = await request(app).post('/api/v8/sync/integrations/int-1/reauth').send({});
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.success).toBe(true);
+    expect(res.body.data?.onboardingStatus).toBe('pending_external_auth');
     expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'pending');
-
-    await vi.advanceTimersByTimeAsync(2000);
-
-    expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'connected');
-    vi.useRealTimers();
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      targetState: 'connecting',
+      transitionedBy: UID,
+      reason: 'reauth_started',
+    });
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/disconnect disconnects through the governed mutation seam', async () => {

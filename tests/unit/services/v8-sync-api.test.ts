@@ -137,6 +137,20 @@ describe('V8SyncApi', () => {
     expect(data.integration.onboardingStatus).toBe('pending_external_auth');
   });
 
+  it('posts governed reauthorization without claiming immediate recovery', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      message: 'Re-authorization initiated',
+      onboardingStatus: 'pending_external_auth',
+    });
+
+    const data = await V8SyncApi.reauthIntegration('int-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/reauth', {});
+    expect(data.success).toBe(true);
+    expect(data.onboardingStatus).toBe('pending_external_auth');
+  });
+
   it('requests governed hub health summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       summary: { total: 2, healthy: 1, degraded: 1, unhealthy: 0 },

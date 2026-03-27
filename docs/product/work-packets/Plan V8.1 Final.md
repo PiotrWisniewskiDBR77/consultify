@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `4`
+- landed packets in the current active lane: `5`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: fourth broader sync packet recorded in `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md`
-- reason: after provider setup requirements became visible, the live sync hub still had no governed way to submit those pending setup fields on the active surface
+- latest evidence: fifth broader sync packet recorded in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md`
+- reason: after pending config submission landed, the live sync hub still let reauthorization trigger fake immediate recovery instead of staying honest about external auth still being incomplete
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md`
+- current packet: `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether OAuth callback / reauthorization round-trip continuity or provider validation continuity is now the next smallest honest broader sync completion packet after pending config submission`
+- next action: `assess whether external authorization callback continuity or post-auth refresh/recovery continuity is now the next smallest honest broader sync completion packet after reauth pending-state honesty`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

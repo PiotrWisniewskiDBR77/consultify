@@ -223,20 +223,6 @@ router.post(
     const intId = String(req.params.integrationId);
     await updateIntegrationStatus(intId, 'pending');
 
-    // In production: redirect to OAuth re-authorization flow
-    // For V2: mark as pending, then auto-resolve to connected
-    setTimeout(async () => {
-      try {
-        await updateIntegrationStatus(intId, 'connected');
-        await dbRun(
-          `UPDATE integrations SET error_count = 0, last_healthy_at = NOW() WHERE id = ?`,
-          [intId]
-        );
-      } catch {
-        /* non-blocking */
-      }
-    }, 2000);
-
     const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
     await logAudit(orgId, intId, 'reauth_started', userId, actorName, {});
 

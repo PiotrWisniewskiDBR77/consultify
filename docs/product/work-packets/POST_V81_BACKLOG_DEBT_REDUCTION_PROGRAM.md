@@ -295,6 +295,7 @@ Current result:
 - the second real bounded broader sync packet landed in `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md` by aligning the active sync hub controls with the already-recorded `pending` onboarding truth instead of offering ready-state sync actions too early,
 - the third real bounded broader sync packet landed in `evidence/445-v81-broader-sync-provider-setup-requirements-continuity-seam.md` by exposing provider setup requirements from the governed connector registry onto the active sync catalog and pending-onboarding surfaces instead of leaving follow-up onboarding needs implicit,
 - the fourth real bounded broader sync packet landed in `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md` by adding governed pending-config submission continuity on the active sync hub while keeping broader OAuth callback completion explicitly out of scope,
+- the fifth real bounded broader sync packet landed in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md` by keeping governed reauthorization in honest pending state instead of auto-claiming recovery before external auth callback completion exists,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -457,6 +458,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the fifth real bounded packet inside broader `Sync` completion by keeping governed reauthorization in honest pending state in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md`, so the active sync hub no longer auto-claims recovered `connected` truth before external auth callback completion actually exists
 - 2026-03-27: landed the fourth real bounded packet inside broader `Sync` completion by adding governed pending config submission continuity on the active sync hub in `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md`, so operators can now save required provider setup fields on pending integrations without pretending OAuth callback completion already exists
 - 2026-03-27: landed the third real bounded packet inside broader `Sync` completion by exposing governed connector setup requirements on the active sync catalog and pending-onboarding hub surfaces in `evidence/445-v81-broader-sync-provider-setup-requirements-continuity-seam.md`, so the live `UnifiedSyncHub` no longer leaves pending provider follow-up requirements implicit after connect initiation
 - 2026-03-27: landed the first real bounded packet inside broader `Sync` completion by moving visible sync-hub connect initiation authority onto a governed V8 seam in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md`, so the active `UnifiedSyncHub` connect CTA no longer defaults to legacy `sync-hub` connect truth or fake immediate `connected` state during normal operation

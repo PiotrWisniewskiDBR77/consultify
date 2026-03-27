@@ -354,8 +354,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
   });
 
   it('uses governed V8 reauth mutation before legacy fallback', async () => {
-    vi.useFakeTimers();
-    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+    const initialIntegrations = {
       integrations: [
         {
           id: 'int-1',
@@ -369,14 +368,53 @@ describe('UnifiedSyncHub V8 health continuity', () => {
           errorRate: 0,
           unresolvedErrors: 0,
           lastRun: null,
-          connector: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
         },
       ],
       count: 1,
-    } as any);
+    };
+    const updatedIntegrations = {
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'pending',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: 'pending_external_auth',
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(initialIntegrations as any);
     vi.mocked(V8SyncApi.reauthIntegration).mockResolvedValue({
       success: true,
       message: 'Re-authorization initiated',
+      onboardingStatus: 'pending_external_auth',
     } as any);
 
     render(<UnifiedSyncHub />);
@@ -386,6 +424,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     });
 
     fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(updatedIntegrations as any);
     fireEvent.click(screen.getByRole('button', { name: /Re-authorize/i }));
 
     await waitFor(() => {
@@ -393,10 +432,14 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     });
 
     expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/reauth/int-1', expect.anything());
-    await act(async () => {
-      vi.runOnlyPendingTimers();
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Required provider configuration is saved. Complete external auth before sync controls become available.',
+        ),
+      ).toBeInTheDocument();
     });
-    vi.useRealTimers();
+    expect(screen.getByText('Finish external auth to enable sync controls')).toBeInTheDocument();
   });
 
   it('uses governed V8 disconnect mutation before legacy fallback', async () => {

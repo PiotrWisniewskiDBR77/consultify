@@ -826,10 +826,17 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const handleReauth = async (integrationId: string) => {
     try {
       try {
-        await V8SyncApi.reauthIntegration(integrationId);
-        toast.success(t('integrations.syncHub.reauthStarted', 'Re-authorization started'));
-        trackFunnelEvent('integration_reauth_completed', { integrationId });
-        setTimeout(() => loadAll(), 3000);
+        const data = await V8SyncApi.reauthIntegration(integrationId);
+        toast.success(
+          data.onboardingStatus === 'pending_external_auth'
+            ? t(
+                'integrations.syncHub.reauthPendingAuth',
+                'Re-authorization started. External auth still needs to complete before sync resumes.',
+              )
+            : t('integrations.syncHub.reauthStarted', 'Re-authorization started'),
+        );
+        trackFunnelEvent('integration_reauth_started', { integrationId, onboardingStatus: data.onboardingStatus });
+        await loadAll();
         return;
       } catch (error) {
         if (!shouldFallbackToLegacySync(error)) {
@@ -843,8 +850,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       });
       if (res.ok) {
         toast.success(t('integrations.syncHub.reauthStarted', 'Re-authorization started'));
-        trackFunnelEvent('integration_reauth_completed', { integrationId });
-        setTimeout(() => loadAll(), 3000);
+        trackFunnelEvent('integration_reauth_started', { integrationId });
+        await loadAll();
       }
     } catch {
       toast.error('Reauth failed');
