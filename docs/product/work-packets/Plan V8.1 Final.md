@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: Gmail governed provider round-trip coverage landed in `evidence/468-v81-broader-sync-gmail-governed-provider-round-trip-coverage-seam.md`
-- reason: the shared governed provider round-trip seam now covers both Jira and Gmail, so the active V8 Gmail path no longer falls back to a callback placeholder instead of a real provider authorization round-trip
+- latest evidence: post-Gmail provider-round-trip residual assessment recorded in `evidence/469-v81-broader-sync-post-gmail-provider-round-trip-residual-assessment.md`
+- reason: after shared governed provider round-trip coverage reached Gmail, another provider seam still remains thinner than deeper authority alignment, with Teams now standing out as the next bounded extension
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/468-v81-broader-sync-gmail-governed-provider-round-trip-coverage-seam.md`
+- current packet: `evidence/469-v81-broader-sync-post-gmail-provider-round-trip-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether another provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync step`
+- next action: `promote Teams governed provider round-trip coverage on the shared governed oauth2 seam as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
