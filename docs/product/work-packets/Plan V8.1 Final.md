@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `6 / 13`
 - active lane: broader `Chat / AI core` parity expansion
-- landed packets in the active lane: `3`
+- landed packets in the active lane: `4`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Chat / AI core` parity expansion
-- latest evidence: `legacy chat governed V8 controls seam` recorded in `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`
-- reason: the next honest broader chat/ai-core packet was an active-surface parity seam that extended the existing governed V8 context and artifact controls onto the legacy full-screen chat surface
+- latest evidence: `legacy chat private mode indicator seam` recorded in `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`
+- reason: the next honest broader chat/ai-core packet was a bounded active-surface status seam that aligned private-mode visibility across the two live chat surfaces
 
 ### Next three lanes
 
@@ -345,10 +345,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`
 - split-brain map: `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`
-- current packet: `assess the next bounded broader chat/ai-core packet after legacy full-screen chat governed V8 controls continuity`
-- last accepted packet: `legacy chat governed V8 controls seam`
+- current packet: `assess the next bounded broader chat/ai-core packet after legacy full-screen chat private-mode status continuity`
+- last accepted packet: `legacy chat private mode indicator seam`
 - blocker: `none`
-- next action: `choose the next smallest honest broader chat/ai-core packet after the legacy full-screen chat control-strip parity closure without silently broadening into a full chat/ai-platform redesign`
+- next action: `choose the next smallest honest broader chat/ai-core packet after the legacy full-screen chat private-mode status closure without silently broadening into a full chat/ai-platform redesign`
 - acceptance evidence: `none`
 
 #### broader `Results / KPI / ROI` parity

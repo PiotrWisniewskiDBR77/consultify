@@ -15,6 +15,7 @@
 import {
   Calculator,
   CheckCircle2,
+  Lock,
   RefreshCw,
   Search,
   Sparkles,
@@ -397,6 +398,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editBusy, setEditBusy] = useState(false);
   const lastSpokenContentRef = useRef<string>('');
   const autoReadEnabled = Boolean(aiConfig?.textToSpeech);
+  const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
 
   // Get time-aware context
   const timeContext = useMemo(() => getTimeContext(), []);
@@ -1487,7 +1489,13 @@ For example: REMEMBER: preferred_language: Polish`;
   // Chat View (when messages exist)
   if (hasMessages) {
     return (
-      <div className="h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative">
+      <div
+        className={`h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative ${
+          isPrivateMode
+            ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+            : 'ring-1 ring-transparent'
+        }`}
+      >
         {/* Claude-style Sliding Panel */}
         <ChatSlidingPanel
           onNewChat={handleNewChat}
@@ -1509,6 +1517,19 @@ For example: REMEMBER: preferred_language: Polish`;
                 conversationId={activeConversationId}
                 defaultGoal={latestUserGoalHint}
               />
+              {isPrivateMode && (
+                <div
+                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
+                  title={t(
+                    'aiChat.menu.modes.privateMode.desc',
+                    'Disable memory injection and personalization for this chat'
+                  )}
+                  aria-label={t('aiChat.menu.modes.privateMode.label', 'Private mode')}
+                >
+                  <Lock size={11} strokeWidth={2} />
+                  <span>{t('aiChat.menu.modes.privateMode.label', 'Private mode')}</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1">
               {voiceSupported && (

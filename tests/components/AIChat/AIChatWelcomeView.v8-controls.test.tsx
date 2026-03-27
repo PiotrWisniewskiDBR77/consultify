@@ -203,6 +203,7 @@ describe('AIChatWelcomeView governed V8 controls', () => {
 
     expect(screen.getByTestId('v8-artifact-run-control')).toBeInTheDocument();
     expect(screen.getByTestId('v8-context-indicator')).toBeInTheDocument();
+    expect(screen.getByLabelText('Private mode')).toBeInTheDocument();
 
     expect(v8ArtifactRunControlMock.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
