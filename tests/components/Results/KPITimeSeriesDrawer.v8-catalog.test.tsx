@@ -26,6 +26,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     getKpiCatalog: vi.fn(),
     getKpiDrawerDetail: vi.fn(),
     createKpiTimeSeriesValue: vi.fn(),
+    updateKpi: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -219,6 +220,129 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
         value: 24,
         periodStart: '2026-03-01',
         notes: 'March value',
+      });
+    });
+  });
+
+  it('saves KPI settings through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          description: 'Current description',
+          unit: '%',
+          latestValue: 12,
+          targetValue: 20,
+          baselineValue: 8,
+          measurementFrequency: 'MONTHLY',
+          direction: 'HIGHER_IS_BETTER',
+          thresholdMode: 'PERCENT_FROM_TARGET',
+          amberThresholdPct: 5,
+          redThresholdPct: 10,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.updateKpi).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.change(screen.getByDisplayValue('KPI Alpha'), {
+      target: { value: 'KPI Alpha Updated' },
+    });
+    fireEvent.change(screen.getByDisplayValue('Current description'), {
+      target: { value: 'Updated description' },
+    });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.updateKpi).toHaveBeenCalledWith('kpi-1', {
+        name: 'KPI Alpha Updated',
+        description: 'Updated description',
+        unit: '%',
+        baselineValue: 8,
+        targetValue: 20,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+        thresholdMode: 'PERCENT_FROM_TARGET',
+        amberThresholdPct: 5,
+        redThresholdPct: 10,
+        amberThresholdAbs: null,
+        redThresholdAbs: null,
+      });
+    });
+
+    expect(Api.put).not.toHaveBeenCalledWith('/benefits/kpis/kpi-1', expect.anything());
+  });
+
+  it('falls back to legacy KPI settings save only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          description: 'Current description',
+          unit: '%',
+          latestValue: 12,
+          targetValue: 20,
+          baselineValue: 8,
+          measurementFrequency: 'MONTHLY',
+          direction: 'HIGHER_IS_BETTER',
+          thresholdMode: 'PERCENT_FROM_TARGET',
+          amberThresholdPct: 5,
+          redThresholdPct: 10,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    } as any);
+    vi.mocked(V8ResultsApi.updateKpi).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/benefits/kpis/kpi-1', {
+        name: 'KPI Alpha',
+        description: 'Current description',
+        unit: '%',
+        baselineValue: 8,
+        targetValue: 20,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+        thresholdMode: 'PERCENT_FROM_TARGET',
+        amberThresholdPct: 5,
+        redThresholdPct: 10,
+        amberThresholdAbs: null,
+        redThresholdAbs: null,
       });
     });
   });

@@ -273,6 +273,48 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('PUT /api/v8/results/kpis/:kpiId saves governed KPI settings', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
+
+    const app = createApp();
+    const res = await request(app).put('/api/v8/results/kpis/kpi-1').send({
+      name: 'KPI Alpha Updated',
+      description: 'Updated description',
+      unit: '%',
+      baselineValue: 10,
+      targetValue: 20,
+      measurementFrequency: 'MONTHLY',
+      direction: 'HIGHER_IS_BETTER',
+      thresholdMode: 'PERCENT_FROM_TARGET',
+      amberThresholdPct: 5,
+      redThresholdPct: 10,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT k.id'),
+      ['kpi-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE initiative_kpis'),
+      expect.arrayContaining([
+        'KPI Alpha Updated',
+        'Updated description',
+        '%',
+        10,
+        20,
+        'MONTHLY',
+        'HIGHER_IS_BETTER',
+        'PERCENT_FROM_TARGET',
+        5,
+        10,
+        'kpi-1',
+      ]),
+    );
+  });
+
   it('POST /api/v8/results/kpi-mappings creates a governed KPI mapping', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-mappings').send({

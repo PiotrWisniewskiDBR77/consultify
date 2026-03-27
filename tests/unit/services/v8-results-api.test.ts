@@ -179,6 +179,37 @@ describe('V8ResultsApi', () => {
     expect(data.id).toBe('kpi-1');
   });
 
+  it('requests governed KPI settings save from the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.updateKpi('kpi-1', {
+      name: 'Revenue Growth',
+      description: 'Updated description',
+      unit: '%',
+      baselineValue: 10,
+      targetValue: 20,
+      measurementFrequency: 'MONTHLY',
+      direction: 'HIGHER_IS_BETTER',
+      thresholdMode: 'PERCENT_FROM_TARGET',
+      amberThresholdPct: 5,
+      redThresholdPct: 10,
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/results/kpis/kpi-1', {
+      name: 'Revenue Growth',
+      description: 'Updated description',
+      unit: '%',
+      baselineValue: 10,
+      targetValue: 20,
+      measurementFrequency: 'MONTHLY',
+      direction: 'HIGHER_IS_BETTER',
+      thresholdMode: 'PERCENT_FROM_TARGET',
+      amberThresholdPct: 5,
+      redThresholdPct: 10,
+    });
+    expect(data.success).toBe(true);
+  });
+
   it('requests governed KPI mapping create from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       id: 'map-1',

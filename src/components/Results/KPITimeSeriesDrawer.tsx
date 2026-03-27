@@ -284,7 +284,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     try {
       const kpiDirection =
         settingsDirection === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
-      await Api.put(`/benefits/kpis/${kpiId}`, {
+      const payload = {
         name: settingsName.trim(),
         description: settingsDescription.trim() || undefined,
         unit: settingsUnit.trim() || undefined,
@@ -309,7 +309,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           settingsThresholdMode === 'ABSOLUTE' && settingsRedThreshold !== ''
             ? Number(settingsRedThreshold)
             : null,
-      });
+      };
+      try {
+        await V8ResultsApi.updateKpi(kpiId, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        await Api.put(`/benefits/kpis/${kpiId}`, payload);
+      }
       setEditMode(false);
       fetchData();
       onValueRecorded?.();

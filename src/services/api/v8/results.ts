@@ -268,6 +268,28 @@ export interface V8ResultsCreateKpiResponse {
   id: string;
 }
 
+export interface V8ResultsUpdateKpiPayload {
+  name?: string;
+  description?: string;
+  unit?: string;
+  baselineValue?: number | null;
+  targetValue?: number | null;
+  measurementFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  alertThreshold?: number | null;
+  alertDirection?: 'BELOW' | 'ABOVE';
+  ownerUserId?: string | null;
+  direction?: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+  thresholdMode?: 'ABSOLUTE' | 'PERCENT_FROM_TARGET';
+  amberThresholdPct?: number | null;
+  redThresholdPct?: number | null;
+  amberThresholdAbs?: number | null;
+  redThresholdAbs?: number | null;
+}
+
+export interface V8ResultsUpdateKpiResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiMappingPayload {
   initiativeId: string;
   kpiId: string;
@@ -355,6 +377,8 @@ export const V8ResultsApi = {
     ),
   createKpi: (payload: V8ResultsCreateKpiPayload) =>
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
+  updateKpi: (kpiId: string, payload: V8ResultsUpdateKpiPayload) =>
+    v8Put<V8ResultsUpdateKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`, payload),
   createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
     v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>

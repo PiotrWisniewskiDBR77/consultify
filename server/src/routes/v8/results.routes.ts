@@ -165,6 +165,105 @@ router.post(
 );
 
 /**
+ * PUT /api/v8/results/kpis/:kpiId
+ * Bounded KPI settings save seam for the active Results drawer surface.
+ */
+router.put(
+  '/kpis/:kpiId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
+    if (!kpiId) {
+      return res.status(400).json({
+        error: 'kpiId is required',
+        code: 'RESULTS_KPI_ID_REQUIRED',
+      });
+    }
+
+    const {
+      name,
+      description,
+      unit,
+      baselineValue,
+      targetValue,
+      measurementFrequency,
+      alertThreshold,
+      alertDirection,
+      ownerUserId,
+      direction,
+      thresholdMode,
+      amberThresholdPct,
+      redThresholdPct,
+      amberThresholdAbs,
+      redThresholdAbs,
+    } = req.body || {};
+
+    const row = await dbGet<any>(
+      `
+      SELECT k.id
+      FROM initiative_kpis k
+      LEFT JOIN initiatives i ON i.id = k.initiative_id
+      WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
+      `,
+      [kpiId, organizationId],
+    );
+    if (!row?.id) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+
+    await dbRun(
+      `
+      UPDATE initiative_kpis
+      SET
+        name = COALESCE(?, name),
+        description = COALESCE(?, description),
+        unit = COALESCE(?, unit),
+        baseline_value = COALESCE(?, baseline_value),
+        target_value = COALESCE(?, target_value),
+        measurement_frequency = COALESCE(?, measurement_frequency),
+        alert_threshold = COALESCE(?, alert_threshold),
+        alert_direction = COALESCE(?, alert_direction),
+        owner_user_id = COALESCE(?, owner_user_id),
+        direction = COALESCE(?, direction),
+        threshold_mode = COALESCE(?, threshold_mode),
+        amber_threshold_pct = COALESCE(?, amber_threshold_pct),
+        red_threshold_pct = COALESCE(?, red_threshold_pct),
+        amber_threshold_abs = COALESCE(?, amber_threshold_abs),
+        red_threshold_abs = COALESCE(?, red_threshold_abs),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [
+        name != null && String(name).trim() ? String(name).trim() : null,
+        description != null ? String(description).trim() : null,
+        unit != null ? String(unit).trim() : null,
+        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
+        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
+        measurementFrequency || null,
+        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
+        alertDirection || null,
+        ownerUserId || null,
+        direction || null,
+        thresholdMode || null,
+        amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
+        redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
+        amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
+        redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
+        kpiId,
+      ],
+    );
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * POST /api/v8/results/kpi-mappings
  * Bounded initiative <-> KPI mapping create seam for the active Results surfaces.
  */
