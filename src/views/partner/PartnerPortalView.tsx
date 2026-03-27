@@ -49,6 +49,7 @@ import { Api } from '../../services/api';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
+  type V8PartnerClient,
   type V8PartnerEarningsSummary,
   type V8PartnerReferralAnalytics,
 } from '../../services/api/v8';
@@ -979,6 +980,33 @@ interface ClientProject {
   targetEndDate?: string;
 }
 
+function normalizeClientOrganization(client: Partial<V8PartnerClient> | Record<string, any>): ClientOrganization {
+  return {
+    id: String(client.id || client.organizationId || client.name || 'client'),
+    name: String(client.name || client.organizationName || client.clientName || 'Organization'),
+    industry:
+      typeof client.industry === 'string' && client.industry.trim().length > 0
+        ? client.industry
+        : 'Unspecified',
+    users:
+      typeof client.users === 'number'
+        ? client.users
+        : typeof client.userCount === 'number'
+          ? client.userCount
+          : 0,
+    projects: typeof client.projects === 'number' ? client.projects : 0,
+    assessmentScore:
+      typeof client.assessmentScore === 'number' ? client.assessmentScore : 0,
+    status: typeof client.status === 'string' ? client.status : 'inactive',
+    onboardedAt:
+      typeof client.onboardedAt === 'string'
+        ? client.onboardedAt
+        : undefined,
+    contractValue:
+      typeof client.contractValue === 'number' ? client.contractValue : undefined,
+  };
+}
+
 const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'users' }> = ({
   subsection,
 }) => {
@@ -994,10 +1022,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       setError(null);
 
       if (subsection === 'organizations' || subsection === 'users') {
-        const response = await Api.get('/api/partners/clients');
-        const payload = response?.data;
-        if (response?.success && payload?.data) {
-          setOrganizations(payload.data);
+        try {
+          const response = await V8PartnerApi.getClients();
+          setOrganizations((response?.clients || []).map(normalizeClientOrganization));
+        } catch (error) {
+          if (!shouldFallbackToLegacyPartner(error)) {
+            throw error;
+          }
+          const response = await Api.get('/api/partners/clients');
+          const payload = response?.data;
+          if (response?.success && Array.isArray(payload?.data)) {
+            setOrganizations(payload.data.map(normalizeClientOrganization));
+          }
         }
       }
 

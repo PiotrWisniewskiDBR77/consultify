@@ -48,6 +48,7 @@ export type {
   V8PartnerCampaignCreatePayload,
   V8PartnerCampaignDeleteResult,
   V8PartnerCampaignLink,
+  V8PartnerClient,
   V8PartnerEarningsSummary,
   V8PartnerListingUpdatePayload,
   V8PartnerListingUpdateResult,

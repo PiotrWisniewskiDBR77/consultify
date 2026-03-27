@@ -54,6 +54,26 @@ describe('V8PartnerApi', () => {
     expect(data.attributions[0].id).toBe('attr-1');
   });
 
+  it('requests partner clients from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      clients: [
+        {
+          id: 'org-1',
+          organizationId: 'org-1',
+          name: 'ACME GmbH',
+          organizationName: 'ACME GmbH',
+          clientName: 'ACME GmbH',
+          status: 'active',
+        },
+      ],
+    });
+
+    const data = await V8PartnerApi.getClients();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/clients');
+    expect(data.clients[0].id).toBe('org-1');
+  });
+
   it('requests partner referral tools from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       tools: {

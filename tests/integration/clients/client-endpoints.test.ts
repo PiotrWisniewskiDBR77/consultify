@@ -3,6 +3,19 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, _res: any, next: () => void) => {
+    req.user = { id: 'user-partner-1', organizationId: 'tenant-org-1', role: 'ADMIN' };
+    req.userId = 'user-partner-1';
+    req.organizationId = 'tenant-org-1';
+    next();
+  },
+}));
+
+vi.mock('../../../server/src/services/partnerOrgResolution.js', () => ({
+  getActivePartnerOrgIdForUser: vi.fn().mockResolvedValue('partner-org-resolved'),
+}));
+
 async function loadPartnersRouter() {
   return (await import('../../../server/src/routes/partners.routes.ts')).default;
 }
@@ -12,12 +25,12 @@ async function makePartnersApp() {
   return makeTestApp({ mountPath: '/api/partners', router });
 }
 
-describe('Clients endpoints (partners routes demo) - REAL integration', () => {
+describe('Clients endpoints (partners routes) - REAL integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('GET /clients returns demo list and pagination', async () => {
+  it('GET /clients returns a real partner-scoped list', async () => {
     const app = await makePartnersApp();
     const res = await request(app).get('/api/partners/clients');
     expect(res.status).toBe(200);
@@ -25,25 +38,21 @@ describe('Clients endpoints (partners routes demo) - REAL integration', () => {
       expect.objectContaining({
         success: true,
         data: expect.any(Array),
-        pagination: expect.objectContaining({ total: expect.any(Number) }),
       })
     );
   });
 
-  it('POST /clients returns 201 with created client object', async () => {
+  it('POST /clients remains unavailable until broader client-access writes land', async () => {
     const app = await makePartnersApp();
     const res = await request(app)
       .post('/api/partners/clients')
       .send({ name: 'N', industry: 'I', contactEmail: 'a@b.com' });
-    expect(res.status).toBe(201);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(expect.objectContaining({ name: 'N', status: 'onboarding' }));
+    expect(res.status).toBe(503);
   });
 
-  it('GET /clients/:clientId echoes the clientId in response', async () => {
+  it('GET /clients/:clientId remains unavailable until broader client-access detail continuity lands', async () => {
     const app = await makePartnersApp();
     const res = await request(app).get('/api/partners/clients/client-999');
-    expect(res.status).toBe(200);
-    expect(res.body.data.id).toBe('client-999');
+    expect(res.status).toBe(503);
   });
 });

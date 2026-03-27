@@ -25,6 +25,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { shouldFallbackToLegacyPartner, V8PartnerApi, type V8PartnerClient } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 
 interface Client {
@@ -50,6 +51,29 @@ interface Employee {
   lastActive?: string;
 }
 
+function normalizeClient(client: Partial<V8PartnerClient> | Record<string, any>): Client {
+  return {
+    id: String(client.id || client.organizationId || client.clientId || client.name || 'client'),
+    clientName: String(client.clientName || client.organizationName || client.name || 'Organization'),
+    organizationName:
+      typeof client.organizationName === 'string'
+        ? client.organizationName
+        : typeof client.name === 'string'
+          ? client.name
+          : undefined,
+    region: typeof client.region === 'string' ? client.region : '',
+    status: typeof client.status === 'string' ? client.status.toUpperCase() : 'ACTIVE',
+    accessLevel: typeof client.accessLevel === 'string' ? client.accessLevel : 'partner access',
+    plan: typeof client.plan === 'string' ? client.plan : undefined,
+    userCount:
+      typeof client.userCount === 'number'
+        ? client.userCount
+        : typeof client.users === 'number'
+          ? client.users
+          : undefined,
+  };
+}
+
 export const ClientAccessView: React.FC = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'clients' | 'employees'>('clients');
@@ -70,9 +94,17 @@ export const ClientAccessView: React.FC = () => {
       setError(null);
 
       // Fetch clients
-      const clientsResponse = await Api.get('/api/partners/clients');
-      if (clientsResponse?.success && clientsResponse?.data) {
-        setClients(clientsResponse.data);
+      try {
+        const clientsResponse = await V8PartnerApi.getClients();
+        setClients((clientsResponse?.clients || []).map(normalizeClient));
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        const clientsResponse = await Api.get('/api/partners/clients');
+        if (clientsResponse?.success && Array.isArray(clientsResponse?.data?.data)) {
+          setClients(clientsResponse.data.data.map(normalizeClient));
+        }
       }
 
       // Fetch employees

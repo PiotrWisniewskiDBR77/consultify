@@ -8,6 +8,7 @@ import request from 'supertest';
 const mockGetReferralAnalytics = vi.fn();
 const mockGetReferralTools = vi.fn();
 const mockGetPartnerAttributions = vi.fn();
+const mockGetPartnerClients = vi.fn();
 const mockGetEarningsSummary = vi.fn();
 const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
@@ -31,6 +32,7 @@ vi.mock('../../../services/partnerReferralService.js', () => ({
     getReferralAnalytics: (...args: unknown[]) => mockGetReferralAnalytics(...args),
     getReferralTools: (...args: unknown[]) => mockGetReferralTools(...args),
     getPartnerAttributions: (...args: unknown[]) => mockGetPartnerAttributions(...args),
+    getPartnerClients: (...args: unknown[]) => mockGetPartnerClients(...args),
     createCampaignLink: (...args: unknown[]) => mockCreateCampaignLink(...args),
     deleteCampaignLink: (...args: unknown[]) => mockDeleteCampaignLink(...args),
   },
@@ -161,6 +163,24 @@ describe('V8 partner read bridge', () => {
         attributedAt: '2026-03-10',
       },
     ]);
+    mockGetPartnerClients.mockResolvedValue([
+      {
+        id: 'org-1',
+        organizationId: 'org-1',
+        name: 'ACME GmbH',
+        organizationName: 'ACME GmbH',
+        clientName: 'ACME GmbH',
+        status: 'active',
+        accessLevel: 'referral link',
+        users: 0,
+        userCount: 0,
+        projects: 0,
+        assessmentScore: 0,
+        industry: 'Unspecified',
+        region: null,
+        plan: null,
+      },
+    ]);
     mockGetReferralTools.mockResolvedValue({
       referralCode: 'PARTNER-123',
       referralLink: 'https://example.com/r/PARTNER-123',
@@ -263,6 +283,20 @@ describe('V8 partner read bridge', () => {
       offset: 5,
     });
     expect(res.body.data.attributions[0].id).toBe('attr-1');
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/clients returns partner client list with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/clients?limit=10&offset=5');
+
+    expect(res.status).toBe(200);
+    expect(mockGetPartnerClients).toHaveBeenCalledWith('partner-org-resolved', {
+      status: undefined,
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.body.data.clients[0].id).toBe('org-1');
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 

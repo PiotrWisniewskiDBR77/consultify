@@ -51,6 +51,41 @@ function buildReferralToolsFallback() {
 }
 
 /**
+ * GET /api/v8/partner/clients
+ */
+router.get(
+  '/clients',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    const clients = await PartnerReferralService.getPartnerClients(partnerOrgId, {
+      status: typeof req.query.status === 'string' ? req.query.status : undefined,
+      limit:
+        typeof req.query.limit === 'string' && /^\d+$/.test(req.query.limit)
+          ? parseInt(req.query.limit, 10)
+          : 50,
+      offset:
+        typeof req.query.offset === 'string' && /^\d+$/.test(req.query.offset)
+          ? parseInt(req.query.offset, 10)
+          : 0,
+    });
+    return res.json({
+      data: { clients },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/partner/onboarding-status
  */
 router.get(

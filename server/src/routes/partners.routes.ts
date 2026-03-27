@@ -1076,9 +1076,32 @@ router.get('/metrics', async (req: Request, res: Response, next: NextFunction) =
  */
 router.get('/clients', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner clients unavailable (no real implementation)');
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const clients = await PartnerReferralService.getPartnerClients(partnerOrgId, {
+      status: status as any,
+      limit,
+      offset,
+    });
+
+    return res.json({ success: true, data: clients });
   } catch (error: any) {
     logger.error('Error fetching clients:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner clients unavailable (database schema missing)');
+    }
     next(error);
   }
 });

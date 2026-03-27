@@ -115,6 +115,27 @@ export interface V8PartnerOnboardingStatus {
   completed: boolean;
 }
 
+export interface V8PartnerClient {
+  id: string;
+  organizationId: string;
+  name: string;
+  organizationName: string;
+  clientName: string;
+  status: 'active' | 'onboarding' | 'inactive';
+  accessLevel: string;
+  users: number;
+  userCount: number;
+  projects: number;
+  assessmentScore: number;
+  industry: string;
+  region: string | null;
+  plan: string | null;
+  onboardedAt?: string;
+  contractValue?: number;
+  lifetimeValue?: number;
+  totalCommissionEarned?: number;
+}
+
 export interface V8PartnerOnboardingAcceptTermsPayload {
   termsVersion?: string;
   privacyVersion?: string;
@@ -220,6 +241,7 @@ export const V8PartnerApi = {
     v8Get<{ analytics: V8PartnerReferralAnalytics; days: number }>('/partner/referral-analytics', {
       days: String(days),
     }),
+  getClients: () => v8Get<{ clients: V8PartnerClient[] }>('/partner/clients'),
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>

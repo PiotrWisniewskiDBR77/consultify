@@ -126,6 +126,27 @@ export interface Attribution {
   createdAt: string;
 }
 
+export interface PartnerClientListItem {
+  id: string;
+  organizationId: string;
+  name: string;
+  organizationName: string;
+  clientName: string;
+  status: 'active' | 'onboarding' | 'inactive';
+  accessLevel: string;
+  users: number;
+  userCount: number;
+  projects: number;
+  assessmentScore: number;
+  industry: string;
+  region: string | null;
+  plan: string | null;
+  onboardedAt?: string;
+  contractValue?: number;
+  lifetimeValue?: number;
+  totalCommissionEarned?: number;
+}
+
 export interface ReferralAnalytics {
   totalClicks: number;
   uniqueClicks: number;
@@ -245,6 +266,17 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
  */
 function hashIp(ip: string): string {
   return crypto.createHash('sha256').update(ip).digest('hex');
+}
+
+function mapAttributionStatusToClientStatus(status: string | undefined): 'active' | 'onboarding' | 'inactive' {
+  switch (String(status || '').toUpperCase()) {
+    case ATTRIBUTION_STATUS.ACTIVE:
+      return 'active';
+    case ATTRIBUTION_STATUS.PENDING:
+      return 'onboarding';
+    default:
+      return 'inactive';
+  }
 }
 
 /**
@@ -815,6 +847,37 @@ export async function getPartnerAttributions(
   }
 }
 
+export async function getPartnerClients(
+  partnerOrgId: string,
+  options: { status?: AttributionStatus; limit?: number; offset?: number } = {}
+): Promise<PartnerClientListItem[]> {
+  const attributions = await getPartnerAttributions(partnerOrgId, options);
+
+  return attributions.map((item) => {
+    const organizationName = item.organizationName || 'Organization';
+    return {
+      id: item.organizationId,
+      organizationId: item.organizationId,
+      name: organizationName,
+      organizationName,
+      clientName: organizationName,
+      status: mapAttributionStatusToClientStatus(item.status),
+      accessLevel: item.attributionType.toLowerCase().replace(/_/g, ' '),
+      users: 0,
+      userCount: 0,
+      projects: 0,
+      assessmentScore: 0,
+      industry: 'Unspecified',
+      region: null,
+      plan: null,
+      onboardedAt: item.signupCompletedAt || item.attributedAt,
+      contractValue: item.lifetimeValue,
+      lifetimeValue: item.lifetimeValue,
+      totalCommissionEarned: item.totalCommissionEarned,
+    };
+  });
+}
+
 /**
  * Update attribution status (e.g., when first payment made)
  */
@@ -1214,6 +1277,7 @@ const PartnerReferralService = {
   createAttribution,
   getAttributionByOrganization,
   getPartnerAttributions,
+  getPartnerClients,
   updateAttributionStatus,
   getReferralAnalytics,
   getPartnerByReferralCode,
