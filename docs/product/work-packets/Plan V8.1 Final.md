@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `22`
+- landed packets in the current active lane: `23`
 
 ---
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/472-v81-broader-sync-slack-governed-provider-round-trip-coverage-seam.md`
+- current packet: `evidence/473-v81-broader-sync-post-slack-provider-round-trip-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether one more provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync step`
+- next action: `promote Asana governed provider round-trip coverage on the shared governed oauth2 seam as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
