@@ -30,6 +30,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     deleteKpi: vi.fn(),
     createKpiMapping: vi.fn(),
     deleteKpiMapping: vi.fn(),
+    acknowledgeDeviationCase: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -609,5 +610,92 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
 
     confirmSpy.mockRestore();
+  });
+
+  it('acknowledges deviation cases through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.acknowledgeDeviationCase).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Acknowledge'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.acknowledgeDeviationCase).toHaveBeenCalledWith('case-1');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/acknowledge', {});
+  });
+
+  it('falls back to legacy deviation acknowledge only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.acknowledgeDeviationCase).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Acknowledge'));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/acknowledge', {});
+    });
   });
 });

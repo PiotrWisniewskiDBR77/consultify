@@ -251,6 +251,15 @@ describe('V8ResultsApi', () => {
     expect(data.success).toBe(true);
   });
 
+  it('requests governed deviation-case acknowledge from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.acknowledgeDeviationCase('case-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/results/deviation-cases/case-1/acknowledge', {});
+    expect(data.success).toBe(true);
+  });
+
   it('requests governed KPI report create from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       snapshotId: 'snap-1',

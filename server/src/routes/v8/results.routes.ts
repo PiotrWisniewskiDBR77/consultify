@@ -415,6 +415,49 @@ router.delete(
 );
 
 /**
+ * POST /api/v8/results/deviation-cases/:caseId/acknowledge
+ * Bounded deviation-case acknowledge seam for the active Results drawer surface.
+ */
+router.post(
+  '/deviation-cases/:caseId/acknowledge',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    if (!caseId) {
+      return res.status(400).json({
+        error: 'caseId is required',
+        code: 'RESULTS_DEVIATION_CASE_ID_REQUIRED',
+      });
+    }
+
+    const row = await dbGet<any>(
+      `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+      [caseId, organizationId],
+    );
+    if (!row?.id) {
+      return res.status(404).json({
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
+      });
+    }
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_cases
+      SET status = 'ACKNOWLEDGED', acknowledged_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND organization_id = ?
+      `,
+      [caseId, organizationId],
+    );
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/results/kpis/:kpiId/drawer-detail
  * Bounded KPI drawer bridge for time-series and open deviation-case continuity.
  */

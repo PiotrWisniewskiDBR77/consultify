@@ -316,6 +316,10 @@ export interface V8ResultsDeleteKpiMappingResponse {
   success: boolean;
 }
 
+export interface V8ResultsAcknowledgeDeviationCaseResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiReportPayload {
   periodStart: string;
   periodEnd?: string | null;
@@ -394,6 +398,11 @@ export const V8ResultsApi = {
   deleteKpiMapping: (mappingId: string) =>
     v8Delete<V8ResultsDeleteKpiMappingResponse>(
       `/results/kpi-mappings/${encodeURIComponent(mappingId)}`,
+    ),
+  acknowledgeDeviationCase: (caseId: string) =>
+    v8Post<V8ResultsAcknowledgeDeviationCaseResponse>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/acknowledge`,
+      {},
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),

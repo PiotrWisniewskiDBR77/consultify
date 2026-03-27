@@ -380,6 +380,25 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('POST /api/v8/results/deviation-cases/:caseId/acknowledge acknowledges a governed deviation case', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/acknowledge').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT id FROM kpi_deviation_cases'),
+      ['case-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining("SET status = 'ACKNOWLEDGED'"),
+      ['case-1', ORG],
+    );
+  });
+
   it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-reports').send({
