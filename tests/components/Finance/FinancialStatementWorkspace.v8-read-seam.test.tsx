@@ -32,6 +32,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     getStatementRatios: vi.fn(),
     searchStatementDocumentIntelligence: vi.fn(),
     confirmStatement: vi.fn(),
+    putStatementValues: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -521,5 +522,132 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     });
 
     expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
+  });
+
+  it('prefers governed values save before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pending',
+        status: 'draft',
+        readinessStatus: 'recoverable',
+        validationMessages: [],
+        values: [{ id: 'value-1', original_label: 'Revenue', originalLabel: 'Revenue', value: 100, mapping_status: 'unmapped' }],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [],
+        coverageSummary: { coveragePct: 0, computed: 0, total: 0 },
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      statementId: 'statement-1',
+      savedCount: 1,
+    } as any);
+    vi.mocked(Api.put).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected PUT ${url}`);
+    });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save recovery' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save recovery' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
+        values: expect.any(Array),
+      });
+    });
+
+    expect(Api.put).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
+      values: expect.any(Array),
+    });
+  });
+
+  it('falls back to legacy values save in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pending',
+        status: 'draft',
+        readinessStatus: 'recoverable',
+        validationMessages: [],
+        values: [{ id: 'value-1', original_label: 'Revenue', originalLabel: 'Revenue', value: 100, mapping_status: 'unmapped' }],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [],
+        coverageSummary: { coveragePct: 0, computed: 0, total: 0 },
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.put).mockResolvedValue({ savedCount: 1 } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save recovery' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save recovery' }));
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
+        values: expect.any(Array),
+      });
+    });
+
+    expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
+      values: expect.any(Array),
+    });
   });
 });

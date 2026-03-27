@@ -227,6 +227,20 @@ async function confirmStatementWithFallback(statementId: string) {
   }
 }
 
+async function saveStatementValuesWithFallback(
+  statementId: string,
+  values: Array<Record<string, unknown>>,
+) {
+  try {
+    return await V8FinanceApi.putStatementValues(statementId, { values });
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.put(`/api/finance-statements/${statementId}/values`, { values });
+  }
+}
+
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
   const rawStatus = String(detail.status || 'draft');
   const readinessStatus = deriveStatementReadinessStatus(
@@ -528,8 +542,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
         }>;
       };
 
-      await Api.put(`/api/finance-statements/${detail.id}/values`, {
-        values: (mapped?.mappedLines || []).map((line) => ({
+      await saveStatementValuesWithFallback(
+        detail.id,
+        (mapped?.mappedLines || []).map((line) => ({
           canonicalLineId: line.suggestedCanonicalId || null,
           originalLabel: line.originalLabel,
           value: line.value,
@@ -539,7 +554,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           isNonFinancial: !!line.isNonFinancial,
           classificationReason: line.classificationReason,
         })),
-      });
+      );
 
       await load();
       await onStatementChanged?.();
@@ -578,8 +593,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     setSavingRecovery(true);
     setError(null);
     try {
-      await Api.put(`/api/finance-statements/${detail.id}/values`, {
-        values: editableValues.map((value) => ({
+      await saveStatementValuesWithFallback(
+        detail.id,
+        editableValues.map((value) => ({
           canonicalLineId: value.canonicalLineId,
           originalLabel: value.originalLabel,
           value: value.value,
@@ -589,7 +605,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           isNonFinancial: !!value.isNonFinancial,
           classificationReason: value.classificationReason,
         })),
-      });
+      );
       await load();
       await onStatementChanged?.();
     } catch (e: any) {

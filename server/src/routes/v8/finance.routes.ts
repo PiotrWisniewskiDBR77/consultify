@@ -40,6 +40,7 @@ import {
   syncStatementToPack,
 } from '../../services/financialStatementPackService.js';
 import { getStatementDetail, listStatements } from '../../services/financialStatementReadService.js';
+import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -355,6 +356,39 @@ router.post(
         status: 'confirmed',
         readiness,
       },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.put(
+  '/statements/:statementId/values',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const statementId = String(req.params.statementId || '');
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+    const values = req.body?.values;
+    if (!Array.isArray(values)) {
+      return res.status(400).json({ error: 'values array required' });
+    }
+
+    const result = await saveStatementValuesFlow({
+      statementId,
+      organizationId,
+      userId,
+      statement,
+      values,
+    });
+
+    return res.json({
+      data: result,
       meta: financeMeta(),
     });
   }),

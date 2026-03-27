@@ -27,6 +27,7 @@ const mockRecordStatementSourceArtifact = vi.fn();
 const mockSnapshotCanonicalStatementVersion = vi.fn();
 const mockStartStatementIngestRun = vi.fn();
 const mockUpdateStatementIngestRun = vi.fn();
+const mockSaveStatementValuesFlow = vi.fn();
 const mockRunFullAnalysis = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
@@ -87,6 +88,10 @@ vi.mock('../../../services/ratioAnalysisService.js', () => ({
 vi.mock('../../../services/documentIntelligenceService.js', () => ({
   searchStatementDocumentIntelligence: (...args: unknown[]) =>
     mockSearchStatementDocumentIntelligence(...args),
+}));
+
+vi.mock('../../../services/financialStatementValueWriteService.js', () => ({
+  saveStatementValuesFlow: (...args: unknown[]) => mockSaveStatementValuesFlow(...args),
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -231,6 +236,14 @@ describe('V8 finance read-only routes', () => {
     mockSnapshotCanonicalStatementVersion.mockResolvedValue(undefined);
     mockStartStatementIngestRun.mockResolvedValue('ingest-run-1');
     mockUpdateStatementIngestRun.mockResolvedValue(undefined);
+    mockSaveStatementValuesFlow.mockResolvedValue({
+      statementId: 'statement-1',
+      statementPackId: 'pack-1',
+      ingestRunId: 'ingest-run-1',
+      savedCount: 1,
+      readiness: { readinessStatus: 'recoverable' },
+      validation: { status: 'warnings', messages: [] },
+    });
     mockSyncStatementToPack.mockResolvedValue('pack-1');
     mockRunFullAnalysis.mockResolvedValue({ ratios: [] });
     mockDbGet.mockResolvedValue(null);
@@ -511,6 +524,36 @@ describe('V8 finance read-only routes', () => {
         stage: 'confirm',
       }),
     );
+  });
+
+  it('PUT /api/v8/finance/statements/:id/values returns envelope and delegates to shared values flow', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'P&L',
+      status: 'draft',
+      validation_status: 'pending',
+      currency: 'PLN',
+      scaling: 'units',
+      source_file_name: 'acme-q1.csv',
+      values: [],
+    });
+
+    const app = createApp();
+    const res = await request(app).put('/api/v8/finance/statements/statement-1/values').send({
+      values: [{ canonicalLineId: 'line-1', originalLabel: 'Revenue', value: 100 }],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.statementId).toBe('statement-1');
+    expect(res.body.data?.savedCount).toBe(1);
+    expect(mockSaveStatementValuesFlow).toHaveBeenCalledWith({
+      statementId: 'statement-1',
+      organizationId: ORG,
+      userId: UID,
+      statement: expect.objectContaining({ id: 'statement-1' }),
+      values: [{ canonicalLineId: 'line-1', originalLabel: 'Revenue', value: 100 }],
+    });
   });
 
   it('GET /api/v8/finance/canonical-lines returns envelope and delegates to the canonical line query', async () => {

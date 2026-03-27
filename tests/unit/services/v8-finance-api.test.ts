@@ -8,7 +8,7 @@ vi.mock('@/services/api/v8/client', () => ({
 }));
 
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
-import { v8Delete, v8Get, v8Post } from '@/services/api/v8/client';
+import { v8Delete, v8Get, v8Post, v8Put } from '@/services/api/v8/client';
 
 describe('V8FinanceApi', () => {
   beforeEach(() => {
@@ -239,6 +239,27 @@ describe('V8FinanceApi', () => {
 
     expect(v8Post).toHaveBeenCalledWith('/finance/statements/statement-1/confirm', {});
     expect(data.success).toBe(true);
+    expect(data.statementPackId).toBe('pack-1');
+  });
+
+  it('puts governed finance statement values through the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({
+      statementId: 'statement-1',
+      statementPackId: 'pack-1',
+      ingestRunId: 'ingest-run-1',
+      savedCount: 1,
+      readiness: { readinessStatus: 'recoverable' },
+      validation: { status: 'warnings' },
+    });
+
+    const data = await V8FinanceApi.putStatementValues('statement-1', {
+      values: [{ canonicalLineId: 'line-1', originalLabel: 'Revenue', value: 100 }],
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/finance/statements/statement-1/values', {
+      values: [{ canonicalLineId: 'line-1', originalLabel: 'Revenue', value: 100 }],
+    });
+    expect(data.savedCount).toBe(1);
     expect(data.statementPackId).toBe('pack-1');
   });
 

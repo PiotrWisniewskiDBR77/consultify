@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `12`
+- landed packets in the active lane: `13`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `statement confirm V8 seam` recorded in `evidence/398-v81-broader-finance-statement-confirm-v8-seam.md`
-- reason: after the advanced statement workspace read cluster was closed, the next smallest honest packet was the visible confirm action still posting directly to the legacy finance-statements surface inside `FinancialStatementWorkspace`
+- latest evidence: `statement values save V8 seam` recorded in `evidence/399-v81-broader-finance-statement-values-save-v8-seam.md`
+- reason: after statement confirm continuity landed, the next smallest honest packet was the values-save write still posting directly to the legacy finance-statements surface inside `FinancialStatementWorkspace`
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after statement confirm continuity`
-- last accepted packet: `statement confirm V8 seam`
+- current packet: `assess the next bounded broader finance packet after values-save continuity`
+- last accepted packet: `statement values save V8 seam`
 - blocker: `none`
-- next action: `assess whether manual values save continuity is now the next smallest honest statement-write packet before the heavier recovery chain`
+- next action: `assess whether the heavier detect/extract/map recovery chain can be split into the next honest statement-write packet`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

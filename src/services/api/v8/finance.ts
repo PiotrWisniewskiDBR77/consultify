@@ -1,4 +1,4 @@
-import { v8Delete, v8Get, v8Post } from './client';
+import { v8Delete, v8Get, v8Post, v8Put } from './client';
 
 export const shouldFallbackToLegacyFinance = (error: any) => {
   const status = Number(error?.status);
@@ -218,6 +218,15 @@ export interface V8FinanceStatementConfirmResult {
   readiness?: Record<string, unknown>;
 }
 
+export interface V8FinanceStatementValuesSaveResult {
+  statementId: string;
+  statementPackId?: string | null;
+  ingestRunId?: string | null;
+  savedCount: number;
+  readiness?: Record<string, unknown>;
+  validation?: Record<string, unknown>;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -291,6 +300,8 @@ export const V8FinanceApi = {
     ),
   confirmStatement: (statementId: string) =>
     v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, {}),
+  putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>
+    v8Put<V8FinanceStatementValuesSaveResult>(`/finance/statements/${statementId}/values`, body),
   getCanonicalLines: () =>
     v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>('/finance/canonical-lines'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
