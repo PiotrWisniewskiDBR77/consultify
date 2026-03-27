@@ -155,7 +155,14 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     // Skip payment for now - directly complete onboarding
     setLoading(true);
     try {
-      await Api.post('/onboarding/complete', {});
+      try {
+        await V8PartnerApi.completeOnboarding();
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        await Api.post('/onboarding/complete', {});
+      }
       toast.success(t('onboarding.toast.completed', 'Onboarding zakończony!'));
       navigate('/app');
     } catch (error) {

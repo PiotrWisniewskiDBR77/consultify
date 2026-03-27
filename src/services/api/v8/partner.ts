@@ -135,6 +135,11 @@ export interface V8PartnerOnboardingSelectTierResult {
   message: string;
 }
 
+export interface V8PartnerOnboardingCompleteResult {
+  success: boolean;
+  message: string;
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -221,6 +226,8 @@ export const V8PartnerApi = {
     v8Post<V8PartnerOnboardingAcceptTermsResult>('/partner/onboarding/accept-terms', body),
   selectOnboardingTier: (body: V8PartnerOnboardingSelectTierPayload) =>
     v8Post<V8PartnerOnboardingSelectTierResult>('/partner/onboarding/select-tier', body),
+  completeOnboarding: () =>
+    v8Post<V8PartnerOnboardingCompleteResult>('/partner/onboarding/complete', {}),
   getReferralTools: () => v8Get<{ tools: V8PartnerReferralTools }>('/partner/referral-tools'),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
   getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),

@@ -123,6 +123,18 @@ describe('V8PartnerApi', () => {
     expect(data.tier).toBe('professional');
   });
 
+  it('requests partner onboarding completion from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      message: 'Onboarding completed!',
+    });
+
+    const data = await V8PartnerApi.completeOnboarding();
+
+    expect(v8Post).toHaveBeenCalledWith('/partner/onboarding/complete', {});
+    expect(data.success).toBe(true);
+  });
+
   it('requests partner earnings summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       earnings: {

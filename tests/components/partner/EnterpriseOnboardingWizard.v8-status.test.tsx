@@ -43,6 +43,7 @@ vi.mock('@/services/api/v8', () => ({
     getOnboardingStatus: vi.fn(),
     acceptOnboardingTerms: vi.fn(),
     selectOnboardingTier: vi.fn(),
+    completeOnboarding: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status);
@@ -67,6 +68,10 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
       success: true,
       tier: 'professional',
       message: 'Pricing tier selected',
+    } as any);
+    vi.mocked(V8PartnerApi.completeOnboarding).mockResolvedValue({
+      success: true,
+      message: 'Onboarding completed!',
     } as any);
     vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
       status: {
@@ -263,6 +268,73 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
 
     expect(Api.post).toHaveBeenCalledWith('/onboarding/select-tier', {
       tier: 'enterprise',
+    });
+  });
+
+  it('prefers governed partner completion before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValueOnce({
+      status: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        pricingTier: 'professional',
+        paymentSetup: false,
+        completed: false,
+      },
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <EnterpriseOnboardingWizard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip for Now' }));
+
+    await waitFor(() => {
+      expect(V8PartnerApi.completeOnboarding).toHaveBeenCalled();
+      expect(navigateMock).toHaveBeenCalledWith('/app');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/onboarding/complete', expect.anything());
+  });
+
+  it('falls back to legacy completion on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValueOnce({
+      status: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        pricingTier: 'enterprise',
+        paymentSetup: false,
+        completed: false,
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.completeOnboarding).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
+      if (url === '/onboarding/complete') {
+        return { success: true, message: 'Onboarding completed!' } as any;
+      }
+      throw new Error(`Unexpected POST ${url}`);
+    });
+
+    render(
+      <MemoryRouter>
+        <EnterpriseOnboardingWizard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip for Now' }));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/onboarding/complete', {});
+      expect(navigateMock).toHaveBeenCalledWith('/app');
     });
   });
 });

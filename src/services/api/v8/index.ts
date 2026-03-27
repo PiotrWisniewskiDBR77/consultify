@@ -53,6 +53,7 @@ export type {
   V8PartnerListingUpdateResult,
   V8PartnerOnboardingAcceptTermsPayload,
   V8PartnerOnboardingAcceptTermsResult,
+  V8PartnerOnboardingCompleteResult,
   V8PartnerOnboardingSelectTierPayload,
   V8PartnerOnboardingSelectTierResult,
   V8PartnerOnboardingStatus,

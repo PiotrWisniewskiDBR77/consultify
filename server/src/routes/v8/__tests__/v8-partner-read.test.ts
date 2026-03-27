@@ -339,6 +339,17 @@ describe('V8 partner read bridge', () => {
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
+  it('POST /api/v8/partner/onboarding/complete records onboarding completion with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/partner/onboarding/complete').send({});
+
+    expect(res.status).toBe(200);
+    expect(mockDbGet).toHaveBeenCalled();
+    expect(mockDbRun).toHaveBeenCalledTimes(2);
+    expect(res.body.data).toEqual({ success: true, message: 'Onboarding completed!' });
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
   it('GET /api/v8/partner/earnings-summary returns earnings with partner meta', async () => {
     const app = createApp();
     const res = await request(app).get('/api/v8/partner/earnings-summary');

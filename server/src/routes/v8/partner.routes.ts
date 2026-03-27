@@ -204,6 +204,80 @@ router.post(
 );
 
 /**
+ * POST /api/v8/partner/onboarding/complete
+ */
+router.post(
+  '/onboarding/complete',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+
+    const status = await DbPromise.get<{
+      terms_accepted?: boolean | number | null;
+      privacy_accepted?: boolean | number | null;
+      pricing_tier?: string | null;
+    }>(
+      getDatabase(),
+      `SELECT terms_accepted, privacy_accepted, pricing_tier
+       FROM user_onboarding_status
+       WHERE user_id = ?`,
+      [userId],
+    );
+
+    if (!status) {
+      return res.status(400).json({
+        error: 'No onboarding status found',
+        code: 'ONBOARDING_STATUS_NOT_FOUND',
+      });
+    }
+
+    if (!Boolean(status.terms_accepted) || !Boolean(status.privacy_accepted)) {
+      return res.status(400).json({
+        error: 'Terms not accepted',
+        code: 'ONBOARDING_TERMS_REQUIRED',
+      });
+    }
+
+    if (!status.pricing_tier) {
+      return res.status(400).json({
+        error: 'Pricing tier not selected',
+        code: 'ONBOARDING_PRICING_TIER_REQUIRED',
+      });
+    }
+
+    await DbPromise.run(
+      getDatabase(),
+      `UPDATE user_onboarding_status
+       SET completed = TRUE,
+           completed_at = NOW(),
+           updated_at = NOW()
+       WHERE user_id = ?`,
+      [userId],
+    );
+
+    await DbPromise.run(
+      getDatabase(),
+      `UPDATE users SET onboarding_completed = TRUE WHERE id = ?`,
+      [userId],
+    );
+
+    return res.json({
+      data: { success: true, message: 'Onboarding completed!' },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/partner/referral-tools
  */
 router.get(
