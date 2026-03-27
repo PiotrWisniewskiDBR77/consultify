@@ -253,4 +253,23 @@ describe('settings integrations authority continuity', () => {
       { fallback: false },
     );
   });
+
+  it('GET /api/settings/integrations/:provider/status exposes governed status truth on the settings surface', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/integrations/jira/status');
+
+    expect(res.status).toBe(200);
+    expect(mockListGovernedIntegrations).toHaveBeenCalledWith('org-1');
+    expect(res.body.status).toEqual(
+      expect.objectContaining({
+        id: 'int-1',
+        provider: 'jira',
+        status: 'pending',
+        onboardingStatus: 'pending_external_auth_or_configuration',
+        isConnected: false,
+      }),
+    );
+  });
 });

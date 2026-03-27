@@ -878,6 +878,22 @@ async function loadGovernedSettingsIntegrations(
   });
 }
 
+async function loadEffectiveSettingsIntegrations(
+  userId: string,
+  organizationId?: string,
+): Promise<IntegrationEntry[]> {
+  const legacyIntegrations = await loadIntegrations(userId);
+  const governedIntegrations = organizationId
+    ? await loadGovernedSettingsIntegrations(organizationId).catch(() => [])
+    : [];
+  const governedProviders = new Set(governedIntegrations.map((integration) => integration.provider));
+
+  return [
+    ...governedIntegrations,
+    ...legacyIntegrations.filter((integration) => !governedProviders.has(integration.provider)),
+  ];
+}
+
 /**
  * GET /api/settings/integrations
  */
@@ -889,15 +905,7 @@ router.get(
     const organizationId = req.organizationId || req.user?.organizationId;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    const legacyIntegrations = await loadIntegrations(userId);
-    const governedIntegrations = organizationId
-      ? await loadGovernedSettingsIntegrations(organizationId).catch(() => [])
-      : [];
-    const governedProviders = new Set(governedIntegrations.map((integration) => integration.provider));
-    const integrations = [
-      ...governedIntegrations,
-      ...legacyIntegrations.filter((integration) => !governedProviders.has(integration.provider)),
-    ];
+    const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const connectedCount = integrations.filter((i) => i.status === 'active').length;
     const providers = defaultIntegrationProviders.map((provider) => {
       const connection = integrations.find((integration) => integration.provider === provider.id) || null;
@@ -1113,10 +1121,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    const integrations = await loadIntegrations(userId);
+    const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const item = integrations.find((i) => i.provider === provider);
     return res.json({ status: item ? { ...item, isConnected: item.status === 'active' } : null });
   })

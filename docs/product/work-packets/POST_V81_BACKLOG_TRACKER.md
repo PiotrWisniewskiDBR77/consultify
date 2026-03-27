@@ -484,6 +484,8 @@ Current status: `active`
 - [x] assessed whether one more thinner settings-lifecycle seam remains after disconnect continuity
 - [x] recorded post-settings disconnect authority residual assessment confirming that settings status readback is now the next thinner seam
 - [x] promoted settings status readback continuity on the governed sync path as the next honest broader-sync implementation step
+- [x] twenty-sixth real bounded packet landed around settings status readback continuity on the governed sync path
+- [x] focused regression added for settings status readback continuity on the settings surface
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1303,6 +1305,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: landed the twenty-sixth real bounded packet inside broader `Sync` completion by aligning the dedicated settings status route with the governed sync readback in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md`, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth
 - 2026-03-27: recorded the broader `Sync` post-settings disconnect authority residual assessment in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md`, confirming that settings status readback continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fifth real bounded packet inside broader `Sync` completion by aligning settings disconnect with the governed sync path in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md`, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow
 - 2026-03-27: recorded the broader `Sync` post-settings connect/readback authority residual assessment in `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md`, confirming that settings disconnect authority continuity is now the next honest broader-sync step
