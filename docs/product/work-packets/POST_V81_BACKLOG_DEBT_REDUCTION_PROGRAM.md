@@ -327,6 +327,7 @@ Current result:
 - the twenty-fourth real bounded broader sync packet landed in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md` by aligning user-level settings integrations readback and connect initiation with the governed sync seam, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path,
 - the post-settings connect/readback authority residual assessment recorded in `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md` confirmed that one thinner settings-lifecycle mutation seam still remains before wider cleanup, with settings disconnect now emerging as the next honest step,
 - the twenty-fifth real bounded broader sync packet landed in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md` by aligning settings disconnect with the governed sync path, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow,
+- the post-settings disconnect authority residual assessment recorded in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md` confirmed that one thinner readback seam still remains before wider cleanup, with settings status now emerging as the next honest step,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -489,6 +490,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: recorded the broader `Sync` post-settings disconnect authority residual assessment in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md`, confirming that settings status readback continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fifth real bounded packet inside broader `Sync` completion by aligning settings disconnect with the governed sync path in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md`, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow
 - 2026-03-27: recorded the broader `Sync` post-settings connect/readback authority residual assessment in `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md`, confirming that settings disconnect authority continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fourth real bounded packet inside broader `Sync` completion by aligning user-level settings integrations readback and connect initiation with the governed sync seam in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md`, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path

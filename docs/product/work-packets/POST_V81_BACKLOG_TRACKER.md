@@ -481,6 +481,9 @@ Current status: `active`
 - [x] promoted settings disconnect authority continuity on the governed sync path as the next honest broader-sync implementation step
 - [x] twenty-fifth real bounded packet landed around settings disconnect authority continuity on the governed sync path
 - [x] focused regression added for settings disconnect authority continuity on the settings surface
+- [x] assessed whether one more thinner settings-lifecycle seam remains after disconnect continuity
+- [x] recorded post-settings disconnect authority residual assessment confirming that settings status readback is now the next thinner seam
+- [x] promoted settings status readback continuity on the governed sync path as the next honest broader-sync implementation step
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1300,6 +1303,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: recorded the broader `Sync` post-settings disconnect authority residual assessment in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md`, confirming that settings status readback continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fifth real bounded packet inside broader `Sync` completion by aligning settings disconnect with the governed sync path in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md`, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow
 - 2026-03-27: recorded the broader `Sync` post-settings connect/readback authority residual assessment in `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md`, confirming that settings disconnect authority continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fourth real bounded packet inside broader `Sync` completion by aligning user-level settings integrations readback and connect initiation with the governed sync seam in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md`, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path
