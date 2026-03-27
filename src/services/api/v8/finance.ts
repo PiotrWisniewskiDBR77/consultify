@@ -209,6 +209,15 @@ export interface V8FinanceStatementDocumentIntelResult {
   authoritativeForNumbers: boolean;
 }
 
+export interface V8FinanceStatementConfirmResult {
+  success: boolean;
+  statementId: string;
+  statementPackId?: string | null;
+  ingestRunId?: string | null;
+  status: string;
+  readiness?: Record<string, unknown>;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -280,6 +289,8 @@ export const V8FinanceApi = {
         ...(typeof params.limit === 'number' ? { limit: params.limit } : {}),
       },
     ),
+  confirmStatement: (statementId: string) =>
+    v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, {}),
   getCanonicalLines: () =>
     v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>('/finance/canonical-lines'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>

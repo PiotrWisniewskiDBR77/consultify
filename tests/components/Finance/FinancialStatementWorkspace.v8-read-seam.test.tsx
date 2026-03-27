@@ -31,6 +31,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     getStatement: vi.fn(),
     getStatementRatios: vi.fn(),
     searchStatementDocumentIntelligence: vi.fn(),
+    confirmStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -400,5 +401,125 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     expect(Api.get).not.toHaveBeenCalledWith(
       '/api/finance-statements/statement-1/document-intelligence/search?q=revenue',
     );
+  });
+
+  it('prefers governed confirm action before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pass',
+        status: 'mapped',
+        readinessStatus: 'ready',
+        validationMessages: [],
+        values: [{ id: 'value-1', original_label: 'Revenue', value: 100, mapping_status: 'mapped' }],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [],
+        coverageSummary: { coveragePct: 0, computed: 0, total: 0 },
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.confirmStatement).mockResolvedValue({
+      success: true,
+      statementId: 'statement-1',
+      status: 'confirmed',
+    } as any);
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected POST ${url}`);
+    });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Potwierdź statement' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Potwierdź statement' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/confirm', {});
+  });
+
+  it('falls back to legacy confirm action in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pass',
+        status: 'mapped',
+        readinessStatus: 'ready',
+        validationMessages: [],
+        values: [{ id: 'value-1', original_label: 'Revenue', value: 100, mapping_status: 'mapped' }],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [],
+        coverageSummary: { coveragePct: 0, computed: 0, total: 0 },
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8FinanceApi.confirmStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Potwierdź statement' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Potwierdź statement' }));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/confirm', {});
+    });
+
+    expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
   });
 });

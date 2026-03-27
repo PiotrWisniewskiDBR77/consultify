@@ -22,11 +22,22 @@ import {
 } from '../../services/financialAnalysisService.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
+import {
+  confirmStatement as confirmFinancialStatement,
+  evaluateStatementReadiness,
+  getLatestStatementIngestRun,
+  recordStatementQualityRun,
+  recordStatementSourceArtifact,
+  snapshotCanonicalStatementVersion,
+  startStatementIngestRun,
+  updateStatementIngestRun,
+} from '../../services/financialStatementService.js';
 import { listModels } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
   getStatementPackDetail,
   listStatementPacks,
+  syncStatementToPack,
 } from '../../services/financialStatementPackService.js';
 import { getStatementDetail, listStatements } from '../../services/financialStatementReadService.js';
 import { listValuations } from '../../services/valuationService.js';
@@ -40,6 +51,37 @@ export const V8_FINANCE_READ_CONTRACT = 'finance_runtime_read_v1';
 
 function financeMeta() {
   return { version: 'v8' as const, contract: V8_FINANCE_READ_CONTRACT };
+}
+
+async function ensureStatementIngestRun(params: {
+  statementId: string;
+  organizationId?: string;
+  createdBy?: string;
+  sourceFileName?: string;
+  sourceFilePath?: string;
+  parseMethod?: string;
+  documentClass?: string;
+  extractionStrategy?: string;
+  templateFamily?: string | null;
+}) {
+  const existingRunId = await getLatestStatementIngestRun(params.statementId);
+  if (existingRunId) {
+    return existingRunId;
+  }
+  if (!params.organizationId) {
+    return null;
+  }
+  return await startStatementIngestRun({
+    statementId: params.statementId,
+    organizationId: params.organizationId,
+    sourceFileName: params.sourceFileName,
+    sourceFilePath: params.sourceFilePath,
+    parseMethod: params.parseMethod,
+    documentClass: params.documentClass,
+    extractionStrategy: params.extractionStrategy,
+    templateFamily: params.templateFamily,
+    createdBy: params.createdBy,
+  });
 }
 
 /**
@@ -203,6 +245,115 @@ router.get(
         query,
         matches,
         authoritativeForNumbers: false,
+      },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/statements/:statementId/confirm',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const statementId = String(req.params.statementId || '');
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+
+    const valueRows = Array.isArray(statement.values)
+      ? statement.values.map((value: any) => ({
+          canonicalLineId: value?.canonicalLineId ?? value?.canonical_line_id ?? null,
+          value: Number(value?.value || 0),
+          isNonFinancial: Boolean(value?.isNonFinancial ?? value?.is_non_financial),
+        }))
+      : [];
+    const validationMessages = Array.isArray(statement.validationMessages)
+      ? statement.validationMessages
+      : [];
+    const readiness = evaluateStatementReadiness({
+      rawStatus: statement.status,
+      statementType: statement.statement_type,
+      validationStatus: statement.validation_status,
+      currency: statement.currency,
+      scaling: statement.scaling,
+      validationMessages,
+      values: valueRows,
+    });
+
+    if (!readiness.isReady) {
+      return res.status(400).json({
+        error: 'Statement is not ready to confirm',
+        readiness,
+      });
+    }
+
+    const ingestRunId = await ensureStatementIngestRun({
+      statementId,
+      organizationId,
+      createdBy: userId,
+      sourceFileName: statement.source_file_name,
+      sourceFilePath: statement.source_file_path,
+      parseMethod: statement.parse_method,
+      documentClass: statement.document_class,
+      extractionStrategy: statement.extraction_strategy,
+      templateFamily: statement.template_family,
+    });
+
+    await confirmFinancialStatement(statementId, userId, readiness);
+    await snapshotCanonicalStatementVersion({
+      statementId,
+      versionKind: 'confirmed',
+      readinessStatus: readiness.readinessStatus,
+      values: valueRows,
+      validations: validationMessages,
+      createdBy: userId,
+      summary: 'Confirmed statement-ready snapshot.',
+    });
+    const statementPackId = await syncStatementToPack(statementId);
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'confirmation',
+      stage: 'confirm',
+      contentJson: readiness,
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'confirm',
+      runStatus: 'completed',
+      reasonCodes: readiness.reasonCodes,
+      summary: {
+        readinessStatus: readiness.readinessStatus,
+      },
+    });
+    await recordStatementQualityRun({
+      statementId,
+      organizationId,
+      stage: 'confirm',
+      resultStatus: 'pass',
+      readinessStatus: readiness.readinessStatus,
+      strategy: String(statement.extraction_strategy || 'confirmation_gate'),
+      summary: 'Statement confirmed as statement-ready.',
+      reasonCodes: readiness.reasonCodes,
+      payload: readiness,
+      createdBy: userId,
+    });
+
+    return res.json({
+      data: {
+        success: true,
+        statementId,
+        statementPackId,
+        ingestRunId,
+        status: 'confirmed',
+        readiness,
       },
       meta: financeMeta(),
     });

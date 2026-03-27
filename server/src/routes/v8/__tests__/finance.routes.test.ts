@@ -19,10 +19,19 @@ const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
+const mockConfirmStatement = vi.fn();
+const mockEvaluateStatementReadiness = vi.fn();
+const mockGetLatestStatementIngestRun = vi.fn();
+const mockRecordStatementQualityRun = vi.fn();
+const mockRecordStatementSourceArtifact = vi.fn();
+const mockSnapshotCanonicalStatementVersion = vi.fn();
+const mockStartStatementIngestRun = vi.fn();
+const mockUpdateStatementIngestRun = vi.fn();
 const mockRunFullAnalysis = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
+const mockSyncStatementToPack = vi.fn();
 
 vi.mock('../../../services/v8/financeIntegrationService.js', () => ({
   getFinanceDashboard: (...args: unknown[]) => mockGetFinanceDashboard(...args),
@@ -44,11 +53,23 @@ vi.mock('../../../services/financialModelingService.js', () => ({
 vi.mock('../../../services/financialStatementPackService.js', () => ({
   getStatementPackDetail: (...args: unknown[]) => mockGetStatementPackDetail(...args),
   listStatementPacks: (...args: unknown[]) => mockListStatementPacks(...args),
+  syncStatementToPack: (...args: unknown[]) => mockSyncStatementToPack(...args),
 }));
 
 vi.mock('../../../services/financialStatementReadService.js', () => ({
   getStatementDetail: (...args: unknown[]) => mockGetStatementDetail(...args),
   listStatements: (...args: unknown[]) => mockListStatements(...args),
+}));
+
+vi.mock('../../../services/financialStatementService.js', () => ({
+  confirmStatement: (...args: unknown[]) => mockConfirmStatement(...args),
+  evaluateStatementReadiness: (...args: unknown[]) => mockEvaluateStatementReadiness(...args),
+  getLatestStatementIngestRun: (...args: unknown[]) => mockGetLatestStatementIngestRun(...args),
+  recordStatementQualityRun: (...args: unknown[]) => mockRecordStatementQualityRun(...args),
+  recordStatementSourceArtifact: (...args: unknown[]) => mockRecordStatementSourceArtifact(...args),
+  snapshotCanonicalStatementVersion: (...args: unknown[]) => mockSnapshotCanonicalStatementVersion(...args),
+  startStatementIngestRun: (...args: unknown[]) => mockStartStatementIngestRun(...args),
+  updateStatementIngestRun: (...args: unknown[]) => mockUpdateStatementIngestRun(...args),
 }));
 
 vi.mock('../../../services/valuationService.js', () => ({
@@ -196,6 +217,21 @@ describe('V8 finance read-only routes', () => {
       coverageSummary: { total: 0, computed: 0, na: 0, coveragePct: 0 },
     });
     mockSearchStatementDocumentIntelligence.mockResolvedValue([]);
+    mockConfirmStatement.mockResolvedValue(undefined);
+    mockEvaluateStatementReadiness.mockReturnValue({
+      isReady: true,
+      readinessStatus: 'ready',
+      readinessScore: 100,
+      summary: 'Ready to confirm',
+      reasonCodes: [],
+    });
+    mockGetLatestStatementIngestRun.mockResolvedValue('ingest-run-1');
+    mockRecordStatementQualityRun.mockResolvedValue(undefined);
+    mockRecordStatementSourceArtifact.mockResolvedValue(undefined);
+    mockSnapshotCanonicalStatementVersion.mockResolvedValue(undefined);
+    mockStartStatementIngestRun.mockResolvedValue('ingest-run-1');
+    mockUpdateStatementIngestRun.mockResolvedValue(undefined);
+    mockSyncStatementToPack.mockResolvedValue('pack-1');
     mockRunFullAnalysis.mockResolvedValue({ ratios: [] });
     mockDbGet.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
@@ -406,6 +442,75 @@ describe('V8 finance read-only routes', () => {
       query: 'revenue',
       limit: 3,
     });
+  });
+
+  it('POST /api/v8/finance/statements/:id/confirm returns envelope and delegates to statement confirm flow', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'P&L',
+      status: 'mapped',
+      validation_status: 'pass',
+      currency: 'PLN',
+      scaling: 'units',
+      source_file_name: 'acme-q1.csv',
+      source_file_path: '/tmp/acme-q1.csv',
+      parse_method: 'ocr',
+      document_class: 'financial_statement',
+      extraction_strategy: 'table',
+      template_family: 'standard',
+      validationMessages: [],
+      values: [{ canonicalLineId: 'line-1', value: 100, isNonFinancial: false }],
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/statements/statement-1/confirm').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(res.body.data?.statementId).toBe('statement-1');
+    expect(res.body.data?.status).toBe('confirmed');
+    expect(mockEvaluateStatementReadiness).toHaveBeenCalledWith({
+      rawStatus: 'mapped',
+      statementType: 'P&L',
+      validationStatus: 'pass',
+      currency: 'PLN',
+      scaling: 'units',
+      validationMessages: [],
+      values: [{ canonicalLineId: 'line-1', value: 100, isNonFinancial: false }],
+    });
+    expect(mockConfirmStatement).toHaveBeenCalledWith(
+      'statement-1',
+      UID,
+      expect.objectContaining({ readinessStatus: 'ready' }),
+    );
+    expect(mockSnapshotCanonicalStatementVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statementId: 'statement-1',
+        versionKind: 'confirmed',
+      }),
+    );
+    expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
+    expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statementId: 'statement-1',
+        artifactType: 'confirmation',
+      }),
+    );
+    expect(mockUpdateStatementIngestRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ingestRunId: 'ingest-run-1',
+        currentStage: 'confirm',
+        runStatus: 'completed',
+      }),
+    );
+    expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statementId: 'statement-1',
+        organizationId: ORG,
+        stage: 'confirm',
+      }),
+    );
   });
 
   it('GET /api/v8/finance/canonical-lines returns envelope and delegates to the canonical line query', async () => {

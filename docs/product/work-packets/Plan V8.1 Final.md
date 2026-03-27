@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `11`
+- landed packets in the active lane: `12`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `document-intelligence search V8 seam` recorded in `evidence/397-v81-broader-finance-document-intelligence-search-v8-seam.md`
-- reason: after related-list continuity landed, the next smallest honest packet was the document-intelligence search read still loaded from the legacy finance-statements surface inside `FinancialStatementWorkspace`
+- latest evidence: `statement confirm V8 seam` recorded in `evidence/398-v81-broader-finance-statement-confirm-v8-seam.md`
+- reason: after the advanced statement workspace read cluster was closed, the next smallest honest packet was the visible confirm action still posting directly to the legacy finance-statements surface inside `FinancialStatementWorkspace`
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after document-intelligence search continuity`
-- last accepted packet: `document-intelligence search V8 seam`
+- current packet: `assess the next bounded broader finance packet after statement confirm continuity`
+- last accepted packet: `statement confirm V8 seam`
 - blocker: `none`
-- next action: `assess whether any smaller honest advanced statement workspace residual remains before broader statement writes`
+- next action: `assess whether manual values save continuity is now the next smallest honest statement-write packet before the heavier recovery chain`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

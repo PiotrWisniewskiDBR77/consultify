@@ -216,6 +216,17 @@ async function searchStatementDocumentIntelligenceWithFallback(statementId: stri
   }
 }
 
+async function confirmStatementWithFallback(statementId: string) {
+  try {
+    return await V8FinanceApi.confirmStatement(statementId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/confirm`, {});
+  }
+}
+
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
   const rawStatus = String(detail.status || 'draft');
   const readinessStatus = deriveStatementReadinessStatus(
@@ -470,7 +481,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   const handleConfirm = useCallback(async () => {
     if (!detail) return;
     try {
-      await Api.post(`/api/finance-statements/${detail.id}/confirm`, {});
+      await confirmStatementWithFallback(detail.id);
       await load();
       await onStatementChanged?.();
     } catch (e: any) {
