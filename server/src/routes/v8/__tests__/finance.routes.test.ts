@@ -16,6 +16,7 @@ const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
 const mockApproveModel = vi.fn();
 const mockComputeModel = vi.fn();
+const mockUpdateModel = vi.fn();
 const mockGetOutputs = vi.fn();
 const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
@@ -96,6 +97,7 @@ vi.mock('../../../services/financialModelingService.js', () => ({
   listEvents: (...args: unknown[]) => mockListEvents(...args),
   listModels: (...args: unknown[]) => mockListModels(...args),
   persistComputeResult: (...args: unknown[]) => mockPersistComputeResult(...args),
+  updateModel: (...args: unknown[]) => mockUpdateModel(...args),
 }));
 
 vi.mock('../../../services/financialStatementPackService.js', () => ({
@@ -643,6 +645,28 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data).toEqual({ success: true, status: 'approved' });
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
     expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID);
+  });
+
+  it('PUT /api/v8/finance/models/:id returns envelope and delegates to updateModel', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+    });
+    mockUpdateModel.mockResolvedValue(undefined);
+
+    const app = createApp();
+    const res = await request(app).put('/api/v8/finance/models/model-1').send({
+      assumptions: { initialCash: 1000 },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockUpdateModel).toHaveBeenCalledWith('model-1', {
+      assumptions: { initialCash: 1000 },
+    });
   });
 
   it('POST /api/v8/finance/models/:id/events returns envelope and delegates to addEvent', async () => {

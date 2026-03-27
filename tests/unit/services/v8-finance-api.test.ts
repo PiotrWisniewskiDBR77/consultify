@@ -210,6 +210,21 @@ describe('V8FinanceApi', () => {
     expect(data.status).toBe('approved');
   });
 
+  it('updates governed finance model assumptions through the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({
+      success: true,
+    });
+
+    const data = await V8FinanceApi.updateModel('model-1', {
+      assumptions: { initialCash: 1000 },
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/finance/models/model-1', {
+      assumptions: { initialCash: 1000 },
+    });
+    expect(data.success).toBe(true);
+  });
+
   it('posts governed finance model events through the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       success: true,

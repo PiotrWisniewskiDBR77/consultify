@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `23`
+- landed packets in the active lane: `28`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `model event delete V8 seam` recorded in `evidence/413-v81-broader-finance-model-event-delete-v8-seam.md`
-- reason: after model event-add continuity landed, the next smallest honest residual was the delete-event mutation still defaulting to the legacy financial-modeling endpoint in the active finance model workspace
+- latest evidence: `model assumptions save V8 seam` recorded in `evidence/414-v81-broader-finance-model-assumptions-save-v8-seam.md`
+- reason: after model event-delete continuity landed, the next smallest honest residual was the assumptions-save mutation still defaulting to the legacy financial-modeling endpoint in the active finance model workspace
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `active finance model event delete continuity`
-- last accepted packet: `model event delete V8 seam`
+- current packet: `active finance model assumptions-save continuity`
+- last accepted packet: `model assumptions save V8 seam`
 - blocker: `none`
-- next action: `assess whether active finance model assumptions-save continuity is the next smallest broader Finance packet after model event-delete closure`
+- next action: `assess whether broader Finance parity is ready for bounded T4 acceptance after model assumptions-save closure`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

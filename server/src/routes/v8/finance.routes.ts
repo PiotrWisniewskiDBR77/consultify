@@ -80,6 +80,7 @@ import {
   listEvents,
   listModels,
   persistComputeResult,
+  updateModel,
 } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
@@ -400,6 +401,24 @@ router.post(
 
     return res.json({
       data: { success: true, status: 'approved' },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.put(
+  '/models/:modelId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    await updateModel(modelId, req.body ?? {});
+    return res.json({
+      data: { success: true },
       meta: financeMeta(),
     });
   }),

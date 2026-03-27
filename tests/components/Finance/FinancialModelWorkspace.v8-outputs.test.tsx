@@ -43,6 +43,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     getModel: vi.fn(),
     getModelOutputs: vi.fn(),
     getModelValidations: vi.fn(),
+    updateModel: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -231,6 +232,59 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
 
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+    });
+  });
+
+  it('prefers governed model assumptions save before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getModel).mockResolvedValue({
+      model: { ...baseModel, assumptions_json: { initialCash: 1000 } },
+    } as any);
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.updateModel).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.updateModel).toHaveBeenCalledWith('model-1', {
+        assumptions: { initialCash: 1000 },
+      });
+    });
+
+    expect(Api.put).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1', {
+      assumptions: { initialCash: 1000 },
+    });
+  });
+
+  it('falls back to legacy model assumptions save in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getModel).mockResolvedValue({
+      model: { ...baseModel, assumptions_json: { initialCash: 1000 } },
+    } as any);
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.updateModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/api/financial-modeling/models/model-1', {
+        assumptions: { initialCash: 1000 },
+      });
     });
   });
 

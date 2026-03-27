@@ -198,6 +198,17 @@ async function deleteModelEventWithFallback(eventId: string) {
   }
 }
 
+async function updateModelWithFallback(modelId: string, body: Record<string, unknown>) {
+  try {
+    return await V8FinanceApi.updateModel(modelId, body);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.put(`/api/financial-modeling/models/${modelId}`, body);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -520,7 +531,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const handleSaveAssumptions = async () => {
     if (!selectedModel) return;
     try {
-      await Api.put(`/api/financial-modeling/models/${selectedModel.id}`, { assumptions });
+      await updateModelWithFallback(selectedModel.id, { assumptions });
       onModelChanged?.(selectedModel.id);
     } catch {
       /* noop */
