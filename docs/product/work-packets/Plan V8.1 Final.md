@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `7`
+- landed packets in the active lane: `8`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `advanced statement detail read V8 seam` recorded in `evidence/393-v81-broader-finance-advanced-statement-detail-read-v8-seam.md`
-- reason: after lightweight child-statement continuity landed, the next smallest honest packet was the advanced statement workspace initial detail read still used by `FinancialStatementWorkspace`
+- latest evidence: `canonical lines V8 seam` recorded in `evidence/394-v81-broader-finance-canonical-lines-v8-seam.md`
+- reason: after advanced statement detail continuity landed, the next smallest honest packet was the canonical-line catalog still loaded from the legacy finance-statements surface inside `FinancialStatementWorkspace`
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after advanced statement detail read continuity`
-- last accepted packet: `advanced statement detail read V8 seam`
+- current packet: `assess the next bounded broader finance packet after canonical lines continuity`
+- last accepted packet: `canonical lines V8 seam`
 - blocker: `none`
-- next action: `assess whether advanced statement workspace support reads (ratios, canonical-lines, related-list continuity) can be split into the next bounded broader finance packet without broadening into analytics or writes`
+- next action: `assess whether advanced statement workspace support reads for ratios or related-list continuity can be split into the next bounded broader finance packet without broadening into analytics or writes`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

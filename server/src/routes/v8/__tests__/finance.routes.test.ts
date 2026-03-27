@@ -312,6 +312,27 @@ describe('V8 finance read-only routes', () => {
     expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
   });
 
+  it('GET /api/v8/finance/canonical-lines returns envelope and delegates to the canonical line query', async () => {
+    mockDbAll.mockResolvedValue([
+      {
+        id: 'line-1',
+        statement_type: 'P&L',
+        line_code: 'revenue',
+        line_name: 'Revenue',
+        line_name_pl: 'Przychody',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/canonical-lines');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.canonicalLines?.[0]?.line_name).toBe('Revenue');
+    expect(mockDbAll).toHaveBeenCalledWith(expect.stringContaining('FROM financial_statement_lines'), [ORG]);
+  });
+
   it('GET /api/v8/finance/valuations returns envelope and delegates to listValuations', async () => {
     mockListValuations.mockResolvedValue([
       {

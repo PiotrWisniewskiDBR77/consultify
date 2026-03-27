@@ -165,6 +165,18 @@ async function getStatementDetailWithFallback(statementId: string) {
   }
 }
 
+async function getCanonicalLinesWithFallback() {
+  try {
+    const data = await V8FinanceApi.getCanonicalLines();
+    return Array.isArray(data?.canonicalLines) ? data.canonicalLines : [];
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get('/api/finance-statements/canonical-lines').catch(() => []);
+  }
+}
+
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
   const rawStatus = String(detail.status || 'draft');
   const readinessStatus = deriveStatementReadinessStatus(
@@ -269,7 +281,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
       const [statement, ratioData, canonicalLineData, statementList] = await Promise.all([
         getStatementDetailWithFallback(statementId),
         Api.get(`/api/finance-statements/${statementId}/ratios`).catch(() => null),
-        Api.get('/api/finance-statements/canonical-lines').catch(() => []),
+        getCanonicalLinesWithFallback(),
         Api.get('/api/finance-statements').catch(() => []),
       ]);
       setDetail(statement as StatementDetail);

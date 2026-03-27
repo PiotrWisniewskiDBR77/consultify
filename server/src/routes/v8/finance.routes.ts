@@ -141,6 +141,26 @@ router.get(
 );
 
 router.get(
+  '/canonical-lines',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const canonicalLines = await dbAll<any>(
+      `SELECT id, statement_type, line_code, line_name, line_name_en, line_name_pl, parent_line_id, sort_order,
+              aggregation_level, required_level, sign_convention, is_total, is_subtotal, is_computed,
+              formula_json, deaggregation_ready, taxonomy_version
+       FROM financial_statement_lines
+       WHERE is_system = TRUE OR organization_id = ?
+       ORDER BY statement_type, sort_order`,
+      [organizationId],
+    );
+    return res.json({
+      data: { canonicalLines, count: canonicalLines.length },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
   '/analyses',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);

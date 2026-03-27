@@ -160,6 +160,27 @@ describe('V8FinanceApi', () => {
     expect(data.statement.statement_type).toBe('P&L');
   });
 
+  it('requests governed finance canonical lines from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      canonicalLines: [
+        {
+          id: 'line-1',
+          statement_type: 'P&L',
+          line_code: 'revenue',
+          line_name: 'Revenue',
+          line_name_pl: 'Przychody',
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8FinanceApi.getCanonicalLines();
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/canonical-lines');
+    expect(data.count).toBe(1);
+    expect(data.canonicalLines[0].line_name).toBe('Revenue');
+  });
+
   it('requests governed finance valuations from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       valuations: [

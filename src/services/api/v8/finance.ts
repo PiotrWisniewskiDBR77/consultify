@@ -132,6 +132,26 @@ export interface V8FinanceStatementDetail {
   [key: string]: unknown;
 }
 
+export interface V8FinanceCanonicalLineOption {
+  id: string;
+  statement_type?: string | null;
+  line_code?: string | null;
+  line_name: string;
+  line_name_en?: string | null;
+  line_name_pl?: string | null;
+  parent_line_id?: string | null;
+  sort_order?: number | null;
+  aggregation_level?: number | null;
+  required_level?: number | null;
+  sign_convention?: string | null;
+  is_total?: boolean | null;
+  is_subtotal?: boolean | null;
+  is_computed?: boolean | null;
+  formula_json?: string | null;
+  deaggregation_ready?: boolean | null;
+  taxonomy_version?: string | null;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -186,6 +206,8 @@ export const V8FinanceApi = {
     v8Get<{ pack: V8FinanceStatementPackDetail }>(`/finance/statement-packs/${packId}`),
   getStatement: (statementId: string) =>
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
+  getCanonicalLines: () =>
+    v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>('/finance/canonical-lines'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),
