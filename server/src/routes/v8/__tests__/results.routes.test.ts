@@ -255,4 +255,39 @@ describe('V8 results read-only routes', () => {
       expect.arrayContaining(['init-1', 'kpi-1', ORG, 'increase', 'medium', UID]),
     );
   });
+
+  it('PUT /api/v8/results/roi/initiative/:initiativeId/assumptions saves governed ROI assumptions', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/results/roi/initiative/init-1/assumptions').send({
+      expectedRevenueDelta: 200,
+      expectedCostDelta: 100,
+      capex: 50,
+      opexAnnual: 20,
+      horizonMonths: 24,
+      confidence: 'medium',
+      assumptionsOwner: 'owner-1',
+      assumptionsText: 'Updated from drawer',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain('INSERT INTO roi_assumptions');
+    expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining([
+        'init-1',
+        ORG,
+        50,
+        20,
+        24,
+        200,
+        100,
+        'Updated from drawer',
+        'owner-1',
+        'medium',
+        UID,
+      ]),
+    );
+  });
 });

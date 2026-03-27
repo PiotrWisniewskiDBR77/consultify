@@ -1,4 +1,4 @@
-import { v8Get, v8Post } from './client';
+import { v8Get, v8Post, v8Put } from './client';
 
 export const shouldFallbackToLegacyResults = (error: any) => {
   const status = Number(error?.status);
@@ -268,6 +268,27 @@ export interface V8ResultsCreateKpiMappingResponse {
   kpiId: string;
 }
 
+export interface V8ResultsUpdateRoiAssumptionsPayload {
+  capex?: number | null;
+  opexAnnual?: number | null;
+  expectedRoiPercent?: number | null;
+  expectedNpv?: number | null;
+  expectedPaybackMonths?: number | null;
+  horizonMonths?: number | null;
+  baselineRevenue?: number | null;
+  baselineCost?: number | null;
+  expectedRevenueDelta?: number | null;
+  expectedCostDelta?: number | null;
+  effectStartDate?: string | null;
+  assumptionsText?: string | null;
+  assumptionsOwner?: string | null;
+  confidence?: 'high' | 'medium' | 'low' | string | null;
+}
+
+export interface V8ResultsUpdateRoiAssumptionsResponse {
+  success: boolean;
+}
+
 export const V8ResultsApi = {
   getDashboard: () => v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard'),
   getKpiCatalog: (params?: { kpiId?: string }) =>
@@ -287,4 +308,12 @@ export const V8ResultsApi = {
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
   createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
     v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
+  updateRoiInitiativeAssumptions: (
+    initiativeId: string,
+    payload: V8ResultsUpdateRoiAssumptionsPayload,
+  ) =>
+    v8Put<V8ResultsUpdateRoiAssumptionsResponse>(
+      `/results/roi/initiative/${encodeURIComponent(initiativeId)}/assumptions`,
+      payload,
+    ),
 };

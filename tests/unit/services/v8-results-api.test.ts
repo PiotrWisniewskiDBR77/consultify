@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
   v8Post: vi.fn(),
+  v8Put: vi.fn(),
 }));
 
 import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
-import { v8Get, v8Post } from '@/services/api/v8/client';
+import { v8Get, v8Post, v8Put } from '@/services/api/v8/client';
 
 describe('V8ResultsApi', () => {
   beforeEach(() => {
@@ -173,5 +174,24 @@ describe('V8ResultsApi', () => {
     });
     expect(data.id).toBe('map-1');
     expect(data.initiativeId).toBe('init-1');
+  });
+
+  it('requests governed ROI assumptions save from the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.updateRoiInitiativeAssumptions('init-1', {
+      expectedRevenueDelta: 200,
+      expectedCostDelta: 100,
+      horizonMonths: 24,
+      confidence: 'medium',
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/results/roi/initiative/init-1/assumptions', {
+      expectedRevenueDelta: 200,
+      expectedCostDelta: 100,
+      horizonMonths: 24,
+      confidence: 'medium',
+    });
+    expect(data.success).toBe(true);
   });
 });

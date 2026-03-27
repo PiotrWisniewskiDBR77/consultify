@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `7 / 13`
 - active lane: broader `Results / KPI / ROI` parity
-- landed packets in the active lane: `1`
+- landed packets in the active lane: `2`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Results / KPI / ROI` parity
-- latest evidence: `KPI create V8 write seam` recorded in `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md`
-- reason: the first honest broader results packet was the visible KPI create workflow, which still wrote through legacy benefits routes despite the accepted results lane already moving active reads/runtime truth onto governed V8 seams
+- latest evidence: `ROI assumptions V8 write seam` recorded in `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md`
+- reason: after KPI create continuity landed, the next smallest honest broader results packet was the visible ROI assumptions save flow inside `ROIDetailDrawer`, which still wrote through the legacy benefits route even though the accepted results lane had already moved ROI reads/runtime truth onto governed V8 seams
 
 ### Next three lanes
 
@@ -356,10 +356,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
 - split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader results packet after KPI create V8 write continuity`
-- last accepted packet: `KPI create V8 write seam`
+- current packet: `assess the next bounded broader results packet after ROI assumptions V8 write continuity`
+- last accepted packet: `ROI assumptions V8 write seam`
 - blocker: `none`
-- next action: `choose the next smallest honest broader results packet after KPI create continuity without silently broadening into KPI reports plus ROI writes plus results operator breadth all at once`
+- next action: `choose the next smallest honest broader results packet after KPI create and ROI assumptions continuity without silently broadening into KPI reports plus realized-entry writes plus results operator breadth all at once`
 - acceptance evidence: `none`
 
 #### broader `Finance` parity

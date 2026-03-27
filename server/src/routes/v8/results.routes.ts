@@ -265,4 +265,79 @@ router.get(
   }),
 );
 
+/**
+ * PUT /api/v8/results/roi/initiative/:initiativeId/assumptions
+ * Bounded ROI assumptions write seam for the active Results drawer surface.
+ */
+router.put(
+  '/roi/initiative/:initiativeId/assumptions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const initiativeId =
+      typeof req.params.initiativeId === 'string' ? req.params.initiativeId.trim() : '';
+    if (!initiativeId) {
+      return res.status(400).json({
+        error: 'initiativeId is required',
+        code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
+      });
+    }
+
+    const {
+      capex,
+      opexAnnual,
+      expectedRoiPercent,
+      expectedNpv,
+      expectedPaybackMonths,
+      horizonMonths,
+      baselineRevenue,
+      baselineCost,
+      expectedRevenueDelta,
+      expectedCostDelta,
+      effectStartDate,
+      assumptionsText,
+      assumptionsOwner,
+      confidence,
+    } = req.body || {};
+
+    const id = uuidv4().replace(/-/g, '');
+    await dbRun(
+      `INSERT INTO roi_assumptions (id, initiative_id, organization_id, capex, opex_annual, expected_roi_percent, expected_npv, expected_payback_months, horizon_months, baseline_revenue, baseline_cost, expected_revenue_delta, expected_cost_delta, effect_start_date, assumptions_text, assumptions_owner, confidence, last_updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(initiative_id) DO UPDATE SET
+         capex=excluded.capex, opex_annual=excluded.opex_annual, expected_roi_percent=excluded.expected_roi_percent,
+         expected_npv=excluded.expected_npv, expected_payback_months=excluded.expected_payback_months,
+         horizon_months=excluded.horizon_months, baseline_revenue=excluded.baseline_revenue, baseline_cost=excluded.baseline_cost,
+         expected_revenue_delta=excluded.expected_revenue_delta, expected_cost_delta=excluded.expected_cost_delta,
+         effect_start_date=excluded.effect_start_date, assumptions_text=excluded.assumptions_text,
+         assumptions_owner=excluded.assumptions_owner, confidence=excluded.confidence,
+         last_updated_by=excluded.last_updated_by, updated_at=CURRENT_TIMESTAMP`,
+      [
+        id,
+        initiativeId,
+        organizationId,
+        capex || 0,
+        opexAnnual || 0,
+        expectedRoiPercent || null,
+        expectedNpv || null,
+        expectedPaybackMonths || null,
+        horizonMonths || 36,
+        baselineRevenue || null,
+        baselineCost || null,
+        expectedRevenueDelta || null,
+        expectedCostDelta || null,
+        effectStartDate || null,
+        assumptionsText || null,
+        assumptionsOwner || null,
+        confidence || 'medium',
+        userId || null,
+      ],
+    );
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
 export default router;

@@ -272,8 +272,8 @@ The next broader results parity lane is now explicitly promoted from visible bac
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Results / KPI / ROI` parity scope honest and assess the next bounded broader results packet after the KPI create V8 write closure
-- `Agent B`: own runtime/surface closure for the active broader results lane packet-by-packet, now through the split-brain map and KPI create continuity
+- `Agent A`: keep broader `Results / KPI / ROI` parity scope honest and assess the next bounded broader results packet after the ROI assumptions V8 write closure
+- `Agent B`: own runtime/surface closure for the active broader results lane packet-by-packet, now through the split-brain map, KPI create continuity, and ROI assumptions save continuity
 
 ### Exit criteria
 
@@ -291,6 +291,7 @@ Current result:
 - the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`,
 - the active lane split-brain map is recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`,
 - the first real bounded broader results packet landed in `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md` by moving the visible KPI create workflow onto governed V8 results write routes with bounded compatibility fallback,
+- the second real bounded broader results packet landed in `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md` by moving the visible ROI assumptions save workflow onto governed V8 results write routes with bounded compatibility fallback,
 - the previously accepted bounded `Results / KPI / ROI` lane stays capped rather than silently reopened into one unbounded results rewrite.
 
 ### Explicitly out of scope
@@ -335,7 +336,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader canonical `/` and public marketing breadth | done | accepted landing shell/IA work plus five bounded canonical `/` narrative packets now close the smallest honest public-marketing seams; what remains is broader redesign work rather than another micro-packet | `5` | canonical `/` and public marketing breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
-| broader `Results / KPI / ROI` parity | active | accepted lane closed bounded read/runtime truth seams, and the first broader KPI create write seam has now landed, but wider write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
+| broader `Results / KPI / ROI` parity | active | accepted lane closed bounded read/runtime truth seams, and the first two broader write seams have now landed, but wider write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
@@ -452,6 +453,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the second real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ROIDetailDrawer` assumptions save flow onto governed V8 results routes in `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md`, so active ROI assumptions editing no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: landed the first real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPICreateModal` write flow onto governed V8 results routes in `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md`, so active KPI creation no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: accepted broader `Chat / AI core` parity expansion in `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md` after four bounded packets landed, then promoted broader `Results / KPI / ROI` parity into active execution through `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md` and recorded the initial split-brain map in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
 - 2026-03-27: landed the fourth bounded packet inside broader `Chat / AI core` parity expansion by mirroring the shared `Private mode` runtime indicator onto `AIChatWelcomeView` in `evidence/365-v81-broader-chat-ai-core-legacy-chat-private-mode-indicator-seam.md`, so the two live chat surfaces no longer diverge on visible private-mode state

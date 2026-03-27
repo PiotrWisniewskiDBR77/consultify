@@ -139,7 +139,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
 
   const handleSaveAssumptions = useCallback(async () => {
     try {
-      await Api.put(`/benefits/roi/${initiativeId}/assumptions`, {
+      const payload = {
         expectedRevenueDelta: assumptions?.expectedRevenueDelta,
         expectedCostDelta: assumptions?.expectedCostDelta,
         capex: assumptions?.capex,
@@ -148,7 +148,16 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
         effectStartDate: assumptions?.effectStartDate,
         confidence: assumptions?.confidence ?? 'medium',
         assumptionsOwner: assumptions?.assumptionsOwner,
-      });
+        assumptionsText: assumptions?.assumptionsText,
+      };
+      try {
+        await V8ResultsApi.updateRoiInitiativeAssumptions(initiativeId, payload);
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        await Api.put(`/benefits/roi/${initiativeId}/assumptions`, payload);
+      }
       fetchData();
       onSaved?.();
     } catch {
