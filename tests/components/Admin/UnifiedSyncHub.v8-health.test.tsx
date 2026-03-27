@@ -50,6 +50,7 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
     getIntegrations: vi.fn(),
     getConnectors: vi.fn(),
     connectIntegration: vi.fn(),
+    configureIntegration: vi.fn(),
     getHubHealth: vi.fn(),
     getErrors: vi.fn(),
     resolveError: vi.fn(),
@@ -342,7 +343,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/pause/int-1', expect.anything());
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
     fireEvent.click(screen.getByRole('button', { name: /Resume/i }));
 
     await waitFor(() => {
@@ -384,7 +385,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Jira')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
     fireEvent.click(screen.getByRole('button', { name: /Re-authorize/i }));
 
     await waitFor(() => {
@@ -426,7 +427,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Jira')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
     fireEvent.click(screen.getByRole('button', { name: /Disconnect/i }));
 
     await waitFor(() => {
@@ -506,6 +507,8 @@ describe('UnifiedSyncHub V8 health continuity', () => {
         name: 'Jira',
         category: 'project_management',
         status: 'pending',
+        configuredFields: [],
+        onboardingStatus: 'pending_external_auth_or_configuration',
         capabilities: ['issues'],
         authType: 'oauth2',
         configFields: ['site_url', 'cloud_id'],
@@ -554,6 +557,8 @@ describe('UnifiedSyncHub V8 health continuity', () => {
           errorRate: 25,
           unresolvedErrors: 0,
           lastRun: null,
+          configuredFields: [],
+          onboardingStatus: 'pending_external_auth_or_configuration',
           connector: {
             id: 'jira',
             name: 'Jira',
@@ -603,5 +608,115 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     expect(V8SyncApi.runIntegrationSync).not.toHaveBeenCalled();
     expect(V8SyncApi.pauseIntegration).not.toHaveBeenCalled();
+  });
+
+  it('saves pending provider config through the governed V8 seam before auth completes', async () => {
+    const initialIntegrations = {
+      integrations: [
+        {
+          id: 'int-pending-2',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'pending',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 25,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: [],
+          onboardingStatus: 'pending_external_auth_or_configuration',
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+    const updatedIntegrations = {
+      integrations: [
+        {
+          id: 'int-pending-2',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'pending',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 25,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: 'pending_external_auth',
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(initialIntegrations as any);
+    vi.mocked(V8SyncApi.configureIntegration).mockResolvedValue({
+      integration: {
+        id: 'int-pending-2',
+        connectorId: 'jira',
+        status: 'pending',
+        configuredFields: ['site_url', 'cloud_id'],
+        onboardingStatus: 'pending_external_auth',
+      },
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Add provider config/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Add provider config/i }));
+    fireEvent.change(screen.getByPlaceholderText('site url'), {
+      target: { value: 'https://example.atlassian.net' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('cloud id'), {
+      target: { value: 'cloud-123' },
+    });
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(updatedIntegrations as any);
+    fireEvent.click(screen.getByRole('button', { name: /Save provider config/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.configureIntegration).toHaveBeenCalledWith('int-pending-2', {
+        config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' },
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Required provider configuration is saved. Complete external auth before sync controls become available.',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('site url saved')).toBeInTheDocument();
+    expect(screen.getByText('cloud id saved')).toBeInTheDocument();
+    expect(screen.getByText('{{configured}} of {{total}} required setup fields saved.')).toBeInTheDocument();
+    expect(screen.getByText('Finish external auth to enable sync controls')).toBeInTheDocument();
   });
 });

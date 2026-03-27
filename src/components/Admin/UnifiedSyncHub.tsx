@@ -103,6 +103,13 @@ interface IntegrationItem {
   errorRate: number;
   unresolvedErrors: number;
   lastRun: SyncRun | null;
+  configuredFields: string[];
+  onboardingStatus:
+    | 'pending_external_auth_or_configuration'
+    | 'pending_external_auth'
+    | 'pending_configuration'
+    | 'configuration_submitted_pending_validation'
+    | null;
   connector: ConnectorInfo | null;
 }
 
@@ -284,6 +291,10 @@ function formatConfigFieldLabel(field: string): string {
   return field.replace(/_/g, ' ');
 }
 
+function isSecretConfigField(field: string): boolean {
+  return field.includes('secret') || field.includes('token');
+}
+
 // ── Component ──────────────────────────────────────────────────
 
 export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -323,6 +334,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [editingPendingConfigId, setEditingPendingConfigId] = useState<string | null>(null);
+  const [savingPendingConfigId, setSavingPendingConfigId] = useState<string | null>(null);
+  const [pendingConfigDrafts, setPendingConfigDrafts] = useState<Record<string, Record<string, string>>>({});
 
   const v8ConnectorHealthTargets = useMemo<V8ConnectorHealthTarget[]>(() => {
     const byConnectorId = new Map<string, V8ConnectorHealthTarget>();
@@ -685,6 +699,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             status: (data.integration.status === 'pending' ? 'pending' : 'pending') as const,
             capabilities: [],
             authType: 'oauth2',
+            configFields: [],
             scopes: [],
           };
         }
@@ -706,6 +721,81 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       }
     } catch {
       toast.error(t('integrations.syncHub.connectFailed', 'Connection failed'));
+    }
+  };
+
+  const handlePendingConfigDraftChange = (
+    integrationId: string,
+    field: string,
+    value: string,
+  ) => {
+    setPendingConfigDrafts((current) => ({
+      ...current,
+      [integrationId]: {
+        ...(current[integrationId] || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSavePendingConfig = async (integration: IntegrationItem) => {
+    const draft = pendingConfigDrafts[integration.id] || {};
+    const config = Object.fromEntries(
+      Object.entries(draft).filter(([, value]) => value.trim().length > 0),
+    );
+
+    if (Object.keys(config).length === 0) {
+      toast.error(
+        t('integrations.syncHub.setupConfigMissing', 'Enter at least one provider configuration value.'),
+      );
+      return;
+    }
+
+    setSavingPendingConfigId(integration.id);
+    try {
+      let onboardingStatus = integration.onboardingStatus;
+      try {
+        const data = await V8SyncApi.configureIntegration(integration.id, { config });
+        onboardingStatus = data.integration.onboardingStatus;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+
+        const res = await fetch(`${API_URL}/integrations/${integration.id}/settings`, {
+          method: 'PUT',
+          headers: getHeaders(),
+          body: JSON.stringify({ settings: config }),
+        });
+        if (!res.ok) {
+          throw new Error('Failed to save integration configuration');
+        }
+      }
+
+      toast.success(
+        onboardingStatus === 'pending_external_auth'
+          ? t(
+              'integrations.syncHub.setupConfigSavedAuthPending',
+              'Configuration saved. External auth still needs to finish before sync controls become available.',
+            )
+          : t(
+              'integrations.syncHub.setupConfigSaved',
+              'Configuration saved. Finish the remaining onboarding steps before sync controls become available.',
+            ),
+      );
+      trackFunnelEvent('integration_config_saved', {
+        integrationId: integration.id,
+        connectorId: integration.connectorId,
+      });
+      setEditingPendingConfigId(null);
+      setPendingConfigDrafts((current) => ({ ...current, [integration.id]: {} }));
+      await loadAll();
+    } catch {
+      toast.error(
+        t('integrations.syncHub.setupConfigSaveFailed', 'Failed to save provider configuration.'),
+      );
+    } finally {
+      setSavingPendingConfigId(null);
     }
   };
 
@@ -1052,6 +1142,31 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const canRunSync = !isPendingOnboarding && int.status !== 'disconnected';
     const canPause = !isPendingOnboarding && int.status !== 'disconnected';
     const canResume = !isPendingOnboarding;
+    const configuredFieldSet = new Set(int.configuredFields || []);
+    const missingConfigFields = (int.connector?.configFields || []).filter(
+      (field) => !configuredFieldSet.has(field),
+    );
+    const isEditingPendingConfig = editingPendingConfigId === int.id;
+    const pendingSetupDescription =
+      int.onboardingStatus === 'pending_external_auth'
+        ? t(
+            'integrations.syncHub.setupPendingAuthOnlyDesc',
+            'Required provider configuration is saved. Complete external auth before sync controls become available.',
+          )
+        : int.onboardingStatus === 'configuration_submitted_pending_validation'
+          ? t(
+              'integrations.syncHub.setupPendingValidationDesc',
+              'Configuration is saved. Provider validation must finish before sync controls become available.',
+            )
+          : int.onboardingStatus === 'pending_configuration'
+            ? t(
+                'integrations.syncHub.setupPendingConfigOnlyDesc',
+                'Finish provider configuration before sync controls become available.',
+              )
+            : t(
+                'integrations.syncHub.setupPendingDesc',
+                'Complete external auth or provider configuration before sync controls become available.',
+              );
 
     return (
       <motion.div
@@ -1185,21 +1300,89 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         {t('integrations.syncHub.setupPending', 'Connection setup still pending')}
                       </div>
                       <div className="text-amber-200/80 mt-0.5">
-                        {t(
-                          'integrations.syncHub.setupPendingDesc',
-                          'Complete external auth or provider configuration before sync controls become available.',
-                        )}
+                        {pendingSetupDescription}
                       </div>
                       {!!int.connector?.configFields?.length && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {int.connector.configFields.map((field) => (
-                            <span
-                              key={field}
-                              className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-100"
+                        <>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {int.connector.configFields.map((field) => {
+                              const isConfigured = configuredFieldSet.has(field);
+                              return (
+                                <span
+                                  key={field}
+                                  className={`px-2 py-0.5 rounded-full border text-[11px] ${
+                                    isConfigured
+                                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-200'
+                                      : 'bg-amber-500/10 border-amber-500/20 text-amber-100'
+                                  }`}
+                                >
+                                  {formatConfigFieldLabel(field)}
+                                  {isConfigured ? ` ${t('common.saved', 'saved')}` : ''}
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 text-[11px] text-amber-200/70">
+                            {t(
+                              'integrations.syncHub.setupProgress',
+                              '{{configured}} of {{total}} required setup fields saved.',
+                              {
+                                configured: configuredFieldSet.size,
+                                total: int.connector.configFields.length,
+                              },
+                            )}
+                          </div>
+                        </>
+                      )}
+                      {!!missingConfigFields.length && (
+                        <div className="mt-3 space-y-2">
+                          {!isEditingPendingConfig ? (
+                            <button
+                              onClick={() => setEditingPendingConfigId(int.id)}
+                              className="px-3 py-1.5 text-xs bg-amber-500/15 text-amber-100 hover:bg-amber-500/25 rounded-lg transition-colors"
                             >
-                              {formatConfigFieldLabel(field)}
-                            </span>
-                          ))}
+                              {t('integrations.syncHub.addProviderConfig', 'Add provider config')}
+                            </button>
+                          ) : (
+                            <div
+                              className="space-y-2 rounded-lg border border-amber-500/20 bg-navy-950/30 p-3"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {missingConfigFields.map((field) => (
+                                <label key={field} className="block">
+                                  <div className="mb-1 text-[11px] uppercase tracking-wide text-amber-100/80">
+                                    {formatConfigFieldLabel(field)}
+                                  </div>
+                                  <input
+                                    type={isSecretConfigField(field) ? 'password' : 'text'}
+                                    value={pendingConfigDrafts[int.id]?.[field] || ''}
+                                    onChange={(e) =>
+                                      handlePendingConfigDraftChange(int.id, field, e.target.value)
+                                    }
+                                    placeholder={formatConfigFieldLabel(field)}
+                                    className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-amber-500/40 focus:outline-none"
+                                  />
+                                </label>
+                              ))}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => void handleSavePendingConfig(int)}
+                                  disabled={savingPendingConfigId === int.id}
+                                  className="px-3 py-1.5 text-xs bg-amber-500/15 text-amber-100 hover:bg-amber-500/25 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  {savingPendingConfigId === int.id
+                                    ? t('common.saving', 'Saving...')
+                                    : t('integrations.syncHub.saveProviderConfig', 'Save provider config')}
+                                </button>
+                                <button
+                                  onClick={() => setEditingPendingConfigId(null)}
+                                  className="px-3 py-1.5 text-xs text-slate-300 hover:text-white rounded-lg transition-colors"
+                                >
+                                  {t('common.cancel', 'Cancel')}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1283,10 +1466,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   {isPendingOnboarding && (
                     <span className="px-3 py-1.5 text-xs rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      {t(
-                        'integrations.syncHub.setupPendingControls',
-                        'Finish auth/config to enable sync controls',
-                      )}
+                      {int.onboardingStatus === 'pending_external_auth'
+                        ? t(
+                            'integrations.syncHub.setupPendingControlsAuthOnly',
+                            'Finish external auth to enable sync controls',
+                          )
+                        : t(
+                            'integrations.syncHub.setupPendingControls',
+                            'Finish auth/config to enable sync controls',
+                          )}
                     </span>
                   )}
                   <button

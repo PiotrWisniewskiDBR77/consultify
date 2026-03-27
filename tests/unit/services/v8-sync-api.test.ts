@@ -115,6 +115,28 @@ describe('V8SyncApi', () => {
     expect(data.integration.configFields).toEqual(['site_url', 'cloud_id']);
   });
 
+  it('posts pending configuration updates to the governed V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      integration: {
+        id: 'int-1',
+        connectorId: 'jira',
+        status: 'pending',
+        configuredFields: ['site_url', 'cloud_id'],
+        onboardingStatus: 'pending_external_auth',
+      },
+    });
+
+    const data = await V8SyncApi.configureIntegration('int-1', {
+      config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' },
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/configure', {
+      config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' },
+    });
+    expect(data.integration.configuredFields).toEqual(['site_url', 'cloud_id']);
+    expect(data.integration.onboardingStatus).toBe('pending_external_auth');
+  });
+
   it('requests governed hub health summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       summary: { total: 2, healthy: 1, degraded: 1, unhealthy: 0 },

@@ -325,6 +325,35 @@ describe('V8 sync read-only routes', () => {
     );
   });
 
+  it('POST /api/v8/sync/integrations/:integrationId/configure saves pending setup fields on the governed seam', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        id: 'int-pending-1',
+        connector_id: 'jira',
+        config: '{}',
+        status: 'pending',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/sync/integrations/int-pending-1/configure')
+      .send({ config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.integration?.configuredFields).toEqual(['site_url', 'cloud_id']);
+    expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE integrations'),
+      ['{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123"}', 'int-pending-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO integration_audit_log'),
+      expect.arrayContaining([ORG, 'int-pending-1', 'configuration_updated', UID, UID]),
+    );
+  });
+
   it('GET /api/v8/sync/health returns governed hub health summary', async () => {
     mockGetConnectedIntegrations.mockResolvedValue([{ id: 'int-1' }, { id: 'int-2' }]);
     mockGetIntegrationHealth

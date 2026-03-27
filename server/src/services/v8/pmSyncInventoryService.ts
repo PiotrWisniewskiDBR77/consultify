@@ -41,6 +41,13 @@ export interface V8SyncIntegrationInventoryRow {
   errorRate: number;
   unresolvedErrors: number;
   lastRun: SyncRunRow | null;
+  configuredFields: string[];
+  onboardingStatus:
+    | 'pending_external_auth_or_configuration'
+    | 'pending_external_auth'
+    | 'pending_configuration'
+    | 'configuration_submitted_pending_validation'
+    | null;
   connector: {
     id: string;
     name: string;
@@ -58,6 +65,36 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function getConfiguredFields(configFields: string[], config: Record<string, unknown>): string[] {
+  return configFields.filter((field) => {
+    const value = config[field];
+    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+  });
+}
+
+function mapOnboardingStatus(
+  status: string,
+  authType: string,
+  configFields: string[],
+  configuredFields: string[],
+):
+  | 'pending_external_auth_or_configuration'
+  | 'pending_external_auth'
+  | 'pending_configuration'
+  | 'configuration_submitted_pending_validation'
+  | null {
+  if (status !== 'pending') return null;
+
+  const hasAllRequiredFields =
+    configFields.length === 0 || configuredFields.length >= configFields.length;
+
+  if (authType === 'oauth2') {
+    return hasAllRequiredFields ? 'pending_external_auth' : 'pending_external_auth_or_configuration';
+  }
+
+  return hasAllRequiredFields ? 'configuration_submitted_pending_validation' : 'pending_configuration';
 }
 
 function mapInventoryHealth(status: string, healthy: boolean): 'healthy' | 'degraded' | 'unhealthy' {
@@ -103,8 +140,13 @@ export async function listGovernedIntegrations(
       );
       const connector = CONNECTORS[row.connector_id];
       const capabilities = safeJsonParse<string[]>(row.capabilities, connector?.capabilities ?? []);
+      const parsedConfig = safeJsonParse<Record<string, unknown>>(row.config, {});
       const derivedStatus = mapIntegrationStatus(row.status, health.authState);
       const derivedHealth = mapInventoryHealth(health.syncStatus, health.healthy);
+      const configuredFields = connector ? getConfiguredFields(connector.configFields, parsedConfig) : [];
+      const onboardingStatus = connector
+        ? mapOnboardingStatus(derivedStatus, connector.authType, connector.configFields, configuredFields)
+        : null;
 
       return {
         id: row.id,
@@ -120,6 +162,8 @@ export async function listGovernedIntegrations(
         errorRate: mapErrorRate(health.syncStatus, health.healthy, health.conflictCount),
         unresolvedErrors: health.conflictCount,
         lastRun: lastRunRows[0] ?? null,
+        configuredFields,
+        onboardingStatus,
         connector: connector
           ? {
               id: connector.id,

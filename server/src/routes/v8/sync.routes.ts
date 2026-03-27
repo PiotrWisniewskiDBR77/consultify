@@ -114,6 +114,48 @@ const InitiateConnectorConnectionBodySchema = z.object({
   displayName: z.string().trim().min(1).optional(),
 });
 
+const ConfigurePendingIntegrationBodySchema = z.object({
+  config: z.record(z.string(), z.unknown()).default({}),
+});
+
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function getConfiguredFields(
+  configFields: string[],
+  config: Record<string, unknown>,
+): string[] {
+  return configFields.filter((field) => {
+    const value = config[field];
+    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+  });
+}
+
+function getPendingOnboardingStatus(
+  authType: string,
+  configFields: string[],
+  configuredFields: string[],
+) {
+  const hasAllRequiredFields =
+    configFields.length === 0 || configuredFields.length >= configFields.length;
+
+  if (authType === 'oauth2') {
+    return hasAllRequiredFields
+      ? ('pending_external_auth' as const)
+      : ('pending_external_auth_or_configuration' as const);
+  }
+
+  return hasAllRequiredFields
+    ? ('configuration_submitted_pending_validation' as const)
+    : ('pending_configuration' as const);
+}
+
 router.get(
   '/integrations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -227,6 +269,98 @@ router.post(
           scopes,
         },
         onboardingStatus: 'pending_external_auth_or_configuration' as const,
+      },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/configure',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const parsedBody = ConfigurePendingIntegrationBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return res.status(400).json({
+        error: parsedBody.error.issues[0]?.message ?? 'Invalid configuration payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    const rows = await dbAll<{
+      id: string;
+      connector_id: string;
+      config: string | null;
+      status: string;
+    }>(
+      `SELECT id, connector_id, config, status
+       FROM integrations
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [integrationId, organizationId],
+    );
+    const integration = rows[0];
+    if (!integration) {
+      return res.status(404).json({ error: 'Integration not found', code: 'INTEGRATION_NOT_FOUND' });
+    }
+
+    const connector = CONNECTORS[integration.connector_id];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+
+    const currentConfig = safeJsonParse<Record<string, unknown>>(integration.config, {});
+    const nextConfig = { ...currentConfig };
+    for (const field of connector.configFields) {
+      if (Object.prototype.hasOwnProperty.call(parsedBody.data.config, field)) {
+        nextConfig[field] = parsedBody.data.config[field];
+      }
+    }
+
+    const configuredFields = getConfiguredFields(connector.configFields, nextConfig);
+    const onboardingStatus = getPendingOnboardingStatus(
+      connector.authType,
+      connector.configFields,
+      configuredFields,
+    );
+
+    await dbRun(
+      `UPDATE integrations
+       SET config = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(nextConfig), integrationId, organizationId],
+    );
+    await logIntegrationAudit(organizationId, integrationId, 'configuration_updated', actorId, actorId, {
+      connectorId: connector.id,
+      configuredFields,
+      status: integration.status,
+    });
+
+    return res.json({
+      data: {
+        integration: {
+          id: integrationId,
+          connectorId: connector.id,
+          status: integration.status,
+          configuredFields,
+          onboardingStatus,
+        },
       },
       meta: syncMutationMeta(),
     });

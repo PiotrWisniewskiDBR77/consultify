@@ -109,6 +109,13 @@ export interface V8SyncIntegrationInventoryRow {
   errorRate: number;
   unresolvedErrors: number;
   lastRun: V8SyncRunSummary | null;
+  configuredFields: string[];
+  onboardingStatus:
+    | 'pending_external_auth_or_configuration'
+    | 'pending_external_auth'
+    | 'pending_configuration'
+    | 'configuration_submitted_pending_validation'
+    | null;
   connector: {
     id: string;
     name: string;
@@ -141,6 +148,18 @@ export interface V8SyncInitiatedIntegration {
   authType: string;
   configFields: string[];
   scopes: string[];
+}
+
+export interface V8SyncConfiguredIntegration {
+  id: string;
+  connectorId: string;
+  status: string;
+  configuredFields: string[];
+  onboardingStatus:
+    | 'pending_external_auth_or_configuration'
+    | 'pending_external_auth'
+    | 'pending_configuration'
+    | 'configuration_submitted_pending_validation';
 }
 
 export interface V8SyncHealthSummary {
@@ -198,6 +217,10 @@ export const V8SyncApi = {
       integration: V8SyncInitiatedIntegration;
       onboardingStatus: 'pending_external_auth_or_configuration';
     }>(`/sync/connectors/${encodeURIComponent(connectorId)}/connect`, payload ?? {}),
+  configureIntegration: (integrationId: string, payload: { config?: Record<string, unknown> }) =>
+    v8Post<{
+      integration: V8SyncConfiguredIntegration;
+    }>(`/sync/integrations/${encodeURIComponent(integrationId)}/configure`, payload ?? { config: {} }),
   getHubHealth: () => v8Get<{ summary: V8SyncHealthSummary }>('/sync/health'),
   getErrors: (params?: { integrationId?: string }) =>
     v8Get<{ errors: V8SyncErrorItem[]; count: number }>(
