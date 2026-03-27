@@ -27,7 +27,7 @@ import {
   getStatementPackDetail,
   listStatementPacks,
 } from '../../services/financialStatementPackService.js';
-import { getStatementDetail } from '../../services/financialStatementReadService.js';
+import { getStatementDetail, listStatements } from '../../services/financialStatementReadService.js';
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -120,6 +120,20 @@ router.get(
     }
     return res.json({
       data: { pack },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/statements',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const readiness =
+      typeof req.query.readiness === 'string' ? String(req.query.readiness).trim().toLowerCase() : '';
+    const statements = await listStatements(organizationId, readiness);
+    return res.json({
+      data: { statements, count: statements.length },
       meta: financeMeta(),
     });
   }),

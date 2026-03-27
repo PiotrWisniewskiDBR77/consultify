@@ -24,6 +24,82 @@ function parseValidationMessages(value: unknown) {
   }
 }
 
+export async function listStatements(
+  organizationId: string,
+  readinessFilter = ''
+): Promise<Record<string, unknown>[]> {
+  const normalizedReadiness = String(readinessFilter || '').trim().toLowerCase();
+  try {
+    return await dbAll(
+      `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
+              fs.overall_confidence, fs.validation_status, fs.status, fs.created_at, fs.updated_at,
+              fs.readiness_status, fs.readiness_score, fs.quality_summary, fs.quality_reason_codes,
+              fs.document_class, fs.extraction_strategy, fs.template_family, fs.values_version,
+              COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
+              COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+              COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+              COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = TRUE) AS non_financial_line_count,
+              CASE
+                WHEN fs.readiness_status = 'ready' THEN TRUE
+                ELSE FALSE
+              END AS is_workable
+         FROM financial_statements fs
+         LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+         WHERE fs.organization_id = ?
+           AND (? = '' OR LOWER(COALESCE(fs.readiness_status, 'pending')) = ?)
+         GROUP BY fs.id
+         ORDER BY fs.period_end DESC, fs.created_at DESC
+         LIMIT 100`,
+      [organizationId, normalizedReadiness, normalizedReadiness],
+      { fallback: false },
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) {
+      throw error;
+    }
+    return await dbAll(
+      `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
+              fs.overall_confidence, fs.validation_status, fs.status, fs.created_at, fs.updated_at,
+              COUNT(fsv.id) AS total_line_count,
+              COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+              COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+              0 AS non_financial_line_count,
+              CASE
+                WHEN fs.status IN ('mapped', 'confirmed')
+                 AND fs.validation_status IN ('pass', 'warnings')
+                 AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) > 0
+                 AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) = 0
+                THEN TRUE
+                ELSE FALSE
+              END AS is_workable,
+              CASE
+                WHEN fs.status IN ('mapped', 'confirmed')
+                 AND fs.validation_status IN ('pass', 'warnings')
+                 AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) > 0
+                 AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) = 0
+                THEN 'ready'
+                WHEN COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) > 0
+                THEN 'recoverable'
+                ELSE 'pending'
+              END AS readiness_status,
+              0 AS readiness_score,
+              NULL AS quality_summary,
+              '[]' AS quality_reason_codes,
+              NULL AS document_class,
+              NULL AS extraction_strategy,
+              NULL AS template_family,
+              0 AS values_version
+         FROM financial_statements fs
+         LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+         WHERE fs.organization_id = ?
+         GROUP BY fs.id
+         ORDER BY fs.period_end DESC, fs.created_at DESC
+         LIMIT 100`,
+      [organizationId],
+    );
+  }
+}
+
 export async function getStatementDetail(
   organizationId: string,
   statementId: string

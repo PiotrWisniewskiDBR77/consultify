@@ -7,6 +7,7 @@ import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 const mockGetFinanceDashboard = vi.fn();
 const mockGetStatementPackDetail = vi.fn();
 const mockGetStatementDetail = vi.fn();
+const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockListValuations = vi.fn();
@@ -46,6 +47,7 @@ vi.mock('../../../services/financialStatementPackService.js', () => ({
 
 vi.mock('../../../services/financialStatementReadService.js', () => ({
   getStatementDetail: (...args: unknown[]) => mockGetStatementDetail(...args),
+  listStatements: (...args: unknown[]) => mockListStatements(...args),
 }));
 
 vi.mock('../../../services/valuationService.js', () => ({
@@ -161,6 +163,7 @@ describe('V8 finance read-only routes', () => {
     });
     mockGetStatementPackDetail.mockResolvedValue(null);
     mockGetStatementDetail.mockResolvedValue(null);
+    mockListStatements.mockResolvedValue([]);
     mockListStatementPacks.mockResolvedValue([]);
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
@@ -321,6 +324,27 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.statement?.id).toBe('statement-1');
     expect(res.body.data?.statement?.statement_type).toBe('P&L');
     expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
+  });
+
+  it('GET /api/v8/finance/statements returns envelope and delegates to listStatements', async () => {
+    mockListStatements.mockResolvedValue([
+      {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        source_file_name: 'acme-q1.csv',
+        readiness_status: 'recoverable',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/statements').query({ readiness: 'recoverable' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.statements?.[0]?.id).toBe('statement-1');
+    expect(mockListStatements).toHaveBeenCalledWith(ORG, 'recoverable');
   });
 
   it('GET /api/v8/finance/statements/:id/ratios returns envelope and delegates to computeRatios', async () => {

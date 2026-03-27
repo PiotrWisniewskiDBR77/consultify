@@ -160,6 +160,29 @@ describe('V8FinanceApi', () => {
     expect(data.statement.statement_type).toBe('P&L');
   });
 
+  it('requests governed finance statements list from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      statements: [
+        {
+          id: 'statement-1',
+          statement_type: 'P&L',
+          period_label: 'Q1 2026',
+          source_file_name: 'acme-q1.csv',
+          readiness_status: 'recoverable',
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8FinanceApi.getStatements({ readiness: 'recoverable' });
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/statements', {
+      readiness: 'recoverable',
+    });
+    expect(data.count).toBe(1);
+    expect(data.statements[0].id).toBe('statement-1');
+  });
+
   it('requests governed finance statement ratios from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       ratios: {

@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `9`
+- landed packets in the active lane: `10`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `statement ratios V8 seam` recorded in `evidence/395-v81-broader-finance-statement-ratios-v8-seam.md`
-- reason: after canonical-line continuity landed, the next smallest honest packet was the statement-ratios read still loaded from the legacy finance-statements surface inside `FinancialStatementWorkspace`
+- latest evidence: `related list V8 seam` recorded in `evidence/396-v81-broader-finance-related-list-v8-seam.md`
+- reason: after statement-ratios continuity landed, the next smallest honest packet was the source-documents related-list still loaded from the legacy finance-statements list surface inside `FinancialStatementWorkspace`
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after statement-ratios continuity`
-- last accepted packet: `statement ratios V8 seam`
+- current packet: `assess the next bounded broader finance packet after related-list continuity`
+- last accepted packet: `related list V8 seam`
 - blocker: `none`
-- next action: `assess whether related-list continuity is now the next smallest honest advanced statement workspace support-read packet without broadening into statements index semantics, analytics, or writes`
+- next action: `assess whether document-intelligence search continuity is now the next smallest honest advanced statement workspace residual before broader statement writes`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

@@ -132,6 +132,27 @@ export interface V8FinanceStatementDetail {
   [key: string]: unknown;
 }
 
+export interface V8FinanceStatementSummary {
+  id: string;
+  statement_type: string;
+  period_start?: string | null;
+  period_end?: string | null;
+  period_label?: string | null;
+  currency?: string | null;
+  scaling?: string | null;
+  source_file_name?: string | null;
+  validation_status?: string | null;
+  status?: string | null;
+  readiness_status?: string | null;
+  readiness_score?: number | null;
+  total_line_count?: number | null;
+  mapped_line_count?: number | null;
+  unmapped_line_count?: number | null;
+  non_financial_line_count?: number | null;
+  is_workable?: boolean | null;
+  [key: string]: unknown;
+}
+
 export interface V8FinanceCanonicalLineOption {
   id: string;
   statement_type?: string | null;
@@ -227,6 +248,10 @@ export const V8FinanceApi = {
     ),
   getStatementPack: (packId: string) =>
     v8Get<{ pack: V8FinanceStatementPackDetail }>(`/finance/statement-packs/${packId}`),
+  getStatements: (params?: { readiness?: string }) =>
+    v8Get<{ statements: V8FinanceStatementSummary[]; count: number }>('/finance/statements', {
+      ...(params?.readiness ? { readiness: params.readiness } : {}),
+    }),
   getStatement: (statementId: string) =>
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
   getStatementRatios: (statementId: string) =>

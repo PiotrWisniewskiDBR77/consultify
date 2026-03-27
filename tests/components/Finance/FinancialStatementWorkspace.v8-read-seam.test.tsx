@@ -27,6 +27,7 @@ vi.mock('@/services/api', () => {
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    getStatements: vi.fn(),
     getStatement: vi.fn(),
     getStatementRatios: vi.fn(),
     getCanonicalLines: vi.fn(),
@@ -71,11 +72,12 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
       },
     } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/finance-statements') {
-        return [] as any;
-      }
       throw new Error(`Unexpected GET ${url}`);
     });
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
     vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
       ratios: {
         statementId: 'statement-1',
@@ -98,15 +100,21 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     });
 
     expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(V8FinanceApi.getStatements).toHaveBeenCalled();
     expect(V8FinanceApi.getStatementRatios).toHaveBeenCalledWith('statement-1');
     expect(V8FinanceApi.getCanonicalLines).toHaveBeenCalled();
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements');
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/ratios');
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/canonical-lines');
   });
 
   it('falls back to legacy child statement detail in the workspace on bounded compatibility statuses', async () => {
     vi.mocked(V8FinanceApi.getStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
     vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
       ratios: {
         statementId: 'statement-1',
@@ -177,6 +185,10 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
         ingestRuns: [],
       },
     } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
     vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
       ratios: {
         statementId: 'statement-1',
@@ -226,6 +238,10 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
         ingestRuns: [],
       },
     } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({
+      statements: [],
+      count: 0,
+    } as any);
     vi.mocked(V8FinanceApi.getStatementRatios).mockRejectedValue({ status: 404 });
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
       canonicalLines: [],
@@ -252,5 +268,67 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
 
     expect(V8FinanceApi.getStatementRatios).toHaveBeenCalledWith('statement-1');
     expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1/ratios');
+  });
+
+  it('falls back to legacy related statement list in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pending',
+        status: 'draft',
+        readinessStatus: 'recoverable',
+        validationMessages: [],
+        values: [],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockRejectedValue({ status: 404 });
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: {
+        statementId: 'statement-1',
+        periodLabel: 'Q1 2026',
+        ratios: [],
+        coverageSummary: { coveragePct: 0, computed: 0, total: 0 },
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [],
+      count: 0,
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements') {
+        return [
+          {
+            id: 'statement-2',
+            statement_type: 'BS',
+            period_label: 'Q1 2026',
+            period_end: '2026-03-31',
+            source_file_name: 'acme-bs.csv',
+            readiness_status: 'ready',
+            mapped_line_count: 12,
+            unmapped_line_count: 0,
+          },
+        ] as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(Api.get).toHaveBeenCalledWith('/api/finance-statements');
+    });
+
+    expect(V8FinanceApi.getStatements).toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements');
+    expect(screen.getByText('acme-bs.csv')).toBeTruthy();
   });
 });

@@ -189,6 +189,18 @@ async function getStatementRatiosWithFallback(statementId: string) {
   }
 }
 
+async function getStatementsListWithFallback() {
+  try {
+    const data = await V8FinanceApi.getStatements();
+    return Array.isArray(data?.statements) ? data.statements : [];
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get('/api/finance-statements').catch(() => []);
+  }
+}
+
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
   const rawStatus = String(detail.status || 'draft');
   const readinessStatus = deriveStatementReadinessStatus(
@@ -294,7 +306,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
         getStatementDetailWithFallback(statementId),
         getStatementRatiosWithFallback(statementId),
         getCanonicalLinesWithFallback(),
-        Api.get('/api/finance-statements').catch(() => []),
+        getStatementsListWithFallback(),
       ]);
       setDetail(statement as StatementDetail);
       setRatios((ratioData as RatioResult) || null);
