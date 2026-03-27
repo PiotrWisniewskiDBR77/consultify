@@ -298,6 +298,7 @@ Current result:
 - the fifth real bounded broader sync packet landed in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md` by keeping governed reauthorization in honest pending state instead of auto-claiming recovery before external auth callback completion exists,
 - the post-reauth residual assessment recorded in `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md` confirmed there is no thinner honest broader-sync packet left before explicit external authorization callback continuity,
 - the sixth real bounded broader sync packet landed in `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md` by adding governed external-auth session preparation plus public callback landing readback, so the active sync hub can now record callback arrival without pretending full ready-state recovery already exists,
+- the seventh real bounded broader sync packet landed in `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md` by promoting callback-received integrations to connected truth on the active hub once governed verification is explicitly completed, without smuggling broader refresh / recovery lifecycle work into the same packet,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -460,6 +461,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the seventh real bounded packet inside broader `Sync` completion by promoting callback-received integrations to connected truth on the active hub in `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md`, so operators can now complete ready-state promotion from the active onboarding surface without switching to the lower connector-health panel
 - 2026-03-27: landed the sixth real bounded packet inside broader `Sync` completion by adding governed external-auth session preparation plus public callback landing readback in `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md`, so the active sync hub can now surface callback preparation and callback-received verification-pending truth without pretending full post-auth recovery already exists
 - 2026-03-27: recorded the broader `Sync` post-reauth residual assessment in `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md`, confirming that no thinner honest broader-sync packet remains before explicit external authorization callback continuity
 - 2026-03-27: landed the fifth real bounded packet inside broader `Sync` completion by keeping governed reauthorization in honest pending state in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md`, so the active sync hub no longer auto-claims recovered `connected` truth before external auth callback completion actually exists

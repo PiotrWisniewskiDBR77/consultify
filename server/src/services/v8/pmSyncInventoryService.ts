@@ -137,8 +137,15 @@ function mapInventoryHealth(status: string, healthy: boolean): 'healthy' | 'degr
 
 function mapIntegrationStatus(rowStatus: string, authState: string): string {
   if (authState === 'degraded_reauth_needed') return 'requires_reauth';
-  if (authState === 'connecting' || rowStatus === 'pending') return 'pending';
   if (authState === 'disconnected' || authState === 'not_connected') return 'disconnected';
+  if (authState === 'healthy' && rowStatus === 'pending') return 'connected';
+  if (
+    authState === 'connecting' ||
+    authState === 'connected_pending_verification' ||
+    rowStatus === 'pending'
+  ) {
+    return 'pending';
+  }
   return rowStatus;
 }
 

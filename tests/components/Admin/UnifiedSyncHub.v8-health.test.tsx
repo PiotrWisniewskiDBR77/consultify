@@ -820,4 +820,99 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     expect(screen.getByText('Verification still pending before sync controls unlock')).toBeInTheDocument();
   });
+
+  it('promotes callback-received integrations to connected through governed verification completion', async () => {
+    const pendingVerificationIntegrations = {
+      integrations: [
+        {
+          id: 'int-pending-4',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'pending',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 10,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: 'authorization_callback_received_pending_verification',
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+    const connectedIntegrations = {
+      integrations: [
+        {
+          id: 'int-pending-4',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    };
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(pendingVerificationIntegrations as any);
+    vi.mocked(V8SyncApi.setConnectorAuthState).mockResolvedValue({
+      record: {
+        connectorId: 'jira',
+        organizationId: 'org-sync-1',
+        authState: 'healthy',
+      },
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Mark verification complete/i })).toBeInTheDocument();
+    });
+
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(connectedIntegrations as any);
+    fireEvent.click(screen.getByRole('button', { name: /Mark verification complete/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.setConnectorAuthState).toHaveBeenCalledWith(
+        'jira',
+        'healthy',
+        'callback_verification_completed',
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTitle('Run now')).not.toBeDisabled();
+    });
+  });
 });

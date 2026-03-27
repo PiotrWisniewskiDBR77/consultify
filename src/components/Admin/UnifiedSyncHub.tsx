@@ -1009,10 +1009,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const handleSetV8ConnectorAuthState = async (
     connectorId: string,
     targetState: V8SyncConnectorAuthState,
+    reason?: string,
   ) => {
     setMutatingConnectorAuthId(`${connectorId}:${targetState}`);
     try {
-      await V8SyncApi.setConnectorAuthState(connectorId, targetState);
+      await V8SyncApi.setConnectorAuthState(connectorId, targetState, reason ?? null);
       toast.success(
         targetState === 'healthy'
           ? t('integrations.syncHub.v8AuthMarkedHealthy', 'Governed auth state marked healthy')
@@ -1021,7 +1022,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               'Governed auth state marked reauth needed',
             ),
       );
-      await Promise.all([fetchV8ConnectorHealth(), fetchV8AuthHealth(), fetchV8AuthEscalations()]);
+      await Promise.all([loadAll(), fetchV8ConnectorHealth(), fetchV8AuthHealth(), fetchV8AuthEscalations()]);
     } catch {
       toast.error(
         t(
@@ -1032,6 +1033,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     } finally {
       setMutatingConnectorAuthId(null);
     }
+  };
+
+  const handleMarkVerificationComplete = async (integration: IntegrationItem) => {
+    await handleSetV8ConnectorAuthState(
+      integration.connectorId,
+      'healthy',
+      'callback_verification_completed',
+    );
   };
 
   const handleResolveV8AuthEscalation = async (escalationId: string) => {
@@ -1429,6 +1438,26 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               'Use this callback URL in the provider authorization flow. It expires automatically if left unused.',
                             )}
                           </div>
+                        </div>
+                      )}
+                      {int.onboardingStatus === 'authorization_callback_received_pending_verification' && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleMarkVerificationComplete(int)}
+                            disabled={mutatingConnectorAuthId === `${int.connectorId}:healthy`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+                          >
+                            {mutatingConnectorAuthId === `${int.connectorId}:healthy` ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={12} />
+                            )}
+                            {t(
+                              'integrations.syncHub.markVerificationComplete',
+                              'Mark verification complete',
+                            )}
+                          </button>
                         </div>
                       )}
                     </div>
