@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `4 / 13`
 - active lane: broader canonical `/` and public marketing breadth
-- landed packets in the active lane: `0`
+- landed packets in the active lane: `1`
 
 ---
 
@@ -165,7 +165,7 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader canonical `/` and public marketing breadth
-- latest promoted evidence: `broader canonical / and public marketing breadth split-brain map` recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`
+- latest evidence: `broader canonical / hero messaging authority seam` recorded in `evidence/346-v81-broader-canonical-public-marketing-hero-messaging-authority-seam.md`
 - reason: the Anna voice lane is now boundedly accepted, and the next honest residual is broader canonical `/` and public marketing breadth rather than another hidden Anna micro-packet
 
 ### Next three lanes
@@ -323,10 +323,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`
 - split-brain map: `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`
-- current packet: `assess the first real bounded public-marketing packet after the split-brain map`
+- current packet: `assess the next bounded public-marketing packet after canonical / hero messaging authority`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `choose the smallest honest broader public-marketing packet without silently broadening into a full public rebrand`
+- next action: `choose the next smallest honest broader public-marketing packet without silently broadening into a full public rebrand`
 - acceptance evidence: `none`
 
 #### broader `Mobile` redesign

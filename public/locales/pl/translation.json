@@ -2360,13 +2360,17 @@
       "login": "Zaloguj się",
       "signUp": "Zarejestruj się"
     },
+    "epicHero": {
+      "eyebrow": "Platforma konsultingowej inteligencji",
+      "sub": "Ustrukturyzowany workflow konsultingowy dla diagnozy, planowania, realizacji i mierzenia efektu."
+    },
     "profitHero": {
       "h1": {
-        "line1": "Consultify AI.",
-        "line2": "Cała wiedza biznesowa świata.",
-        "line3": "Zamieniona w Twoje zyski."
+        "line1": "Consultify to",
+        "line2": "Spotify dla",
+        "line3": "wiedzy konsultingowej."
       },
-      "sub": "Diagnozuj. Planuj. Wdrażaj. Pilnuj efektu.",
+      "sub": "Ustrukturyzowany workflow konsultingowy dla diagnozy, planowania, realizacji i mierzenia efektu.",
       "billboard": "Zrobiliśmy dla konsultingu to, co Spotify zrobił dla muzyki: nielimitowany dostęp — tylko zamiast playlist masz zysk.",
       "ctaPrimary": "Uruchom darmowy trial",
       "ctaSecondary": "OPEN DEMO NOW",

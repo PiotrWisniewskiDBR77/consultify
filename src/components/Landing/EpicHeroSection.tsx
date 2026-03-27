@@ -210,7 +210,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
             >
               <Sparkles size={12} className="text-primary-300" />
               <span className="text-xs font-bold text-primary-300 tracking-wide">
-                {t('landing.epicHero.eyebrow', 'AI-Powered Consulting Platform')}
+                {t('landing.epicHero.eyebrow', 'Consulting Intelligence Platform')}
               </span>
             </motion.div>
 
@@ -222,9 +222,11 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               className="font-black tracking-tight leading-[1.0] text-white"
               style={{ fontSize: 'clamp(40px, 5.5vw, 88px)' }}
             >
-              <span className="block">{t('landing.profitHero.h1.line1', 'Consultify AI.')}</span>
+              <span className="block">
+                {t('landing.profitHero.h1.line1', 'Consultify is the')}
+              </span>
               <span className="block text-white/75 mt-1">
-                {t('landing.profitHero.h1.line2', "All the world's business knowledge.")}
+                {t('landing.profitHero.h1.line2', 'Spotify for')}
               </span>
               <span
                 className="block mt-1"
@@ -235,7 +237,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   backgroundClip: 'text',
                 }}
               >
-                {t('landing.profitHero.h1.line3', 'Turned into your profits.')}
+                {t('landing.profitHero.h1.line3', 'consulting knowledge.')}
               </span>
             </motion.h1>
 
@@ -246,7 +248,10 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               transition={{ duration: 0.5, delay: 0.14 }}
               className="text-base md:text-lg text-white/60 font-medium leading-relaxed max-w-lg"
             >
-              {t('landing.epicHero.sub', 'Consulting Intelligence Platform')}
+              {t(
+                'landing.epicHero.sub',
+                'Structured consulting workflow for diagnosis, planning, execution, and impact.'
+              )}
             </motion.p>
 
             {/* CTAs */}

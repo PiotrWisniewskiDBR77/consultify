@@ -67,13 +67,17 @@
       "login": "Log in",
       "signUp": "Sign up"
     },
+    "epicHero": {
+      "eyebrow": "Consulting Intelligence Platform",
+      "sub": "Structured consulting workflow for diagnosis, planning, execution, and impact."
+    },
     "profitHero": {
       "h1": {
-        "line1": "Consultify AI.",
-        "line2": "All the world’s business knowledge.",
-        "line3": "Turned into your profits."
+        "line1": "Consultify is the",
+        "line2": "Spotify for",
+        "line3": "consulting knowledge."
       },
-      "sub": "Diagnose. Plan. Execute. Track impact.",
+      "sub": "Structured consulting workflow for diagnosis, planning, execution, and impact.",
       "billboard": "We did for consulting what Spotify did for music: unlimited access — but instead of playlists, you get profit.",
       "ctaPrimary": "Launch Free Trial",
       "ctaSecondary": "OPEN DEMO NOW",

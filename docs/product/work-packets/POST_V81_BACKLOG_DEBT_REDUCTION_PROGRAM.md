@@ -273,8 +273,8 @@ The next broader public lane is now explicitly promoted from visible backlog int
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader canonical `/` and public marketing breadth scope honest and prepare the first real bounded public-marketing packet
-- `Agent B`: own runtime/surface closure for the active public-marketing lane once the first bounded packet is chosen
+- `Agent A`: keep broader canonical `/` and public marketing breadth scope honest and prepare the next bounded public-marketing packet after hero messaging authority
+- `Agent B`: own runtime/surface closure for the active public-marketing lane now that the first bounded packet has landed
 
 ### Exit criteria
 
@@ -335,7 +335,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | `Landing Anna multilingual expansion` | done | accepted work now covers the full bounded public app-locale language set through Spanish, German, Japanese, and Arabic continuity packets | `2` | Anna supports the chosen target language set on the live public surface, or the scope is explicitly capped and retired |
 | `Landing Anna backend analytics / dashboard breadth` | done | current Anna telemetry has been closed into bounded backend ingest plus operator readback continuity without broadening into full dashboard productization | `3` | agreed Anna analytics surface and data contract exist, are used, and are evidenced, or the need is explicitly retired |
 | `Landing Anna` broader voice UX / architecture | done | the bounded same-session continuity, channel truth, and public voice-config authority cuts are complete; remaining productization is broader architecture work that should not be smuggled into one more pseudo-small packet | `4` | live voice UX/architecture is either deliberately productized as a broader redesign or formally capped at the accepted bounded state |
-| broader canonical `/` and public marketing breadth | active | accepted landing packets closed authority and bounded IA seams, but not the broader copy / section-order / visual-system redesign; that broader residual is now explicitly promoted | `5` | canonical `/` and public marketing breadth is either completed as a deliberate redesign lane or retired from this program |
+| broader canonical `/` and public marketing breadth | active | accepted landing packets closed authority and bounded IA seams, and the first broader packet now aligns canonical `/` hero messaging to the SSOT, but broader copy / section-order / visual-system redesign still remains | `5` | canonical `/` and public marketing breadth is either completed as a deliberate redesign lane or retired from this program |
 | broader `Mobile` redesign | visible, not promoted | bounded mobile entry and overlay continuity are done, but full mobile product breadth was never promoted | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
 | broader `Chat` / `AI core` parity expansion | visible, not promoted | current bounded work closed the active seam, not the full product/runtime breadth | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | visible, not promoted | accepted lane closed bounded read/runtime truth seams; broader write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
@@ -455,6 +455,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the first real bounded packet inside broader canonical `/` and public marketing breadth by aligning canonical `/` hero messaging to `docs/product/LANDING_V8_SSOT.md` and recording the closure in `evidence/346-v81-broader-canonical-public-marketing-hero-messaging-authority-seam.md`
 - 2026-03-27: accepted `Landing Anna` broader voice UX / architecture in `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md` after the bounded continuity, channel-truth, and config-authority packet chain reduced the lane to a broader architecture residual that should not be forced into another pseudo-small packet
 - 2026-03-27: promoted broader canonical `/` and public marketing breadth into active execution through `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md` and recorded the initial broader public-marketing split-brain map in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md` so the first honest redesign-shaped packet can be chosen explicitly
 - 2026-03-27: promoted `Landing Anna` broader voice UX / architecture into active execution through `docs/product/work-packets/T4_LANDING_ANNA_BROADER_VOICE_UX_ARCHITECTURE_CHARTER.md` and recorded the initial architecture split-brain map in `evidence/337-v81-landing-anna-broader-voice-ux-architecture-split-brain-map.md` so the next real bounded voice packet can be chosen honestly
