@@ -41,6 +41,25 @@ export interface V8FinanceAnalysisSummary {
   updatedAt: string;
 }
 
+export interface V8FinanceModelSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  project_id?: string | null;
+  initiative_id?: string | null;
+  currency?: string | null;
+  horizon_months?: number | null;
+  start_date?: string | null;
+  granularity?: string | null;
+  scenario?: string | null;
+  status?: string | null;
+  version?: number | null;
+  source_statement_id?: string | null;
+  source_statement_pack_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -78,6 +97,8 @@ export interface V8FinanceAnalysisCreatePayload {
 
 export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
+  getModels: () =>
+    v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),

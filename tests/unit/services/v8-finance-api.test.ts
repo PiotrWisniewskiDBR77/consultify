@@ -71,6 +71,29 @@ describe('V8FinanceApi', () => {
     expect(data.analyses[0].title).toBe('Working capital analysis');
   });
 
+  it('requests governed finance models from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      models: [
+        {
+          id: 'model-1',
+          name: 'Revenue forecast',
+          status: 'draft',
+          currency: 'PLN',
+          horizon_months: 36,
+          start_date: '2026-01-01',
+          updated_at: '2026-03-27T09:00:00.000Z',
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8FinanceApi.getModels();
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/models');
+    expect(data.count).toBe(1);
+    expect(data.models[0].name).toBe('Revenue forecast');
+  });
+
   it('requests governed finance analysis ratios from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       ratios: [

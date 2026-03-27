@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockGetFinanceDashboard = vi.fn();
+const mockListModels = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -26,6 +27,10 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
   getAnalysisInsights: (...args: unknown[]) => mockGetAnalysisInsights(...args),
   approveAnalysis: (...args: unknown[]) => mockApproveAnalysis(...args),
   runFullAnalysis: (...args: unknown[]) => mockRunFullAnalysis(...args),
+}));
+
+vi.mock('../../../services/financialModelingService.js', () => ({
+  listModels: (...args: unknown[]) => mockListModels(...args),
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -127,6 +132,7 @@ describe('V8 finance read-only routes', () => {
       staleSourceRefreshesCount: 0,
       promotionGatePassRate: null,
     });
+    mockListModels.mockResolvedValue([]);
     mockListAnalyses.mockResolvedValue([]);
     mockGetAnalysisRatios.mockResolvedValue([]);
     mockGetAnalysisInsights.mockResolvedValue([]);
@@ -187,6 +193,29 @@ describe('V8 finance read-only routes', () => {
       status: 'DRAFT',
       projectId: 'project-1',
     });
+  });
+
+  it('GET /api/v8/finance/models returns envelope and delegates to listModels', async () => {
+    mockListModels.mockResolvedValue([
+      {
+        id: 'model-1',
+        name: 'Revenue forecast',
+        status: 'draft',
+        currency: 'PLN',
+        horizon_months: 36,
+        start_date: '2026-01-01',
+        updated_at: '2026-03-27T09:00:00.000Z',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/models');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.models?.[0]?.name).toBe('Revenue forecast');
+    expect(mockListModels).toHaveBeenCalledWith(ORG);
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

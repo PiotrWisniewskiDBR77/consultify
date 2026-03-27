@@ -7,7 +7,7 @@
 > Last updated: 2026-03-27
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: held - no active promoted lane
+> Current state: active - broader `Finance` parity
 
 ---
 
@@ -257,64 +257,46 @@ The following do **not** qualify as done:
 
 Current state:
 
-- no lane is currently promoted
-- the program is held pending an explicit next promotion
+- broader `Finance` parity is the active promoted lane
 
 ### Slice name
 
-none
+broader `Finance` parity
 
 ### Scope
 
-The accepted bounded `Results / KPI / ROI` lane and the accepted broader results parity lane now close the smallest honest visible Results / KPI / ROI seams.
+The accepted bounded `Finance` lane now closes its scoped analysis/runtime-truth seams.
 
-No follow-on lane is currently promoted, so the program is held until the next broader residual is explicitly selected.
+The next broader finance parity lane is now explicitly promoted from visible backlog into active execution.
 
 ### Three-agent assignment
 
-- `Manager`: maintain this program, tranche rules, and final execution board discipline while the queue is held
-- `Agent A`: do not reopen accepted lanes without an explicit broader promotion
-- `Agent B`: stay idle on new implementation until the next promoted lane is chosen
+- `Manager`: maintain this program, tranche rules, and final execution board discipline
+- `Agent A`: keep broader `Finance` parity scope honest and assess the next bounded broader finance packet after the split-brain map
+- `Agent B`: own runtime/surface closure for the active broader finance lane packet-by-packet after the broader residual is made explicit
 
 ### Exit criteria
 
-- the active broader results lane keeps bounded packet discipline,
+- the active broader finance lane keeps bounded packet discipline,
 - accepted bounded evidence remains the authority for previously closed lanes,
-- and the earlier accepted bounded `Results / KPI / ROI` cut does not get silently reopened as a whole-results rewrite.
+- and the earlier accepted bounded `Finance` cut does not get silently reopened as a whole-finance rewrite.
 
 ### Current lane status
 
-The active lane is documented in `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`.
+The active lane is documented in `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`.
 
 Current result:
 
-- broader `Chat / AI core` parity expansion is now accepted in `evidence/366-v81-broader-chat-ai-core-parity-expansion-t4-acceptance.md`,
-- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`,
-- the active lane split-brain map is recorded in `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`,
-- the first real bounded broader results packet landed in `evidence/368-v81-broader-results-kpi-roi-kpi-create-v8-write-seam.md` by moving the visible KPI create workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the second real bounded broader results packet landed in `evidence/369-v81-broader-results-kpi-roi-roi-assumptions-v8-write-seam.md` by moving the visible ROI assumptions save workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the third real bounded broader results packet landed in `evidence/370-v81-broader-results-kpi-roi-roi-realized-entry-v8-write-seam.md` by moving the visible ROI realized-entry submit workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the fourth real bounded broader results packet landed in `evidence/371-v81-broader-results-kpi-roi-kpi-report-create-v8-write-seam.md` by moving the visible KPI report create workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the fifth real bounded broader results packet landed in `evidence/372-v81-broader-results-kpi-roi-kpi-time-series-record-v8-write-seam.md` by moving the visible KPI time-series record workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the sixth real bounded broader results packet landed in `evidence/373-v81-broader-results-kpi-roi-kpi-settings-save-v8-write-seam.md` by moving the visible KPI settings save workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the seventh real bounded broader results packet landed in `evidence/374-v81-broader-results-kpi-roi-kpi-initiative-link-v8-write-seam.md` by moving the visible KPI initiative-link workflow onto the existing governed V8 mapping-create seam with bounded compatibility fallback,
-- the eighth real bounded broader results packet landed in `evidence/375-v81-broader-results-kpi-roi-kpi-initiative-unlink-v8-write-seam.md` by moving the visible KPI initiative-unlink workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the ninth real bounded broader results packet landed in `evidence/376-v81-broader-results-kpi-roi-kpi-delete-v8-write-seam.md` by moving the visible KPI delete workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the tenth real bounded broader results packet landed in `evidence/377-v81-broader-results-kpi-roi-deviation-acknowledge-v8-write-seam.md` by moving the visible deviation-case acknowledge workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the eleventh real bounded broader results packet landed in `evidence/378-v81-broader-results-kpi-roi-deviation-rca-v8-write-seam.md` by moving the visible deviation-case RCA save workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the twelfth real bounded broader results packet landed in `evidence/379-v81-broader-results-kpi-roi-deviation-action-create-v8-write-seam.md` by moving the visible deviation-case action-create workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the thirteenth real bounded broader results packet landed in `evidence/380-v81-broader-results-kpi-roi-deviation-action-status-v8-write-seam.md` by moving the visible deviation-action status-toggle workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the fourteenth real bounded broader results packet landed in `evidence/381-v81-broader-results-kpi-roi-deviation-resolve-v8-write-seam.md` by moving the visible deviation-case resolve workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the fifteenth real bounded broader results packet landed in `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md` by moving the visible deviation-case close workflow onto governed V8 results write routes with bounded compatibility fallback,
-- the sixteenth real bounded broader results packet landed in `evidence/383-v81-broader-results-kpi-roi-results-hub-delete-v8-write-seam.md` by moving the visible `ResultsHub` KPI-delete workflow onto the governed V8 results seam with bounded compatibility fallback,
 - broader `Results / KPI / ROI` parity is now accepted in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`,
-- the program is now held again in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`,
-- the previously accepted bounded `Results / KPI / ROI` lane stays capped rather than silently reopened into one unbounded results rewrite.
+- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`,
+- the active lane split-brain map is recorded in `evidence/386-v81-broader-finance-parity-split-brain-map.md`,
+- the first real bounded broader finance packet landed in `evidence/387-v81-broader-finance-models-list-read-v8-seam.md` by moving visible finance models list/read continuity onto the governed V8 seam with bounded compatibility fallback,
+- the previously accepted bounded `Finance` lane stays capped rather than silently reopened into one unbounded finance rewrite.
 
 ### Explicitly out of scope
 
 - broader `Chat` / `AI core` parity expansion
-- broader `Finance` parity
+- broader `Results / KPI / ROI` parity
 - broader `Partner Program` parity
 - broader `Sync` completion
 - broader `Multiplayer / collaboration` breadth
@@ -339,7 +321,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the currently promoted scopes
 - the bounded `T4` unlock series is complete through the Anna broader voice UX / architecture acceptance
-- no broader lane is currently active
+- broader `Finance` parity is the one active non-deferred lane
 - what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
 
 ### Remaining work to reach 100%
@@ -354,7 +336,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | done | accepted lane closed bounded read/runtime truth seams, and the sixteen broader write seams now close the smallest honest visible write residuals without broadening into a larger results redesign | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
-| broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
+| broader `Finance` parity | active | accepted lane closed active analysis seams, and the first broader packet now closes visible models list/read continuity while statements, budgets, valuations, and wider writes remain | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | visible, not promoted | accepted lane closed presence + lock indicators only; deeper realtime collaboration was never promoted | `12` | remaining collaboration breadth is closed or explicitly retired |
@@ -470,6 +452,8 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the first real bounded packet inside broader `Finance` parity by moving visible finance models list/read continuity onto the governed V8 seam in `evidence/387-v81-broader-finance-models-list-read-v8-seam.md`, so the active models surface no longer defaults to legacy financial-modeling reads during normal operation
+- 2026-03-27: promoted broader `Finance` parity with charter `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`, recorded the split-brain map in `evidence/386-v81-broader-finance-parity-split-brain-map.md`, and selected visible finance models list/read continuity as the first bounded packet candidate
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `ResultsHub` KPI-delete flow onto the governed V8 results seam in `evidence/383-v81-broader-results-kpi-roi-results-hub-delete-v8-write-seam.md`, accepted the lane in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`, and returned the program to held bounded state in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`
 - 2026-03-27: landed the fifteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPITimeSeriesDrawer` deviation-case close flow onto governed V8 results routes in `evidence/382-v81-broader-results-kpi-roi-deviation-close-v8-write-seam.md`, so active deviation close no longer defaults to legacy benefits writes during normal operation
 - 2026-03-27: landed the fourteenth real bounded packet inside broader `Results / KPI / ROI` parity by moving the visible `KPITimeSeriesDrawer` deviation-case resolve flow onto governed V8 results routes in `evidence/381-v81-broader-results-kpi-roi-deviation-resolve-v8-write-seam.md`, so active deviation resolve no longer defaults to legacy benefits writes during normal operation

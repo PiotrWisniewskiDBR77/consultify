@@ -20,6 +20,7 @@ import {
   listAnalyses,
   runFullAnalysis,
 } from '../../services/financialAnalysisService.js';
+import { listModels } from '../../services/financialModelingService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -45,6 +46,18 @@ router.get(
     const dashboard = await getFinanceDashboard(organizationId);
     return res.json({
       data: { dashboard },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/models',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const models = await listModels(organizationId);
+    return res.json({
+      data: { models, count: models.length },
       meta: financeMeta(),
     });
   }),

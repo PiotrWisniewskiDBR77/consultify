@@ -11,11 +11,13 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
+const mockTranslation = {
+  t: (_key: string, fallback?: string) => fallback || _key,
+  i18n: { language: 'en' },
+};
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
-    i18n: { language: 'en' },
-  }),
+  useTranslation: () => mockTranslation,
 }));
 
 vi.mock('@/services/api', () => ({
@@ -27,6 +29,7 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    getModels: vi.fn(),
     getAnalyses: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -102,5 +105,73 @@ describe('useFinanceData V8 analyses seam', () => {
     expect(V8FinanceApi.getAnalyses).toHaveBeenCalled();
     expect(Api.get).toHaveBeenCalledWith('/api/economics/financial-analyses');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy analysis');
+  });
+
+  it('prefers governed finance models before legacy financial-modeling fallback', async () => {
+    vi.mocked(V8FinanceApi.getModels).mockResolvedValue({
+      models: [
+        {
+          id: 'model-1',
+          name: 'Revenue forecast',
+          status: 'draft',
+          currency: 'PLN',
+          horizon_months: 36,
+          start_date: '2026-01-01',
+          updated_at: '2026-03-27T09:00:00.000Z',
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements/packs') {
+        return [];
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    const { result } = renderHook(() => useFinanceData('models', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.models).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getModels).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/financial-modeling/models');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('Revenue forecast');
+  });
+
+  it('falls back to legacy finance models when V8 seam returns a bounded compatibility status', async () => {
+    vi.mocked(V8FinanceApi.getModels).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements/packs') {
+        return [];
+      }
+      if (url === '/api/financial-modeling/models') {
+        return [
+          {
+            id: 'model-legacy-1',
+            name: 'Legacy forecast',
+            status: 'draft',
+            currency: 'PLN',
+            horizon_months: 24,
+            start_date: '2026-01-01',
+            updated_at: '2026-03-27T09:05:00.000Z',
+          },
+        ];
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    const { result } = renderHook(() => useFinanceData('models', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.models).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getModels).toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/financial-modeling/models');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy forecast');
   });
 });

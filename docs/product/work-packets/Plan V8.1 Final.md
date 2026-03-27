@@ -69,8 +69,8 @@ Only one major lane should be `active` at a time unless independence is proven.
 ### Current success metric
 
 - completed remaining themes: `8 / 13`
-- active lane: `none`
-- landed packets in the active lane: `0`
+- active lane: broader `Finance` parity
+- landed packets in the active lane: `1`
 
 ---
 
@@ -86,7 +86,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `6` | broader `Mobile` redesign | `Phase B` | `done` | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | broader mobile responsive/product breadth reached bounded acceptance |
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
-| `9` | broader `Finance` parity | `Phase C` | `queued` | ingest, models, budgets, valuations, and wider writes remain | finance breadth is accepted beyond bounded analysis seams |
+| `9` | broader `Finance` parity | `Phase C` | `active` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual is now explicitly promoted | finance breadth is accepted beyond bounded analysis seams |
 | `10` | broader `Partner Program` parity | `Phase C` | `queued` | onboarding, client-access, statement sources, and payout-settings remain | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
@@ -163,10 +163,10 @@ No lane should jump directly from `queued` to `done`.
 
 ### Current lane
 
-- status: `held`
-- lane: `none`
-- latest evidence: broader `Results / KPI / ROI` parity accepted in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md` and hold restored in `evidence/385-v81-post-backlog-program-held-state-after-broader-results-parity.md`
-- reason: the last visible broader Results hub delete seam is now closed, and no next lane has been explicitly promoted yet
+- status: `active`
+- lane: broader `Finance` parity
+- latest evidence: `models list/read V8 seam` recorded in `evidence/387-v81-broader-finance-models-list-read-v8-seam.md`
+- reason: after the broader finance split-brain map landed, the next smallest honest packet was the visible models list/read seam in `useFinanceData`, which still defaulted to legacy financial-modeling reads
 
 ### Next three lanes
 
@@ -364,13 +364,13 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Finance` parity
 
-- status: `queued`
-- charter: `not written yet`
-- split-brain map: `not written yet`
-- current packet: `not defined yet`
-- last accepted packet: `none`
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
+- split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
+- current packet: `assess the next bounded broader finance packet after models list/read continuity`
+- last accepted packet: `models list/read V8 seam`
 - blocker: `none`
-- next action: `wait for prior platform parity lanes`
+- next action: `assess the next smallest broader finance packet after models list/read continuity without broadening into statements, budgets, valuations, and wider mutations at once`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

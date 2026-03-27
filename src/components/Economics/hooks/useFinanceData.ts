@@ -100,8 +100,17 @@ export function useFinanceData(
 
   const loadModels = useCallback(async () => {
     try {
-      const data = await Api.get('/api/financial-modeling/models');
-      const arr = Array.isArray(data) ? data : [];
+      let arr: any[] = [];
+      try {
+        const data = await V8FinanceApi.getModels();
+        arr = Array.isArray(data?.models) ? data.models : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/financial-modeling/models');
+        arr = Array.isArray(data) ? data : [];
+      }
       setLoadError(null);
       setIsUsingDemoData(false);
       setModels(arr);
