@@ -311,6 +311,7 @@ Current result:
 - the sixteenth real bounded broader sync packet landed in `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md` by moving alias `/api/integrations/:provider/connect` initiation onto the same governed connector path, so older settings surfaces no longer reopen a second org-level authority seam for starting broader sync setup,
 - the post-org-surface alignment residual assessment recorded in `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md` confirmed that no thinner honest authority packet remains before real governed refresh execution continuity,
 - the seventeenth real bounded broader sync packet landed in `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md` by adding governed refresh-secret materialization plus real refresh execution on the active runtime path, so stale oauth credentials no longer stop at a fake `not wired yet` boundary before sync,
+- the post-refresh-execution residual assessment recorded in `evidence/463-v81-broader-sync-post-refresh-execution-residual-assessment.md` confirmed that no thinner honest packet remains before callback-driven governed refresh secret or token materialization continuity,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -473,6 +474,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: recorded the broader `Sync` post-refresh-execution residual assessment in `evidence/463-v81-broader-sync-post-refresh-execution-residual-assessment.md`, confirming that no thinner honest packet remains before callback-driven governed refresh secret or token materialization continuity
 - 2026-03-27: landed the seventeenth real bounded packet inside broader `Sync` completion by adding governed refresh-secret materialization plus real refresh execution on the active runtime path in `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md`, so stale oauth credentials no longer stop at a fake `not wired yet` boundary before sync
 - 2026-03-27: recorded the broader `Sync` post-org-surface alignment residual assessment in `evidence/461-v81-broader-sync-post-org-surface-alignment-residual-assessment.md`, confirming that no thinner honest authority packet remains before real governed refresh execution continuity
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Sync` completion by moving alias `/api/integrations/:provider/connect` initiation onto the same governed connector path in `evidence/460-v81-broader-sync-legacy-alias-connect-authority-continuity-seam.md`, so older settings surfaces no longer reopen a second org-level authority seam for starting broader sync setup
