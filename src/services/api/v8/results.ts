@@ -339,6 +339,17 @@ export interface V8ResultsCreateDeviationActionResponse {
   caseId: string;
 }
 
+export interface V8ResultsUpdateDeviationActionPayload {
+  title?: string | null;
+  ownerUserId?: string | null;
+  dueDate?: string | null;
+  status?: string | null;
+}
+
+export interface V8ResultsUpdateDeviationActionResponse {
+  success: boolean;
+}
+
 export interface V8ResultsCreateKpiReportPayload {
   periodStart: string;
   periodEnd?: string | null;
@@ -431,6 +442,15 @@ export const V8ResultsApi = {
   createDeviationAction: (caseId: string, payload: V8ResultsCreateDeviationActionPayload) =>
     v8Post<V8ResultsCreateDeviationActionResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/actions`,
+      payload,
+    ),
+  updateDeviationAction: (
+    caseId: string,
+    actionId: string,
+    payload: V8ResultsUpdateDeviationActionPayload,
+  ) =>
+    v8Put<V8ResultsUpdateDeviationActionResponse>(
+      `/results/deviation-cases/${encodeURIComponent(caseId)}/actions/${encodeURIComponent(actionId)}`,
       payload,
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>

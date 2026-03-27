@@ -289,6 +289,19 @@ describe('V8ResultsApi', () => {
     expect(data.caseId).toBe('case-1');
   });
 
+  it('requests governed deviation action update from the V8 namespace', async () => {
+    vi.mocked(v8Put).mockResolvedValue({ success: true });
+
+    const data = await V8ResultsApi.updateDeviationAction('case-1', 'action-1', {
+      status: 'DONE',
+    });
+
+    expect(v8Put).toHaveBeenCalledWith('/results/deviation-cases/case-1/actions/action-1', {
+      status: 'DONE',
+    });
+    expect(data.success).toBe(true);
+  });
+
   it('requests governed KPI report create from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       snapshotId: 'snap-1',

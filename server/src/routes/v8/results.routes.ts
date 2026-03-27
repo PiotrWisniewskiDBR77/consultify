@@ -555,6 +555,72 @@ router.post(
 );
 
 /**
+ * PUT /api/v8/results/deviation-cases/:caseId/actions/:actionId
+ * Bounded deviation-action status-update seam for the active Results drawer surface.
+ */
+router.put(
+  '/deviation-cases/:caseId/actions/:actionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
+    const actionId = typeof req.params.actionId === 'string' ? req.params.actionId.trim() : '';
+    const { title, ownerUserId, dueDate, status } = req.body || {};
+
+    if (!caseId || !actionId) {
+      return res.status(400).json({
+        error: 'caseId and actionId are required',
+        code: 'RESULTS_DEVIATION_ACTION_ID_REQUIRED',
+      });
+    }
+
+    const row = await dbGet<any>(
+      `
+      SELECT a.id
+      FROM kpi_deviation_actions a
+      INNER JOIN kpi_deviation_cases c ON c.id = a.case_id
+      WHERE a.id = ? AND a.case_id = ? AND c.organization_id = ?
+      `,
+      [actionId, caseId, organizationId],
+    );
+    if (!row?.id) {
+      return res.status(404).json({
+        error: 'Deviation action not found',
+        code: 'RESULTS_DEVIATION_ACTION_NOT_FOUND',
+      });
+    }
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_actions a
+      SET
+        title = COALESCE(?, a.title),
+        owner_user_id = COALESCE(?, a.owner_user_id),
+        due_date = COALESCE(?, a.due_date),
+        status = COALESCE(?, a.status),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE a.id = ? AND a.case_id = ? AND EXISTS (
+        SELECT 1 FROM kpi_deviation_cases c WHERE c.id = a.case_id AND c.organization_id = ?
+      )
+      `,
+      [
+        title != null ? String(title).trim() : null,
+        ownerUserId || null,
+        dueDate ? String(dueDate).slice(0, 10) : null,
+        status || null,
+        actionId,
+        caseId,
+        organizationId,
+      ],
+    );
+
+    return res.json({
+      data: { success: true },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/results/kpis/:kpiId/drawer-detail
  * Bounded KPI drawer bridge for time-series and open deviation-case continuity.
  */

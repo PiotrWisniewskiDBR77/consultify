@@ -443,6 +443,29 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('PUT /api/v8/results/deviation-cases/:caseId/actions/:actionId updates a governed deviation action', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'action-1' });
+
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/results/deviation-cases/case-1/actions/action-1')
+      .send({
+        status: 'DONE',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('SELECT a.id'),
+      ['action-1', 'case-1', ORG],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE kpi_deviation_actions a'),
+      [null, null, null, 'DONE', 'action-1', 'case-1', ORG],
+    );
+  });
+
   it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-reports').send({

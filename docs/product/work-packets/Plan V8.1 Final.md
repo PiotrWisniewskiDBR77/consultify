@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `7 / 13`
 - active lane: broader `Results / KPI / ROI` parity
-- landed packets in the active lane: `12`
+- landed packets in the active lane: `13`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Results / KPI / ROI` parity
-- latest evidence: `deviation action create V8 write seam` recorded in `evidence/379-v81-broader-results-kpi-roi-deviation-action-create-v8-write-seam.md`
-- reason: after deviation RCA save continuity landed, the next smallest honest broader results packet was the visible `Add action` workflow inside the open deviation-case panel of `KPITimeSeriesDrawer`, which still posted through the legacy benefits route
+- latest evidence: `deviation action status V8 write seam` recorded in `evidence/380-v81-broader-results-kpi-roi-deviation-action-status-v8-write-seam.md`
+- reason: after deviation action-create continuity landed, the next smallest honest broader results packet was the visible checklist-toggle workflow inside the open deviation-case panel of `KPITimeSeriesDrawer`, which still wrote through the legacy benefits route
 
 ### Next three lanes
 
@@ -356,10 +356,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_RESULTS_KPI_ROI_PARITY_CHARTER.md`
 - split-brain map: `evidence/367-v81-broader-results-kpi-roi-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader results packet after deviation action-create continuity`
-- last accepted packet: `deviation action create V8 write seam`
+- current packet: `assess the next bounded broader results packet after deviation action-status continuity`
+- last accepted packet: `deviation action status V8 write seam`
 - blocker: `none`
-- next action: `choose the next smallest honest broader results packet after deviation action-create continuity, likely action status update, resolve, or close, without smuggling in the whole deviation workflow at once`
+- next action: `choose the next smallest honest broader results packet after deviation action-status continuity, likely resolve or close, without smuggling in the whole deviation workflow at once`
 - acceptance evidence: `none`
 
 #### broader `Finance` parity

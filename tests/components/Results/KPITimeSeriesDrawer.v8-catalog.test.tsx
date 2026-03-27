@@ -33,6 +33,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     acknowledgeDeviationCase: vi.fn(),
     updateDeviationCaseRca: vi.fn(),
     createDeviationAction: vi.fn(),
+    updateDeviationAction: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -904,6 +905,114 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/actions', {
         title: 'Create mitigation plan',
         dueDate: '2026-03-31',
+      });
+    });
+  });
+
+  it('updates deviation action status through the governed V8 route before legacy fallback', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [
+          {
+            id: 'action-1',
+            title: 'Create mitigation plan',
+            status: 'OPEN',
+            dueDate: '2026-03-31',
+          },
+        ],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.updateDeviationAction).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Create mitigation plan')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Create mitigation plan'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.updateDeviationAction).toHaveBeenCalledWith('case-1', 'action-1', {
+        status: 'DONE',
+      });
+    });
+
+    expect(Api.put).not.toHaveBeenCalledWith(
+      '/benefits/deviation-cases/case-1/actions/action-1',
+      expect.anything(),
+    );
+  });
+
+  it('falls back to legacy deviation action status update only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          measurementFrequency: 'MONTHLY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [
+          {
+            id: 'action-1',
+            title: 'Create mitigation plan',
+            status: 'OPEN',
+            dueDate: '2026-03-31',
+          },
+        ],
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.updateDeviationAction).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.put).mockResolvedValue({ success: true } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Create mitigation plan')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Create mitigation plan'));
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/actions/action-1', {
+        status: 'DONE',
       });
     });
   });
