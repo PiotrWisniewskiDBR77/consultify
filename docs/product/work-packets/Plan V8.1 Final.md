@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: sixteenth broader packet recorded in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md`
-- reason: after employee roster continuity landed, a thinner active residual still existed inside the broader statement-source breadth because `CommissionView` continued to read placeholder statement data even though governed partner payout and commission seams were already available
+- latest evidence: post-`CommissionView` residual assessment recorded in `evidence/435-v81-broader-partner-post-commissionview-residual-assessment.md`
+- reason: after `CommissionView` statement continuity landed, no thinner honest statement-source micro-packet remained; the next real residuals are now heavier commission/dashboard truth migration and partner `payout-settings` ownership
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `CommissionView statement continuity seam`
+- current packet: `post-CommissionView residual assessment`
 - last accepted packet: `CommissionView statement continuity seam`
 - blocker: `none`
-- next action: `assess whether any thinner honest statement-source residual remains after CommissionView continuity before revisiting placeholder-only payout-settings save ownership`
+- next action: `choose the next honest heavier packet between broader commission/dashboard truth migration away from usePartnerEcosystem placeholders and explicit partner payout-settings save ownership`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion
