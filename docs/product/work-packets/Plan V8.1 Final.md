@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `14`
+- landed packets in the active lane: `15`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `statement detect V8 seam` recorded in `evidence/400-v81-broader-finance-statement-detect-v8-seam.md`
-- reason: after values-save continuity landed, the next smallest honest packet was the self-contained detect step inside the statement recovery chain, while `extract/map` still remain paired for the next bounded assessment
+- latest evidence: `statement extract/map V8 seam` recorded in `evidence/401-v81-broader-finance-statement-extract-map-v8-seam.md`
+- reason: after statement detect continuity landed, the remaining active workspace recovery residue was the coupled `extract -> map` pipeline, which stayed honest as one bounded packet
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after detect continuity`
-- last accepted packet: `statement detect V8 seam`
+- current packet: `assess the next bounded broader finance packet after active workspace recovery-chain closure`
+- last accepted packet: `statement extract/map V8 seam`
 - blocker: `none`
-- next action: `assess whether the remaining extract/map recovery pair is the next honest bounded statement-write packet`
+- next action: `assess whether FinancialStatementImportWizard continuity is the next honest broader Finance packet after active workspace recovery-chain closure`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

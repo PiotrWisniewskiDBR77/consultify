@@ -238,6 +238,28 @@ async function detectStatementWithFallback(statementId: string) {
   }
 }
 
+async function extractStatementWithFallback(statementId: string) {
+  try {
+    return await V8FinanceApi.extractStatement(statementId, {});
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/extract`, {});
+  }
+}
+
+async function mapStatementWithFallback(statementId: string, lines: Array<Record<string, unknown>>) {
+  try {
+    return await V8FinanceApi.mapStatement(statementId, { lines });
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/map`, { lines });
+  }
+}
+
 async function saveStatementValuesWithFallback(
   statementId: string,
   values: Array<Record<string, unknown>>,
@@ -529,7 +551,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     setError(null);
     try {
       await detectStatementWithFallback(detail.id);
-      const extracted = (await Api.post(`/api/finance-statements/${detail.id}/extract`, {})) as {
+      const extracted = (await extractStatementWithFallback(detail.id)) as {
         lines?: Array<{
           originalLabel: string;
           value: number;
@@ -539,9 +561,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           classificationReason?: string;
         }>;
       };
-      const mapped = (await Api.post(`/api/finance-statements/${detail.id}/map`, {
-        lines: extracted?.lines || [],
-      })) as {
+      const mapped = (await mapStatementWithFallback(detail.id, extracted?.lines || [])) as {
         mappedLines?: Array<{
           suggestedCanonicalId?: string;
           originalLabel: string;

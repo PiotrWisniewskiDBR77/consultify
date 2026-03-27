@@ -23,21 +23,51 @@ import {
 import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import {
+  autoMapLines,
   classifyStatementDocument,
   confirmStatement as confirmFinancialStatement,
   detectStatementType,
   evaluateStatementReadiness,
+  extractFinancialLines,
   getLatestStatementIngestRun,
+  loadPersistedStatementCandidateRows,
   loadStatementSourceText,
+  locateStatementSections,
+  persistStatementCandidateRows,
+  persistStatementExtractedSections,
+  persistStatementMappingCandidates,
   recordStatementQualityRun,
   recordStatementSourceArtifact,
   resolveStatementColumnSelection,
+  resolveDuplicateSuggestedMappings,
   snapshotCanonicalStatementVersion,
   startStatementIngestRun,
   updateStatementMetadata,
+  updateStatementStatus,
   updateStatementIngestRun,
 } from '../../services/financialStatementService.js';
 import type { DetectionResult } from '../../services/financialStatementService.js';
+import {
+  getFinanceTraceId,
+  logFinanceError,
+  logFinanceEvent,
+} from '../../services/financeDiagnosticsService.js';
+import {
+  applyLlmProposals,
+  applySecondPassProposals,
+  mapDuplicateConflictLinesWithLLM,
+  mapUnmappedLinesWithLLM,
+} from '../../services/llmFinancialMappingService.js';
+import {
+  assessCoverage,
+  classifyMappingTier,
+  isLikelySubtotalOrAggregate,
+  isNonFinancialByPolicy,
+} from '../../services/financeMappingPolicy.js';
+import {
+  extractFinancialLinesWithAnthropic,
+  extractFinancialLinesWithOpenAI,
+} from '../../services/openAIFinancialExtractionService.js';
 import { listModels } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
@@ -411,6 +441,418 @@ router.post(
         },
         documentProfile,
         columnSelection,
+      },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/statements/:statementId/extract',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const statementId = String(req.params.statementId || '');
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+
+    const traceId = getFinanceTraceId((req as any).correlationId);
+    const text = await loadStatementSourceText(statementId, String(statement.notes || ''));
+    if (!text) {
+      return res.status(400).json({ error: 'No extracted text' });
+    }
+
+    const ingestRunId = await ensureStatementIngestRun({
+      statementId,
+      organizationId,
+      createdBy: userId,
+      sourceFileName: statement.source_file_name,
+      sourceFilePath: statement.source_file_path,
+      parseMethod: statement.parse_method,
+      documentClass: statement.document_class,
+      extractionStrategy: statement.extraction_strategy,
+      templateFamily: statement.template_family,
+      rawTextLength: text.length,
+    });
+    const documentProfile = classifyStatementDocument({
+      fileName: statement.source_file_name,
+      parseMethod: statement.parse_method,
+      text,
+    });
+    const effectiveStatementType =
+      normalizeStatementTypeInput(req.body?.statementType) ||
+      normalizeStatementTypeInput(statement.statement_type) ||
+      'P&L';
+    const effectivePeriodLabel =
+      String(req.body?.periodLabel || '').trim() || String(statement.period_label || '').trim() || undefined;
+    const effectiveCurrency =
+      String(req.body?.currency || '').trim() || String(statement.currency || '').trim() || undefined;
+    const effectiveScaling =
+      String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
+    const minimumAiLines =
+      effectiveStatementType === 'CF' ? 2 : ['BS', 'P&L'].includes(effectiveStatementType) ? 3 : 2;
+
+    const openAiExtraction =
+      documentProfile.documentClass === 'spreadsheet' || documentProfile.documentClass === 'csv'
+        ? null
+        : await extractFinancialLinesWithOpenAI({
+            filePath: statement.source_file_path,
+            fileName: statement.source_file_name,
+            statementType: effectiveStatementType,
+            traceId,
+          });
+    const anthropicExtraction =
+      documentProfile.documentClass === 'spreadsheet' || documentProfile.documentClass === 'csv'
+        ? null
+        : !openAiExtraction || openAiExtraction.lines.length < minimumAiLines
+          ? await extractFinancialLinesWithAnthropic({
+              text,
+              fileName: statement.source_file_name,
+              statementType: effectiveStatementType,
+              traceId,
+            })
+          : null;
+    const aiExtraction =
+      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+        ? anthropicExtraction
+        : openAiExtraction;
+    const extractedSections = locateStatementSections(text, effectiveStatementType);
+    const scopedText = extractedSections[0]?.text || text;
+    const columnSelection = resolveStatementColumnSelection(scopedText, {
+      periodLabel: effectivePeriodLabel,
+      currency: effectiveCurrency,
+      scaling: effectiveScaling,
+    });
+    const extractionRaw =
+      aiExtraction && aiExtraction.lines.length > 0
+        ? aiExtraction
+        : extractFinancialLines(scopedText, effectiveStatementType, {
+            selectedPeriodLabel: columnSelection.selectedPeriodLabel,
+            comparisonPeriodLabel: columnSelection.comparisonPeriodLabel,
+          });
+    const extraction = {
+      ...extractionRaw,
+      lines: extractionRaw.lines.map((line) => ({
+        ...line,
+        selectedPeriodLabel: line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
+      })),
+    };
+    const strategy =
+      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+        ? openAiExtraction && (openAiExtraction.lines.length || 0) > 0
+          ? 'anthropic_text_fallback'
+          : 'anthropic_text_primary'
+        : openAiExtraction && openAiExtraction.lines.length > 0
+          ? 'openai_input_file'
+          : documentProfile.documentClass === 'spreadsheet'
+            ? 'spreadsheet_structured'
+            : 'local_parser';
+
+    logFinanceEvent('statement.extract.completed', {
+      traceId,
+      statementId,
+      strategy,
+      lineCount: extraction.lines.length,
+      rawTableCount: extraction.rawTableCount,
+      warnings: extraction.warnings,
+    });
+
+    await updateStatementStatus(statementId, 'imported');
+    await updateStatementMetadata(statementId, {
+      statementType: effectiveStatementType,
+      periodLabel: effectivePeriodLabel,
+      currency: effectiveCurrency,
+      scaling: effectiveScaling,
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: strategy,
+      templateFamily: documentProfile.templateFamily,
+    });
+    const persistedSections = await persistStatementExtractedSections({
+      statementId,
+      ingestRunId,
+      sections: extractedSections,
+    });
+    const sectionIdsByKey = Object.fromEntries(
+      persistedSections.map((section) => [section.sectionKey, section.sectionId]),
+    );
+    const candidateRows = await persistStatementCandidateRows({
+      statementId,
+      ingestRunId,
+      rows: extraction.lines,
+      sectionIdsByKey,
+      statementType: effectiveStatementType,
+      currency: effectiveCurrency,
+      scaling: effectiveScaling,
+    });
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'extraction',
+      stage: 'extract',
+      contentJson: {
+        strategy,
+        rawTableCount: extraction.rawTableCount,
+        warnings: extraction.warnings,
+        lineCount: extraction.lines.length,
+        columnSelection,
+        lines: extraction.lines,
+      },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'extract',
+      runStatus: extraction.lines.length > 0 ? 'running' : 'failed',
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: strategy,
+      templateFamily: documentProfile.templateFamily,
+      rawTextLength: text.length,
+      reasonCodes: extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+      summary: {
+        sections: persistedSections.length,
+        candidateRows: candidateRows.length,
+      },
+    });
+    if (organizationId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId,
+        stage: 'extract',
+        resultStatus: extraction.lines.length > 0 ? 'pass' : 'fail',
+        readinessStatus: extraction.lines.length > 0 ? 'recoverable' : 'rejected',
+        strategy,
+        summary:
+          extraction.lines.length > 0
+            ? 'Extraction produced candidate financial lines.'
+            : 'Extraction did not produce usable financial lines.',
+        reasonCodes: extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+        payload: {
+          rawTableCount: extraction.rawTableCount,
+          warnings: extraction.warnings,
+          lineCount: extraction.lines.length,
+        },
+        createdBy: userId,
+      });
+    }
+
+    return res.json({
+      data: {
+        statementId,
+        ingestRunId,
+        lines: extraction.lines,
+        sections: extractedSections,
+        columnSelection,
+        rawTableCount: extraction.rawTableCount,
+        warnings: extraction.warnings,
+        lineCount: extraction.lines.length,
+        extractionStrategy: strategy,
+        documentClass: documentProfile.documentClass,
+      },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/statements/:statementId/map',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const statementId = String(req.params.statementId || '');
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+
+    const traceId = getFinanceTraceId((req as any).correlationId);
+    const ingestRunId = await ensureStatementIngestRun({
+      statementId,
+      organizationId,
+      createdBy: userId,
+      sourceFileName: statement.source_file_name,
+      sourceFilePath: statement.source_file_path,
+      parseMethod: statement.parse_method,
+      documentClass: statement.document_class,
+      extractionStrategy: statement.extraction_strategy,
+      templateFamily: statement.template_family,
+    });
+
+    const requestLines = Array.isArray(req.body?.lines) ? req.body.lines : null;
+    const sourceLines =
+      requestLines && requestLines.length > 0
+        ? requestLines
+        : await loadPersistedStatementCandidateRows({ statementId, ingestRunId });
+    if (!sourceLines || sourceLines.length === 0) {
+      return res.status(400).json({ error: 'No extracted candidate rows available for mapping' });
+    }
+
+    const heuristicMapped = await autoMapLines(sourceLines, statement.statement_type, {
+      organizationId,
+      templateFamily: statement.template_family,
+    });
+
+    const unmappedCount = heuristicMapped.filter(
+      (line) => !line.suggestedCanonicalId && !line.isNonFinancial && line.originalLabel,
+    ).length;
+
+    let llmMappingResult = null;
+    if (unmappedCount > 0) {
+      try {
+        llmMappingResult = await mapUnmappedLinesWithLLM({
+          allLines: heuristicMapped,
+          statementType: statement.statement_type,
+          traceId,
+        });
+        if (llmMappingResult.proposals.length > 0) {
+          const { applied, skipped } = applyLlmProposals(heuristicMapped, llmMappingResult.proposals);
+          logFinanceEvent('statement.mapping.llm_applied', {
+            traceId,
+            statementId,
+            provider: llmMappingResult.provider,
+            applied,
+            skipped,
+            durationMs: llmMappingResult.durationMs,
+          });
+        }
+      } catch (llmErr) {
+        logFinanceError('statement.mapping.llm_error', llmErr, { traceId, statementId });
+      }
+    }
+
+    const mapped = resolveDuplicateSuggestedMappings(heuristicMapped);
+
+    const conflictCount = mapped.filter((line) => line.mappingReason === 'duplicate_candidate_conflict').length;
+    let llmSecondPassResult = null;
+    if (conflictCount > 0) {
+      try {
+        llmSecondPassResult = await mapDuplicateConflictLinesWithLLM({
+          allLines: mapped,
+          statementType: statement.statement_type,
+          traceId,
+        });
+        if (llmSecondPassResult.proposals.length > 0) {
+          const { applied, skipped } = applySecondPassProposals(mapped, llmSecondPassResult.proposals);
+          logFinanceEvent('statement.mapping.llm_second_pass_applied', {
+            traceId,
+            statementId,
+            provider: llmSecondPassResult.provider,
+            applied,
+            skipped,
+            durationMs: llmSecondPassResult.durationMs,
+          });
+        }
+      } catch (llm2Err) {
+        logFinanceError('statement.mapping.llm_second_pass_error', llm2Err, { traceId, statementId });
+      }
+    }
+
+    const candidateRows = await persistStatementCandidateRows({
+      statementId,
+      ingestRunId,
+      rows: mapped,
+      statementType: statement.statement_type,
+      currency: statement.currency,
+      scaling: statement.scaling,
+    });
+    await persistStatementMappingCandidates({
+      statementId,
+      ingestRunId,
+      rows: mapped,
+      candidateRowIdsBySourceRow: Object.fromEntries(
+        candidateRows.filter((row) => row.sourceRow != null).map((row) => [Number(row.sourceRow), row.candidateRowId]),
+      ),
+    });
+
+    await updateStatementStatus(statementId, 'mapped');
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'mapping',
+      stage: 'map',
+      contentJson: {
+        mappedLines: mapped,
+      },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'map',
+      runStatus: 'running',
+      reasonCodes: mapped.some((line) => line.suggestedCanonicalId)
+        ? ['MAPPING_COMPLETE']
+        : ['MAPPING_NO_SUGGESTIONS'],
+      summary: {
+        total: mapped.length,
+        suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
+        heuristicMapped: mapped.filter(
+          (line) => line.suggestedCanonicalId && !line.mappingReason?.startsWith('llm_mapping'),
+        ).length,
+        llmMapped: mapped.filter((line) => line.mappingReason?.startsWith('llm_mapping')).length,
+        llmProvider: llmMappingResult?.provider || null,
+        llmDurationMs: llmMappingResult?.durationMs || 0,
+      },
+    });
+    if (organizationId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId,
+        stage: 'map',
+        resultStatus: mapped.some((line) => line.suggestedCanonicalId) ? 'pass' : 'warning',
+        readinessStatus: 'recoverable',
+        strategy: statement.template_family || statement.extraction_strategy || 'alias_engine',
+        summary: 'Canonical mapping suggestions generated.',
+        reasonCodes: mapped.some((line) => line.isNonFinancial)
+          ? ['MAPPING_COMPLETE', 'NON_FINANCIAL_ROWS_EXCLUDED']
+          : ['MAPPING_COMPLETE'],
+        payload: {
+          total: mapped.length,
+          suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
+          nonFinancial: mapped.filter((line) => line.isNonFinancial).length,
+        },
+        createdBy: userId,
+      });
+    }
+
+    for (const line of mapped) {
+      if (!line.isNonFinancial && isNonFinancialByPolicy(line.originalLabel)) {
+        line.isNonFinancial = true;
+        line.classificationReason = 'policy_non_financial';
+      }
+      if (!line.isNonFinancial && !line.suggestedCanonicalId && isLikelySubtotalOrAggregate(line.originalLabel)) {
+        line.isNonFinancial = true;
+        line.classificationReason = 'policy_subtotal_aggregate';
+      }
+    }
+
+    const tierResults = mapped.map((line) =>
+      classifyMappingTier({
+        suggestedCanonicalId: line.suggestedCanonicalId,
+        mappingReason: line.mappingReason,
+        isNonFinancial: line.isNonFinancial,
+        originalLabel: line.originalLabel,
+      }),
+    );
+    for (let index = 0; index < mapped.length; index += 1) {
+      (mapped[index] as any).mappingTier = tierResults[index].tier;
+    }
+    const policyAssessment = assessCoverage(tierResults, mapped.length);
+
+    return res.json({
+      data: {
+        statementId,
+        ingestRunId,
+        mappedLines: mapped,
+        policyAssessment,
       },
       meta: financeMeta(),
     });

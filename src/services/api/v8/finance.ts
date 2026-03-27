@@ -227,6 +227,43 @@ export interface V8FinanceStatementDetectResult {
   columnSelection?: Record<string, unknown>;
 }
 
+export interface V8FinanceStatementExtractLine {
+  originalLabel: string;
+  value: number;
+  confidence?: number;
+  sourceRow?: number;
+  isNonFinancial?: boolean;
+  classificationReason?: string;
+  selectedPeriodLabel?: string;
+  [key: string]: unknown;
+}
+
+export interface V8FinanceStatementExtractResult {
+  statementId: string;
+  ingestRunId?: string | null;
+  lines: V8FinanceStatementExtractLine[];
+  sections?: Array<Record<string, unknown>>;
+  columnSelection?: Record<string, unknown>;
+  rawTableCount?: number;
+  warnings?: string[];
+  lineCount?: number;
+  extractionStrategy?: string;
+  documentClass?: string;
+}
+
+export interface V8FinanceStatementMappedLine extends V8FinanceStatementExtractLine {
+  suggestedCanonicalId?: string;
+  mappingReason?: string;
+  mappingTier?: string;
+}
+
+export interface V8FinanceStatementMapResult {
+  statementId: string;
+  ingestRunId?: string | null;
+  mappedLines: V8FinanceStatementMappedLine[];
+  policyAssessment?: Record<string, unknown>;
+}
+
 export interface V8FinanceStatementValuesSaveResult {
   statementId: string;
   statementPackId?: string | null;
@@ -309,6 +346,10 @@ export const V8FinanceApi = {
     ),
   detectStatement: (statementId: string, body: Record<string, unknown> = {}) =>
     v8Post<V8FinanceStatementDetectResult>(`/finance/statements/${statementId}/detect`, body),
+  extractStatement: (statementId: string, body: Record<string, unknown> = {}) =>
+    v8Post<V8FinanceStatementExtractResult>(`/finance/statements/${statementId}/extract`, body),
+  mapStatement: (statementId: string, body: { lines?: Record<string, unknown>[] } = {}) =>
+    v8Post<V8FinanceStatementMapResult>(`/finance/statements/${statementId}/map`, body),
   confirmStatement: (statementId: string) =>
     v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, {}),
   putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>

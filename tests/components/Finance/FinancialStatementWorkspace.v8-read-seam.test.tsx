@@ -32,6 +32,8 @@ vi.mock('@/services/api/v8/finance', () => ({
     getStatementRatios: vi.fn(),
     searchStatementDocumentIntelligence: vi.fn(),
     detectStatement: vi.fn(),
+    extractStatement: vi.fn(),
+    mapStatement: vi.fn(),
     confirmStatement: vi.fn(),
     putStatementValues: vi.fn(),
     getCanonicalLines: vi.fn(),
@@ -525,7 +527,7 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
   });
 
-  it('prefers governed detect action before legacy fallback in retry recovery', async () => {
+  it('prefers governed detect/extract/map actions before legacy fallback in retry recovery', async () => {
     vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
       statement: {
         id: 'statement-1',
@@ -565,31 +567,26 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
       statementId: 'statement-1',
       detection: { statementType: 'P&L' },
     } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          suggestedCanonicalId: 'line-1',
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.9,
+        },
+      ],
+    } as any);
     vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
       statementId: 'statement-1',
       savedCount: 1,
     } as any);
-    vi.mocked(Api.post).mockImplementation(async (url: string, body?: any) => {
-      if (url === '/api/finance-statements/statement-1/extract') {
-        return {
-          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
-        } as any;
-      }
-      if (url === '/api/finance-statements/statement-1/map') {
-        expect(body).toEqual({
-          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
-        });
-        return {
-          mappedLines: [
-            {
-              suggestedCanonicalId: 'line-1',
-              originalLabel: 'Revenue',
-              value: 100,
-              confidence: 0.9,
-            },
-          ],
-        } as any;
-      }
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
       throw new Error(`Unexpected POST ${url}`);
     });
     vi.mocked(Api.put).mockImplementation(async (url: string) => {
@@ -612,8 +609,12 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     });
 
     expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/detect', {});
-    expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/extract', {});
-    expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {
+    expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith('statement-1', {});
+    expect(V8FinanceApi.mapStatement).toHaveBeenCalledWith('statement-1', {
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    });
+    expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/extract', {});
+    expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
     });
     expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
@@ -621,7 +622,7 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     });
   });
 
-  it('falls back to legacy detect action in retry recovery on bounded compatibility statuses', async () => {
+  it('falls back to legacy extract/map actions in retry recovery on bounded compatibility statuses', async () => {
     vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
       statement: {
         id: 'statement-1',
@@ -658,6 +659,8 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
       count: 0,
     } as any);
     vi.mocked(V8FinanceApi.detectStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(V8FinanceApi.extractStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(V8FinanceApi.mapStatement).mockRejectedValue({ status: 404 });
     vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
       statementId: 'statement-1',
       savedCount: 1,
@@ -708,6 +711,10 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     });
 
     expect(V8FinanceApi.detectStatement).toHaveBeenCalledWith('statement-1', {});
+    expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith('statement-1', {});
+    expect(V8FinanceApi.mapStatement).toHaveBeenCalledWith('statement-1', {
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    });
     expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/extract', {});
     expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],

@@ -244,6 +244,41 @@ describe('V8FinanceApi', () => {
     expect((data.detection as Record<string, unknown>).statementType).toBe('P&L');
   });
 
+  it('posts governed finance statement extract through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      statementId: 'statement-1',
+      ingestRunId: 'ingest-run-1',
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+      lineCount: 1,
+      extractionStrategy: 'local_parser',
+      documentClass: 'financial_statement',
+    });
+
+    const data = await V8FinanceApi.extractStatement('statement-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/statements/statement-1/extract', {});
+    expect(data.statementId).toBe('statement-1');
+    expect(data.lines[0].originalLabel).toBe('Revenue');
+  });
+
+  it('posts governed finance statement map through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      statementId: 'statement-1',
+      ingestRunId: 'ingest-run-1',
+      mappedLines: [{ originalLabel: 'Revenue', value: 100, suggestedCanonicalId: 'line-1' }],
+      policyAssessment: { coveragePct: 100 },
+    });
+
+    const data = await V8FinanceApi.mapStatement('statement-1', {
+      lines: [{ originalLabel: 'Revenue', value: 100 }],
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/statements/statement-1/map', {
+      lines: [{ originalLabel: 'Revenue', value: 100 }],
+    });
+    expect(data.mappedLines[0].suggestedCanonicalId).toBe('line-1');
+  });
+
   it('posts governed finance statement confirm through the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       success: true,
