@@ -18,24 +18,21 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import {
+  shouldFallbackToLegacyPartner,
+  V8PartnerApi,
+  type V8PartnerOnboardingStatus,
+} from '@/services/api/v8';
 
 type OnboardingStep = 1 | 2 | 3 | 4;
 type PricingTier = 'starter' | 'professional' | 'enterprise';
-
-interface OnboardingStatus {
-  terms_accepted: boolean;
-  privacy_accepted: boolean;
-  pricing_tier: string | null;
-  payment_setup: boolean;
-  completed: boolean;
-}
 
 export const EnterpriseOnboardingWizard: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [step, setStep] = useState<OnboardingStep>(1);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<OnboardingStatus | null>(null);
+  const [status, setStatus] = useState<V8PartnerOnboardingStatus | null>(null);
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
 
   // Step 1: Terms
@@ -57,23 +54,44 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   }, [step]);
 
   const loadStatus = async () => {
-    try {
-      const data = await Api.get('/onboarding/status');
+    const normalizeStatus = (data: any): V8PartnerOnboardingStatus => ({
+      termsAccepted: Boolean(data?.termsAccepted ?? data?.terms_accepted),
+      privacyAccepted: Boolean(data?.privacyAccepted ?? data?.privacy_accepted),
+      pricingTier: data?.pricingTier === undefined ? (data?.pricing_tier ?? null) : data.pricingTier,
+      paymentSetup: Boolean(data?.paymentSetup ?? data?.payment_setup),
+      completed: Boolean(data?.completed),
+    });
+
+    const applyStatus = (data: V8PartnerOnboardingStatus) => {
       setStatus(data);
 
       // Resume from last incomplete step
       if (data.completed) {
         navigate('/app');
-      } else if (data.payment_setup) {
+      } else if (data.paymentSetup) {
         setStep(4);
-      } else if (data.pricing_tier) {
+      } else if (data.pricingTier) {
         setStep(3);
-        setSelectedTier(data.pricing_tier as PricingTier);
-      } else if (data.terms_accepted) {
+        setSelectedTier(data.pricingTier as PricingTier);
+      } else if (data.termsAccepted) {
         setStep(2);
       }
+    };
+
+    try {
+      const data = await V8PartnerApi.getOnboardingStatus();
+      applyStatus(normalizeStatus(data?.status));
     } catch (error) {
-      console.error('Failed to load onboarding status:', error);
+      if (!shouldFallbackToLegacyPartner(error)) {
+        console.error('Failed to load onboarding status:', error);
+        return;
+      }
+      try {
+        const legacy = await Api.get('/onboarding/status');
+        applyStatus(normalizeStatus(legacy));
+      } catch (legacyError) {
+        console.error('Failed to load onboarding status:', legacyError);
+      }
     }
   };
 
