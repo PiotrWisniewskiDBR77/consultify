@@ -128,6 +128,32 @@ describe('useAIStream', () => {
     expect(mockSetCurrentStreamContent).toHaveBeenCalled();
   });
 
+  it('should pass streamed session id through onStreamDone metadata', async () => {
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onThinking?.({ type: 'stream_meta', sessionId: 'stream-session-123' });
+        onChunk('Hello ');
+        onChunk('again');
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Test message', []);
+    });
+
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Hello again',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({ sessionId: 'stream-session-123' })
+    );
+  });
+
   it('should handle streaming errors gracefully', async () => {
     const mockOnStreamError = vi.fn();
 

@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `6 / 13`
 - active lane: broader `Chat / AI core` parity expansion
-- landed packets in the active lane: `0`
+- landed packets in the active lane: `1`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Chat / AI core` parity expansion
-- latest evidence: `broader Chat / AI core parity expansion split-brain map` recorded in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`
-- reason: broader Mobile redesign is now boundedly accepted, and the next honest residual is wider chat/AI-core parity breadth beyond the accepted `T2` continuity cuts
+- latest evidence: `stream session metadata continuity seam` recorded in `evidence/362-v81-broader-chat-ai-core-stream-session-metadata-continuity-seam.md`
+- reason: the first honest broader chat/ai-core packet was a turn-level continuity seam between governed stream identity and persisted AI-response metadata across the live chat surfaces
 
 ### Next three lanes
 
@@ -345,10 +345,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`
 - split-brain map: `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`
-- current packet: `assess the first real bounded broader chat/ai-core packet after the split-brain map`
-- last accepted packet: `none`
+- current packet: `assess the next bounded broader chat/ai-core packet after stream session metadata continuity`
+- last accepted packet: `stream session metadata continuity seam`
 - blocker: `none`
-- next action: `choose the smallest honest broader chat/ai-core packet without silently broadening into a full chat/ai-platform redesign`
+- next action: `choose the next smallest honest broader chat/ai-core packet without silently broadening into a full chat/ai-platform redesign`
 - acceptance evidence: `none`
 
 #### broader `Results / KPI / ROI` parity

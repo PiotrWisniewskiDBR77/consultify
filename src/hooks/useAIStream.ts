@@ -351,7 +351,7 @@ type StreamOptions = {
     fullText: string,
     thinking: ThinkingStep[],
     artifacts: Artifact[],
-    meta?: { citations?: any[] }
+    meta?: { citations?: any[]; sessionId?: string }
   ) => void;
   onStreamError?: (error: Error) => void;
   onThinkingUpdate?: (steps: ThinkingStep[]) => void;
@@ -542,6 +542,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const MAX_AUTO_RETRIES = 3;
   const thinkingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const thinkingClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streamSessionIdRef = useRef<string | null>(null);
 
   const resetStreamState = useCallback(() => {
     setStreamedContent('');
@@ -563,6 +564,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setRetryInfo(null);
     setStreamStartedAt(null);
     setStreamCompletedSignal(false);
+    streamSessionIdRef.current = null;
     if (thinkingIntervalRef.current) {
       clearInterval(thinkingIntervalRef.current);
       thinkingIntervalRef.current = null;
@@ -824,7 +826,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         }
 
         updateLastChatMessage?.(fullText);
-        options.onStreamDone?.(fullText, currentThinking, parsedArtifacts, { citations });
+        options.onStreamDone?.(fullText, currentThinking, parsedArtifacts, {
+          citations,
+          sessionId: streamSessionIdRef.current || undefined,
+        });
       };
 
       const handleEvent = (evt: any) => {
@@ -962,7 +967,13 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
 
         // Stream meta (debug/resume affinity)
         if (evt.type === 'stream_meta') {
-          // Currently best-effort; stored in lastRequestRef via caller context.
+          const sessionId =
+            typeof evt.sessionId === 'string' && evt.sessionId.trim().length > 0
+              ? evt.sessionId.trim()
+              : null;
+          if (sessionId) {
+            streamSessionIdRef.current = sessionId;
+          }
           return;
         }
 

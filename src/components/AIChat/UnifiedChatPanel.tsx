@@ -61,6 +61,7 @@ import {
   ThinkingStep,
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
+import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
@@ -725,20 +726,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               '⚠️ AI returned an empty response. Check backend LLM provider configuration.'
             );
 
-      const artifactsForConversation: Array<{
-        id: string;
-        type: string;
-        title: string;
-        content: string;
-        language?: string;
-      }> = (artifacts || []).map((a) => ({
-        id: a.id,
-        type: String((a as any).type),
-        title: String((a as any).title || 'Artifact'),
-        content: String((a as any).content || ''),
-        language: (a as any).language,
-      }));
-
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
       if (activeConversationId) {
@@ -748,26 +735,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'ai',
             content: safeText,
             messageType: 'text',
-            metadata: {
-              thinkingSteps: thinking as any,
-              artifacts: artifactsForConversation,
-              citations: Array.isArray(meta?.citations) ? meta?.citations : [],
-              ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                ? {
-                    options: [
-                      { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                      { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                      {
-                        id: 'dt-challenge',
-                        label: 'Challenge this conclusion',
-                        value: 'Challenge this conclusion',
-                      },
-                    ],
-                    multiSelect: false,
-                    deepThinking: { kind: 'report' },
-                  }
-                : {}),
-            },
+            metadata: buildPersistedAiResponseMetadata({
+              thinking: thinking as any,
+              artifacts: artifacts as any,
+              citations: meta?.citations,
+              streamSessionId: meta?.sessionId,
+              extra:
+                aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                  ? {
+                      options: [
+                        { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
+                        { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
+                        {
+                          id: 'dt-challenge',
+                          label: 'Challenge this conclusion',
+                          value: 'Challenge this conclusion',
+                        },
+                      ],
+                      multiSelect: false,
+                      deepThinking: { kind: 'report' },
+                    }
+                  : undefined,
+            }),
           });
           savedAiMessageId = String((saved as any)?.id || '') || null;
         } catch (err) {

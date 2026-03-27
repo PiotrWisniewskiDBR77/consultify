@@ -52,6 +52,7 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
+import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
 import { isRtlLanguage, textDirection } from '../utils/textDirection';
@@ -177,7 +178,12 @@ export const AIChatWelcomeView: React.FC = () => {
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
-    async (fullText: string, _thinking?: any, _artifacts?: any, meta?: { citations?: any[] }) => {
+    async (
+      fullText: string,
+      thinking: any[] = [],
+      artifacts: any[] = [],
+      meta?: { citations?: any[]; sessionId?: string }
+    ) => {
       // Use ref to get the latest conversation ID (avoids stale closure)
       const convId = activeConversationIdRef.current;
       if (!convId) {
@@ -192,9 +198,12 @@ export const AIChatWelcomeView: React.FC = () => {
           role: 'ai',
           content: fullText,
           messageType: 'text',
-          metadata: {
-            citations: Array.isArray(meta?.citations) ? meta?.citations : [],
-          } as any,
+          metadata: buildPersistedAiResponseMetadata({
+            thinking: thinking as any,
+            artifacts: artifacts as any,
+            citations: meta?.citations,
+            streamSessionId: meta?.sessionId,
+          }) as any,
         });
 
         // Title generation is handled by useConversationStore.addMessage()
@@ -258,6 +267,7 @@ export const AIChatWelcomeView: React.FC = () => {
       content: String(m.content || ''),
       timestamp: m.createdAt || new Date(),
       type: m.messageType || 'text',
+      thinkingSteps: m.metadata?.thinkingSteps,
       metadata: m.metadata,
       citations: m.metadata?.citations,
       actions: m.metadata?.actions,
