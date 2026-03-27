@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Partner Program` parity
-- landed packets in the active lane: `13`
+- landed packets in the active lane: `14`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: thirteenth broader packet recorded in `evidence/431-v81-broader-partner-client-access-projects-read-v8-seam.md`
-- reason: after client-organizations list continuity landed, the next honest split inside `client-access` was the active partner projects read, because it had real project and attributed-organization truth while `employees` and `access-links` still remained heavier or less well-grounded residuals
+- latest evidence: fourteenth broader packet recorded in `evidence/432-v81-broader-partner-client-access-access-link-read-v8-seam.md`
+- reason: after partner project continuity landed, the next honest `client-access` split was the dead access-link action, because it could be restored by reusing the existing partner referral-link truth while `employees` still remained the heavier unresolved residual
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `client-access projects read V8 seam`
-- last accepted packet: `client-access projects read V8 seam`
+- current packet: `client-access access-link read V8 seam`
+- last accepted packet: `client-access access-link read V8 seam`
 - blocker: `none`
-- next action: `assess whether remaining client-access employee or access-link breadth can be split honestly before broader statement-source migration or payout-settings continuity`
+- next action: `assess whether remaining client-access employee breadth can be split honestly before broader statement-source migration or payout-settings continuity`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

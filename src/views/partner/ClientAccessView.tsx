@@ -25,7 +25,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { shouldFallbackToLegacyPartner, V8PartnerApi, type V8PartnerClient } from '../../services/api/v8';
+import {
+  shouldFallbackToLegacyPartner,
+  V8PartnerApi,
+  type V8PartnerClient,
+} from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 
 interface Client {
@@ -130,14 +134,27 @@ export const ClientAccessView: React.FC = () => {
   const handleGetAccessLink = useCallback(async () => {
     try {
       setGeneratingLink(true);
-      const response = await Api.post('/api/partners/access-links', {});
-      if (response?.success && response?.data?.link) {
-        setAccessLink(response.data.link);
+      try {
+        const response = await V8PartnerApi.getReferralTools();
+        const referralLink = response?.tools?.referralLink;
+        if (typeof referralLink === 'string' && referralLink.length > 0) {
+          setAccessLink(referralLink);
+          toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
+          return;
+        }
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+      }
+
+      const response = await Api.get('/api/partners/referral-tools');
+      const referralLink = response?.data?.referralLink;
+      if (response?.success && typeof referralLink === 'string' && referralLink.length > 0) {
+        setAccessLink(referralLink);
         toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
       } else {
-        toast.error(
-          response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
-        );
+        toast.error(response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link'));
       }
     } catch (err: any) {
       console.error('Error generating access link:', err);

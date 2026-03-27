@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -30,6 +30,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getClients: vi.fn(),
+    getReferralTools: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status);
@@ -50,6 +51,7 @@ describe('ClientAccessView partner clients seam', () => {
       }
       throw new Error(`Unexpected GET ${url}`);
     });
+    vi.mocked(Api.post).mockResolvedValue({ success: false } as any);
   });
 
   it('prefers governed partner clients before legacy fallback', async () => {
@@ -128,5 +130,75 @@ describe('ClientAccessView partner clients seam', () => {
     });
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/clients');
+  });
+
+  it('uses governed referral tools for access-link reads before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getClients).mockResolvedValue({ clients: [] } as any);
+    vi.mocked(V8PartnerApi.getReferralTools).mockResolvedValue({
+      tools: {
+        referralCode: 'PARTNER-123',
+        referralLink: 'https://example.com/r/PARTNER-123',
+        referralLinkSlug: 'PARTNER-123',
+        campaignLinks: [],
+      },
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <ClientAccessView />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Get access link')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Get access link'));
+
+    await waitFor(() => {
+      expect(screen.getByText('https://example.com/r/PARTNER-123')).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.getReferralTools).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/referral-tools');
+    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/access-links', {});
+  });
+
+  it('falls back to legacy referral tools for bounded access-link compatibility errors', async () => {
+    vi.mocked(V8PartnerApi.getClients).mockResolvedValue({ clients: [] } as any);
+    vi.mocked(V8PartnerApi.getReferralTools).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/employees') {
+        return { success: true, data: [] } as any;
+      }
+      if (url === '/api/partners/referral-tools') {
+        return {
+          success: true,
+          data: {
+            referralLink: 'https://example.com/r/FALLBACK-123',
+          },
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(
+      <MemoryRouter>
+        <ClientAccessView />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Get access link')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Get access link'));
+
+    await waitFor(() => {
+      expect(screen.getByText('https://example.com/r/FALLBACK-123')).toBeInTheDocument();
+    });
+
+    expect(Api.get).toHaveBeenCalledWith('/api/partners/referral-tools');
+    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/access-links', {});
   });
 });
