@@ -11,6 +11,7 @@ const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockCreateModel = vi.fn();
 const mockAddEvent = vi.fn();
+const mockDeleteEvent = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
 const mockApproveModel = vi.fn();
@@ -88,6 +89,7 @@ vi.mock('../../../services/financialModelingService.js', () => ({
   approveModel: (...args: unknown[]) => mockApproveModel(...args),
   computeModel: (...args: unknown[]) => mockComputeModel(...args),
   createModel: (...args: unknown[]) => mockCreateModel(...args),
+  deleteEvent: (...args: unknown[]) => mockDeleteEvent(...args),
   getModel: (...args: unknown[]) => mockGetModel(...args),
   getOutputs: (...args: unknown[]) => mockGetOutputs(...args),
   getValidations: (...args: unknown[]) => mockGetValidations(...args),
@@ -675,6 +677,23 @@ describe('V8 finance read-only routes', () => {
         createdBy: UID,
       }),
     );
+  });
+
+  it('DELETE /api/v8/finance/events/:id returns envelope and delegates to deleteEvent', async () => {
+    mockDbGet.mockResolvedValue({ id: 'event-1' });
+    mockDeleteEvent.mockResolvedValue(undefined);
+
+    const app = createApp();
+    const res = await request(app).delete('/api/v8/finance/events/event-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, deleted: 'event-1' });
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('FROM financial_model_events e'),
+      ['event-1', ORG],
+    );
+    expect(mockDeleteEvent).toHaveBeenCalledWith('event-1');
   });
 
   it('DELETE /api/v8/finance/models/:id returns envelope and deletes model rows', async () => {

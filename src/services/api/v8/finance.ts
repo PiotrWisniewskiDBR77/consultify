@@ -416,6 +416,8 @@ export const V8FinanceApi = {
     v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
   addModelEvent: (modelId: string, body: V8FinanceModelEventCreatePayload) =>
     v8Post<{ success: boolean; id: string }>(`/finance/models/${modelId}/events`, body),
+  deleteModelEvent: (eventId: string) =>
+    v8Delete<{ success: boolean; deleted: string }>(`/finance/events/${eventId}`),
   deleteModel: (modelId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/models/${modelId}`),
   getValuations: () =>

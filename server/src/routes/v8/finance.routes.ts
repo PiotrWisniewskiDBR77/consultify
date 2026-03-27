@@ -73,6 +73,7 @@ import {
   approveModel,
   computeModel,
   createModel,
+  deleteEvent,
   getModel,
   getOutputs,
   getValidations,
@@ -446,6 +447,30 @@ router.post(
 
     return res.status(201).json({
       data: { success: true, id },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.delete(
+  '/events/:eventId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const eventId = String(req.params.eventId || '');
+    const event = await dbGet<{ id: string }>(
+      `SELECT e.id
+       FROM financial_model_events e
+       INNER JOIN financial_models m ON m.id = e.model_id
+       WHERE e.id = ? AND m.organization_id = ?`,
+      [eventId, organizationId],
+    );
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    await deleteEvent(eventId);
+    return res.json({
+      data: { success: true, deleted: eventId },
       meta: financeMeta(),
     });
   }),

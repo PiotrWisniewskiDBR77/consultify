@@ -39,6 +39,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     approveModel: vi.fn(),
     computeModel: vi.fn(),
     createModel: vi.fn(),
+    deleteModelEvent: vi.fn(),
     getModel: vi.fn(),
     getModelOutputs: vi.fn(),
     getModelValidations: vi.fn(),
@@ -69,6 +70,23 @@ const baseModel = {
   version: 1,
   assumptions_json: {},
   events: [],
+};
+
+const modelWithEvent = {
+  ...baseModel,
+  events: [
+    {
+      id: 'event-1',
+      event_type: 'revenue',
+      name: 'Existing contract',
+      amount: 50000,
+      recurrence: 'monthly',
+      growth_rate: 0,
+      cf_classification: 'operating',
+      period_start: '2026-01-01',
+      is_active: 1,
+    },
+  ],
 };
 
 describe('FinancialModelWorkspace V8 outputs seam', () => {
@@ -365,6 +383,68 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
           cfClassification: 'operating',
         }),
       );
+    });
+  });
+
+  it('prefers governed model event delete before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getModel).mockResolvedValue({ model: modelWithEvent } as any);
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.deleteModelEvent).mockResolvedValue({
+      success: true,
+      deleted: 'event-1',
+    } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Events Timeline/i })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('tab', { name: /Events Timeline/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Delete event' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Delete event' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.deleteModelEvent).toHaveBeenCalledWith('event-1');
+    });
+
+    expect(Api.delete).not.toHaveBeenCalledWith('/api/financial-modeling/events/event-1');
+  });
+
+  it('falls back to legacy model event delete in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getModel).mockResolvedValue({ model: modelWithEvent } as any);
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.deleteModelEvent).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Events Timeline/i })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('tab', { name: /Events Timeline/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Delete event' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Delete event' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.delete).toHaveBeenCalledWith('/api/financial-modeling/events/event-1');
     });
   });
 });

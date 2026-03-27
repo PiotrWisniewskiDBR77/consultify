@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `model event add V8 seam` recorded in `evidence/412-v81-broader-finance-model-event-add-v8-seam.md`
-- reason: after model create continuity landed, the next smallest honest residual was the add-event mutation still defaulting to the legacy financial-modeling endpoint in the active finance model workspace
+- latest evidence: `model event delete V8 seam` recorded in `evidence/413-v81-broader-finance-model-event-delete-v8-seam.md`
+- reason: after model event-add continuity landed, the next smallest honest residual was the delete-event mutation still defaulting to the legacy financial-modeling endpoint in the active finance model workspace
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `active finance model event add continuity`
-- last accepted packet: `model event add V8 seam`
+- current packet: `active finance model event delete continuity`
+- last accepted packet: `model event delete V8 seam`
 - blocker: `none`
-- next action: `assess whether active finance model delete-event continuity is the next smallest broader Finance packet after model event-add closure`
+- next action: `assess whether active finance model assumptions-save continuity is the next smallest broader Finance packet after model event-delete closure`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

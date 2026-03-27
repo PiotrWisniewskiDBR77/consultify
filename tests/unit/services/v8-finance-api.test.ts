@@ -235,6 +235,19 @@ describe('V8FinanceApi', () => {
     expect(data.id).toBe('event-1');
   });
 
+  it('deletes governed finance model events through the V8 namespace', async () => {
+    vi.mocked(v8Delete).mockResolvedValue({
+      success: true,
+      deleted: 'event-1',
+    } as any);
+
+    const data = await V8FinanceApi.deleteModelEvent('event-1');
+
+    expect(v8Delete).toHaveBeenCalledWith('/finance/events/event-1');
+    expect(data.success).toBe(true);
+    expect(data.deleted).toBe('event-1');
+  });
+
   it('deletes governed finance models through the V8 namespace', async () => {
     vi.mocked(v8Delete).mockResolvedValue({
       success: true,

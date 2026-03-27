@@ -187,6 +187,17 @@ async function addModelEventWithFallback(modelId: string, body: Record<string, u
   }
 }
 
+async function deleteModelEventWithFallback(eventId: string) {
+  try {
+    return await V8FinanceApi.deleteModelEvent(eventId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.delete(`/api/financial-modeling/events/${eventId}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -450,7 +461,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      await Api.delete(`/api/financial-modeling/events/${eventId}`);
+      await deleteModelEventWithFallback(eventId);
       if (selectedModel) {
         await selectModel(selectedModel.id);
         onModelChanged?.(selectedModel.id);
@@ -947,6 +958,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           </span>
                           <button
                             onClick={() => handleDeleteEvent(ev.id)}
+                            aria-label={t('finance.model.deleteEvent', 'Delete event') as string}
                             className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                           >
                             <Trash2 size={14} className="text-red-400" />
