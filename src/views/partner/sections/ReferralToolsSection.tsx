@@ -66,8 +66,13 @@ interface ReferredCustomer {
   organizationName?: string;
   attributionType: string;
   referralCodeUsed?: string;
+  signupCompletedAt?: string;
+  firstPaymentAt?: string;
+  lifetimeValue?: number;
   status: string;
   totalCommissionEarned: number;
+  commissionRatePercent?: number;
+  commissionDurationMonths?: number;
   attributedAt: string;
 }
 
@@ -129,8 +134,22 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       organizationName: payload?.organizationName ? String(payload.organizationName) : undefined,
       attributionType: String(payload?.attributionType ?? 'UNKNOWN'),
       referralCodeUsed: payload?.referralCodeUsed ? String(payload.referralCodeUsed) : undefined,
+      signupCompletedAt: payload?.signupCompletedAt ? String(payload.signupCompletedAt) : undefined,
+      firstPaymentAt: payload?.firstPaymentAt ? String(payload.firstPaymentAt) : undefined,
+      lifetimeValue:
+        payload?.lifetimeValue === null || payload?.lifetimeValue === undefined
+          ? undefined
+          : Number(payload.lifetimeValue),
       status: String(payload?.status ?? 'PENDING'),
       totalCommissionEarned: Number(payload?.totalCommissionEarned ?? 0),
+      commissionRatePercent:
+        payload?.commissionRatePercent === null || payload?.commissionRatePercent === undefined
+          ? undefined
+          : Number(payload.commissionRatePercent),
+      commissionDurationMonths:
+        payload?.commissionDurationMonths === null || payload?.commissionDurationMonths === undefined
+          ? undefined
+          : Number(payload.commissionDurationMonths),
       attributedAt: String(payload?.attributedAt ?? ''),
     }),
     []
@@ -505,6 +524,60 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                       {customer.totalCommissionEarned.toLocaleString()}
                     </span>
                   </div>
+                  {(customer.signupCompletedAt ||
+                    customer.firstPaymentAt ||
+                    customer.commissionRatePercent !== undefined ||
+                    customer.commissionDurationMonths !== undefined ||
+                    customer.lifetimeValue !== undefined) && (
+                    <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+                      <div className="rounded-lg border border-white/5 bg-white/60 p-3 dark:bg-navy-950/40">
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {t('partner.referrals.customerSignupCompleted', 'Signup completed')}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                          {customer.signupCompletedAt || t('common.pending', 'Pending')}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-white/5 bg-white/60 p-3 dark:bg-navy-950/40">
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {t('partner.referrals.customerFirstPayment', 'First payment')}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                          {customer.firstPaymentAt || t('common.pending', 'Pending')}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-white/5 bg-white/60 p-3 dark:bg-navy-950/40">
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {t('partner.referrals.customerCommissionRate', 'Commission rate')}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                          {customer.commissionRatePercent !== undefined
+                            ? `${customer.commissionRatePercent}%`
+                            : t('common.notAvailable', 'Not available')}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-white/5 bg-white/60 p-3 dark:bg-navy-950/40">
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {t('partner.referrals.customerCommissionDuration', 'Commission duration')}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                          {customer.commissionDurationMonths !== undefined
+                            ? `${customer.commissionDurationMonths} ${t('common.months', 'months')}`
+                            : t('common.notAvailable', 'Not available')}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-white/5 bg-white/60 p-3 dark:bg-navy-950/40">
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {t('partner.referrals.customerLifetimeValue', 'Lifetime value')}
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                          {customer.lifetimeValue !== undefined
+                            ? `€${customer.lifetimeValue.toLocaleString()}`
+                            : t('common.notAvailable', 'Not available')}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: fourth broader packet recorded in `evidence/422-v81-broader-partner-referral-tools-read-v8-seam.md`
-- reason: after payout-history, statement-history, and referred-customer list continuity moved onto governed reads, the shared referral-tools body still defaulted to legacy `GET /api/partners/referral-tools` across active partner portal subsections, making it the next smallest honest residual before deeper lifecycle breadth
+- latest evidence: fifth broader packet recorded in `evidence/423-v81-broader-partner-referred-customer-lifecycle-readback-seam.md`
+- reason: after the shared referral-tools body moved onto governed reads, the active partner portal still showed only a thin referred-customer list even though the governed attribution seam already carried lifecycle depth such as signup completion, first payment, commission rate, duration, and lifetime value
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `referral-tools read V8 seam`
-- last accepted packet: `referral-tools read V8 seam`
+- current packet: `referred-customer lifecycle readback seam`
+- last accepted packet: `referred-customer lifecycle readback seam`
 - blocker: `none`
-- next action: `assess whether deeper referred-customer lifecycle or drill-down continuity is now the next smallest honest broader-partner packet after referral-tools body reads are governed`
+- next action: `assess whether onboarding or client-access breadth now contains the next smallest honest broader-partner packet after referred-customer lifecycle readback continuity`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

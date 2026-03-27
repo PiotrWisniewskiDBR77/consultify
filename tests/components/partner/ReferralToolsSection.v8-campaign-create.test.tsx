@@ -155,7 +155,12 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
           organizationId: 'org-1',
           organizationName: 'ACME GmbH',
           attributionType: 'REFERRAL_LINK',
+          signupCompletedAt: '2026-03-11',
+          firstPaymentAt: '2026-03-22',
+          lifetimeValue: 12000,
           totalCommissionEarned: 120,
+          commissionRatePercent: 15,
+          commissionDurationMonths: 12,
           status: 'ACTIVE',
           attributedAt: '2026-03-10',
         },
@@ -167,6 +172,11 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     await waitFor(() => {
       expect(screen.getByText('ACME GmbH')).toBeInTheDocument();
       expect(screen.getByText('active')).toBeInTheDocument();
+      expect(screen.getByText('2026-03-11')).toBeInTheDocument();
+      expect(screen.getByText('2026-03-22')).toBeInTheDocument();
+      expect(screen.getByText('15%')).toBeInTheDocument();
+      expect(screen.getByText('12 months')).toBeInTheDocument();
+      expect(screen.getByText('€12,000')).toBeInTheDocument();
     });
 
     expect(V8PartnerApi.getAttributions).toHaveBeenCalled();
@@ -197,7 +207,12 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
                 organizationId: 'org-legacy-1',
                 organizationName: 'Legacy Customer',
                 attributionType: 'PROMO_CODE',
+                signupCompletedAt: '2026-02-21',
+                firstPaymentAt: null,
+                lifetimeValue: 2500,
                 totalCommissionEarned: 0,
+                commissionRatePercent: 10,
+                commissionDurationMonths: 6,
                 status: 'PENDING',
                 attributedAt: '2026-02-20',
               },
@@ -213,6 +228,10 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     await waitFor(() => {
       expect(screen.getByText('Legacy Customer')).toBeInTheDocument();
       expect(screen.getByText('pending')).toBeInTheDocument();
+      expect(screen.getByText('2026-02-21')).toBeInTheDocument();
+      expect(screen.getAllByText('10%').length).toBeGreaterThan(0);
+      expect(screen.getByText('6 months')).toBeInTheDocument();
+      expect(screen.getByText('€2,500')).toBeInTheDocument();
     });
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/attributions');
