@@ -272,8 +272,8 @@ The next broader chat/ai-core parity lane is now explicitly promoted from visibl
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Chat` / `AI core` parity expansion scope honest and assess the next bounded broader chat/ai-core packet after the bounded trust/provenance readback closure
-- `Agent B`: own runtime/surface closure for the active broader chat/ai-core lane packet-by-packet, now through stream-session metadata continuity and operator trust/provenance readback
+- `Agent A`: keep broader `Chat` / `AI core` parity expansion scope honest and assess the next bounded broader chat/ai-core packet after the legacy full-screen chat control-strip parity closure
+- `Agent B`: own runtime/surface closure for the active broader chat/ai-core lane packet-by-packet, now through stream-session metadata continuity, operator trust/provenance readback, and legacy full-screen chat governed controls
 
 ### Exit criteria
 
@@ -292,6 +292,7 @@ Current result:
 - the active lane split-brain map is recorded in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`,
 - the first real bounded broader chat/ai-core packet landed in `evidence/362-v81-broader-chat-ai-core-stream-session-metadata-continuity-seam.md` by retaining governed stream-session identity and aligning persisted AI-response metadata across the two live chat surfaces,
 - the second real bounded broader chat/ai-core packet landed in `evidence/363-v81-broader-chat-ai-core-trust-provenance-readback-seam.md` by exposing governed trust and provenance readback on the existing AI-core runtime operator surface,
+- the third real bounded broader chat/ai-core packet landed in `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md` by extending the governed V8 context and artifact controls onto the legacy full-screen chat surface,
 - the previously accepted bounded `Chat` and `AI core` lanes stay capped rather than silently reopened into one unbounded architecture rewrite.
 
 ### Explicitly out of scope
@@ -335,7 +336,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | `Landing Anna` broader voice UX / architecture | done | the bounded same-session continuity, channel truth, and public voice-config authority cuts are complete; remaining productization is broader architecture work that should not be smuggled into one more pseudo-small packet | `4` | live voice UX/architecture is either deliberately productized as a broader redesign or formally capped at the accepted bounded state |
 | broader canonical `/` and public marketing breadth | done | accepted landing shell/IA work plus five bounded canonical `/` narrative packets now close the smallest honest public-marketing seams; what remains is broader redesign work rather than another micro-packet | `5` | canonical `/` and public marketing breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
-| broader `Chat` / `AI core` parity expansion | active | current bounded work closed the active seams, and broader packet coverage now includes both turn-level continuity and operator trust readback, but wider product/runtime breadth still remains | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
+| broader `Chat` / `AI core` parity expansion | active | current bounded work closed the active seams, and broader packet coverage now includes turn-level continuity, operator trust readback, and legacy full-screen governed control-strip parity, but wider product/runtime breadth still remains | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | visible, not promoted | accepted lane closed bounded read/runtime truth seams; broader write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
@@ -453,6 +454,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the third bounded packet inside broader `Chat / AI core` parity expansion by extending the existing governed `V8ContextIndicator` and `V8ArtifactRunControl` onto `AIChatWelcomeView` in `evidence/364-v81-broader-chat-ai-core-legacy-chat-governed-v8-controls-seam.md`, so the legacy full-screen chat surface no longer trails the shared chat panel on visible governed V8 controls
 - 2026-03-27: landed the second bounded packet inside broader `Chat / AI core` parity expansion by wiring governed trust and provenance readback into the active `AICoreRuntimePanel` in `evidence/363-v81-broader-chat-ai-core-trust-provenance-readback-seam.md`, so the visible operator surface now reflects the existing V8 trust authority instead of stopping at environment and tool-policy status
 - 2026-03-27: landed the first real bounded packet inside broader `Chat / AI core` parity expansion by retaining `stream_meta.sessionId` through `useAIStream` and aligning persisted AI-response metadata across legacy `/chat` and unified chat in `evidence/362-v81-broader-chat-ai-core-stream-session-metadata-continuity-seam.md`, so the active lane now has a code-backed turn-level continuity closure after the split-brain map
 - 2026-03-27: accepted broader `Mobile` redesign in `evidence/360-v81-broader-mobile-redesign-t4-acceptance.md` after four shared mobile-shell packets landed, then promoted broader `Chat / AI core` parity expansion into active execution through `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md` and recorded the initial split-brain map in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`

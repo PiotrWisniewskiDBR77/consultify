@@ -44,6 +44,8 @@ import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
 import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
+import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
+import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
@@ -88,6 +90,12 @@ const prefersReducedMotion = (): boolean => {
   if (typeof window === 'undefined') return true;
   return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? true;
 };
+
+const isUuidLike = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim(),
+  );
 
 /** Download a string as a file */
 function downloadFile(filename: string, content: string, mimeType: string): void {
@@ -301,6 +309,48 @@ export const AIChatWelcomeView: React.FC = () => {
   useEffect(() => {
     activeChatMessagesRef.current = activeChatMessages;
   }, [activeChatMessages]);
+
+  const latestUserGoalHint = useMemo(() => {
+    const latestUserMessage = [...activeChatMessages]
+      .reverse()
+      .find((message) => message.role === 'user' && String(message.content || '').trim().length > 0);
+    return String(latestUserMessage?.content || '').trim();
+  }, [activeChatMessages]);
+
+  const v8SnapshotContext = useMemo(() => {
+    const workspaceId = isUuidLike(workspaceContext?.entityId)
+      ? workspaceContext.entityId
+      : isUuidLike(workspaceContext?.projectId)
+        ? workspaceContext.projectId
+        : isUuidLike(selectedProject?.id)
+          ? selectedProject.id
+          : null;
+
+    const projectId = isUuidLike(workspaceContext?.projectId)
+      ? workspaceContext.projectId
+      : isUuidLike(selectedProject?.id)
+        ? selectedProject.id
+        : null;
+
+    const resolvedRoleRef =
+      typeof currentUser?.role === 'string' && currentUser.role.trim().length > 0
+        ? currentUser.role.trim().toLowerCase()
+        : 'member';
+
+    return {
+      workspaceId,
+      projectId,
+      effectiveScopeRef: 'workspace',
+      resolvedRoleRef,
+      privacyMode: Boolean((aiConfig as any)?.privateMode),
+    };
+  }, [
+    aiConfig,
+    currentUser?.role,
+    selectedProject?.id,
+    workspaceContext?.entityId,
+    workspaceContext?.projectId,
+  ]);
 
   // AI context
   const { pmoContext, globalContext, screenContext } = useAIContext();
@@ -1448,7 +1498,18 @@ For example: REMEMBER: preferred_language: Polish`;
         {/* Main Chat Area - Full width, sidebar is overlay */}
         <div className="h-full flex flex-col overflow-hidden">
           {/* Header with Sidebar Toggle */}
-          <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-end bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
+          <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-between bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
+            <div className="flex items-center gap-0.5">
+              <V8ArtifactRunControl
+                conversationId={activeConversationId}
+                defaultGoal={latestUserGoalHint}
+                snapshotContext={v8SnapshotContext}
+              />
+              <V8ContextIndicator
+                conversationId={activeConversationId}
+                defaultGoal={latestUserGoalHint}
+              />
+            </div>
             <div className="flex items-center gap-1">
               {voiceSupported && (
                 <button
