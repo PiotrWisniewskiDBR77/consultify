@@ -210,6 +210,31 @@ describe('V8FinanceApi', () => {
     expect(data.status).toBe('approved');
   });
 
+  it('posts governed finance model events through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      id: 'event-1',
+    } as any);
+
+    const data = await V8FinanceApi.addModelEvent('model-1', {
+      eventType: 'revenue',
+      name: 'New contract',
+      amount: 120000,
+      periodStart: '2026-01-01',
+      cfClassification: 'operating',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/models/model-1/events', {
+      eventType: 'revenue',
+      name: 'New contract',
+      amount: 120000,
+      periodStart: '2026-01-01',
+      cfClassification: 'operating',
+    });
+    expect(data.success).toBe(true);
+    expect(data.id).toBe('event-1');
+  });
+
   it('deletes governed finance models through the V8 namespace', async () => {
     vi.mocked(v8Delete).mockResolvedValue({
       success: true,

@@ -10,6 +10,7 @@ const mockGetStatementDetail = vi.fn();
 const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockCreateModel = vi.fn();
+const mockAddEvent = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
 const mockApproveModel = vi.fn();
@@ -83,6 +84,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
+  addEvent: (...args: unknown[]) => mockAddEvent(...args),
   approveModel: (...args: unknown[]) => mockApproveModel(...args),
   computeModel: (...args: unknown[]) => mockComputeModel(...args),
   createModel: (...args: unknown[]) => mockCreateModel(...args),
@@ -639,6 +641,40 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data).toEqual({ success: true, status: 'approved' });
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
     expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID);
+  });
+
+  it('POST /api/v8/finance/models/:id/events returns envelope and delegates to addEvent', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+    });
+    mockAddEvent.mockResolvedValue('event-1');
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/model-1/events').send({
+      eventType: 'revenue',
+      name: 'New contract',
+      amount: 120000,
+      periodStart: '2026-01-01',
+      cfClassification: 'operating',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, id: 'event-1' });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockAddEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'model-1',
+        eventType: 'revenue',
+        name: 'New contract',
+        amount: 120000,
+        periodStart: '2026-01-01',
+        cfClassification: 'operating',
+        createdBy: UID,
+      }),
+    );
   });
 
   it('DELETE /api/v8/finance/models/:id returns envelope and deletes model rows', async () => {

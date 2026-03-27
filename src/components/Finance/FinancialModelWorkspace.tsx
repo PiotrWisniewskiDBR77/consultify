@@ -176,6 +176,17 @@ async function createModelWithFallback(body: Record<string, unknown>) {
   }
 }
 
+async function addModelEventWithFallback(modelId: string, body: Record<string, unknown>) {
+  try {
+    return await V8FinanceApi.addModelEvent(modelId, body);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/financial-modeling/models/${modelId}/events`, body);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -405,7 +416,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const handleAddEvent = async () => {
     if (!selectedModel || !eventForm.name || !eventForm.periodStart) return;
     try {
-      await Api.post(`/api/financial-modeling/models/${selectedModel.id}/events`, {
+      await addModelEventWithFallback(selectedModel.id, {
         eventType: eventForm.eventType,
         name: eventForm.name,
         amount: eventForm.amount,

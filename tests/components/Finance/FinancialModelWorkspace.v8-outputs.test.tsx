@@ -35,6 +35,7 @@ vi.mock('@/services/api', () => {
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    addModelEvent: vi.fn(),
     approveModel: vi.fn(),
     computeModel: vi.fn(),
     createModel: vi.fn(),
@@ -266,6 +267,102 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
         '/api/financial-modeling/models',
         expect.objectContaining({
           name: 'Legacy model',
+        }),
+      );
+    });
+  });
+
+  it('prefers governed model event create before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.addModelEvent).mockResolvedValue({ success: true, id: 'event-1' } as any);
+
+    const { container } = render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Events Timeline/i })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('tab', { name: /Events Timeline/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Add Event' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
+    });
+
+    const eventTextInputs = container.querySelectorAll('input');
+    fireEvent.change(eventTextInputs[0] as HTMLInputElement, { target: { value: 'New contract' } });
+    fireEvent.change(eventTextInputs[1] as HTMLInputElement, { target: { value: '120000' } });
+    fireEvent.change(eventTextInputs[2] as HTMLInputElement, { target: { value: '2026-01-01' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: 'Add Event' })[1]);
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.addModelEvent).toHaveBeenCalledWith(
+        'model-1',
+        expect.objectContaining({
+          eventType: 'revenue',
+          name: 'New contract',
+          amount: 120000,
+          periodStart: '2026-01-01',
+          cfClassification: 'operating',
+        }),
+      );
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/financial-modeling/models/model-1/events',
+      expect.anything(),
+    );
+  });
+
+  it('falls back to legacy model event create in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.addModelEvent).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true, id: 'event-legacy-1' } as any);
+
+    const { container } = render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Events Timeline/i })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('tab', { name: /Events Timeline/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Add Event' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
+    });
+
+    const eventTextInputs = container.querySelectorAll('input');
+    fireEvent.change(eventTextInputs[0] as HTMLInputElement, { target: { value: 'Legacy contract' } });
+    fireEvent.change(eventTextInputs[1] as HTMLInputElement, { target: { value: '99000' } });
+    fireEvent.change(eventTextInputs[2] as HTMLInputElement, { target: { value: '2026-01-01' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: 'Add Event' })[1]);
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith(
+        '/api/financial-modeling/models/model-1/events',
+        expect.objectContaining({
+          eventType: 'revenue',
+          name: 'Legacy contract',
+          amount: 99000,
+          periodStart: '2026-01-01',
+          cfClassification: 'operating',
         }),
       );
     });

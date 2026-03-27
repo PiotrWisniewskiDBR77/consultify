@@ -69,6 +69,7 @@ import {
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
 import {
+  addEvent,
   approveModel,
   computeModel,
   createModel,
@@ -398,6 +399,53 @@ router.post(
 
     return res.json({
       data: { success: true, status: 'approved' },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/models/:modelId/events',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const body = req.body ?? {};
+    if (
+      !body.eventType ||
+      !body.name ||
+      body.amount === undefined ||
+      !body.periodStart ||
+      !body.cfClassification
+    ) {
+      return res.status(400).json({
+        error: 'eventType, name, amount, periodStart, cfClassification required',
+      });
+    }
+
+    const id = await addEvent({
+      modelId,
+      eventType: body.eventType,
+      name: body.name,
+      description: body.description,
+      amount: body.amount,
+      periodStart: body.periodStart,
+      periodEnd: body.periodEnd,
+      recurrence: body.recurrence,
+      growthRate: body.growthRate,
+      cfClassification: body.cfClassification,
+      postingRules: body.postingRules,
+      parameters: body.parameters,
+      sortOrder: body.sortOrder,
+      createdBy: req.user?.id,
+    });
+
+    return res.status(201).json({
+      data: { success: true, id },
       meta: financeMeta(),
     });
   }),

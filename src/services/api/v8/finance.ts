@@ -134,6 +134,21 @@ export interface V8FinanceModelCreatePayload {
   sourceStatementPackId?: string;
 }
 
+export interface V8FinanceModelEventCreatePayload {
+  eventType: string;
+  name: string;
+  description?: string;
+  amount: number;
+  periodStart: string;
+  periodEnd?: string;
+  recurrence?: string;
+  growthRate?: number;
+  cfClassification: string;
+  postingRules?: Record<string, unknown>;
+  parameters?: Record<string, unknown>;
+  sortOrder?: number;
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -399,6 +414,8 @@ export const V8FinanceApi = {
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
   approveModel: (modelId: string) =>
     v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
+  addModelEvent: (modelId: string, body: V8FinanceModelEventCreatePayload) =>
+    v8Post<{ success: boolean; id: string }>(`/finance/models/${modelId}/events`, body),
   deleteModel: (modelId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/models/${modelId}`),
   getValuations: () =>
