@@ -137,10 +137,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
         try {
           setSuggestedNotesLoading(true);
-          const params = new URLSearchParams();
-          params.set('q', String(q).slice(0, 400));
-          params.set('limit', '5');
-          const notes = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
+          const notes = await Api.getNotebookPages({ q: String(q).slice(0, 400), limit: 5 });
           const arr = Array.isArray(notes) ? notes : [];
           setSuggestedNotes(arr);
           if (arr.length > 0) {

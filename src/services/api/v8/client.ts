@@ -41,6 +41,16 @@ export async function v8Put<T>(path: string, body?: unknown): Promise<T> {
   return json.data;
 }
 
+export async function v8Patch<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetchWithRetry(`${V8_BASE}${path}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await handleResponse<{ data: T }>(res, `V8 PATCH ${path}`);
+  return json.data;
+}
+
 export async function v8Delete<T>(path: string): Promise<T> {
   const res = await fetchWithRetry(`${V8_BASE}${path}`, {
     method: 'DELETE',

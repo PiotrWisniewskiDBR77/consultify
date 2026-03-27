@@ -329,7 +329,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         id: 'export',
         label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
         icon: Download,
-        onClick: () => actions.exportReportPdf(row.originRecordId),
+        onClick: () => actions.exportReportPdf(row),
       });
       base.push({
         id: 'archive',
@@ -338,7 +338,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         divider: true,
         variant: 'danger',
         onClick: async () => {
-          const ok = await actions.archiveReport(row.originRecordId);
+          const ok = await actions.archiveReport(row);
           if (ok) onRefresh();
         },
       });
@@ -347,7 +347,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         id: 'export',
         label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
         icon: Download,
-        onClick: () => actions.exportDeckPptx(row.originRecordId),
+        onClick: () => actions.exportDeckPptx(row),
       });
       base.push({
         id: 'archive',
@@ -356,7 +356,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         divider: true,
         variant: 'danger',
         onClick: async () => {
-          const ok = await actions.archiveDeck(row.originRecordId);
+          const ok = await actions.archiveDeck(row);
           if (ok) onRefresh();
         },
       });

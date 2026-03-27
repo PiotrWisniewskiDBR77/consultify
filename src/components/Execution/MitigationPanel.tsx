@@ -10,6 +10,10 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  shouldFallbackToLegacyExecutionControl,
+  V8ExecutionControlApi,
+} from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 interface MitigationPanelProps {
@@ -66,14 +70,21 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
       if (dueDate) body.mitigationDueDate = dueDate;
       if (status) body.mitigationStatus = status;
 
-      const res = await fetch(`/api/execution-control/raid/${raidItemId}/mitigation`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
+      const res = await V8ExecutionControlApi.updateRaidMitigation(raidItemId, body)
+        .then(() => ({ ok: true, json: async () => ({}) }))
+        .catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetch(`/api/execution-control/raid/${raidItemId}/mitigation`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+          });
+        });
 
       if (res.ok) {
         setSaved(true);

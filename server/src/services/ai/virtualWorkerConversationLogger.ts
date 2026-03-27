@@ -75,10 +75,12 @@ export async function findOrCreateConversation(opts: {
   locale?: string;
   visitorFingerprint?: string;
 }): Promise<string> {
+  const channel = opts.channel || 'text_chat';
+
   if (opts.sessionId) {
     const existing = await db().query<{ id: string }>(
-      'SELECT id FROM virtual_worker_conversations WHERE session_id = $1 AND worker_id = $2 LIMIT 1',
-      [opts.sessionId, opts.workerId]
+      'SELECT id FROM virtual_worker_conversations WHERE session_id = $1 AND worker_id = $2 AND channel = $3 LIMIT 1',
+      [opts.sessionId, opts.workerId, channel]
     );
     if (existing.rows[0]) return existing.rows[0].id;
   }
@@ -92,7 +94,7 @@ export async function findOrCreateConversation(opts: {
       id,
       opts.workerId,
       opts.sessionId || null,
-      opts.channel || 'text_chat',
+      channel,
       opts.locale || null,
       opts.visitorFingerprint || null,
     ]

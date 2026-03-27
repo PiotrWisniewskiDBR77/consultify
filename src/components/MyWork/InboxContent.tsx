@@ -1617,13 +1617,25 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               V8MyWorkApi.getCanonicalInboxStats().catch(() => null),
             ]);
             return buildInboxResponseFromCanonical(tableRes.items, statsRes);
-          } catch {
+          } catch (error) {
+            if (!Api.shouldFallbackToLegacyMyWorkInbox(error)) {
+              throw error;
+            }
             return (Api.inboxGetTable({ status, limit: 200 }).catch(
               () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
             ) as Promise<InboxResponse>);
           }
         })(),
-        V8MyWorkApi.materializeCanonicalInbox().catch(() => Api.materializeInbox().catch(() => null)),
+        (async () => {
+          try {
+            return await V8MyWorkApi.materializeCanonicalInbox();
+          } catch (error) {
+            if (!Api.shouldFallbackToLegacyMyWorkInbox(error)) {
+              return null;
+            }
+            return Api.materializeInbox().catch(() => null);
+          }
+        })(),
       ]);
       setData(res);
       const now = new Date();

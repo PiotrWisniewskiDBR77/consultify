@@ -33,6 +33,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
+import { bucketIdeaStageForList, normalizeStageToV5, type IdeaStageV5 } from './ideaEntryTypes';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeasTableContent } from './IdeasTableContent';
 import { useConfirmDialog } from './shared/ConfirmDialog';
@@ -54,6 +55,7 @@ export type MyIdea = {
   sourceConversationId?: string | null;
   sourceMessageId?: string | null;
   stage?: IdeaStage;
+  stageV5?: IdeaStageV5;
   potential?: string | null;
   complexity?: string | null;
   aiExpansion?: string | null;
@@ -206,17 +208,6 @@ function getToolConfig(tool?: string | null) {
   return TOOL_CONFIG[t] || TOOL_CONFIG.mindmap;
 }
 
-function mapRawStageToStage(raw?: string | null): IdeaStage {
-  if (!raw) return 'spark';
-  const s = raw.toLowerCase();
-  if (s === 'done' || s === 'summary' || s === 'shaping') return 'shaping';
-  if (s === 'expanding' || s === 'researching' || s === 'proposing' || s === 'incubating')
-    return 'incubating';
-  if (s === 'ready') return 'ready';
-  if (s === 'promoted') return 'promoted';
-  return 'spark';
-}
-
 export type SortField = 'title' | 'stage' | 'tool' | 'date' | 'tags';
 export type SortDir = 'asc' | 'desc';
 
@@ -314,7 +305,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       const data = await Api.getMyIdeas({ q: searchQuery || undefined, limit: 200 });
       const mapped = ((data || []) as any[]).map((raw) => ({
         ...raw,
-        stage: mapRawStageToStage(raw.stage),
+        stageV5: normalizeStageToV5(raw.stage),
+        stage: bucketIdeaStageForList(raw.stage),
       }));
       setIdeas(mapped as MyIdea[]);
 

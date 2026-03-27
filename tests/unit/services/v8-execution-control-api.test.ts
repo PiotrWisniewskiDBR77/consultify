@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
   v8Post: vi.fn(),
+  v8Patch: vi.fn(),
   v8Put: vi.fn(),
 }));
 
-import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
-import { v8Get, v8Post } from '@/services/api/v8/client';
+import {
+  shouldFallbackToLegacyExecutionControl,
+  V8ExecutionControlApi,
+} from '@/services/api/v8/execution-control';
+import { v8Get, v8Patch, v8Post } from '@/services/api/v8/client';
 
 describe('V8ExecutionControlApi', () => {
   beforeEach(() => {
@@ -58,6 +62,14 @@ describe('V8ExecutionControlApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/execution-control/budget/portfolio', {
       projectId: 'proj-1',
     });
+  });
+
+  it('requests initiative budget summary from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ summary: null });
+
+    await V8ExecutionControlApi.getBudgetInitiativeSummary('init-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/execution-control/budget/initiative/init-1');
   });
 
   it('requests overspend signals from the V8 namespace', async () => {
@@ -149,6 +161,22 @@ describe('V8ExecutionControlApi', () => {
     });
   });
 
+  it('patches raid mitigation updates to the V8 namespace', async () => {
+    vi.mocked(v8Patch).mockResolvedValue({ success: true, raidItemId: 'raid-1' });
+
+    await V8ExecutionControlApi.updateRaidMitigation('raid-1', {
+      raidItemId: 'raid-1',
+      mitigationPlan: 'Reassign owner',
+      mitigationStatus: 'IN_PROGRESS',
+    });
+
+    expect(v8Patch).toHaveBeenCalledWith('/execution-control/raid/raid-1/mitigation', {
+      raidItemId: 'raid-1',
+      mitigationPlan: 'Reassign owner',
+      mitigationStatus: 'IN_PROGRESS',
+    });
+  });
+
   it('posts budget entries to the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({ success: true, id: 'be-1' });
 
@@ -169,5 +197,17 @@ describe('V8ExecutionControlApi', () => {
       periodMonth: 3,
       periodYear: 2026,
     });
+  });
+
+  it('allows legacy execution-control fallback only for bounded non-supported statuses', () => {
+    expect(shouldFallbackToLegacyExecutionControl({ status: 404 })).toBe(true);
+    expect(shouldFallbackToLegacyExecutionControl({ status: 405 })).toBe(true);
+    expect(shouldFallbackToLegacyExecutionControl({ status: 501 })).toBe(true);
+  });
+
+  it('prevents silent legacy execution-control fallback on transient failures', () => {
+    expect(shouldFallbackToLegacyExecutionControl({ status: 429 })).toBe(false);
+    expect(shouldFallbackToLegacyExecutionControl({ status: 500 })).toBe(false);
+    expect(shouldFallbackToLegacyExecutionControl({ status: 503 })).toBe(false);
   });
 });

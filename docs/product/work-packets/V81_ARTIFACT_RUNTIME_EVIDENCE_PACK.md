@@ -103,9 +103,11 @@ This gives the current repo an honest local claim that object-linked outputs are
 - implemented as a first-class canonical artifact type in the registry,
 - implemented for governed table-platform registration/open/export flows,
 - visible in Outputs Library and My Work surfaces,
-- but **deferred** for chat-driven `ArtifactRun` materialization parity with `document` and `presentation`.
+- and now also closed for bounded chat-driven `ArtifactRun` materialization parity with `document` and
+  `presentation` when the run targets an existing governed table artifact.
 
-This deferral is intentional and must remain explicit in closure reporting.
+The remaining honesty boundary is no longer `sheet ArtifactRun` materialization itself, but broader spreadsheet
+generation/publishing breadth beyond the existing governed table-target path.
 
 ---
 
@@ -115,6 +117,7 @@ The strongest local deep-flow evidence currently executed is:
 
 - `chat -> plan -> accept -> materialize` for `document`,
 - `chat -> plan -> accept -> materialize` for `presentation`,
+- `chat -> plan -> accept -> materialize` for bounded `sheet`,
 - governed table-platform registration/open/export for `sheet`,
 - My Work canonical lane rendering,
 - notebook object-linked output rendering through real initiative backlinks.

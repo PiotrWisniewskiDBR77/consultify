@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EntryFooter } from '../../components/Landing/EntryFooter';
+import { AnnaAssistantWidget } from '../../components/Landing/AnnaAssistantWidget';
 import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 
 // Company data - UPDATE THESE VALUES
@@ -19,12 +20,24 @@ export const AboutView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  const handleTrialClick = () => {
+    navigate('/trial/start');
+  };
+
+  const handleDemoClick = () => {
+    navigate('/demo');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
       {/* Header */}
       <EntryTopBar
-        onTrialClick={() => navigate('/trial/start')}
-        onDemoClick={() => navigate('/demo')}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
         onLoginClick={() => navigate('/login')}
         isLoggedIn={false}
         hasWorkspace={false}
@@ -173,7 +186,7 @@ export const AboutView: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate('/demo')}
+              onClick={handleDemoClick}
               className="px-8 py-4 bg-white dark:bg-navy-900 text-purple-600 font-semibold rounded-xl 
                                        hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
             >
@@ -181,7 +194,7 @@ export const AboutView: React.FC = () => {
               <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => navigate('/trial/start')}
+              onClick={handleTrialClick}
               className="px-8 py-4 bg-purple-500 text-white font-semibold rounded-xl 
                                        hover:bg-purple-400 transition-colors border border-purple-400"
             >
@@ -193,6 +206,11 @@ export const AboutView: React.FC = () => {
 
       {/* Footer */}
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
     </div>
   );
 };

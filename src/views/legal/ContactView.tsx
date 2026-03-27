@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { DemoButton } from '../../components/Landing/DemoButton';
+import { AnnaAssistantWidget } from '../../components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '../../components/Landing/EntryFooter';
 import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 
@@ -102,12 +103,24 @@ export const ContactView: React.FC = () => {
     }
   };
 
+  const handleTrialClick = () => {
+    navigate('/trial/start');
+  };
+
+  const handleDemoClick = () => {
+    navigate('/demo');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
       {/* Header */}
       <EntryTopBar
-        onTrialClick={() => navigate('/trial/start')}
-        onDemoClick={() => navigate('/demo')}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
         onLoginClick={() => navigate('/login')}
         isLoggedIn={false}
         hasWorkspace={false}
@@ -431,6 +444,11 @@ export const ContactView: React.FC = () => {
 
       {/* Footer */}
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
     </div>
   );
 };

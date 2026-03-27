@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('framer-motion', () => ({
@@ -48,6 +48,16 @@ vi.mock('../../../src/store/useAppStore', () => ({
 vi.mock('../../../src/services/api/v8/sync', () => ({
   V8SyncApi: {
     getIntegrations: vi.fn(),
+    getConnectors: vi.fn(),
+    getHubHealth: vi.fn(),
+    getErrors: vi.fn(),
+    resolveError: vi.fn(),
+    reauthIntegration: vi.fn(),
+    disconnectIntegration: vi.fn(),
+    pauseIntegration: vi.fn(),
+    resumeIntegration: vi.fn(),
+    runIntegrationSync: vi.fn(),
+    getAuditLog: vi.fn(),
     getAuthHealth: vi.fn(),
     getAuthEscalations: vi.fn(),
     getConflicts: vi.fn(),
@@ -57,6 +67,10 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
     resolveAuthEscalation: vi.fn(),
     resolveConflict: vi.fn(),
     setRefreshTimingPolicy: vi.fn(),
+  },
+  shouldFallbackToLegacySync: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
   },
 }));
 
@@ -79,6 +93,21 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
       integrations: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getConnectors).mockResolvedValue({
+      connectors: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getHubHealth).mockResolvedValue({
+      summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0 },
+    } as any);
+    vi.mocked(V8SyncApi.getErrors).mockResolvedValue({
+      errors: [],
+      count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getAuditLog).mockResolvedValue({
+      entries: [],
       count: 0,
     } as any);
     vi.mocked(V8SyncApi.getAuthHealth).mockResolvedValue({
@@ -145,6 +174,10 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     await waitFor(() => {
       expect(V8SyncApi.getIntegrations).toHaveBeenCalled();
+      expect(V8SyncApi.getConnectors).toHaveBeenCalled();
+      expect(V8SyncApi.getHubHealth).toHaveBeenCalled();
+      expect(V8SyncApi.getErrors).toHaveBeenCalled();
+      expect(V8SyncApi.getAuditLog).toHaveBeenCalled();
       expect(screen.getByText('Connect your first integration')).toBeInTheDocument();
     });
 
@@ -231,5 +264,220 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(screen.getByText('V8 Active Locks')).toBeInTheDocument();
     expect(screen.getByText('edit')).toBeInTheDocument();
     expect(screen.getByText('document')).toBeInTheDocument();
+  });
+
+  it('resolves sync errors through the governed V8 mutation before legacy fallback', async () => {
+    vi.mocked(V8SyncApi.getErrors).mockResolvedValue({
+      errors: [
+        {
+          id: 'err-1',
+          integrationId: 'int-1',
+          errorType: 'AUTH',
+          errorMessage: 'Token expired',
+          isRetryable: false,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: '2026-03-25T00:00:00Z',
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.resolveError).mockResolvedValue({ success: true } as any);
+
+    render(<UnifiedSyncHub />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Token expired')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Resolve/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.resolveError).toHaveBeenCalledWith('err-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      '/api/sync-hub/errors/err-1/resolve',
+      expect.anything(),
+    );
+  });
+
+  it('uses governed V8 pause and resume mutations before legacy fallback', async () => {
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: null,
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.pauseIntegration).mockResolvedValue({ success: true } as any);
+    vi.mocked(V8SyncApi.resumeIntegration).mockResolvedValue({ success: true } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle('Pause'));
+
+    await waitFor(() => {
+      expect(V8SyncApi.pauseIntegration).toHaveBeenCalledWith('int-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/pause/int-1', expect.anything());
+
+    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByRole('button', { name: /Resume/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.resumeIntegration).toHaveBeenCalledWith('int-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/resume/int-1', expect.anything());
+  });
+
+  it('uses governed V8 reauth mutation before legacy fallback', async () => {
+    vi.useFakeTimers();
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'requires_reauth',
+          lastSyncAt: null,
+          lastError: 'Token expired',
+          health: 'degraded',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: null,
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.reauthIntegration).mockResolvedValue({
+      success: true,
+      message: 'Re-authorization initiated',
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByRole('button', { name: /Re-authorize/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.reauthIntegration).toHaveBeenCalledWith('int-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/reauth/int-1', expect.anything());
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+    });
+    vi.useRealTimers();
+  });
+
+  it('uses governed V8 disconnect mutation before legacy fallback', async () => {
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: null,
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.disconnectIntegration).mockResolvedValue({ success: true } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByRole('button', { name: /Disconnect/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.disconnectIntegration).toHaveBeenCalledWith('int-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/disconnect/int-1', expect.anything());
+  });
+
+  it('uses governed V8 run-now mutation before legacy fallback', async () => {
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: null,
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.runIntegrationSync).mockResolvedValue({
+      success: true,
+      syncRun: {
+        id: 'run-1',
+        status: 'completed',
+        recordsSynced: 12,
+        duration: 345,
+      },
+      warnings: [],
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle('Run now'));
+
+    await waitFor(() => {
+      expect(V8SyncApi.runIntegrationSync).toHaveBeenCalledWith('int-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/sync/int-1', expect.anything());
   });
 });

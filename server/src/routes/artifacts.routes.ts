@@ -31,6 +31,66 @@ function canManageArtifactAccess(params: {
   return normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER';
 }
 
+function buildActionTargetPayload(artifact: {
+  artifactId: string;
+  originRuntime?: string | null;
+  originRecordId?: string | null;
+}) {
+  const originRuntime = String(artifact.originRuntime || '');
+  const originRecordId = String(artifact.originRecordId || '');
+  const reviewPath = `/api/artifacts/${artifact.artifactId}/start-review`;
+
+  if (!originRuntime || !originRecordId) {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime: null,
+      originRecordId: null,
+      openPath: null,
+      exportPath: null,
+      deletePath: null,
+      reviewPath,
+      authority: 'artifact_registry',
+    };
+  }
+
+  if (originRuntime === 'report') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: `/reports/builder/${originRecordId}`,
+      exportPath: `/api/report-builder/${originRecordId}/export/pdf`,
+      deletePath: `/api/report-builder/${originRecordId}`,
+      reviewPath,
+      authority: 'report_builder',
+    };
+  }
+
+  if (originRuntime === 'presentation') {
+    return {
+      artifactId: artifact.artifactId,
+      originRuntime,
+      originRecordId,
+      openPath: `/presentations/builder/${originRecordId}`,
+      exportPath: `/api/presentations/decks/${originRecordId}/download`,
+      deletePath: `/api/presentations/decks/${originRecordId}`,
+      reviewPath,
+      authority: 'presentations_runtime',
+    };
+  }
+
+  return {
+    artifactId: artifact.artifactId,
+    originRuntime,
+    originRecordId,
+    openPath: null,
+    exportPath: null,
+    deletePath: null,
+    reviewPath,
+    authority: 'artifact_registry',
+  };
+}
+
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
@@ -135,6 +195,24 @@ router.post(
       requestedOutputType: req.body?.requestedOutputType,
     });
     res.status(201).json(result);
+  }),
+);
+
+router.get(
+  '/:id/action-target',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId: String(req.params.id || ''),
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    res.json({ data: buildActionTargetPayload(artifact) });
   }),
 );
 

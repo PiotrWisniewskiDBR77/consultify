@@ -19,7 +19,10 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
+import {
+  shouldFallbackToLegacyExecutionControl,
+  V8ExecutionControlApi,
+} from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 export interface RiskSignal {
@@ -104,7 +107,10 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
       const params = new URLSearchParams();
       if (projectId) params.set('projectId', projectId);
 
-      const data = await V8ExecutionControlApi.getRiskSignals(projectId).catch(async () => {
+      const data = await V8ExecutionControlApi.getRiskSignals(projectId).catch(async (error) => {
+        if (!shouldFallbackToLegacyExecutionControl(error)) {
+          throw error;
+        }
         const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -129,16 +135,19 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
       const token = getAuthToken();
       if (!token) return;
 
-      await V8ExecutionControlApi.dismissRiskSignal(signalId).catch(() =>
-        fetch('/api/execution-control/risk-signals/dismiss', {
+      await V8ExecutionControlApi.dismissRiskSignal(signalId).catch((error) => {
+        if (!shouldFallbackToLegacyExecutionControl(error)) {
+          throw error;
+        }
+        return fetch('/api/execution-control/risk-signals/dismiss', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ signalId }),
-        })
-      );
+        });
+      });
 
       setDismissedIds((prev) => new Set([...prev, signalId]));
       trackFunnelEvent('execution_risk_signal_dismissed', { signalId });

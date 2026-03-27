@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
 import { type FinanceModelPreviewDetail, type FinanceModelRow, type FinanceRow, type PreviewDataState } from '../financeTypes';
@@ -524,8 +525,17 @@ export function useFinanceSelection(activeTab: ModuleTab) {
 
   const loadAnalysisPreviewRatios = useCallback(async (analysisId: string) => {
     try {
-      const data = await Api.get(`/api/economics/financial-analyses/${analysisId}/ratios`);
-      const ratios = (data as any)?.ratios;
+      let ratios: any[] | null = null;
+      try {
+        const data = await V8FinanceApi.getAnalysisRatios(analysisId);
+        ratios = Array.isArray(data?.ratios) ? data.ratios : null;
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get(`/api/economics/financial-analyses/${analysisId}/ratios`);
+        ratios = Array.isArray((data as any)?.ratios) ? (data as any).ratios : null;
+      }
       if (Array.isArray(ratios) && ratios.length > 0) {
         setAnalysisPreviewRatios(
           ratios.map((r: any) => ({

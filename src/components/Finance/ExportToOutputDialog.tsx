@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 import { exportFinancialAnalysis, type ExportResult } from '@/services/financeExportService';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -82,9 +83,15 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
 
   const fetchInitiativeProposals = useCallback(async () => {
     try {
-      const resp = await Api.get(
-        `/economics/financial-analyses/${analysisId}/initiative-proposals`
-      );
+      let resp: any;
+      try {
+        resp = await V8FinanceApi.getInitiativeProposals(analysisId);
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        resp = await Api.get(`/economics/financial-analyses/${analysisId}/initiative-proposals`);
+      }
       const proposals = Array.isArray((resp as any)?.proposals) ? (resp as any).proposals : [];
       setInitiativeProposals(proposals);
       const defaults: Record<string, boolean> = {};
@@ -126,9 +133,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             t('finance.export.noInitiativesSelected', 'Select at least one proposal')
           );
         }
-        const created = await Api.post(`/economics/financial-analyses/${analysisId}/initiatives`, {
-          acceptedProposalIds,
-        });
+        let created: any;
+        try {
+          created = await V8FinanceApi.createInitiativesFromAnalysis(analysisId, {
+            acceptedProposalIds,
+          });
+        } catch (error) {
+          if (!shouldFallbackToLegacyFinance(error)) {
+            throw error;
+          }
+          created = await Api.post(`/economics/financial-analyses/${analysisId}/initiatives`, {
+            acceptedProposalIds,
+          });
+        }
         trackFunnelEvent('finance_export_initiatives_created', {
           analysisId,
           count: acceptedProposalIds.length,

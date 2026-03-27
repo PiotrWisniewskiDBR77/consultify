@@ -204,7 +204,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       id: 'export',
       label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
       icon: Download,
-      onClick: () => actions.exportDeckPptx(row.id),
+      onClick: () => actions.exportDeckPptx(row),
     },
     {
       id: 'share',
@@ -225,7 +225,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       divider: true,
       variant: 'danger',
       onClick: async () => {
-        const ok = await actions.archiveDeck(row.id);
+        const ok = await actions.archiveDeck(row);
         if (ok) onRefresh();
       },
     },
@@ -372,7 +372,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
             reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
             onOpen={() => navigate(`/presentations/builder/${item.id}`)}
             onExport={() => {
-              actions.exportDeckPptx(item.id);
+              actions.exportDeckPptx(item);
             }}
           />
         )}

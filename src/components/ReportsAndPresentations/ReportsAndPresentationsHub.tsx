@@ -62,6 +62,7 @@ function parseRapTabFromQuery(raw: string | null): RapTab | null {
     needs_review: 'outputs_review',
     review: 'outputs_review',
     documents: 'outputs_documents',
+    // Backward compatibility for legacy deep-links. Canonical query is `documents`.
     reports: 'outputs_documents',
     presentations: 'presentations',
     sheets: 'outputs_sheets',

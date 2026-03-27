@@ -1,10 +1,11 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { MitigationPanel } from '../../../src/components/Execution/MitigationPanel';
 
 const trackFunnelEventMock = vi.fn();
+const updateRaidMitigationMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -16,9 +17,18 @@ vi.mock('../../../src/services/funnelAnalytics', () => ({
   trackFunnelEvent: (...args: any[]) => trackFunnelEventMock(...args),
 }));
 
+vi.mock('../../../src/services/api/v8/execution-control', () => ({
+  shouldFallbackToLegacyExecutionControl: (error: any) =>
+    [400, 404, 405, 501].includes(Number(error?.status)),
+  V8ExecutionControlApi: {
+    updateRaidMitigation: (...args: any[]) => updateRaidMitigationMock(...args),
+  },
+}));
+
 describe('MitigationPanel (L2)', () => {
   beforeEach(() => {
     trackFunnelEventMock.mockClear();
+    updateRaidMitigationMock.mockReset();
     vi.useRealTimers();
     (globalThis as any).fetch = undefined;
     localStorage.clear();
@@ -48,9 +58,7 @@ describe('MitigationPanel (L2)', () => {
   it('renders localized option labels via strategy/status keys', () => {
     render(<MitigationPanel raidItemId="r-1" />);
     expect(screen.getByRole('option', { name: 'execution.mitigation.avoid' })).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'execution.mitigation.statusOpen' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'execution.mitigation.statusOpen' })).toBeInTheDocument();
   });
 
   it('does not call fetch when auth token is missing', async () => {
@@ -62,6 +70,7 @@ describe('MitigationPanel (L2)', () => {
 
     await waitFor(() => {
       expect(fetchMock).not.toHaveBeenCalled();
+      expect(updateRaidMitigationMock).not.toHaveBeenCalled();
     });
   });
 
@@ -84,6 +93,7 @@ describe('MitigationPanel (L2)', () => {
 
       await waitFor(() => {
         expect(fetchMock).not.toHaveBeenCalled();
+        expect(updateRaidMitigationMock).not.toHaveBeenCalled();
       });
     } finally {
       Object.defineProperty(globalThis, 'localStorage', {
@@ -93,11 +103,9 @@ describe('MitigationPanel (L2)', () => {
     }
   });
 
-  it('sends PATCH with only non-empty fields in body', async () => {
+  it('sends V8 mitigation payload with only non-empty fields in body', async () => {
     localStorage.setItem('token', 't-1');
-
-    const fetchMock = vi.fn(async () => ({ ok: true }));
-    (globalThis as any).fetch = fetchMock;
+    updateRaidMitigationMock.mockResolvedValue({ success: true, raidItemId: 'r-1' });
 
     render(<MitigationPanel raidItemId="r-1" initialStatus="OPEN" />);
 
@@ -113,13 +121,9 @@ describe('MitigationPanel (L2)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'execution.mitigation.save' }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/execution-control/raid/r-1/mitigation');
-    expect(init.method).toBe('PATCH');
-    expect(init.headers.Authorization).toBe('Bearer t-1');
-
-    const body = JSON.parse(init.body);
+    await waitFor(() => expect(updateRaidMitigationMock).toHaveBeenCalledTimes(1));
+    const [raidItemId, body] = updateRaidMitigationMock.mock.calls[0];
+    expect(raidItemId).toBe('r-1');
     expect(body).toEqual(
       expect.objectContaining({
         raidItemId: 'r-1',
@@ -135,9 +139,7 @@ describe('MitigationPanel (L2)', () => {
   it('marks as saved on success, tracks funnel event and calls onSaved', async () => {
     vi.useFakeTimers();
     localStorage.setItem('token', 't-1');
-
-    const fetchMock = vi.fn(async () => ({ ok: true }));
-    (globalThis as any).fetch = fetchMock;
+    updateRaidMitigationMock.mockResolvedValue({ success: true, raidItemId: 'r-1' });
 
     const onSaved = vi.fn();
     render(
@@ -150,7 +152,7 @@ describe('MitigationPanel (L2)', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'execution.mitigation.save' }));
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateRaidMitigationMock).toHaveBeenCalledTimes(1));
 
     expect(trackFunnelEventMock).toHaveBeenCalledWith('execution_risk_mitigation_updated', {
       raidItemId: 'r-1',
@@ -159,30 +161,33 @@ describe('MitigationPanel (L2)', () => {
     });
     expect(onSaved).toHaveBeenCalledTimes(1);
 
-    expect(
-      await screen.findByRole('button', { name: 'execution.mitigation.saved' })
-    ).toBeInTheDocument();
-    await vi.advanceTimersByTimeAsync(2000);
+    expect(await screen.findByRole('button', { name: 'execution.mitigation.saved' })).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'execution.mitigation.save' })).toBeInTheDocument();
     });
   });
 
-  it('does not mark as saved when response is not ok', async () => {
+  it('falls back to legacy mitigation update only for bounded unsupported statuses', async () => {
     localStorage.setItem('token', 't-1');
-    const fetchMock = vi.fn(async () => ({ ok: false }));
+    updateRaidMitigationMock.mockRejectedValue({ status: 404 });
+    const fetchMock = vi.fn(async () => ({ ok: false, json: async () => ({}) }));
     (globalThis as any).fetch = fetchMock;
 
     render(<MitigationPanel raidItemId="r-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'execution.mitigation.save' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(screen.getByRole('button', { name: 'execution.mitigation.save' })).toBeInTheDocument();
-    expect(trackFunnelEventMock).not.toHaveBeenCalled();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/execution-control/raid/r-1/mitigation');
+    expect(init.method).toBe('PATCH');
   });
 
-  it('recovers from fetch throwing and re-enables save', async () => {
+  it('recovers from legacy fallback throwing and re-enables save', async () => {
     localStorage.setItem('token', 't-1');
+    updateRaidMitigationMock.mockRejectedValue({ status: 404 });
     const fetchMock = vi.fn(async () => {
       throw new Error('net');
     });
@@ -193,6 +198,22 @@ describe('MitigationPanel (L2)', () => {
     fireEvent.click(btn);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'execution.mitigation.save' })).not.toBeDisabled()
+    );
+  });
+
+  it('does not silently fall back to legacy on transient V8 failures', async () => {
+    localStorage.setItem('token', 't-1');
+    updateRaidMitigationMock.mockRejectedValue({ status: 503 });
+    const fetchMock = vi.fn();
+    (globalThis as any).fetch = fetchMock;
+
+    render(<MitigationPanel raidItemId="r-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'execution.mitigation.save' }));
+
+    await waitFor(() => expect(updateRaidMitigationMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'execution.mitigation.save' })).not.toBeDisabled()
     );

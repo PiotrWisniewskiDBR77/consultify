@@ -89,6 +89,10 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     setIsDemoModalOpen(true);
   };
 
+  const handleContactClick = () => {
+    navigate(ROUTES.LEGAL.CONTACT);
+  };
+
   return (
     <div className="dark absolute inset-0 bg-[#0A0A1F] text-white overflow-y-auto overflow-x-hidden">
       <EntryTopBar
@@ -118,14 +122,18 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
 
         <DocumentationSection />
 
-        <KnowledgePreviewSection />
+        <KnowledgePreviewSection onTrialClick={handleTrialClick} />
 
         <InfoSections />
       </main>
 
-      <EntryFooter />
+      <EntryFooter onDemoClick={handleDemoClick} onTrialClick={handleTrialClick} />
 
-      <AnnaAssistantWidget />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
 
       {/* Demo Mode Modal (for Trial flow) */}
       <DemoModeModal

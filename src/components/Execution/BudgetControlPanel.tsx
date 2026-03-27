@@ -20,7 +20,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
+import {
+  shouldFallbackToLegacyExecutionControl,
+  V8ExecutionControlApi,
+} from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -102,18 +105,30 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
         const token = localStorage.getItem('token');
         if (!token) return;
         const headers = { Authorization: `Bearer ${token}` };
-        const res = await fetch(`/api/execution-control/budget/initiative/${initiativeId}`, {
-          headers,
-        });
-        if (res.ok) {
-          setInitSummary(await res.json());
-        } else {
-          const err = await res.json().catch(() => ({}));
-          toast.error(
-            (err as any)?.error ||
-              (err as any)?.message ||
-              t('execution.toast.budgetLoadFailed', 'Failed to load budget')
+        try {
+          const data = await V8ExecutionControlApi.getBudgetInitiativeSummary(initiativeId).catch(
+            async (error) => {
+              if (!shouldFallbackToLegacyExecutionControl(error)) {
+                throw error;
+              }
+              const res = await fetch(`/api/execution-control/budget/initiative/${initiativeId}`, {
+                headers,
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(
+                  (err as any)?.error ||
+                    (err as any)?.message ||
+                    t('execution.toast.budgetLoadFailed', 'Failed to load budget')
+                );
+              }
+              const summary = await res.json();
+              return { summary };
+            }
           );
+          setInitSummary(data.summary);
+        } catch (error: any) {
+          toast.error(error?.message || t('execution.toast.budgetLoadFailed', 'Failed to load budget'));
         }
       } else {
         const [portfolioData, signalsData] = await Promise.all([
@@ -155,13 +170,16 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
       };
       const res = await V8ExecutionControlApi.createBudgetEntry(payload)
         .then(() => ({ ok: true, json: async () => ({}) }))
-        .catch(() =>
-          fetch('/api/execution-control/budget/entries', {
+        .catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetch('/api/execution-control/budget/entries', {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-          })
-        );
+          });
+        });
       if (res.ok) {
         setShowAddEntry(false);
         setEntryForm({ costType: 'CAPEX', amount: '', category: '', description: '' });

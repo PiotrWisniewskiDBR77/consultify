@@ -154,6 +154,26 @@ export interface V8NotebookPageFilters {
   offset?: number;
 }
 
+export interface V8NotebookClassification {
+  pageId: string;
+  suggestedType: string;
+  reason: string;
+  maturity?: string | null;
+}
+
+export interface V8NotebookAIProposal {
+  id: string;
+  pageId: string;
+  actorId: string;
+  proposalType: 'insert' | 'replace' | 'append';
+  blockContent: Record<string, unknown>;
+  rationale?: string;
+  status: 'proposed' | 'accepted' | 'rejected';
+  createdAt?: string;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+}
+
 export interface V8CalendarEvent {
   id: string;
   title: string;
@@ -276,6 +296,45 @@ export const V8MyWorkApi = {
     v8Put<{ id: string; status: string }>(
       `/my-work/notebook/pages/${encodeURIComponent(id)}/status`,
       { status },
+    ),
+  classifyNotebookPage: (id: string) =>
+    v8Post<V8NotebookClassification>(`/my-work/notebook/pages/${encodeURIComponent(id)}/classify`),
+  convertNotebookPage: (
+    id: string,
+    target: 'task' | 'decision' | 'initiative' | 'report' | 'presentation' | 'assessment',
+    extra?: {
+      title?: string;
+      description?: string;
+      assessmentType?: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+    },
+  ) =>
+    v8Post<{ id: string; type: string; title: string; sourceSessionId?: string }>(
+      `/my-work/notebook/pages/${encodeURIComponent(id)}/convert`,
+      { target, ...extra },
+    ),
+  createNotebookAIProposal: (
+    id: string,
+    proposal: {
+      proposalType: 'insert' | 'replace' | 'append';
+      blockContent: Record<string, unknown>;
+      rationale: string;
+    }
+  ) => v8Post<V8NotebookAIProposal>(`/my-work/notebook/pages/${encodeURIComponent(id)}/ai-proposals`, proposal),
+  getNotebookAIProposals: (id: string, options?: { status?: string; limit?: number }) =>
+    v8Get<{ proposals: V8NotebookAIProposal[] }>(
+      `/my-work/notebook/pages/${encodeURIComponent(id)}/ai-proposals`,
+      options
+        ? (Object.fromEntries(
+            Object.entries(options)
+              .filter(([, value]) => value !== undefined && value !== null)
+              .map(([key, value]) => [key, String(value)]),
+          ) as Record<string, string>)
+        : undefined,
+    ),
+  resolveNotebookAIProposal: (proposalId: string, action: 'accepted' | 'rejected') =>
+    v8Post<V8NotebookAIProposal>(
+      `/my-work/notebook/ai-proposals/${encodeURIComponent(proposalId)}/resolve`,
+      { action },
     ),
   getCalendarUnified: (filters?: V8CalendarUnifiedFilters) =>
     v8Get<{ events: V8CalendarEvent[] }>(

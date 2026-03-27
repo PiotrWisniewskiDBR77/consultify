@@ -42,8 +42,24 @@ export type {
 } from './multiplayer';
 export { V8MultiplayerApi } from './multiplayer';
 export { V8MyWorkApi } from './my-work';
-export type { V8PartnerEarningsSummary, V8PartnerReferralAnalytics } from './partner';
-export { V8PartnerApi } from './partner';
+export type {
+  V8PartnerCampaignCreatePayload,
+  V8PartnerCampaignDeleteResult,
+  V8PartnerCampaignLink,
+  V8PartnerEarningsSummary,
+  V8PartnerListingUpdatePayload,
+  V8PartnerListingUpdateResult,
+  V8PartnerOrganizationUpdatePayload,
+  V8PartnerOrganizationUpdateResult,
+  V8PartnerPayoutRequestPayload,
+  V8PartnerPayoutRequestResult,
+  V8PartnerReferralAnalytics,
+  V8PartnerRegionsUpdatePayload,
+  V8PartnerRegionsUpdateResult,
+  V8PartnerSpecializationsUpdatePayload,
+  V8PartnerSpecializationsUpdateResult,
+} from './partner';
+export { shouldFallbackToLegacyPartner, V8PartnerApi } from './partner';
 export type { V8PlanningDecisionChain, V8PlanningDecisionEntry } from './planning';
 export { V8PlanningApi } from './planning';
 export type { V8PromptOsRuntimeSummary } from './prompt-os';

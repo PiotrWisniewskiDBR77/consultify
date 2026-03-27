@@ -13,7 +13,7 @@
  */
 
 import { ChevronRight, Menu, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -76,6 +76,10 @@ import { ROUTES } from '../routes/routeConfig';
 // Store and types
 import { useAppStore } from '../store/useAppStore';
 import { AppView, User } from '../types';
+import {
+  normalizeSettingsSectionFromPath,
+  resolveLegacySyncSettingsEntry,
+} from './settings/syncEntryResolver';
 
 interface SettingsViewProps {
   currentUser: User;
@@ -186,10 +190,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    const redirectTarget = resolveLegacySyncSettingsEntry(location.pathname, currentUser?.role);
+    if (!redirectTarget) return;
+    navigate(redirectTarget, { replace: true });
+  }, [currentUser?.role, location.pathname, navigate]);
+
   // Get section from URL path
   const activeSection = useMemo(() => {
-    const pathSection =
-      location.pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
+    const pathSection = normalizeSettingsSectionFromPath(location.pathname);
     return (
       Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile'
     ) as SettingsSection;

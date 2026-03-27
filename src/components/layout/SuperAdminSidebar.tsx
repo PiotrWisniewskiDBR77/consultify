@@ -74,6 +74,7 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
   [AppView.SUPERADMIN_DASHBOARD]: 'overview',
   [AppView.SUPERADMIN_ORGANIZATIONS]: 'customers',
   [AppView.SUPERADMIN_USERS]: 'customers',
+  [AppView.SUPERADMIN_COMMUNICATION]: 'customers',
   [AppView.SUPERADMIN_FEEDBACK]: 'customers',
   [AppView.SUPERADMIN_BULK_OPERATIONS]: 'customers',
   [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-platform',

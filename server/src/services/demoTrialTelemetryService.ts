@@ -25,6 +25,14 @@ interface RecordDemoTrialEventInput {
   metadata?: Record<string, unknown>;
 }
 
+interface RecordConversionEventInput {
+  eventType: string;
+  organizationId?: string | null;
+  userId?: string | null;
+  source?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
 function mapToFunnelEventType(eventType: DemoTrialEventType): string | null {
   if (
     eventType === DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED ||
@@ -70,16 +78,9 @@ async function ensureConversionEventsTable(): Promise<void> {
   tableEnsured = true;
 }
 
-export async function recordDemoTrialEvent(input: RecordDemoTrialEventInput): Promise<void> {
+export async function recordConversionEvent(input: RecordConversionEventInput): Promise<void> {
   try {
     await ensureConversionEventsTable();
-
-    const funnelEventType = mapToFunnelEventType(input.eventType) || input.eventType;
-    const metadataJson = JSON.stringify({
-      canonical_event: input.eventType,
-      language: input.language || null,
-      ...(input.metadata || {}),
-    });
 
     await DbPromise.run(
       `INSERT INTO conversion_events (id, organization_id, user_id, event_type, source, metadata, created_at)
@@ -88,16 +89,31 @@ export async function recordDemoTrialEvent(input: RecordDemoTrialEventInput): Pr
         uuidv4(),
         input.organizationId || null,
         input.userId || null,
-        funnelEventType,
+        String(input.eventType || '').trim(),
         input.source || 'direct',
-        metadataJson,
+        JSON.stringify(input.metadata || {}),
       ],
       { fallback: true }
     );
   } catch (error) {
-    logger.warn('[DemoTrialTelemetry] Failed to record event', {
+    logger.warn('[ConversionTelemetry] Failed to record event', {
       eventType: input.eventType,
       error: (error as Error)?.message || String(error),
     });
   }
+}
+
+export async function recordDemoTrialEvent(input: RecordDemoTrialEventInput): Promise<void> {
+  const funnelEventType = mapToFunnelEventType(input.eventType) || input.eventType;
+  return recordConversionEvent({
+    eventType: funnelEventType,
+    organizationId: input.organizationId,
+    userId: input.userId,
+    source: input.source,
+    metadata: {
+      canonical_event: input.eventType,
+      language: input.language || null,
+      ...(input.metadata || {}),
+    },
+  });
 }

@@ -51,15 +51,18 @@ export const RouterSync: React.FC = () => {
     nextParams.delete('artifact');
     nextParams.delete('code');
 
-    if (type === 'task' || type === 'decision') {
+    if (type === 'task' || type === 'decision' || type === 'idea') {
+      const targetTab = type === 'task' ? 'tasks' : type === 'decision' ? 'decisions' : 'ideas';
+      const targetParam =
+        type === 'task' ? 'taskId' : type === 'decision' ? 'decisionId' : 'ideaId';
       setMyWorkIntent({
-        tab: type === 'task' ? 'tasks' : 'decisions',
+        tab: targetTab,
         open: {
           type,
           id,
         },
       });
-      nextParams.set(type === 'task' ? 'taskId' : 'decisionId', id);
+      nextParams.set(targetParam, id);
       navigate(`/my-work?${nextParams.toString()}`, { replace: true });
       return;
     }
@@ -73,7 +76,7 @@ export const RouterSync: React.FC = () => {
 
     if (type === 'report' || type === 'presentation' || type === 'sheet') {
       const targetTab =
-        type === 'report' ? 'reports' : type === 'presentation' ? 'presentations' : 'sheets';
+        type === 'report' ? 'documents' : type === 'presentation' ? 'presentations' : 'sheets';
       nextParams.set('tab', targetTab);
       nextParams.set('selectedArtifact', `${type}:${id}`);
       navigate(`/presentations?${nextParams.toString()}`, { replace: true });
@@ -175,7 +178,11 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/my-work') ||
       path.startsWith('/initiatives') ||
       path.startsWith('/execution') ||
+      path.startsWith('/implementation') ||
+      path.startsWith('/rollout') ||
+      path.startsWith('/kpi-okr') ||
       path.startsWith('/benefits') ||
+      path.startsWith('/finance') ||
       path.startsWith('/economics') ||
       path.startsWith('/reports') ||
       path.startsWith('/presentations') ||

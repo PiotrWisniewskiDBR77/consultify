@@ -8,6 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8ContextIndicator } from '../../../src/components/AIChat/V8ContextIndicator';
 
 const useV8SnapshotsMock = vi.fn();
+const useV8HandoffsMock = vi.fn();
+const createHandoffMutateAsync = vi.fn();
 const useV8ConversationRetrievalTracesMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
@@ -29,6 +31,11 @@ vi.mock('../../../src/hooks/useV8Gate', () => ({
 
 vi.mock('../../../src/hooks/useV8Chat', () => ({
   useV8Snapshots: (...args: any[]) => useV8SnapshotsMock(...args),
+  useV8Handoffs: (...args: any[]) => useV8HandoffsMock(...args),
+  useV8CreateHandoff: () => ({
+    mutateAsync: createHandoffMutateAsync,
+    isPending: false,
+  }),
 }));
 
 vi.mock('../../../src/hooks/useV8Retrieval', () => ({
@@ -38,8 +45,32 @@ vi.mock('../../../src/hooks/useV8Retrieval', () => ({
 describe('V8ContextIndicator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    createHandoffMutateAsync.mockReset();
     useV8SnapshotsMock.mockReturnValue({
       data: [{ snapshotId: 'snap-1' }, { snapshotId: 'snap-2' }],
+      isLoading: false,
+      isError: false,
+    });
+    useV8HandoffsMock.mockReturnValue({
+      data: [
+        {
+          handoffId: 'handoff-1',
+          conversationId: 'conv-1',
+          contextSnapshotId: 'snap-2',
+          executionRunId: 'run-9',
+          organizationId: 'org-1',
+          initiatorUserId: 'user-1',
+          intentClassification: {
+            intentType: 'governed_work',
+            confidence: 0.85,
+            suggestedAction: 'initiate_execution',
+            reasoning: 'Work-producing request',
+            classifiedAt: '2026-03-24T10:00:00.000Z',
+          },
+          goal: 'Create a board update deck',
+          createdAt: '2026-03-24T10:01:00.000Z',
+        },
+      ],
       isLoading: false,
       isError: false,
     });
@@ -76,16 +107,22 @@ describe('V8ContextIndicator', () => {
   });
 
   it('shows governed retrieval evidence for the active conversation', async () => {
-    render(<V8ContextIndicator conversationId="conv-1" />);
+    render(<V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />);
 
     expect(screen.getByTestId('v8-context-indicator')).toHaveTextContent('V8 2');
     expect(screen.getByTestId('v8-context-indicator')).toHaveTextContent('RAG 1');
+    expect(screen.getByTestId('v8-context-indicator')).toHaveTextContent('H 1');
 
     fireEvent.click(screen.getByTestId('v8-context-indicator'));
 
     const panel = await screen.findByTestId('v8-context-panel');
     expect(panel).toHaveTextContent('Governed V8 context');
     expect(panel).toHaveTextContent('2 snapshot(s) captured for this conversation');
+    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('Handoffs');
+    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('1');
+    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('governed_work');
+    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('Create a board update deck');
+    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('run-9');
     expect(screen.getByTestId('v8-retrieval-summary')).toHaveTextContent('workspace_broad');
     expect(screen.getByTestId('v8-retrieval-summary')).toHaveTextContent('Results');
     expect(screen.getByTestId('v8-retrieval-summary')).toHaveTextContent('2');
@@ -99,10 +136,40 @@ describe('V8ContextIndicator', () => {
       isLoading: false,
       isError: false,
     });
+    useV8HandoffsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
 
-    render(<V8ContextIndicator conversationId="conv-1" />);
+    render(<V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />);
 
     expect(screen.getByTestId('v8-context-indicator')).toHaveTextContent('V8 2');
     expect(screen.getByTestId('v8-context-indicator')).not.toHaveTextContent('RAG');
+    fireEvent.click(screen.getByTestId('v8-context-indicator'));
+    expect(screen.getByTestId('v8-handoff-create')).toBeInTheDocument();
+  });
+
+  it('creates a governed handoff from the latest snapshot and active goal', async () => {
+    useV8HandoffsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+    createHandoffMutateAsync.mockResolvedValue({
+      handoffId: 'handoff-new',
+      executionRunId: 'run-new',
+    });
+
+    render(<V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />);
+
+    fireEvent.click(screen.getByTestId('v8-context-indicator'));
+    fireEvent.click(screen.getByTestId('v8-handoff-create'));
+
+    expect(createHandoffMutateAsync).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      contextSnapshotId: 'snap-2',
+      goal: 'Create a board update deck',
+    });
   });
 });

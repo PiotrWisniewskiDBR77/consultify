@@ -5,9 +5,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8_RESULTS_READ_CONTRACT } from '../results.routes.js';
 
 const mockGetResultsDashboard = vi.fn();
+const mockGetROIPortfolioSummary = vi.fn();
+const mockGetROIInitiativeDetail = vi.fn();
+const mockGetResultsKpiCatalog = vi.fn();
+const mockGetResultsKpiDrawerDetail = vi.fn();
 
 vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
+  getResultsKpiCatalog: (...args: unknown[]) => mockGetResultsKpiCatalog(...args),
+  getResultsKpiDrawerDetail: (...args: unknown[]) => mockGetResultsKpiDrawerDetail(...args),
+  getROIPortfolioSummary: (...args: unknown[]) => mockGetROIPortfolioSummary(...args),
+  getROIInitiativeDetail: (...args: unknown[]) => mockGetROIInitiativeDetail(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -114,6 +122,36 @@ describe('V8 results read-only routes', () => {
       },
       recentReviewPacks: [],
     });
+    mockGetROIPortfolioSummary.mockResolvedValue({
+      organizationId: ORG,
+      items: [],
+      summary: {
+        totalProjected: 0,
+        totalRealized: 0,
+        totalCapex: 0,
+        totalVariance: 0,
+        initiativeCount: 0,
+        coveragePercent: 0,
+      },
+    });
+    mockGetResultsKpiCatalog.mockResolvedValue({
+      organizationId: ORG,
+      kpis: [],
+      mappings: [],
+    });
+    mockGetROIInitiativeDetail.mockResolvedValue({
+      organizationId: ORG,
+      initiativeId: 'init-1',
+      variance: { hasAssumptions: false, variance: null },
+      assumptions: null,
+      realized: [],
+    });
+    mockGetResultsKpiDrawerDetail.mockResolvedValue({
+      organizationId: ORG,
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    });
   });
 
   it('GET /api/v8/results/dashboard returns envelope and delegates to getResultsDashboard', async () => {
@@ -124,5 +162,45 @@ describe('V8 results read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.snapshot?.organizationId).toBe(ORG);
     expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/results/roi/portfolio-summary returns envelope and delegates to getROIPortfolioSummary', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/roi/portfolio-summary');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(res.body.data?.organizationId).toBe(ORG);
+    expect(mockGetROIPortfolioSummary).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/results/kpis/catalog returns envelope and delegates to getResultsKpiCatalog', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/kpis/catalog').query({ kpiId: 'kpi-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(res.body.data?.organizationId).toBe(ORG);
+    expect(mockGetResultsKpiCatalog).toHaveBeenCalledWith(ORG, { kpiId: 'kpi-1' });
+  });
+
+  it('GET /api/v8/results/roi/initiative/:initiativeId/detail returns envelope and delegates to getROIInitiativeDetail', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/roi/initiative/init-1/detail');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(res.body.data?.initiativeId).toBe('init-1');
+    expect(mockGetROIInitiativeDetail).toHaveBeenCalledWith('init-1', ORG);
+  });
+
+  it('GET /api/v8/results/kpis/:kpiId/drawer-detail returns envelope and delegates to getResultsKpiDrawerDetail', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/kpis/kpi-1/drawer-detail');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(res.body.data?.kpiId).toBe('kpi-1');
+    expect(mockGetResultsKpiDrawerDetail).toHaveBeenCalledWith('kpi-1', ORG);
   });
 });

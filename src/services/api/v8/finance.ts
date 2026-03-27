@@ -1,4 +1,9 @@
-import { v8Get } from './client';
+import { v8Delete, v8Get, v8Post } from './client';
+
+export const shouldFallbackToLegacyFinance = (error: any) => {
+  const status = Number(error?.status);
+  return [400, 404, 405, 501].includes(status);
+};
 
 export interface V8FinanceDashboard {
   ingestionPipeline: {
@@ -22,6 +27,79 @@ export interface V8FinanceDashboard {
   promotionGatePassRate: number | null;
 }
 
+export interface V8FinanceAnalysisSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  analysisType: string;
+  periods: string[];
+  currency: string | null;
+  sourceStatementIds: string[];
+  sourceStatementPackId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface V8FinanceAnalysisRatio {
+  category: string | null;
+  ratio_code: string;
+  ratio_name: string;
+  value: number | null;
+  benchmark_value?: number | null;
+  interpretation?: string | null;
+  period?: string | null;
+}
+
+export interface V8FinanceInitiativeProposal {
+  id: string;
+  title: string;
+  summary: string;
+  kind: string;
+  priority: number;
+}
+
+export interface V8FinanceInitiativeCreateResult {
+  success: boolean;
+  initiativeIds: string[];
+}
+
+export interface V8FinanceAnalysisCreatePayload {
+  title: string;
+  description?: string;
+  projectId?: string;
+  analysisType?: string;
+  periods?: string[];
+  statementData?: Record<string, unknown>;
+  currency?: string;
+  sourceStatementIds?: string[];
+  sourceStatementPackId?: string;
+}
+
 export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
+  getAnalyses: (params?: { status?: string; projectId?: string }) =>
+    v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
+      ...(params?.status ? { status: params.status } : {}),
+      ...(params?.projectId ? { projectId: params.projectId } : {}),
+    }),
+  getAnalysisRatios: (analysisId: string) =>
+    v8Get<{ ratios: V8FinanceAnalysisRatio[] }>(`/finance/analyses/${analysisId}/ratios`),
+  getInitiativeProposals: (analysisId: string) =>
+    v8Get<{ proposals: V8FinanceInitiativeProposal[] }>(
+      `/finance/analyses/${analysisId}/initiative-proposals`,
+    ),
+  createInitiativesFromAnalysis: (analysisId: string, body: { acceptedProposalIds: string[] }) =>
+    v8Post<V8FinanceInitiativeCreateResult>(
+      `/finance/analyses/${analysisId}/initiatives`,
+      body,
+    ),
+  createAnalysis: (body: V8FinanceAnalysisCreatePayload) =>
+    v8Post<{ analysis: V8FinanceAnalysisSummary & Record<string, unknown> }>('/finance/analyses', body),
+  deleteAnalysis: (analysisId: string) =>
+    v8Delete<{ success: boolean; deleted: string }>(`/finance/analyses/${analysisId}`),
+  runAnalysis: (analysisId: string) =>
+    v8Post<{ success: boolean; result: unknown }>(`/finance/analyses/${analysisId}/run`, {}),
+  approveAnalysis: (analysisId: string) =>
+    v8Post<{ success: boolean }>(`/finance/analyses/${analysisId}/approve`, {}),
 };

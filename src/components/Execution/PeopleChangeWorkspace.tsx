@@ -15,7 +15,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getHeaders } from '@/services/api';
+import Api, { getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 /* ------------------------------------------------------------------ */
@@ -84,6 +84,25 @@ interface CommPlan {
   nextDueAt?: string;
 }
 
+interface CommPlanItem {
+  id: string;
+  planId: string;
+  subject?: string | null;
+  status: string;
+  segmentIds: string[];
+  channel?: string;
+}
+
+interface SteercoPack {
+  id: string;
+  title: string;
+  packType: string;
+  status: string;
+  scheduledDate?: string | null;
+  distributedAt?: string | null;
+  distributionChannels?: string | null;
+}
+
 interface SendLogEntry {
   id: string;
   channel?: string;
@@ -122,9 +141,13 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
   /* ------------- Communication state ------------- */
   const [segments, setSegments] = useState<StakeholderSegment[]>([]);
   const [plans, setPlans] = useState<CommPlan[]>([]);
+  const [planItemsByPlanId, setPlanItemsByPlanId] = useState<Record<string, CommPlanItem[]>>({});
+  const [steercoPacks, setSteercoPacks] = useState<SteercoPack[]>([]);
   const [overduePlans, setOverduePlans] = useState<CommPlan[]>([]);
   const [sendLog, setSendLog] = useState<SendLogEntry[]>([]);
   const [commLoading, setCommLoading] = useState(false);
+  const [sendingPlanItemId, setSendingPlanItemId] = useState<string | null>(null);
+  const [distributingPackId, setDistributingPackId] = useState<string | null>(null);
 
   /* ---------------------------------------------------------------- */
   /*  Data fetchers                                                    */
@@ -185,25 +208,84 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
   const fetchComm = useCallback(async () => {
     setCommLoading(true);
     try {
-      const [segRes, planRes, overdueRes, logRes] = await Promise.all([
-        fetch(`/api/stakeholder-comm/segments?${qs}`, { headers: getHeaders() }),
-        fetch(`/api/stakeholder-comm/plans?${qs}`, { headers: getHeaders() }),
-        fetch(`/api/stakeholder-comm/overdue`, { headers: getHeaders() }),
-        fetch(`/api/stakeholder-comm/log?${qs}&limit=20`, { headers: getHeaders() }),
+      const [nextSegments, nextPlans, nextSteercoPacks, nextOverduePlans, nextSendLog] = await Promise.all([
+        Api.getStakeholderSegments(initiativeId),
+        Api.getStakeholderPlans(initiativeId),
+        Api.getSteercoPacks({ initiativeId }),
+        Api.getStakeholderOverduePlans(),
+        Api.getStakeholderSendLog({ initiativeId, limit: 20 }),
       ]);
-      const segData = await segRes.json();
-      const planData = await planRes.json();
-      const overdueData = await overdueRes.json();
-      const logData = await logRes.json();
-      setSegments(segData.data ?? []);
-      setPlans(planData.data ?? []);
-      setOverduePlans(overdueData.data ?? []);
-      setSendLog(logData.data ?? []);
+      const planItemsEntries = await Promise.all(
+        (nextPlans ?? []).map(async (plan) => [plan.id, await Api.getStakeholderPlanItems(plan.id)] as const)
+      );
+      setSegments(nextSegments ?? []);
+      setPlans(nextPlans ?? []);
+      setPlanItemsByPlanId(Object.fromEntries(planItemsEntries));
+      setSteercoPacks(nextSteercoPacks ?? []);
+      setOverduePlans(nextOverduePlans ?? []);
+      setSendLog(nextSendLog ?? []);
     } catch {
       /* ignore */
     }
     setCommLoading(false);
-  }, [qs]);
+  }, [initiativeId, qs]);
+
+  const getRecipientCountForPlanItem = useCallback(
+    (item: CommPlanItem): number => {
+      if (!Array.isArray(item.segmentIds) || item.segmentIds.length === 0) return 0;
+      return item.segmentIds.reduce((total, segmentId) => {
+        const segment = segments.find((candidate) => candidate.id === segmentId);
+        return total + (Array.isArray(segment?.membersJson) ? segment.membersJson.length : 0);
+      }, 0);
+    },
+    [segments]
+  );
+
+  const handleSendPlanItem = useCallback(
+    async (planId: string, item: CommPlanItem) => {
+      setSendingPlanItemId(item.id);
+      try {
+        await Api.sendStakeholderPlanItem(planId, item.id, {
+          initiativeId,
+          segmentId: item.segmentIds[0],
+          recipientCount: getRecipientCountForPlanItem(item),
+        });
+        await fetchComm();
+      } catch {
+        /* ignore */
+      } finally {
+        setSendingPlanItemId(null);
+      }
+    },
+    [fetchComm, getRecipientCountForPlanItem, initiativeId]
+  );
+
+  const handleDistributePack = useCallback(
+    async (pack: SteercoPack) => {
+      const segmentIds = segments.map((segment) => segment.id);
+      if (segmentIds.length === 0) return;
+
+      const channels =
+        pack.distributionChannels
+          ?.split(',')
+          .map((value) => value.trim())
+          .filter(Boolean) ?? [];
+
+      setDistributingPackId(pack.id);
+      try {
+        await Api.distributeSteercoPack(pack.id, {
+          segmentIds,
+          channels: channels.length > 0 ? channels : ['in_app'],
+        });
+        await fetchComm();
+      } catch {
+        /* ignore */
+      } finally {
+        setDistributingPackId(null);
+      }
+    },
+    [fetchComm, segments]
+  );
 
   useEffect(() => {
     if (activeSubTab === 'capability') {
@@ -620,28 +702,60 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           </p>
         ) : (
           <div className="space-y-2">
-            {plans.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
-              >
-                <div>
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                    {p.description ?? t('stakeholder.untitled', 'Untitled plan')}
-                  </span>
-                  <span className="ml-2 text-xs text-slate-500">{p.cadence}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {p.isActive ? (
-                    <CheckCircle2 size={14} className="text-green-500" />
-                  ) : (
-                    <span className="text-xs text-slate-400">
-                      {t('stakeholder.inactive', 'Inactive')}
-                    </span>
+            {plans.map((p) => {
+              const nextPendingItem = (planItemsByPlanId[p.id] ?? []).find((item) => item.status !== 'sent');
+              return (
+                <div
+                  key={p.id}
+                  className="border-b border-slate-100 dark:border-navy-800 pb-2 last:border-b-0"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                        {p.description ?? t('stakeholder.untitled', 'Untitled plan')}
+                      </span>
+                      <span className="ml-2 text-xs text-slate-500">{p.cadence}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {p.isActive ? (
+                        <CheckCircle2 size={14} className="text-green-500" />
+                      ) : (
+                        <span className="text-xs text-slate-400">
+                          {t('stakeholder.inactive', 'Inactive')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {nextPendingItem && (
+                    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs dark:bg-navy-800/80">
+                      <div className="min-w-0">
+                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                          {nextPendingItem.subject ?? t('stakeholder.nextSend', 'Ready to send')}
+                        </div>
+                        <div className="mt-0.5 text-slate-500 dark:text-slate-400">
+                          {(nextPendingItem.channel ?? 'email')} ·{' '}
+                          {getRecipientCountForPlanItem(nextPendingItem)}{' '}
+                          {t('stakeholder.recipients', 'recipients')}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSendPlanItem(p.id, nextPendingItem)}
+                        disabled={sendingPlanItemId === nextPendingItem.id}
+                        className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        {sendingPlanItemId === nextPendingItem.id ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Send size={12} />
+                        )}
+                        {t('stakeholder.sendNow', 'Send now')}
+                      </button>
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -672,6 +786,57 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
                 </span>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* SteerCo Packs */}
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+          {t('stakeholder.steercoPacks', 'SteerCo Packs')}
+        </h3>
+        {steercoPacks.length === 0 ? (
+          <p className="text-sm text-slate-500 text-center py-3">
+            {t('stakeholder.noSteercoPacks', 'No steerco packs yet.')}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {steercoPacks.map((pack) => {
+              const canDistribute = pack.status !== 'distributed' && segments.length > 0;
+              return (
+                <div
+                  key={pack.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-navy-800"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                      {pack.title}
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {pack.packType} · {pack.status}
+                      {pack.distributedAt
+                        ? ` · ${t('stakeholder.distributedOn', 'distributed')} ${new Date(pack.distributedAt).toLocaleDateString()}`
+                        : ''}
+                    </div>
+                  </div>
+                  {canDistribute && (
+                    <button
+                      type="button"
+                      onClick={() => handleDistributePack(pack)}
+                      disabled={distributingPackId === pack.id}
+                      className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-sky-700 disabled:opacity-50"
+                    >
+                      {distributingPackId === pack.id ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Send size={12} />
+                      )}
+                      {t('stakeholder.distributeNow', 'Distribute now')}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

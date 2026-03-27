@@ -19,6 +19,7 @@ const sqliteCtx = vi.hoisted(() => {
 
 const spineMocks = vi.hoisted(() => ({
   initiateHandoff: vi.fn(),
+  getRun: vi.fn().mockResolvedValue({ state: 'proposals_ready' }),
   transitionRunState: vi.fn().mockResolvedValue({}),
   createProposal: vi.fn(),
   submitForReview: vi.fn().mockResolvedValue({}),
@@ -89,6 +90,7 @@ vi.mock('../../../server/src/services/v8/chatExecutionService.js', () => ({
 }));
 
 vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
+  getRun: (...args: unknown[]) => spineMocks.getRun(...args),
   transitionRunState: (...args: unknown[]) => spineMocks.transitionRunState(...args),
   createProposal: (...args: unknown[]) => spineMocks.createProposal(...args),
   submitForReview: (...args: unknown[]) => spineMocks.submitForReview(...args),
@@ -109,12 +111,14 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
   beforeEach(async () => {
     await clearArtifactSubstrateTables(sqliteCtx.db);
     spineMocks.initiateHandoff.mockReset();
+    spineMocks.getRun.mockReset();
     spineMocks.transitionRunState.mockReset();
     spineMocks.createProposal.mockReset();
     spineMocks.submitForReview.mockReset();
     spineMocks.approveRun.mockReset();
     spineMocks.applyRun.mockReset();
     spineMocks.completeRun.mockReset();
+    spineMocks.getRun.mockResolvedValue({ state: 'proposals_ready' });
     spineMocks.transitionRunState.mockResolvedValue({});
     spineMocks.submitForReview.mockResolvedValue({});
     spineMocks.approveRun.mockResolvedValue({});
@@ -362,6 +366,42 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(loaded?.runStatus).toBe('planned');
     expect(loaded?.plan.outputType).toBe('sheet');
     expect(spineMocks.transitionRunState).toHaveBeenCalled();
+  });
+
+  it('materializeArtifactRun completes a sheet run into the canonical registry when config.tableId is provided', async () => {
+    spineMocks.initiateHandoff.mockResolvedValue({ executionRunId: 'exec-run-sheet-1' });
+    spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-sheet-1' });
+
+    const created = await artifactRegistryService.createArtifactRunFromChat({
+      organizationId: 'org-a',
+      userId: 'user-owner',
+      conversationId: 'conv-sheet-1',
+      contextSnapshotId: 'snap-sheet-1',
+      goal: 'Build an Excel operating model',
+      requestedArtifactFamily: 'sheet',
+      requestedOutputType: 'sheet',
+    });
+
+    const accepted = await artifactRegistryService.acceptArtifactRunPlan({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+    });
+    expect(accepted.runStatus).toBe('proposal_created');
+
+    const completed = await artifactRegistryService.materializeArtifactRun({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+      title: 'Governed matrix',
+      config: {
+        tableId: 'tbl-governed-1',
+      },
+    });
+
+    expect(completed.runStatus).toBe('completed');
+    expect(completed.plan.outputType).toBe('sheet');
+    expect(completed.artifactId).toBeTruthy();
   });
 
   it('registerGovernedTableSheetArtifact persists sheet output_type and origin link for tp_tables id', async () => {

@@ -28,6 +28,10 @@ vi.mock('../../../src/components/SuperAdmin/ModelRegistry', () => ({
   ModelRegistryHub: () => <div>Model Registry Hub</div>,
 }));
 
+vi.mock('../../../src/components/Admin/AI/AICoreRuntimePanel', () => ({
+  AICoreRuntimePanel: () => <div>AI core runtime panel</div>,
+}));
+
 vi.mock('../../../src/components/Admin/AI/PromptOsRuntimeSummaryPanel', () => ({
   PromptOsRuntimeSummaryPanel: () => <div>Prompt OS runtime panel</div>,
 }));
@@ -134,7 +138,14 @@ describe('SuperAdmin AIPlatformModule', () => {
   it('shows Prompt OS runtime as an operations sub-tab', async () => {
     render(<AIPlatformModule initialTab="operations" />);
 
+    expect(await screen.findByRole('button', { name: 'AI core runtime' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Prompt OS runtime' })).toBeInTheDocument();
+  });
+
+  it('renders AI core runtime panel when selected', async () => {
+    render(<AIPlatformModule initialTab="operations" initialSubTab="ai-core-runtime" />);
+
+    expect(await screen.findByText('AI core runtime panel')).toBeInTheDocument();
   });
 
   it('renders Prompt OS runtime panel when selected', async () => {

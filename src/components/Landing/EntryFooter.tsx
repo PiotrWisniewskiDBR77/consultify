@@ -2,6 +2,8 @@ import { Handshake, Key, Lock, Server, ShieldCheck } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ROUTES } from '../../routes/routeConfig';
+
 // Company data - DBR77 official details
 const COMPANY = {
   headquarters: {
@@ -53,17 +55,26 @@ const PARTNERSHIPS = {
   },
 };
 
-export const EntryFooter: React.FC = () => {
+interface EntryFooterProps {
+  onDemoClick?: () => void;
+  onTrialClick?: () => void;
+}
+
+export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialClick }) => {
   const { t } = useTranslation();
 
   const sections = [
     {
       title: t('landing.footer.product.title', 'Product'),
       links: [
-        { label: t('landing.footer.product.demo', 'Demo'), href: '/demo' },
-        { label: t('landing.footer.product.trial', 'Trial'), href: '/trial/start' },
-        { label: t('landing.footer.product.pricing', 'Pricing'), href: '/pricing' },
-        { label: t('landing.footer.product.login', 'Log in'), href: '/login' },
+        { label: t('landing.footer.product.demo', 'Demo'), href: '/demo', onClick: onDemoClick },
+        {
+          label: t('landing.footer.product.trial', 'Trial'),
+          href: ROUTES.TRIAL_ENTRY,
+          onClick: onTrialClick,
+        },
+        { label: t('landing.footer.product.pricing', 'Pricing'), href: ROUTES.PRICING },
+        { label: t('landing.footer.product.login', 'Log in'), href: ROUTES.LOGIN },
       ],
     },
     {
@@ -193,18 +204,28 @@ export const EntryFooter: React.FC = () => {
               <ul className="space-y-2.5">
                 {section.links.map((link, lIdx) => (
                   <li key={lIdx}>
-                    <a
-                      href={link.href}
-                      {...((link as any).external
-                        ? { target: '_blank', rel: 'noopener noreferrer' }
-                        : {})}
-                      className="text-sm text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                    >
-                      {link.label}
-                      {(link as any).external && (
-                        <span className="ml-1 text-[10px] opacity-50">↗</span>
-                      )}
-                    </a>
+                    {'onClick' in link && typeof (link as any).onClick === 'function' ? (
+                      <button
+                        type="button"
+                        onClick={(link as any).onClick}
+                        className="text-sm text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <a
+                        href={link.href}
+                        {...((link as any).external
+                          ? { target: '_blank', rel: 'noopener noreferrer' }
+                          : {})}
+                        className="text-sm text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                      >
+                        {link.label}
+                        {(link as any).external && (
+                          <span className="ml-1 text-[10px] opacity-50">↗</span>
+                        )}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -223,7 +244,7 @@ export const EntryFooter: React.FC = () => {
             </p>
           </div>
           <a
-            href="/become-partner"
+            href={ROUTES.BECOME_PARTNER}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 shrink-0"
             style={{
               background: 'linear-gradient(135deg, #7c3aed, #c026d3)',

@@ -222,4 +222,68 @@ describe('useDocs V8 featured bridge', () => {
       })
     );
   });
+
+  it('falls back to the mounted /api/kb categories endpoint when public and V8 bridges fail', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          categories: [
+            {
+              id: 'cat-fallback',
+              slug: 'academy',
+              name: 'Academy',
+              icon: 'BookOpen',
+              article_count: 2,
+            },
+          ],
+        }),
+      });
+
+    const { result } = renderHook(() => useDocsCategories('en'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/categories?lang=en');
+    expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/kb/categories?lang=en');
+    expect(result.current.data?.[0].slug).toBe('academy');
+  });
+
+  it('falls back to the mounted /api/kb articles endpoint when public and V8 bridges fail', async () => {
+    vi.mocked(V8KnowledgeBaseApi.getArticles).mockRejectedValueOnce(new Error('v8 unavailable'));
+    mockFetch
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          articles: [
+            {
+              id: 'art-fallback',
+              slug: 'academy-intro',
+              title: 'Academy Intro',
+              summary: 'Fallback summary',
+              reading_time_minutes: 6,
+              is_featured: false,
+              category_slug: 'academy',
+              category_name: 'Academy',
+              category_icon: 'BookOpen',
+              view_count: 0,
+            },
+          ],
+          total: 1,
+        }),
+      });
+
+    const { result } = renderHook(
+      () => useDocsArticles({ language: 'en', categorySlug: 'academy', limit: 5, offset: 0 }),
+      { wrapper: createWrapper() }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockFetch).toHaveBeenNthCalledWith(1, '/api/public/kb-v8/articles?lang=en&category=academy&limit=5');
+    expect(mockFetch).toHaveBeenNthCalledWith(2, '/api/kb/articles?lang=en&category=academy&limit=5');
+    expect(result.current.data?.articles[0].slug).toBe('academy-intro');
+  });
 });

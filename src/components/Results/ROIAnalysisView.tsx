@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -186,9 +187,20 @@ export const ROIAnalysisView: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await Api.get('/benefits/roi/portfolio/summary');
-      const data = (res as any)?.data || res;
-      const payload = typeof data?.items !== 'undefined' ? data : { items: [], summary: null };
+      let payload: { items: PortfolioSummary['items']; summary: PortfolioSummary['summary'] | null } = {
+        items: [],
+        summary: null,
+      };
+      try {
+        payload = await V8ResultsApi.getRoiPortfolioSummary();
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        const res = await Api.get('/benefits/roi/portfolio/summary');
+        const data = (res as any)?.data || res;
+        payload = typeof data?.items !== 'undefined' ? data : { items: [], summary: null };
+      }
       setItems(payload.items || []);
       setSummary(payload.summary || null);
     } catch {

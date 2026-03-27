@@ -3,9 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api, API_URL } from '@/services/api';
+import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { tokenService } from '@/services/tokenService';
 
 interface ActionItem {
   title: string;
@@ -43,51 +42,18 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
     setCreatedIds(new Set());
 
     try {
-      const token = tokenService.getToken();
-      const res = await fetch(
-        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(noteId)}/extract-actions`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ language: isPl ? 'pl' : 'en' }),
-        }
-      );
-
-      if (!res.ok) throw new Error('Failed to extract actions');
-
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error('No response stream');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.type === 'stage') setStageLabel(data.label || '');
-            if (data.type === 'actions') setItems(data.items || []);
-            if (data.type === 'done') setLoading(false);
-            if (data.type === 'error') {
-              toast.error(data.message || 'Error');
-              setLoading(false);
-            }
-          } catch {
-            /* ignore parse errors */
+      await Api.streamNotebookActionExtraction(noteId, {
+        language: isPl ? 'pl' : 'en',
+        onEvent: (data) => {
+          if (data.type === 'stage') setStageLabel(String(data.label || ''));
+          if (data.type === 'actions') setItems(Array.isArray(data.items) ? (data.items as ActionItem[]) : []);
+          if (data.type === 'done') setLoading(false);
+          if (data.type === 'error') {
+            toast.error(String(data.message || 'Error'));
+            setLoading(false);
           }
-        }
-      }
+        },
+      });
     } catch (err: any) {
       toast.error(err?.message || 'Extraction failed');
     } finally {

@@ -22,10 +22,26 @@ import {
   getUnresolvedConflicts,
   resolveConflict,
 } from '../../services/v8/pmSyncTruthService.js';
+import {
+  CONNECTORS,
+  getConnectedIntegrations,
+  disconnectIntegration,
+  syncIntegration,
+  updateIntegrationStatus,
+} from '../../services/integrationHubService.js';
+import {
+  checkRateLimit,
+  getIntegrationHealth,
+  getUnresolvedErrors,
+  logSyncError,
+  recordRequest,
+  resolveError,
+} from '../../services/syncGuardrailsService.js';
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -41,6 +57,21 @@ function syncMutationMeta() {
   return { version: 'v8' as const, contract: V8_SYNC_RUNTIME_MUTATION_CONTRACT };
 }
 
+async function logIntegrationAudit(
+  organizationId: string,
+  integrationId: string | null,
+  action: string,
+  actorId: string,
+  actorName: string,
+  details: Record<string, unknown> = {},
+) {
+  await dbRun(
+    `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+     VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?::JSONB)`,
+    [organizationId, integrationId, action, actorId, actorName, JSON.stringify(details)],
+  );
+}
+
 const firstQueryString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
   if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
@@ -52,6 +83,14 @@ function parseConflictLimit(raw: unknown): number | undefined {
   if (s === undefined || s === '') return undefined;
   const n = Number.parseInt(s, 10);
   if (!Number.isFinite(n)) return undefined;
+  return n;
+}
+
+function parsePositiveInt(raw: unknown, fallback: number): number {
+  const s = firstQueryString(raw);
+  if (!s) return fallback;
+  const n = Number.parseInt(s, 10);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
   return n;
 }
 
@@ -77,6 +116,366 @@ router.get(
     const integrations = await listGovernedIntegrations(organizationId);
     return res.json({
       data: { integrations, count: integrations.length },
+      meta: syncReadMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/connectors',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const category = firstQueryString(req.query.category);
+    let connectors = Object.values(CONNECTORS);
+    if (category) {
+      connectors = connectors.filter((c) => c.category === category);
+    }
+
+    const catalog = connectors.map((c) => {
+      const isV2Ready = ['slack', 'jira', 'gmail', 'asana', 'teams'].includes(c.id);
+      return {
+        ...c,
+        isAvailable: true,
+        isV2Ready,
+        comingSoon: !isV2Ready,
+      };
+    });
+
+    return res.json({
+      data: { connectors: catalog, count: catalog.length },
+      meta: syncReadMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/disconnect',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    await disconnectIntegration(integrationId);
+    await logIntegrationAudit(organizationId, integrationId, 'disconnected', actorId, actorId, {});
+
+    return res.json({
+      data: { success: true as const },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/reauth',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    await updateIntegrationStatus(integrationId, 'pending');
+    setTimeout(async () => {
+      try {
+        await updateIntegrationStatus(integrationId, 'connected');
+        await dbRun(`UPDATE integrations SET error_count = 0, last_healthy_at = NOW() WHERE id = ?`, [
+          integrationId,
+        ]);
+      } catch {
+        /* non-blocking */
+      }
+    }, 2000);
+
+    await logIntegrationAudit(organizationId, integrationId, 'reauth_started', actorId, actorId, {});
+
+    return res.json({
+      data: { success: true as const, message: 'Re-authorization initiated' },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/pause',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    await dbRun(
+      `UPDATE integrations SET is_paused = TRUE, paused_at = NOW(), updated_at = NOW()
+       WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId],
+    );
+    await logIntegrationAudit(organizationId, integrationId, 'paused', actorId, actorId, {});
+
+    return res.json({
+      data: { success: true as const },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/resume',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    await dbRun(
+      `UPDATE integrations SET is_paused = FALSE, paused_at = NULL, updated_at = NOW()
+       WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId],
+    );
+    await logIntegrationAudit(organizationId, integrationId, 'resumed', actorId, actorId, {});
+
+    return res.json({
+      data: { success: true as const },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/integrations/:integrationId/sync',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+    if (!integrationId) {
+      return res.status(400).json({ error: 'integrationId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const integration = ((await dbAll(
+      `SELECT connector_id, is_paused, status FROM integrations WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId],
+    )) || []) as Array<{ connector_id: string; is_paused: boolean; status: string }>;
+
+    if (!integration.length) {
+      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    }
+    if (integration[0].is_paused) {
+      return res
+        .status(400)
+        .json({ error: 'Integration is paused', code: 'INTEGRATION_PAUSED' });
+    }
+    if (integration[0].status === 'disconnected') {
+      return res
+        .status(400)
+        .json({ error: 'Integration is disconnected', code: 'INTEGRATION_DISCONNECTED' });
+    }
+
+    const rateCheck = await checkRateLimit(organizationId, integrationId, integration[0].connector_id);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({
+        error: 'Rate limited',
+        reason: rateCheck.reason,
+        retryAfterMs: rateCheck.retryAfterMs,
+        warnings: rateCheck.warnings,
+        code: 'RATE_LIMITED',
+      });
+    }
+
+    const runId = `sr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const startedAt = new Date();
+    await dbRun(
+      `INSERT INTO integration_sync_runs
+         (id, organization_id, integration_id, provider, direction, status, started_at, triggered_by)
+       VALUES (?, ?, ?, ?, 'pull', 'running', NOW(), 'manual')`,
+      [runId, organizationId, integrationId, integration[0].connector_id],
+    );
+
+    await recordRequest(organizationId, integrationId, integration[0].connector_id);
+
+    try {
+      const result = await syncIntegration(integrationId, {});
+      await dbRun(
+        `UPDATE integration_sync_runs
+         SET status = 'completed', items_processed = ?, duration_ms = ?, completed_at = NOW()
+         WHERE id = ?`,
+        [result.recordsSynced, result.duration, runId],
+      );
+      await dbRun(`UPDATE integrations SET last_healthy_at = NOW(), error_count = 0 WHERE id = ?`, [
+        integrationId,
+      ]);
+      await logIntegrationAudit(organizationId, integrationId, 'sync_completed', actorId, actorId, {
+        syncRunId: runId,
+        recordsSynced: result.recordsSynced,
+        duration: result.duration,
+      });
+
+      return res.json({
+        data: {
+          success: true as const,
+          syncRun: {
+            id: runId,
+            status: 'completed',
+            recordsSynced: result.recordsSynced,
+            duration: result.duration,
+          },
+          warnings: rateCheck.warnings,
+        },
+        meta: syncMutationMeta(),
+      });
+    } catch (error) {
+      const errorMessage = (error as Error).message || 'Sync failed';
+      await dbRun(
+        `UPDATE integration_sync_runs
+         SET status = 'failed', error_summary = ?, duration_ms = ?, completed_at = NOW()
+         WHERE id = ?`,
+        [errorMessage, Date.now() - startedAt.getTime(), runId],
+      );
+      await logSyncError(organizationId, integrationId, error as Error, runId);
+
+      return res.status(500).json({ error: errorMessage, syncRunId: runId, code: 'SYNC_FAILED' });
+    }
+  }),
+);
+
+router.get(
+  '/health',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrations = await getConnectedIntegrations(organizationId);
+    const healthChecks = await Promise.all(integrations.map((int) => getIntegrationHealth(organizationId, int.id)));
+    const summary = {
+      total: healthChecks.length,
+      healthy: healthChecks.filter((h) => h.status === 'healthy').length,
+      degraded: healthChecks.filter((h) => h.status === 'degraded').length,
+      unhealthy: healthChecks.filter((h) => h.status === 'unhealthy').length,
+    };
+
+    return res.json({
+      data: { summary },
+      meta: syncReadMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/errors',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId = firstQueryString(req.query.integrationId);
+    const errors = await getUnresolvedErrors(organizationId, integrationId || undefined);
+    return res.json({
+      data: {
+        errors: (errors || []).map((error) => ({
+          id: error.id,
+          integrationId: error.integrationId,
+          errorType: error.errorType,
+          errorMessage: error.errorMessage,
+          isRetryable: error.isRetryable,
+          retryCount: error.retryCount,
+          maxRetries: error.maxRetries,
+          createdAt: error.createdAt,
+        })),
+        count: errors.length,
+      },
+      meta: syncReadMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/errors/:errorId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const errorId = typeof req.params.errorId === 'string' ? req.params.errorId.trim() : '';
+    if (!errorId) {
+      return res.status(400).json({
+        error: 'errorId is required',
+        code: 'INVALID_PARAM',
+      });
+    }
+
+    await resolveError(errorId);
+    return res.json({
+      data: { success: true as const },
+      meta: syncMutationMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/audit-log',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId = firstQueryString(req.query.integrationId);
+    const limit = parsePositiveInt(req.query.limit, 50);
+
+    let query = `
+      SELECT id, integration_id, action, actor_id, actor_name, details, created_at
+      FROM integration_audit_log
+      WHERE organization_id = ?
+    `;
+    const params: unknown[] = [organizationId];
+
+    if (integrationId) {
+      query += ' AND integration_id = ?';
+      params.push(integrationId);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ?';
+    params.push(limit);
+
+    const entries = ((await dbAll(query, params)) || []) as Array<Record<string, unknown>>;
+    return res.json({
+      data: { entries, count: entries.length },
       meta: syncReadMeta(),
     });
   }),

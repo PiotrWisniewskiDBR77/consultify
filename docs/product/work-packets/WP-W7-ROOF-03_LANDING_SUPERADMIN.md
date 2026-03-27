@@ -49,7 +49,7 @@ From `BUSINESS_POSITIONING_SSOT.md`:
 | **No page messaging system** | High | Translation of `BUSINESS_POSITIONING_SSOT.md` narrative into concrete headline/subhead/proof-point copy for each landing section |
 | **No expert showcase model** | High | Catalog of experts/personas, their roles, descriptions, and mapping to use cases and value layers |
 | **No visual/asset plan** | High | Image strategy, illustration system, screenshot/demo-video plan aligned with DBR77 visual language |
-| **Anna LP integration incomplete** | Medium | `ANNA_LP_ASSISTANT_CONTRACT_V8.md` is referenced in the registry but the file is missing from the repository; the assistant contract needs to be restored and embedded into the landing IA |
+| **Anna LP integration incomplete** | Medium | `ANNA_LP_ASSISTANT_CONTRACT_V8.md` exists; the remaining gap is embedding the contract coherently into the landing IA |
 | **Demo → Trial → Paid conversion UX** | Medium | Demo/trial mechanics exist (v3) but are not aligned with V8 product narrative; strategic CTA moments need V8 framing |
 | **First-run / tenant setup experience** | Medium | No canonical doc for what happens after a user converts from trial: org creation wizard, initial context capture, Teresa introduction, first-value-moment design |
 | **No onboarding journey spec** | Medium | The gap between "user signs up" and "user gets first value" is undocumented at V8 level |
@@ -266,13 +266,13 @@ Priorities are ordered by: (1) blocking risk to platform coherence, (2) dependen
 
 ## 8. Open questions and conflicts
 
-### 8.1 Missing ANNA_LP_ASSISTANT_CONTRACT_V8.md
+### 8.1 Anna LP contract truth normalized, embedding still open
 
-`DOCUMENTATION_REGISTRY.md` lists `ANNA_LP_ASSISTANT_CONTRACT_V8.md` as a canonical doc with scope "public/landing assistant contract for Anna including persona, voice, knowledge boundaries, session memory limits and separation from tenant-bound assistants." However, the file does not exist in the repository.
+`DOCUMENTATION_REGISTRY.md` lists `ANNA_LP_ASSISTANT_CONTRACT_V8.md` as a canonical doc with scope "public/landing assistant contract for Anna including persona, voice, knowledge boundaries, session memory limits and separation from tenant-bound assistants." The file now exists in the repository.
 
-**Assessment:** This is a gap, not a conflict. The registry entry describes what the doc should contain, but the file was either not created or was lost.
+**Assessment:** The missing-file conflict is closed. The remaining gap is implementation and IA embedding, not documentation absence.
 
-**Recommendation:** Restore or create `ANNA_LP_ASSISTANT_CONTRACT_V8.md` before Landing V8 SSOT work begins, as Anna's LP embedding depends on this contract.
+**Recommendation:** Keep canonical docs aligned around the existing contract and treat Anna LP embedding as the remaining landing work item.
 
 ### 8.2 Demo/trial docs are v3, not V8
 
@@ -301,9 +301,8 @@ The following pairs were checked for consistency:
 
 ### 8.5 Questions requiring escalation
 
-1. **Should `ANNA_LP_ASSISTANT_CONTRACT_V8.md` be restored or recreated?** The registry entry exists but the file is missing. If it was intentionally removed, the registry should be updated. If it was lost, it should be recreated before Landing V8 work begins.
-2. **Should a `SUPERADMIN_V8_SSOT.md` be created as a Wave 7 deliverable?** The vertical packages are strong but the horizontal IA is missing. This is the structural prerequisite for mounting all SuperAdmin capabilities coherently.
-3. **Should demo/trial be refreshed to V8 as part of Landing V8, or remain at v3?** The v3 mechanics work but the narrative framing is pre-V8.
+1. **Should a `SUPERADMIN_V8_SSOT.md` be created as a Wave 7 deliverable?** The vertical packages are strong but the horizontal IA is missing. This is the structural prerequisite for mounting all SuperAdmin capabilities coherently.
+2. **Should demo/trial be refreshed to V8 as part of Landing V8, or remain at v3?** The v3 mechanics work but the narrative framing is pre-V8.
 
 ---
 
@@ -337,12 +336,10 @@ Supporting anchors read:
   - Wave 5 integration: 4 integration gaps identified, downstream dependency path confirmed
   - Priority ordering: 11 items across P0–P3, with SuperAdmin unified IA and connector fleet mounting as P0
   - Downstream dependency map: 6 downstream consumers, 10 upstream dependencies
-  - Open questions and conflict analysis: 5 items, 0 conflicts between canonical docs, 3 questions requiring escalation
+  - Open questions and conflict analysis: 5 items, 0 conflicts between canonical docs, 2 questions requiring escalation
 - **Remaining:** none within packet scope
 - **Blockers or risks:**
-  - Missing `ANNA_LP_ASSISTANT_CONTRACT_V8.md` — registry entry exists but file is absent (§8.1)
   - No SuperAdmin horizontal IA doc — vertical packages are strong but unmounted (§8.3)
 - **Questions requiring escalation:**
-  1. Should `ANNA_LP_ASSISTANT_CONTRACT_V8.md` be restored or recreated? (§8.1)
-  2. Should a `SUPERADMIN_V8_SSOT.md` be created as a Wave 7 deliverable? (§8.3)
-  3. Should demo/trial be refreshed to V8 as part of Landing V8, or remain at v3? (§8.2)
+  1. Should a `SUPERADMIN_V8_SSOT.md` be created as a Wave 7 deliverable? (§8.3)
+  2. Should demo/trial be refreshed to V8 as part of Landing V8, or remain at v3? (§8.2)

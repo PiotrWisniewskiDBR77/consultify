@@ -24,6 +24,12 @@ interface Communication {
   created_at: string;
 }
 
+interface CommunicationStats {
+  total: number;
+  sent: number;
+  avg_open_rate: number;
+}
+
 const RECIPIENT_LABELS: Record<string, string> = {
   all: 'All Customers',
   all_active: 'All Active Users',
@@ -33,6 +39,11 @@ const RECIPIENT_LABELS: Record<string, string> = {
 
 const CustomerCommunicationView: React.FC = () => {
   const [communications, setCommunications] = useState<Communication[]>([]);
+  const [stats, setStats] = useState<CommunicationStats>({
+    total: 0,
+    sent: 0,
+    avg_open_rate: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [sending, setSending] = useState(false);
@@ -50,8 +61,16 @@ const CustomerCommunicationView: React.FC = () => {
   const fetchCommunications = async () => {
     setLoading(true);
     try {
-      const data = await Api.getCommunications();
-      setCommunications(data || []);
+      const [communicationData, statsData] = await Promise.all([
+        Api.getCommunications(),
+        Api.getCommunicationStats(),
+      ]);
+      setCommunications(communicationData || []);
+      setStats({
+        total: Number(statsData?.total || 0),
+        sent: Number(statsData?.sent || 0),
+        avg_open_rate: Number(statsData?.avg_open_rate || 0),
+      });
     } catch (err) {
       console.error('Failed to fetch communications:', err);
     } finally {
@@ -135,6 +154,36 @@ const CustomerCommunicationView: React.FC = () => {
           <Plus className="w-4 h-4" />
           New Message
         </button>
+      </div>
+
+      {/* Runtime Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card padding="sm">
+          <div data-testid="communication-stat-total">
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Total messages
+            </p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
+          </div>
+        </Card>
+        <Card padding="sm">
+          <div data-testid="communication-stat-sent">
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Sent
+            </p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{stats.sent}</p>
+          </div>
+        </Card>
+        <Card padding="sm">
+          <div data-testid="communication-stat-open-rate">
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Avg. open rate
+            </p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+              {Math.round(stats.avg_open_rate)}%
+            </p>
+          </div>
+        </Card>
       </div>
 
       {/* Quick Actions */}

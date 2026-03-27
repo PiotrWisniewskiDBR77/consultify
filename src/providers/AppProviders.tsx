@@ -70,9 +70,7 @@ const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ child
   <V8Provider>
     <TrialProvider>
       <AccessPolicyProvider>
-        <AIProvider>
-          <HelpProvider>{children}</HelpProvider>
-        </AIProvider>
+        <AIProvider>{children}</AIProvider>
       </AccessPolicyProvider>
     </TrialProvider>
   </V8Provider>
@@ -94,12 +92,14 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
           <FeatureFlagsProvider>
             <AutoSaveProvider>
               <TourProvider>
-                {isAuthenticated ? (
-                  <AuthenticatedProviders>{children}</AuthenticatedProviders>
-                ) : (
-                  children
-                )}
-                <Toaster position="bottom-right" />
+                <HelpProvider>
+                  {isAuthenticated ? (
+                    <AuthenticatedProviders>{children}</AuthenticatedProviders>
+                  ) : (
+                    children
+                  )}
+                  <Toaster position="bottom-right" />
+                </HelpProvider>
               </TourProvider>
             </AutoSaveProvider>
           </FeatureFlagsProvider>

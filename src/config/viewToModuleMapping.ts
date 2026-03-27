@@ -226,6 +226,13 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
         aiPromptKey: 'superadmin_feedback',
       };
 
+    case AppView.SUPERADMIN_COMMUNICATION:
+      return {
+        moduleId: 'superadmin',
+        documentId: 'superadmin_customers_communication',
+        aiPromptKey: 'superadmin_customers_communication',
+      };
+
     case AppView.SUPERADMIN_BULK_OPERATIONS:
       return {
         moduleId: 'superadmin',

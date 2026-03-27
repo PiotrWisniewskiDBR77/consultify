@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 interface KPITimeSeriesDrawerProps {
@@ -116,35 +117,71 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [kpisRes, tsRes, casesRes, mappingsRes] = await Promise.allSettled([
-        Api.get('/benefits/kpis'),
-        Api.get(`/benefits/kpis/${kpiId}/time-series`),
-        Api.get(`/benefits/kpis/${kpiId}/deviation-cases?openOnly=1`),
-        Api.get(`/benefits/kpi-mappings?kpiId=${encodeURIComponent(kpiId)}`),
+      const [catalogRes, drawerRes] = await Promise.allSettled([
+        V8ResultsApi.getKpiCatalog({ kpiId }),
+        V8ResultsApi.getKpiDrawerDetail(kpiId),
       ]);
 
-      if (kpisRes.status === 'fulfilled') {
-        const payload: any = kpisRes.value as any;
-        const all = payload?.data ?? payload ?? [];
-        const found = (all || []).find((k: any) => String(k?.id) === String(kpiId));
-        if (found) setKpi(found);
+      let catalogKpis: any[] = [];
+      let catalogMappings: any[] = [];
+      let drawerMeasurements: any[] = [];
+      let drawerOpenCase: any = null;
+      if (catalogRes.status === 'fulfilled') {
+        catalogKpis = Array.isArray(catalogRes.value?.kpis) ? catalogRes.value.kpis : [];
+        catalogMappings = Array.isArray(catalogRes.value?.mappings) ? catalogRes.value.mappings : [];
+      } else if (!shouldFallbackToLegacyResults(catalogRes.reason)) {
+        throw catalogRes.reason;
       }
 
-      if (tsRes.status === 'fulfilled') {
-        const payload: any = tsRes.value as any;
-        const ts = payload?.data ?? payload ?? [];
-        setMeasurements(
-          (ts || []).sort(
-            (a: KPIMeasurement, b: KPIMeasurement) =>
-              new Date(measurementDate(b)).getTime() - new Date(measurementDate(a)).getTime()
-          )
-        );
+      if (drawerRes.status === 'fulfilled') {
+        drawerMeasurements = Array.isArray(drawerRes.value?.measurements) ? drawerRes.value.measurements : [];
+        drawerOpenCase = drawerRes.value?.openCase ?? null;
+      } else if (!shouldFallbackToLegacyResults(drawerRes.reason)) {
+        throw drawerRes.reason;
       }
 
-      if (casesRes.status === 'fulfilled') {
-        const payload: any = casesRes.value as any;
-        const list = payload?.data ?? payload ?? [];
-        const first = Array.isArray(list) && list.length > 0 ? (list[0] as DeviationCase) : null;
+      if (
+        (catalogRes.status !== 'fulfilled' && shouldFallbackToLegacyResults(catalogRes.reason)) ||
+        (drawerRes.status !== 'fulfilled' && shouldFallbackToLegacyResults(drawerRes.reason))
+      ) {
+        const [kpisRes, mappingsRes, tsRes, casesRes] = await Promise.allSettled([
+          Api.get('/benefits/kpis'),
+          Api.get(`/benefits/kpi-mappings?kpiId=${encodeURIComponent(kpiId)}`),
+          Api.get(`/benefits/kpis/${kpiId}/time-series`),
+          Api.get(`/benefits/kpis/${kpiId}/deviation-cases?openOnly=1`),
+        ]);
+        if (catalogRes.status !== 'fulfilled' && kpisRes.status === 'fulfilled') {
+          const payload: any = kpisRes.value as any;
+          catalogKpis = payload?.data ?? payload ?? [];
+        }
+        if (catalogRes.status !== 'fulfilled' && mappingsRes.status === 'fulfilled') {
+          const payload: any = mappingsRes.value as any;
+          catalogMappings = payload?.data ?? payload ?? [];
+        }
+        if (drawerRes.status !== 'fulfilled' && tsRes.status === 'fulfilled') {
+          const payload: any = tsRes.value as any;
+          drawerMeasurements = payload?.data ?? payload ?? [];
+        }
+        if (drawerRes.status !== 'fulfilled' && casesRes.status === 'fulfilled') {
+          const payload: any = casesRes.value as any;
+          const list = payload?.data ?? payload ?? [];
+          drawerOpenCase = Array.isArray(list) && list.length > 0 ? list[0] : null;
+        }
+      }
+
+      const found = (catalogKpis || []).find((k: any) => String(k?.id) === String(kpiId));
+      if (found) setKpi(found);
+      else setKpi(null);
+
+      setMeasurements(
+        (drawerMeasurements || []).sort(
+          (a: KPIMeasurement, b: KPIMeasurement) =>
+            new Date(measurementDate(b)).getTime() - new Date(measurementDate(a)).getTime()
+        )
+      );
+
+      if (drawerOpenCase) {
+        const first = drawerOpenCase as DeviationCase;
         setOpenCase(first);
         setRcaDraft(first?.rcaText || '');
         setCloseEvidenceText(first?.evidenceText || '');
@@ -158,13 +195,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         setCloseResolutionNotes('');
       }
 
-      if (mappingsRes.status === 'fulfilled') {
-        const payload: any = mappingsRes.value as any;
-        const rows = (payload?.data ?? payload ?? []) as any[];
-        setMappings((rows || []) as KpiMappingRow[]);
-      } else {
-        setMappings([]);
-      }
+      setMappings((catalogMappings || []) as KpiMappingRow[]);
     } catch {
       // silent
     } finally {

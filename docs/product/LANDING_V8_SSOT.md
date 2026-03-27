@@ -179,7 +179,7 @@ All commercial narrative surfaces (landing page, demo banners, trial onboarding,
 
 The landing page AI assistant (Anna) is governed by `ANNA_LP_ASSISTANT_CONTRACT_V8.md`.
 
-**Current state:** The file is missing from the repository (confirmed by WP-W7-ROOF-03 §8.1). Decision W7-9 mandates recreation.
+**Current state:** The contract file exists in the repository. The remaining gap is full Anna embedding on the landing IA, not file absence.
 
 **Scope of Anna on landing:**
 
@@ -191,7 +191,7 @@ The landing page AI assistant (Anna) is governed by `ANNA_LP_ASSISTANT_CONTRACT_
 - Session: stateless or short-lived; no cross-session memory
 - Handoff: when user enters app (demo or trial), Anna hands off to Teresa (tenant-bound assistant)
 
-**Dependency:** Full Anna LP embedding depends on `ANNA_LP_ASSISTANT_CONTRACT_V8.md` being restored (Decision W7-9). This SSOT defines placement and purpose; the contract defines persona, voice, and technical boundaries.
+**Dependency:** Full Anna LP embedding depends on implementing the existing `ANNA_LP_ASSISTANT_CONTRACT_V8.md` on the landing IA. This SSOT defines placement and purpose; the contract defines persona, voice, and technical boundaries.
 
 ---
 
@@ -205,7 +205,7 @@ Source: WP-W7-ROOF-03 §1.3, updated with this SSOT's coverage.
 | No page messaging system | High | **Partially closed** — messaging hierarchy defined (§2.3); full copy framework deferred to Landing Content Spec |
 | No expert showcase model | High | **Open** — depends on this SSOT; can now be authored |
 | No visual/asset plan | High | **Open** — depends on this SSOT; can now be authored |
-| Anna LP integration incomplete | Medium | **Partially closed** — placement defined (§5); blocked on ANNA_LP_ASSISTANT_CONTRACT_V8.md restoration (Decision W7-9) |
+| Anna LP integration incomplete | Medium | **Partially closed** — placement defined (§5) and contract exists; full landing IA embedding remains open |
 | Demo/trial V8 narrative alignment | Medium | **Closed** — V8 overlay defined (§4) |
 | First-run onboarding spec | Medium | **Closed** — first-run flow defined (§3.3) |
 | No onboarding journey spec | Medium | **Closed** — full visitor→demo→trial→onboarding path defined (§3) |
@@ -214,7 +214,7 @@ Source: WP-W7-ROOF-03 §1.3, updated with this SSOT's coverage.
 
 | Priority | Deliverable | Depends on |
 |----------|-------------|------------|
-| P1 | `ANNA_LP_ASSISTANT_CONTRACT_V8.md` restoration | Decision W7-9 |
+| P1 | Anna LP embedding on landing IA using `ANNA_LP_ASSISTANT_CONTRACT_V8.md` | Existing contract + this SSOT |
 | P1 | Landing Content Spec (section-by-section copy framework) | This SSOT |
 | P2 | Expert showcase model (personas, credentials, use-case mapping) | This SSOT |
 | P2 | Visual/asset plan (aligned with DBR77 visual language) | This SSOT + Landing Content Spec |
@@ -229,7 +229,7 @@ Source: WP-W7-ROOF-03 §1.3, updated with this SSOT's coverage.
 | `BUSINESS_POSITIONING_SSOT.md` | Canonical business narrative — all landing messaging derives from this |
 | `DEMO_TRIAL_V3.md` | Demo/trial mechanics SSOT — V3 mechanics remain valid; V8 adds narrative layer |
 | `DEMO_TRIAL_ENTERPRISE_PLAN.md` | Enterprise-ready implementation plan for demo/trial |
-| `ANNA_LP_ASSISTANT_CONTRACT_V8.md` | LP assistant contract (missing — Decision W7-9 mandates restoration) |
+| `ANNA_LP_ASSISTANT_CONTRACT_V8.md` | LP assistant contract governing Anna persona, boundaries, and handoff rules |
 | `TERESA_ASSISTANT_CONTRACT_V8.md` | In-app assistant contract — Anna hands off to Teresa post-login |
 | `WP-W7-ROOF-03_LANDING_SUPERADMIN.md` | Gap analysis that identified Landing as weakest branch |
 | `DECISION_LOG_WAVE_7.md` | Decisions W7-9 (Anna), W7-11 (demo/trial V8 refresh) |

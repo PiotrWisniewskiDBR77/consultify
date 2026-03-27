@@ -134,6 +134,105 @@ describe('V8MyWorkApi', () => {
     expect(v8Delete).toHaveBeenCalledWith('/my-work/notebook/pages/note-1');
   });
 
+  it('requests notebook classify through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      pageId: 'note-7',
+      suggestedType: 'idea',
+      reason: 'Contains exploratory/idea language',
+      maturity: 'mature',
+    });
+
+    const data = await V8MyWorkApi.classifyNotebookPage('note-7');
+
+    expect(v8Post).toHaveBeenCalledWith('/my-work/notebook/pages/note-7/classify');
+    expect(data.suggestedType).toBe('idea');
+  });
+
+  it('routes notebook AI proposals through the V8 namespace', async () => {
+    vi.mocked(v8Post)
+      .mockResolvedValueOnce({
+        id: 'proposal-1',
+        pageId: 'note-7',
+        actorId: 'user-1',
+        proposalType: 'append',
+        blockContent: { type: 'paragraph' },
+        rationale: 'Add summary',
+        status: 'proposed',
+      })
+      .mockResolvedValueOnce({
+        id: 'proposal-1',
+        pageId: 'note-7',
+        actorId: 'user-1',
+        proposalType: 'append',
+        blockContent: { type: 'paragraph' },
+        rationale: 'Add summary',
+        status: 'accepted',
+      });
+    vi.mocked(v8Get).mockResolvedValue({
+      proposals: [
+        {
+          id: 'proposal-1',
+          pageId: 'note-7',
+          actorId: 'user-1',
+          proposalType: 'append',
+          blockContent: { type: 'paragraph' },
+          rationale: 'Add summary',
+          status: 'proposed',
+        },
+      ],
+    });
+
+    const created = await V8MyWorkApi.createNotebookAIProposal('note-7', {
+      proposalType: 'append',
+      blockContent: { type: 'paragraph' },
+      rationale: 'Add summary',
+    });
+    const listed = await V8MyWorkApi.getNotebookAIProposals('note-7', {
+      status: 'proposed',
+      limit: 20,
+    });
+    const resolved = await V8MyWorkApi.resolveNotebookAIProposal('proposal-1', 'accepted');
+
+    expect(v8Post).toHaveBeenNthCalledWith(1, '/my-work/notebook/pages/note-7/ai-proposals', {
+      proposalType: 'append',
+      blockContent: { type: 'paragraph' },
+      rationale: 'Add summary',
+    });
+    expect(v8Get).toHaveBeenCalledWith('/my-work/notebook/pages/note-7/ai-proposals', {
+      status: 'proposed',
+      limit: '20',
+    });
+    expect(v8Post).toHaveBeenNthCalledWith(
+      2,
+      '/my-work/notebook/ai-proposals/proposal-1/resolve',
+      { action: 'accepted' },
+    );
+    expect(created.status).toBe('proposed');
+    expect(listed.proposals).toHaveLength(1);
+    expect(resolved.status).toBe('accepted');
+  });
+
+  it('routes notebook convert through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      id: 'initiative-7',
+      type: 'initiative',
+      title: 'Converted initiative',
+      sourceSessionId: 'tool-9',
+    });
+
+    const data = await V8MyWorkApi.convertNotebookPage('note-7', 'initiative', {
+      title: 'Converted initiative',
+      description: 'Notebook summary',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/my-work/notebook/pages/note-7/convert', {
+      target: 'initiative',
+      title: 'Converted initiative',
+      description: 'Notebook summary',
+    });
+    expect(data.sourceSessionId).toBe('tool-9');
+  });
+
   it('requests calendar unified data from the bounded V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({ events: [] });
 

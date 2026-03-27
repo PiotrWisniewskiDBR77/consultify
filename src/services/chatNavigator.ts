@@ -66,7 +66,7 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     detail: (id) => `/presentations?deck=${encodeURIComponent(id)}`,
   },
   results: {
-    list: '/kpi-okr',
+    list: '/benefits',
   },
   assessment: {
     list: '/assessment',
@@ -80,8 +80,8 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     list: '/my-work',
   },
   economics: {
-    list: '/economics',
-    detail: (id) => `/economics?tab=valuation&open=${encodeURIComponent(id)}`,
+    list: '/finance',
+    detail: (id) => `/finance?tab=valuation&open=${encodeURIComponent(id)}`,
   },
 };
 

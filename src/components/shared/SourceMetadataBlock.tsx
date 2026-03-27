@@ -39,7 +39,7 @@ function resolveSourceRoute(sourceType: SourceType, sourceId: string): string | 
     case 'interview':
       return `/interview/${encodeURIComponent(sourceId)}/session`;
     case 'financial_analysis':
-      return `/kpi-okr?analysis=${encodeURIComponent(sourceId)}`;
+      return `/benefits?analysis=${encodeURIComponent(sourceId)}`;
     case 'manual':
     default:
       return null;

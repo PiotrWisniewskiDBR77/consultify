@@ -1,0 +1,432 @@
+# Plan V8.1 Final
+
+> Status: approved execution plan
+> Priority: highest
+> Program authority: `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
+> Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
+> Goal: literal `100%` completion of the post-`V8/V8.1` program
+> Last updated: 2026-03-27
+
+---
+
+## 1. Purpose
+
+This file is the single operational plan for driving the post-`V8/V8.1` program to literal `100%`.
+
+It exists so that:
+
+- one file shows what is already done,
+- one file shows what is still left,
+- one file shows the current lane, next lane, and blockers,
+- and future status updates can be observed without reconstructing the whole history from evidence files.
+
+This file does not replace the program or tracker.
+It is the final execution view layered on top of them.
+
+---
+
+## 2. Finish-line definition
+
+For this file, `100%` means:
+
+1. every remaining visible theme in the program is explicitly promoted and completed,
+2. every promoted lane has charter, runtime closure, surface closure, regression, evidence, and acceptance,
+3. no residual broad theme remains unclassified as `queued`, `active`, `blocked`, or `done`,
+4. and the program can be marked complete instead of merely `held`.
+
+This plan uses the user's chosen finish-line rule:
+
+- `100% = dowozimy wszystkie pozostałe widoczne theme’y w tym programie`
+
+---
+
+## 3. Status vocabulary
+
+- `queued` - visible and planned, but not started
+- `active` - current promoted lane
+- `blocked` - active lane with one explicit blocker
+- `acceptance-review` - implementation done, awaiting bounded acceptance decision
+- `done` - accepted and closed
+
+Only one major lane should be `active` at a time unless independence is proven.
+
+---
+
+## 4. Current program snapshot
+
+### Bounded work already complete
+
+- `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the promoted scopes
+- bounded `T4` work is complete through the Anna reopen / voice continuity plateau
+- two additional Phase A themes are now accepted under this final plan
+
+### Current planning truth
+
+- the program is no longer blocked by micro residue
+- what remains is broad residual breadth that must be closed intentionally
+- the first two lanes under this plan are now accepted: `Landing Anna prompt-quality / retrieval-quality` and `Landing Anna multilingual expansion`
+
+### Current success metric
+
+- completed remaining themes: `4 / 13`
+- active lane: broader canonical `/` and public marketing breadth
+- landed packets in the active lane: `0`
+
+---
+
+## 5. Final queue to 100%
+
+| order | theme | phase | status | why it remains | planned finish condition |
+| --- | --- | --- | --- | --- | --- |
+| `1` | `Landing Anna prompt-quality / retrieval-quality` | `Phase A` | `done` | answer quality was the strongest remaining public Anna gap and is now closed as a bounded accepted lane | typed and voice answers improved through a bounded prompt/retrieval lane with regression and acceptance |
+| `2` | `Landing Anna multilingual expansion` | `Phase A` | `done` | current work now covers the full bounded app-locale language set on the live public surface | chosen language set works end-to-end on the live public surface |
+| `3` | `Landing Anna backend analytics / dashboard breadth` | `Phase A` | `done` | current telemetry has been closed into bounded backend ingest plus operator readback continuity on the live Anna path | Anna operator analytics surface and data contract exist and are evidenced |
+| `4` | `Landing Anna` broader voice UX / architecture | `Phase A` | `done` | bounded continuity/config/channel truth work is now complete; the remaining residual is broader productization that should not be smuggled into one more pseudo-small packet | voice lane reached bounded acceptance without forcing a full public voice redesign |
+| `5` | broader canonical `/` and public marketing breadth | `Phase B` | `active` | accepted landing work closed authority/IA seams, not full redesign breadth, so the broader public marketing residual is now explicitly promoted | public marketing breadth is closed with explicit redesign acceptance |
+| `6` | broader `Mobile` redesign | `Phase B` | `queued` | accepted mobile work closed bounded continuity only | broader mobile responsive/product breadth is accepted |
+| `7` | broader `Chat / AI core` parity expansion | `Phase C` | `queued` | current bounded seams do not cover the wider product/runtime breadth | broader chat and AI operator parity is accepted |
+| `8` | broader `Results / KPI / ROI` parity | `Phase C` | `queued` | wider write/operator breadth still remains | results breadth is accepted beyond bounded reads/runtime truth |
+| `9` | broader `Finance` parity | `Phase C` | `queued` | ingest, models, budgets, valuations, and wider writes remain | finance breadth is accepted beyond bounded analysis seams |
+| `10` | broader `Partner Program` parity | `Phase C` | `queued` | onboarding, client-access, statement sources, and payout-settings remain | broader partner breadth is accepted |
+| `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
+| `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
+| `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
+
+---
+
+## 6. Phase structure
+
+### `Phase A` - Finish Anna first
+
+Order:
+
+1. `Landing Anna prompt-quality / retrieval-quality`
+2. `Landing Anna multilingual expansion`
+3. `Landing Anna backend analytics / dashboard breadth`
+4. `Landing Anna` broader voice UX / architecture
+
+Why:
+
+- highest public value
+- already sits on a hardened base
+- avoids rework before public redesign and mobile breadth
+
+### `Phase B` - Finish remaining public surface breadth
+
+Order:
+
+1. broader canonical `/` and public marketing breadth
+2. broader `Mobile` redesign
+
+Why:
+
+- still highly visible
+- easier to close once Anna strategy is stable
+
+### `Phase C` - Finish broader platform parity
+
+Order:
+
+1. broader `Chat / AI core` parity expansion
+2. broader `Results / KPI / ROI` parity
+3. broader `Finance` parity
+4. broader `Partner Program` parity
+5. broader `Sync` completion
+6. broader `Multiplayer / collaboration` breadth
+7. broader `Notes` adjunct / object-linked outputs breadth
+
+Why:
+
+- these are broad follow-on lanes after bounded acceptance
+- they must be promoted as deliberate new work rather than smuggled back into closed lanes
+
+---
+
+## 7. Lane template
+
+Every remaining theme must pass through the same lifecycle:
+
+1. write a new charter for the broader lane
+2. record a split-brain or residual map
+3. identify the first bounded packet
+4. land runtime and surface closure for the packet
+5. add regression and evidence
+6. repeat packet-by-packet until no honest smaller packet remains
+7. run bounded acceptance review
+8. move the lane to `done` here, in the main program, and in the tracker
+
+No lane should jump directly from `queued` to `done`.
+
+---
+
+## 8. Live control board
+
+### Current lane
+
+- status: `active`
+- lane: broader canonical `/` and public marketing breadth
+- latest promoted evidence: `broader canonical / and public marketing breadth split-brain map` recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`
+- reason: the Anna voice lane is now boundedly accepted, and the next honest residual is broader canonical `/` and public marketing breadth rather than another hidden Anna micro-packet
+
+### Next three lanes
+
+1. broader canonical `/` and public marketing breadth
+2. broader `Mobile` redesign
+3. broader `Chat / AI core` parity expansion
+
+### Active blockers
+
+- none yet at plan level
+
+### Decision rule
+
+Do not activate a new lane until:
+
+- the current lane is accepted,
+- or the current lane is blocked by one explicit blocker that forces a manager decision.
+
+---
+
+## 9. First execution lane
+
+### Lane name
+
+`Landing Anna prompt-quality / retrieval-quality`
+
+### Why it starts first
+
+- it is the most user-visible remaining Anna improvement
+- it improves both typed and voice paths
+- it builds on already accepted Anna runtime discipline, placement, fallback, telemetry integrity, and reopen continuity
+
+### First files to inspect and likely update
+
+- `server/src/routes/public-anna.routes.ts`
+- `server/src/services/ai/annaKnowledgeService.ts`
+- `src/components/Landing/AnnaAssistantWidget.tsx`
+- `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md`
+
+### First packet objective
+
+Create the first bounded quality packet around one of these, chosen only after the residual map is written:
+
+- prompt shaping
+- retrieval shaping
+- conversation-history shaping
+
+### Acceptance shape for the first lane
+
+The lane is not done when one prompt tweak lands.
+It is done when the broader prompt/retrieval quality lane has:
+
+- explicit charter,
+- bounded packet sequence,
+- real runtime improvements,
+- real surface continuity,
+- regression coverage,
+- evidence,
+- and final bounded acceptance.
+
+---
+
+## 10. Status update protocol
+
+This file should be updated every time one of the following happens:
+
+1. a lane moves from `queued` to `active`
+2. a new packet is defined inside the active lane
+3. the active lane becomes `blocked`
+4. the active lane moves to `acceptance-review`
+5. the active lane moves to `done`
+
+For each update, change at minimum:
+
+- `Last updated`
+- `Current success metric`
+- `Current lane`
+- `Next three lanes`
+- the row for the affected theme in `Final queue to 100%`
+
+If a lane is accepted, also record:
+
+- charter path
+- evidence path
+- acceptance evidence path
+
+---
+
+## 11. Per-lane execution ledger
+
+Use the following structure for each lane as it becomes active:
+
+### Template
+
+#### `<Lane name>`
+
+- status:
+- charter:
+- split-brain map:
+- current packet:
+- last accepted packet:
+- blocker:
+- next action:
+- acceptance evidence:
+
+### Live ledger
+
+#### `Landing Anna prompt-quality / retrieval-quality`
+
+- status: `done`
+- charter: `docs/product/work-packets/T4_LANDING_ANNA_PROMPT_QUALITY_CHARTER.md`
+- split-brain map: `evidence/319-v81-landing-anna-prompt-quality-split-brain-map.md`
+- current packet: `none`
+- last accepted packet: `evidence/325-v81-landing-anna-history-shaping-seam.md`
+- blocker: `none`
+- next action: `promote the next queued Anna lane only through a new bounded charter`
+- acceptance evidence: `evidence/326-v81-landing-anna-prompt-quality-t4-acceptance.md`
+
+#### `Landing Anna multilingual expansion`
+
+- status: `done`
+- charter: `docs/product/work-packets/T4_LANDING_ANNA_MULTILINGUAL_EXPANSION_CHARTER.md`
+- split-brain map: `evidence/327-v81-landing-anna-multilingual-expansion-split-brain-map.md`
+- current packet: `none`
+- last accepted packet: `evidence/331-v81-landing-anna-arabic-public-continuity-seam.md`
+- blocker: `none`
+- next action: `promote the next queued Anna lane only through a new bounded charter`
+- acceptance evidence: `evidence/332-v81-landing-anna-multilingual-expansion-t4-acceptance.md`
+
+#### `Landing Anna backend analytics / dashboard breadth`
+
+- status: `done`
+- charter: `docs/product/work-packets/T4_LANDING_ANNA_BACKEND_ANALYTICS_DASHBOARD_BREADTH_CHARTER.md`
+- split-brain map: `evidence/333-v81-landing-anna-backend-analytics-dashboard-breadth-split-brain-map.md`
+- current packet: `none`
+- last accepted packet: `evidence/335-v81-landing-anna-operator-readback-continuity-seam.md`
+- blocker: `none`
+- next action: `promote the next queued Anna lane only through a new bounded charter`
+- acceptance evidence: `evidence/336-v81-landing-anna-backend-analytics-dashboard-breadth-t4-acceptance.md`
+
+#### `Landing Anna` broader voice UX / architecture
+
+- status: `done`
+- charter: `docs/product/work-packets/T4_LANDING_ANNA_BROADER_VOICE_UX_ARCHITECTURE_CHARTER.md`
+- split-brain map: `evidence/337-v81-landing-anna-broader-voice-ux-architecture-split-brain-map.md`
+- current packet: `none`
+- last accepted packet: `evidence/343-v81-landing-anna-voice-surface-status-authority-continuity-seam.md`
+- blocker: `none`
+- next action: `promote the next queued lane only through a new bounded charter`
+- acceptance evidence: `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md`
+
+#### broader canonical `/` and public marketing breadth
+
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`
+- split-brain map: `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`
+- current packet: `assess the first real bounded public-marketing packet after the split-brain map`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `choose the smallest honest broader public-marketing packet without silently broadening into a full public rebrand`
+- acceptance evidence: `none`
+
+#### broader `Mobile` redesign
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for canonical public breadth stabilization`
+- acceptance evidence: `none`
+
+#### broader `Chat / AI core` parity expansion
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for public-surface phases to complete`
+- acceptance evidence: `none`
+
+#### broader `Results / KPI / ROI` parity
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for prior platform parity lanes`
+- acceptance evidence: `none`
+
+#### broader `Finance` parity
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for prior platform parity lanes`
+- acceptance evidence: `none`
+
+#### broader `Partner Program` parity
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for prior platform parity lanes`
+- acceptance evidence: `none`
+
+#### broader `Sync` completion
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for prior platform parity lanes`
+- acceptance evidence: `none`
+
+#### broader `Multiplayer / collaboration` breadth
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for prior platform parity lanes`
+- acceptance evidence: `none`
+
+#### broader `Notes` adjunct / object-linked outputs breadth
+
+- status: `queued`
+- charter: `not written yet`
+- split-brain map: `not written yet`
+- current packet: `not defined yet`
+- last accepted packet: `none`
+- blocker: `none`
+- next action: `wait for prior platform parity lanes`
+- acceptance evidence: `none`
+
+---
+
+## 12. Completion rule
+
+This file reaches its own end-state only when:
+
+- all `13 / 13` remaining themes are `done`,
+- `Current lane` is `none`,
+- `Next three lanes` is empty,
+- `Active blockers` is empty,
+- and the parent program can be marked complete instead of `held`.
+
+Until then, this file is the main status board to keep updating.

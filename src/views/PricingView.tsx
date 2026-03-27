@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EntryFooter } from '../components/Landing/EntryFooter';
+import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 
 const CALENDAR_URL =
@@ -49,6 +50,18 @@ export const PricingView: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [billingPeriod, setBillingPeriod] = useState<'annual' | 'monthly'>('annual');
+
+  const handleTrialClick = () => {
+    navigate('/trial/start');
+  };
+
+  const handleDemoClick = () => {
+    navigate('/demo');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
 
   const tiers: PricingTier[] = [
     {
@@ -172,15 +185,15 @@ export const PricingView: React.FC = () => {
     if (tier.name === 'Enterprise') {
       window.open(CALENDAR_URL, '_blank');
     } else {
-      navigate('/trial/start');
+      handleTrialClick();
     }
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
       <EntryTopBar
-        onTrialClick={() => navigate('/trial/start')}
-        onDemoClick={() => navigate('/demo')}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
         onLoginClick={() => navigate('/login')}
         isLoggedIn={false}
         hasWorkspace={false}
@@ -622,7 +635,7 @@ export const PricingView: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate('/trial/start')}
+              onClick={handleTrialClick}
               className="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               Start Free Trial
@@ -642,6 +655,11 @@ export const PricingView: React.FC = () => {
       </section>
 
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
     </div>
   );
 };

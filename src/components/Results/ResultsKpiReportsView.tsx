@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import {
@@ -123,8 +124,17 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     (async () => {
       setKpisLoading(true);
       try {
-        const res: any = await Api.get('/benefits/kpis');
-        const list = (res?.data || []) as any[];
+        let list: any[] = [];
+        try {
+          const catalog = await V8ResultsApi.getKpiCatalog();
+          list = Array.isArray(catalog?.kpis) ? catalog.kpis : [];
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          const res: any = await Api.get('/benefits/kpis');
+          list = (res?.data || []) as any[];
+        }
         const items = (list || [])
           .map((k: any) => ({
             id: String(k.id || '').trim(),

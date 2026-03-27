@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 
 import { ROIAssumptionEditor, ROIAssumptionsData } from './ROIAssumptionEditor';
 
@@ -61,33 +62,68 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [varRes, assRes, realRes] = await Promise.all([
-        Api.get(`/benefits/roi/${initiativeId}/variance`),
-        Api.get(`/benefits/roi/${initiativeId}/assumptions`),
-        Api.get(`/benefits/roi/${initiativeId}/realized`),
-      ]);
+      try {
+        const detail = await V8ResultsApi.getRoiInitiativeDetail(initiativeId);
+        setVarianceData(detail.variance);
+        setAssumptions(
+          detail.assumptions
+            ? {
+                expectedRevenueDelta: detail.assumptions.expectedRevenueDelta ?? undefined,
+                expectedCostDelta: detail.assumptions.expectedCostDelta ?? undefined,
+                capex: detail.assumptions.capex ?? undefined,
+                opexAnnual: detail.assumptions.opexAnnual ?? undefined,
+                horizonMonths: detail.assumptions.horizonMonths ?? undefined,
+                effectStartDate: detail.assumptions.effectStartDate ?? undefined,
+                confidence: (detail.assumptions.confidence as ROIAssumptionsData['confidence']) ?? undefined,
+                assumptionsOwner: detail.assumptions.assumptionsOwner ?? undefined,
+                assumptionsText: detail.assumptions.assumptionsText ?? undefined,
+              }
+            : null,
+        );
+        setRealized(
+          (detail.realized || []).map((entry) => ({
+            id: entry.id,
+            period_month: entry.periodMonth,
+            realized_revenue_delta: entry.realizedRevenueDelta ?? undefined,
+            realized_cost_delta: entry.realizedCostDelta ?? undefined,
+            realized_savings: entry.realizedSavings ?? undefined,
+            variance_notes: entry.varianceNotes ?? undefined,
+            recorded_by: entry.recordedBy ?? undefined,
+            created_at: entry.createdAt ?? undefined,
+          })),
+        );
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        const [varRes, assRes, realRes] = await Promise.all([
+          Api.get(`/benefits/roi/${initiativeId}/variance`),
+          Api.get(`/benefits/roi/${initiativeId}/assumptions`),
+          Api.get(`/benefits/roi/${initiativeId}/realized`),
+        ]);
 
-      const varPayload = (varRes as any)?.data ?? varRes;
-      setVarianceData(varPayload);
+        const varPayload = (varRes as any)?.data ?? varRes;
+        setVarianceData(varPayload);
 
-      const assPayload = (assRes as any)?.data ?? assRes;
-      if (assPayload) {
-        setAssumptions({
-          expectedRevenueDelta: assPayload.expected_revenue_delta,
-          expectedCostDelta: assPayload.expected_cost_delta,
-          capex: assPayload.capex,
-          opexAnnual: assPayload.opex_annual,
-          horizonMonths: assPayload.horizon_months,
-          effectStartDate: assPayload.effect_start_date,
-          confidence: assPayload.confidence,
-          assumptionsOwner: assPayload.assumptions_owner,
-        });
-      } else {
-        setAssumptions(null);
+        const assPayload = (assRes as any)?.data ?? assRes;
+        if (assPayload) {
+          setAssumptions({
+            expectedRevenueDelta: assPayload.expected_revenue_delta,
+            expectedCostDelta: assPayload.expected_cost_delta,
+            capex: assPayload.capex,
+            opexAnnual: assPayload.opex_annual,
+            horizonMonths: assPayload.horizon_months,
+            effectStartDate: assPayload.effect_start_date,
+            confidence: assPayload.confidence,
+            assumptionsOwner: assPayload.assumptions_owner,
+          });
+        } else {
+          setAssumptions(null);
+        }
+
+        const realPayload = (realRes as any)?.data ?? realRes;
+        setRealized(Array.isArray(realPayload) ? realPayload : []);
       }
-
-      const realPayload = (realRes as any)?.data ?? realRes;
-      setRealized(Array.isArray(realPayload) ? realPayload : []);
     } catch {
       setVarianceData(null);
       setAssumptions(null);

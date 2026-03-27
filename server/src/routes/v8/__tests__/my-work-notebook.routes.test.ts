@@ -6,6 +6,10 @@ const mockGetTableColumns = vi.fn();
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
+const mockCreateAIProposal = vi.fn();
+const mockGetProposalsForPage = vi.fn();
+const mockResolveAIProposal = vi.fn();
+const mockConvertNotebookPage = vi.fn();
 
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
@@ -15,6 +19,27 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+}));
+
+vi.mock('../../../services/notebookService.js', () => ({
+  default: {
+    createAIProposal: (...args: unknown[]) => mockCreateAIProposal(...args),
+    getProposalsForPage: (...args: unknown[]) => mockGetProposalsForPage(...args),
+    resolveAIProposal: (...args: unknown[]) => mockResolveAIProposal(...args),
+  },
+}));
+
+vi.mock('../../../services/notebookConversionService.js', () => ({
+  convertNotebookPage: (...args: unknown[]) => mockConvertNotebookPage(...args),
+  NotebookConversionError: class NotebookConversionError extends Error {
+    status: number;
+    code?: string;
+    constructor(status: number, message: string, code?: string) {
+      super(message);
+      this.status = status;
+      this.code = code;
+    }
+  },
 }));
 
 import myWorkRoutes from '../my-work.routes.js';
@@ -184,6 +209,134 @@ describe('V8 My Work notebook routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ id: 'note-4', status: 'archived' });
+  });
+
+  it('classifies an owned notebook page through the V8 namespace', async () => {
+    mockQueryOne.mockResolvedValue({
+      id: 'note-4b',
+      title: 'New idea concept',
+      contentText: 'brainstorm and explore a fresh idea concept',
+      maturity: 'mature',
+    });
+
+    const res = await request(createApp()).post('/api/v8/my-work/notebook/pages/note-4b/classify');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
+    expect(res.body.data).toMatchObject({
+      pageId: 'note-4b',
+      suggestedType: 'idea',
+      reason: 'Contains exploratory/idea language',
+      maturity: 'mature',
+    });
+  });
+
+  it('creates notebook AI proposals through the V8 namespace', async () => {
+    mockCreateAIProposal.mockResolvedValue({
+      id: 'proposal-1',
+      pageId: 'note-4b',
+      actorId: USER_ID,
+      proposalType: 'append',
+      blockContent: { type: 'paragraph' },
+      rationale: 'Add summary',
+      status: 'proposed',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/pages/note-4b/ai-proposals')
+      .send({
+        proposalType: 'append',
+        blockContent: { type: 'paragraph' },
+        rationale: 'Add summary',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
+    expect(mockCreateAIProposal).toHaveBeenCalledWith(ORG, USER_ID, 'note-4b', {
+      proposalType: 'append',
+      blockContent: { type: 'paragraph' },
+      rationale: 'Add summary',
+    });
+    expect(res.body.data.status).toBe('proposed');
+  });
+
+  it('converts notebook pages through the governed V8 namespace', async () => {
+    mockConvertNotebookPage.mockResolvedValue({
+      id: 'initiative-7',
+      type: 'initiative',
+      title: 'Converted initiative',
+      sourceSessionId: 'tool-9',
+    });
+
+    const res = await request(createApp()).post('/api/v8/my-work/notebook/pages/note-4b/convert').send({
+      target: 'initiative',
+      title: 'Converted initiative',
+      description: 'Notebook summary',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
+    expect(mockConvertNotebookPage).toHaveBeenCalledWith({
+      pageId: 'note-4b',
+      orgId: ORG,
+      userId: USER_ID,
+      target: 'initiative',
+      title: 'Converted initiative',
+      description: 'Notebook summary',
+      assessmentType: undefined,
+    });
+    expect(res.body.data).toMatchObject({
+      id: 'initiative-7',
+      type: 'initiative',
+      sourceSessionId: 'tool-9',
+    });
+  });
+
+  it('lists notebook AI proposals through the V8 namespace', async () => {
+    mockGetProposalsForPage.mockResolvedValue([
+      {
+        id: 'proposal-1',
+        pageId: 'note-4b',
+        actorId: USER_ID,
+        proposalType: 'append',
+        blockContent: { type: 'paragraph' },
+        rationale: 'Add summary',
+        status: 'proposed',
+      },
+    ]);
+
+    const res = await request(createApp())
+      .get('/api/v8/my-work/notebook/pages/note-4b/ai-proposals')
+      .query({ status: 'proposed', limit: '20' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
+    expect(mockGetProposalsForPage).toHaveBeenCalledWith(ORG, 'note-4b', {
+      status: 'proposed',
+      limit: 20,
+    });
+    expect(res.body.data.proposals).toHaveLength(1);
+  });
+
+  it('resolves notebook AI proposals through the V8 namespace', async () => {
+    mockResolveAIProposal.mockResolvedValue({
+      id: 'proposal-1',
+      pageId: 'note-4b',
+      actorId: USER_ID,
+      proposalType: 'append',
+      blockContent: { type: 'paragraph' },
+      rationale: 'Add summary',
+      status: 'accepted',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/ai-proposals/proposal-1/resolve')
+      .send({ action: 'accepted' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
+    expect(mockResolveAIProposal).toHaveBeenCalledWith(ORG, 'proposal-1', USER_ID, 'accepted');
+    expect(res.body.data.status).toBe('accepted');
   });
 
   it('deletes an owned notebook page through the V8 namespace', async () => {

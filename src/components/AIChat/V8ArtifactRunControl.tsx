@@ -33,11 +33,18 @@ import {
   useV8SubmitExecutionReview,
 } from '@/hooks/useV8Execution';
 import { useV8Gate } from '@/hooks/useV8Gate';
-import { useV8Snapshots } from '@/hooks/useV8Chat';
+import { useV8CaptureSnapshot, useV8Snapshots } from '@/hooks/useV8Chat';
 
 interface V8ArtifactRunControlProps {
   conversationId: string | null;
   defaultGoal?: string;
+  snapshotContext?: {
+    workspaceId: string | null;
+    projectId?: string | null;
+    effectiveScopeRef?: string;
+    resolvedRoleRef?: string;
+    privacyMode?: boolean;
+  };
 }
 
 const OUTPUT_OPTIONS: Array<{
@@ -47,6 +54,7 @@ const OUTPUT_OPTIONS: Array<{
 }> = [
   { outputType: 'report', artifactFamily: 'document', label: 'Document' },
   { outputType: 'presentation', artifactFamily: 'presentation', label: 'Presentation' },
+  { outputType: 'sheet', artifactFamily: 'sheet', label: 'Sheet' },
 ];
 
 function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
@@ -77,12 +85,14 @@ function formatExecutionState(state: string | null | undefined): string {
 export function V8ArtifactRunControl({
   conversationId,
   defaultGoal = '',
+  snapshotContext,
 }: V8ArtifactRunControlProps) {
   const { t } = useTranslation();
   const { showV8Chat } = useV8Gate();
   const { data: snapshots, isLoading: snapshotsLoading } = useV8Snapshots(
     showV8Chat && conversationId ? conversationId : undefined,
   );
+  const captureSnapshot = useV8CaptureSnapshot();
   const createRun = useV8CreateArtifactRunFromChat();
   const acceptPlan = useV8AcceptArtifactRunPlan();
   const materializeRun = useV8MaterializeArtifactRun();
@@ -90,6 +100,7 @@ export function V8ArtifactRunControl({
   const [isOpen, setIsOpen] = useState(false);
   const [goal, setGoal] = useState(defaultGoal);
   const [selectedOutputType, setSelectedOutputType] = useState<ArtifactPlanOutputType>('report');
+  const [sheetTableId, setSheetTableId] = useState('');
   const [currentRun, setCurrentRun] = useState<ArtifactRunRecord | null>(null);
   const [currentPlan, setCurrentPlan] = useState<ArtifactRunPlan | null>(null);
   const executionRun = useV8ExecutionRun(currentRun?.executionRunId || undefined);
@@ -106,6 +117,7 @@ export function V8ArtifactRunControl({
     setIsOpen(false);
     setGoal(defaultGoal);
     setSelectedOutputType('report');
+    setSheetTableId('');
     setCurrentRun(null);
     setCurrentPlan(null);
   }, [conversationId, defaultGoal]);
@@ -117,7 +129,9 @@ export function V8ArtifactRunControl({
 
   if (!showV8Chat || !conversationId) return null;
 
+  const canCaptureSnapshot = Boolean(snapshotContext?.workspaceId);
   const isBusy =
+    captureSnapshot.isPending ||
     createRun.isPending ||
     acceptPlan.isPending ||
     materializeRun.isPending ||
@@ -128,9 +142,15 @@ export function V8ArtifactRunControl({
   const canPlan = Boolean(latestSnapshot?.snapshotId) && goal.trim().length > 0 && !isBusy;
   const canAccept =
     currentRun?.runStatus === 'planned' || currentRun?.runStatus === 'retry_requested';
+  const requiresSheetTableTarget =
+    (currentRun?.plan.outputType ?? selectedOutputType) === 'sheet';
+  const hasSheetTableTarget = sheetTableId.trim().length > 0;
   const canMaterialize =
     currentRun?.runStatus === 'proposal_created' &&
-    (currentRun?.plan.outputType === 'report' || currentRun?.plan.outputType === 'presentation') &&
+    (currentRun?.plan.outputType === 'report' ||
+      currentRun?.plan.outputType === 'presentation' ||
+      currentRun?.plan.outputType === 'sheet') &&
+    (!requiresSheetTableTarget || hasSheetTableTarget) &&
     !['rejected', 'failed', 'cancelled', 'expired'].includes(executionRun.data?.state || '') &&
     !currentRun.artifactId;
   const canSubmitReview = executionRun.data?.state === 'proposals_ready';
@@ -161,6 +181,33 @@ export function V8ArtifactRunControl({
         error instanceof Error
           ? error.message
           : t('v8.artifactRun.planFailed', 'Failed to create artifact plan'),
+      );
+    }
+  };
+
+  const handleCaptureSnapshot = async () => {
+    if (!conversationId || !snapshotContext?.workspaceId) return;
+    try {
+      await captureSnapshot.mutateAsync({
+        workspaceId: snapshotContext.workspaceId,
+        projectId: snapshotContext.projectId ?? null,
+        conversationId,
+        executionRunId: null,
+        artifactRefs: [],
+        effectiveScopeRef: snapshotContext.effectiveScopeRef || 'workspace',
+        resolvedRoleRef: snapshotContext.resolvedRoleRef || 'member',
+        consumerClass: 'chat',
+        privacyMode: Boolean(snapshotContext.privacyMode),
+        sourceContextRefs: [],
+      });
+      toast.success(
+        t('v8.artifactRun.snapshotCaptured', 'Governed V8 snapshot captured for this conversation'),
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.artifactRun.snapshotCaptureFailed', 'Failed to capture governed V8 snapshot'),
       );
     }
   };
@@ -206,6 +253,12 @@ export function V8ArtifactRunControl({
         runId: currentRun.runId,
         params: {
           title: currentRun.plan.titleHint,
+          config:
+            currentRun.plan.outputType === 'sheet'
+              ? {
+                  tableId: sheetTableId.trim(),
+                }
+              : undefined,
         },
       });
       setCurrentRun(completed);
@@ -278,7 +331,7 @@ export function V8ArtifactRunControl({
         type="button"
         data-testid="v8-artifact-run-button"
         onClick={() => setIsOpen((prev) => !prev)}
-        disabled={!latestSnapshot?.snapshotId && !snapshotsLoading}
+        disabled={!latestSnapshot?.snapshotId && !snapshotsLoading && !canCaptureSnapshot}
         className={`relative p-1.5 rounded-lg transition-colors ${
           isOpen
             ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
@@ -287,7 +340,12 @@ export function V8ArtifactRunControl({
         title={
           latestSnapshot?.snapshotId
             ? t('v8.artifactRun.trigger', 'Create governed output plan')
-            : t('v8.artifactRun.noSnapshot', 'Capture a V8 snapshot before planning an output')
+            : canCaptureSnapshot
+              ? t(
+                  'v8.artifactRun.captureFirst',
+                  'Capture a V8 snapshot to start governed output planning',
+                )
+              : t('v8.artifactRun.noSnapshot', 'Capture a V8 snapshot before planning an output')
         }
         aria-label={t('v8.artifactRun.trigger', 'Create governed output plan')}
       >
@@ -310,7 +368,15 @@ export function V8ArtifactRunControl({
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {latestSnapshot?.snapshotId
                   ? t('v8.artifactRun.snapshotReady', 'Uses the latest V8 context snapshot from this conversation.')
-                  : t('v8.artifactRun.snapshotMissing', 'This conversation needs a V8 snapshot before output planning can start.')}
+                  : canCaptureSnapshot
+                    ? t(
+                        'v8.artifactRun.snapshotMissingButCapturable',
+                        'This conversation needs one governed V8 snapshot before output planning can start.',
+                      )
+                    : t(
+                        'v8.artifactRun.snapshotMissing',
+                        'This conversation needs a V8 snapshot before output planning can start.',
+                      )}
               </div>
             </div>
             <button
@@ -330,6 +396,23 @@ export function V8ArtifactRunControl({
               : t('v8.artifactRun.waitingSnapshot', 'No snapshot available yet')}
           </div>
 
+          {!latestSnapshot?.snapshotId && canCaptureSnapshot && (
+            <button
+              type="button"
+              data-testid="v8-artifact-run-capture-snapshot"
+              onClick={handleCaptureSnapshot}
+              disabled={isBusy}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200 dark:hover:bg-amber-950/35"
+            >
+              {captureSnapshot.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Sparkles size={16} />
+              )}
+              {t('v8.artifactRun.captureSnapshotAction', 'Capture V8 snapshot')}
+            </button>
+          )}
+
           <label className="mt-4 block text-xs font-medium text-slate-600 dark:text-slate-300">
             {t('v8.artifactRun.outputType', 'Output type')}
           </label>
@@ -345,6 +428,30 @@ export function V8ArtifactRunControl({
               </option>
             ))}
           </select>
+
+          {requiresSheetTableTarget && (
+            <>
+              <label className="mt-4 block text-xs font-medium text-slate-600 dark:text-slate-300">
+                {t('v8.artifactRun.sheetTableId', 'Governed table ID')}
+              </label>
+              <input
+                data-testid="v8-artifact-run-sheet-table-id"
+                value={sheetTableId}
+                onChange={(event) => setSheetTableId(event.target.value)}
+                placeholder={t(
+                  'v8.artifactRun.sheetTableIdPlaceholder',
+                  'Enter the governed table ID to register/materialize',
+                )}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              />
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {t(
+                  'v8.artifactRun.sheetTableIdHint',
+                  'This bounded sheet path materializes into an existing governed table artifact.',
+                )}
+              </div>
+            </>
+          )}
 
           <label className="mt-4 block text-xs font-medium text-slate-600 dark:text-slate-300">
             {t('v8.artifactRun.goal', 'Goal')}

@@ -8,6 +8,8 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  normalizeReportActionTarget,
+  useRapActions,
   useArtifactOutputsList,
   useArtifactOutputsForInitiative,
   useArtifactOutputsForInitiatives,
@@ -18,6 +20,27 @@ import {
 } from '../../../src/components/ReportsAndPresentations/useRapData';
 
 const originalFetch = globalThis.fetch;
+const { toastSuccessMock, toastErrorMock } = vi.hoisted(() => ({
+  toastSuccessMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
+
+vi.mock('react-i18next', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-i18next')>();
+  return {
+    ...actual,
+    useTranslation: () => ({
+      t: (_key: string, fallback?: string) => fallback || _key,
+    }),
+  };
+});
+
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: (...args: any[]) => toastSuccessMock(...args),
+    error: (...args: any[]) => toastErrorMock(...args),
+  },
+}));
 
 function jsonResponse(data: unknown, ok = true) {
   return Promise.resolve({
@@ -34,6 +57,118 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+  });
+
+  it('normalizes report action targets from both report rows and aggregate registry rows', () => {
+    expect(
+      normalizeReportActionTarget({
+        id: 'report-1',
+        artifactId: 'art-report-1',
+        title: 'Weekly execution report',
+      }),
+    ).toEqual({
+      originRecordId: 'report-1',
+      artifactId: 'art-report-1',
+      label: 'Weekly execution report',
+    });
+
+    expect(
+      normalizeReportActionTarget({
+        originRecordId: 'report-2',
+        artifactId: 'art-report-2',
+        title: 'Portfolio overview',
+      }),
+    ).toEqual({
+      originRecordId: 'report-2',
+      artifactId: 'art-report-2',
+      label: 'Portfolio overview',
+    });
+  });
+
+  it('useRapActions resolves report delete authority through /api/artifacts/:id/action-target', async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : String(input);
+      const method = init?.method || 'GET';
+      calls.push({ url, method });
+
+      if (url.includes('/api/artifacts/art-report-1/action-target')) {
+        return jsonResponse({
+          data: {
+            artifactId: 'art-report-1',
+            originRuntime: 'report',
+            originRecordId: 'report-1',
+            openPath: '/reports/builder/report-1',
+            exportPath: '/api/report-builder/report-1/export/pdf',
+            deletePath: '/api/report-builder/report-1',
+            reviewPath: '/api/artifacts/art-report-1/start-review',
+            authority: 'report_builder',
+          },
+        });
+      }
+
+      if (url.includes('/api/report-builder/report-1') && method === 'DELETE') {
+        return jsonResponse({ ok: true });
+      }
+
+      return jsonResponse({}, false);
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useRapActions());
+    const ok = await result.current.archiveReport({
+      originRecordId: 'report-1',
+      artifactId: 'art-report-1',
+      title: 'Report 1',
+    });
+
+    expect(ok).toBe(true);
+    expect(calls).toEqual([
+      { url: '/api/artifacts/art-report-1/action-target', method: 'GET' },
+      { url: '/api/report-builder/report-1', method: 'DELETE' },
+    ]);
+  });
+
+  it('useRapActions resolves presentation delete authority through /api/artifacts/:id/action-target', async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : String(input);
+      const method = init?.method || 'GET';
+      calls.push({ url, method });
+
+      if (url.includes('/api/artifacts/art-deck-1/action-target')) {
+        return jsonResponse({
+          data: {
+            artifactId: 'art-deck-1',
+            originRuntime: 'presentation',
+            originRecordId: 'deck-1',
+            openPath: '/presentations/builder/deck-1',
+            exportPath: '/api/presentations/decks/deck-1/download',
+            deletePath: '/api/presentations/decks/deck-1',
+            reviewPath: '/api/artifacts/art-deck-1/start-review',
+            authority: 'presentations_runtime',
+          },
+        });
+      }
+
+      if (url.includes('/api/presentations/decks/deck-1') && method === 'DELETE') {
+        return jsonResponse({ ok: true });
+      }
+
+      return jsonResponse({}, false);
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useRapActions());
+    const ok = await result.current.archiveDeck({
+      originRecordId: 'deck-1',
+      artifactId: 'art-deck-1',
+      title: 'Deck 1',
+    });
+
+    expect(ok).toBe(true);
+    expect(calls).toEqual([
+      { url: '/api/artifacts/art-deck-1/action-target', method: 'GET' },
+      { url: '/api/presentations/decks/deck-1', method: 'DELETE' },
+    ]);
   });
 
   it('useArtifactOutputsList(all) requests GET /api/artifacts?limit=200 and maps registry rows', async () => {

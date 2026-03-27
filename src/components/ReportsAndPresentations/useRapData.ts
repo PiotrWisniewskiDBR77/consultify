@@ -1,11 +1,15 @@
 /**
  * useRapData — Hook for fetching real data from backend for Reports & Presentations Hub
  *
- * API calls:
- *   - GET /api/report-builder           → reports list
- *   - GET /api/report-builder/templates → report templates
- *   - GET /api/presentations/decks      → presentation decks
- *   - GET /api/presentations/templates  → presentation templates
+ * Canonical list reads:
+ *   - GET /api/artifacts?outputType=report
+ *   - GET /api/artifacts?outputType=presentation
+ *   - GET /api/artifacts?view=mine|review
+ *
+ * Origin actions remain delegated to the runtime that owns the document/deck:
+ *   - /api/report-builder/*            → report mutations + exports
+ *   - /api/presentations/decks/*       → deck mutations + exports
+ *   - /api/artifacts/*                 → governance/read-model actions (review/access)
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -14,6 +18,90 @@ import { useTranslation } from 'react-i18next';
 
 import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
 import type { PresentationItem, ReportItem, TemplateItem, UnifiedOutputRow } from './types';
+
+export type ReportActionTarget =
+  | string
+  | Pick<ReportItem, 'id' | 'artifactId' | 'title'>
+  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
+
+export type PresentationActionTarget =
+  | string
+  | Pick<PresentationItem, 'id' | 'artifactId' | 'title'>
+  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
+
+type ArtifactOriginActionTarget =
+  | ReportActionTarget
+  | PresentationActionTarget;
+
+type ArtifactActionTargetPayload = {
+  artifactId: string;
+  originRuntime: string | null;
+  originRecordId: string | null;
+  openPath: string | null;
+  exportPath: string | null;
+  deletePath: string | null;
+  reviewPath: string;
+  authority: string;
+};
+
+function normalizeArtifactOriginActionTarget(target: ArtifactOriginActionTarget): {
+  originRecordId: string;
+  artifactId?: string;
+  label: string;
+} {
+  if (typeof target === 'string') {
+    return {
+      originRecordId: target,
+      label: target,
+    };
+  }
+
+  if ('originRecordId' in target) {
+    return {
+      originRecordId: target.originRecordId,
+      artifactId: target.artifactId,
+      label: target.title,
+    };
+  }
+
+  return {
+    originRecordId: target.id,
+    artifactId: target.artifactId,
+    label: target.title,
+  };
+}
+
+export function normalizeReportActionTarget(target: ReportActionTarget): {
+  originRecordId: string;
+  artifactId?: string;
+  label: string;
+} {
+  return normalizeArtifactOriginActionTarget(target);
+}
+
+export function normalizePresentationActionTarget(target: PresentationActionTarget): {
+  originRecordId: string;
+  artifactId?: string;
+  label: string;
+} {
+  return normalizeArtifactOriginActionTarget(target);
+}
+
+async function fetchArtifactActionTarget(
+  artifactId: string | undefined,
+): Promise<ArtifactActionTargetPayload | null> {
+  if (!artifactId) return null;
+  try {
+    const res = await fetch(`${API_URL}/artifacts/${artifactId}/action-target`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.data || null;
+  } catch {
+    return null;
+  }
+}
 
 const DEMO_REPORTS: ReportItem[] = [
   { id: 'demo-r1', title: 'Weekly Execution Report – Sprint 14', reportType: 'R1', status: 'ready', owner: 'Anna Kowalska', goal: 'Stakeholder update', periodFrom: '2026-03-04', periodTo: '2026-03-10', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-10T14:30:00Z', exportFormats: ['pdf', 'pptx'], sourceRefs: [] },
@@ -709,9 +797,15 @@ export function useRapActions() {
   const { t } = useTranslation();
 
   const exportReportPdf = useCallback(
-    async (reportId: string) => {
+    async (target: ReportActionTarget) => {
+      const { originRecordId, artifactId } = normalizeReportActionTarget(target);
+      const actionTarget = await fetchArtifactActionTarget(artifactId);
+      const exportPath =
+        actionTarget?.originRuntime === 'report' && actionTarget.exportPath
+          ? actionTarget.exportPath
+          : `${API_URL}/report-builder/${originRecordId}/export/pdf`;
       try {
-        const res = await fetch(`${API_URL}/report-builder/${reportId}/export/pdf`, {
+        const res = await fetch(exportPath, {
           headers: getHeaders(),
         });
         if (res.ok) {
@@ -719,7 +813,7 @@ export function useRapActions() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `report-${reportId.slice(0, 8)}.pdf`;
+          a.download = `report-${originRecordId.slice(0, 8)}.pdf`;
           a.click();
           URL.revokeObjectURL(url);
           toast.success(t('rap.toast.exported', 'Report exported'));
@@ -734,9 +828,15 @@ export function useRapActions() {
   );
 
   const exportDeckPptx = useCallback(
-    async (deckId: string) => {
+    async (target: PresentationActionTarget) => {
+      const { originRecordId, artifactId } = normalizePresentationActionTarget(target);
+      const actionTarget = await fetchArtifactActionTarget(artifactId);
+      const exportPath =
+        actionTarget?.originRuntime === 'presentation' && actionTarget.exportPath
+          ? actionTarget.exportPath
+          : `${API_URL}/presentations/decks/${originRecordId}/download`;
       try {
-        const res = await fetch(`${API_URL}/presentations/decks/${deckId}/download`, {
+        const res = await fetch(exportPath, {
           headers: getHeaders(),
         });
         if (res.ok) {
@@ -744,7 +844,7 @@ export function useRapActions() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `presentation-${deckId.slice(0, 8)}.pptx`;
+          a.download = `presentation-${originRecordId.slice(0, 8)}.pptx`;
           a.click();
           URL.revokeObjectURL(url);
           toast.success(t('rap.toast.exported', 'Exported'));
@@ -759,9 +859,15 @@ export function useRapActions() {
   );
 
   const archiveReport = useCallback(
-    async (reportId: string) => {
+    async (target: ReportActionTarget) => {
+      const { originRecordId, artifactId } = normalizeReportActionTarget(target);
+      const actionTarget = await fetchArtifactActionTarget(artifactId);
+      const deletePath =
+        actionTarget?.originRuntime === 'report' && actionTarget.deletePath
+          ? actionTarget.deletePath
+          : `${API_URL}/report-builder/${originRecordId}`;
       try {
-        const res = await fetch(`${API_URL}/report-builder/${reportId}`, {
+        const res = await fetch(deletePath, {
           method: 'DELETE',
           headers: getHeaders(),
         });
@@ -779,9 +885,15 @@ export function useRapActions() {
   );
 
   const archiveDeck = useCallback(
-    async (deckId: string) => {
+    async (target: PresentationActionTarget) => {
+      const { originRecordId, artifactId } = normalizePresentationActionTarget(target);
+      const actionTarget = await fetchArtifactActionTarget(artifactId);
+      const deletePath =
+        actionTarget?.originRuntime === 'presentation' && actionTarget.deletePath
+          ? actionTarget.deletePath
+          : `${API_URL}/presentations/decks/${originRecordId}`;
       try {
-        const res = await fetch(`${API_URL}/presentations/decks/${deckId}`, {
+        const res = await fetch(deletePath, {
           method: 'DELETE',
           headers: getHeaders(),
         });

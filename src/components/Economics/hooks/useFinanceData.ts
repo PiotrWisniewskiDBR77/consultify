@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api, shouldAllowDemoData } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
@@ -118,8 +119,17 @@ export function useFinanceData(
 
   const loadAnalyses = useCallback(async () => {
     try {
-      const data = await Api.get('/api/economics/financial-analyses');
-      const arr = Array.isArray((data as any)?.analyses) ? (data as any).analyses : [];
+      let arr: any[] = [];
+      try {
+        const data = await V8FinanceApi.getAnalyses();
+        arr = Array.isArray(data?.analyses) ? data.analyses : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/economics/financial-analyses');
+        arr = Array.isArray((data as any)?.analyses) ? (data as any).analyses : [];
+      }
       setLoadError(null);
       setIsUsingDemoData(false);
       setAnalyses(arr);

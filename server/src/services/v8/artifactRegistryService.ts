@@ -1099,7 +1099,7 @@ function inferArtifactPlan(
       outputType: 'sheet',
       titleHint: 'Structured sheet draft',
       governancePath: 'execution_spine',
-      visibilityScope: 'private',
+      visibilityScope: 'organization',
     };
   }
 
@@ -1566,9 +1566,13 @@ export async function materializeArtifactRun(
   if (!current) {
     throw new Error(`ArtifactRun ${validated.runId} not found`);
   }
-  if (current.plan.outputType !== 'report' && current.plan.outputType !== 'presentation') {
+  if (
+    current.plan.outputType !== 'report' &&
+    current.plan.outputType !== 'presentation' &&
+    current.plan.outputType !== 'sheet'
+  ) {
     throw new Error(
-      `ArtifactRun ${validated.runId} only supports report or presentation materialization currently`,
+      `ArtifactRun ${validated.runId} only supports report, presentation, or sheet materialization currently`,
     );
   }
   if (current.runStatus !== 'proposal_created') {
@@ -1661,7 +1665,7 @@ export async function materializeArtifactRun(
         );
         resolvedArtifactId = link?.artifactId || null;
       }
-    } else {
+    } else if (current.plan.outputType === 'presentation') {
       const presentationParams = await resolveMaterializedPresentationParams(current, validated);
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
@@ -1691,6 +1695,24 @@ export async function materializeArtifactRun(
         userId: validated.actorUserId,
       });
       resolvedArtifactId = artifact?.artifactId || null;
+    } else {
+      const tableId =
+        typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
+      const tableName =
+        typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
+      if (!tableId) {
+        throw new Error(
+          `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization`,
+        );
+      }
+
+      const artifact = await registerGovernedTableSheetArtifact({
+        organizationId: validated.organizationId,
+        userId: validated.actorUserId,
+        tableId,
+        tableName: tableName || validated.title || current.plan.titleHint,
+      });
+      resolvedArtifactId = artifact.artifactId;
     }
     if (!resolvedArtifactId) {
       throw new Error(

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EntryFooter } from '../../components/Landing/EntryFooter';
+import { AnnaAssistantWidget } from '../../components/Landing/AnnaAssistantWidget';
 import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 
 // Company data - UPDATE THESE VALUES
@@ -17,6 +18,18 @@ const COMPANY = {
 export const SecurityView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const handleTrialClick = () => {
+    navigate('/trial/start');
+  };
+
+  const handleDemoClick = () => {
+    navigate('/demo');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
 
   const securityFeatures = [
     {
@@ -77,8 +90,8 @@ export const SecurityView: React.FC = () => {
     <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
       {/* Header */}
       <EntryTopBar
-        onTrialClick={() => navigate('/trial/start')}
-        onDemoClick={() => navigate('/demo')}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
         onLoginClick={() => navigate('/login')}
         isLoggedIn={false}
         hasWorkspace={false}
@@ -279,6 +292,11 @@ export const SecurityView: React.FC = () => {
 
       {/* Footer */}
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
     </div>
   );
 };

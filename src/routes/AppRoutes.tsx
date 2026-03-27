@@ -102,9 +102,6 @@ const ImplementationView = React.lazy(() =>
 const FullRolloutView = React.lazy(() =>
   import('@/views/FullRolloutView').then((m) => ({ default: m.FullRolloutView }))
 );
-const FullReportsView = React.lazy(() =>
-  import('@/views/FullReportsView').then((m) => ({ default: m.FullReportsView }))
-);
 const ReportBuilderView = React.lazy(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
@@ -121,11 +118,6 @@ const BenefitsRealizationView = React.lazy(() =>
 );
 const V4ComingSoonView = React.lazy(() =>
   import('@/views/V4ComingSoonView').then((m) => ({ default: m.V4ComingSoonView }))
-);
-const PresentationsHub = React.lazy(() =>
-  import('@/components/Presentations/PresentationsHub').then((m) => ({
-    default: m.PresentationsHub,
-  }))
 );
 const SharedPresentationView = React.lazy(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
@@ -151,7 +143,7 @@ const MeetingHub = React.lazy(() =>
   import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
 );
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
-// Reports & Presentations hub under /presentations (tab=reports).
+// Reports & Presentations hub under /presentations (tab=documents).
 
 // Settings
 const SettingsView = React.lazy(() =>
@@ -302,8 +294,8 @@ const ChangelogView = React.lazy(() =>
 );
 
 // Knowledge Base & Pricing
-const KnowledgeBaseView = React.lazy(() =>
-  import('@/views/KnowledgeBaseView').then((m) => ({ default: m.KnowledgeBaseView }))
+const KnowledgeBaseEntryView = React.lazy(() =>
+  import('@/views/KnowledgeBaseEntryView').then((m) => ({ default: m.KnowledgeBaseEntryView }))
 );
 const AppPricingView = React.lazy(() =>
   import('@/views/AppPricingView').then((m) => ({ default: m.AppPricingView }))
@@ -1305,7 +1297,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <RedirectWithTracking
               from={ROUTES.REPORTS.ROOT}
-              to={`${ROUTES.PRESENTATIONS}?tab=reports`}
+              to={`${ROUTES.PRESENTATIONS}?tab=documents`}
               reason="reports_ui_moved_to_presentations"
             />
           }
@@ -1357,7 +1349,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <RedirectWithTracking
               from={ROUTES.REPORTS.MANAGEMENT}
-              to={`${ROUTES.PRESENTATIONS}?tab=reports`}
+              to={`${ROUTES.PRESENTATIONS}?tab=documents`}
               reason="reports_management_deprecated"
             />
           }
@@ -1367,7 +1359,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
-                <ResultsHub />
+                <KpiOkrView />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1734,12 +1726,12 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.KNOWLEDGE_BASE}
           element={
             <AnimationWrapper variant="slideUp">
-              <KnowledgeBaseView onBack={() => navigate(-1)} />
+              <KnowledgeBaseEntryView />
             </AnimationWrapper>
           }
         />
         <Route
-          path={ROUTES.PRICING}
+          path={ROUTES.APP_PRICING}
           element={
             <AnimationWrapper variant="slideUp">
               <AppPricingView />

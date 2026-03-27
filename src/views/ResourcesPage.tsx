@@ -4,17 +4,22 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
 import { EntryTopBar } from '@/components/Landing/EntryTopBar';
+import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { FullVideoModal } from '@/components/Landing/FullVideoModal';
 import { LANDING_FILMS, LandingFilm } from '@/config/landingFilms';
+import { ROUTES } from '@/routes/routeConfig';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import { AppView, SessionMode } from '@/types';
 
 export const ResourcesPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentUser } = useAppStore();
+  const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
+    useAppStore();
 
   const films = useMemo(
     () => [
@@ -30,14 +35,40 @@ export const ResourcesPage: React.FC = () => {
 
   const [openFullFilm, setOpenFullFilm] = useState<LandingFilm | null>(null);
   const [endedTeasers, setEndedTeasers] = useState<Record<string, boolean>>({});
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [demoModalMode, setDemoModalMode] = useState<'demo' | 'trial'>('trial');
+
+  const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
+    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setIsDemoModalOpen(false);
+    setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
+    if (mode === 'demo') setDemoMode(true);
+    else setDemoMode(false);
+    setCurrentView(AppView.DASHBOARD);
+    navigate(ROUTES.AI_CHAT);
+  };
+
+  const handleTrialClick = () => {
+    setDemoModalMode('trial');
+    setIsDemoModalOpen(true);
+  };
+
+  const handleDemoClick = () => {
+    setDemoModalMode('demo');
+    setIsDemoModalOpen(true);
+  };
+
+  const handleContactClick = () => {
+    navigate(ROUTES.LEGAL.CONTACT);
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-navy-950 transition-colors duration-500">
       <EntryTopBar
-        onTrialClick={() => navigate('/register')}
-        onDemoClick={() => navigate('/')}
-        onLoginClick={() => navigate('/login')}
-        onRegisterClick={() => navigate('/register')}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
+        onLoginClick={() => navigate(ROUTES.LOGIN)}
+        onRegisterClick={() => navigate(ROUTES.REGISTER)}
         isLoggedIn={!!currentUser}
         hasWorkspace={!!currentUser?.hasWorkspace}
       />
@@ -144,7 +175,7 @@ export const ResourcesPage: React.FC = () => {
                     )}
 
                     <button
-                      onClick={() => navigate('/register')}
+                      onClick={() => navigate(ROUTES.REGISTER)}
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-200 font-semibold transition-colors"
                     >
                       {t('landing.resources.launchTrial', 'Launch Free Trial')}
@@ -158,6 +189,11 @@ export const ResourcesPage: React.FC = () => {
       </main>
 
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
 
       <FullVideoModal
         isOpen={!!openFullFilm}
@@ -172,6 +208,12 @@ export const ResourcesPage: React.FC = () => {
             });
           }
         }}
+      />
+      <DemoModeModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        mode={demoModalMode}
       />
     </div>
   );

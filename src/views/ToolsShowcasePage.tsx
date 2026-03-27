@@ -22,9 +22,12 @@ import {
 import * as LucideIcons from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
+import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
+import { DemoModeModal } from '@/components/Landing/DemoModeModal';
+import { EntryFooter } from '@/components/Landing/EntryFooter';
 import { EntryTopBar } from '@/components/Landing/EntryTopBar';
 import {
   EDUCATION_BLOCKS,
@@ -32,7 +35,9 @@ import {
   EducationTool,
   getFeaturedToolsByBlock,
 } from '@/data/toolEducationData';
+import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { AppView, SessionMode } from '@/types';
 
 // ============================================
 // DYNAMIC ICON
@@ -250,9 +255,12 @@ const BlockSection: React.FC<BlockSectionProps> = ({ block, tools, onWatchVideo,
 export const ToolsShowcasePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
+    useAppStore();
   const [selectedTool, setSelectedTool] = useState<EducationTool | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [demoModalMode, setDemoModalMode] = useState<'demo' | 'trial'>('trial');
 
   const handleWatchVideo = (tool: EducationTool) => {
     setSelectedTool(tool);
@@ -264,20 +272,36 @@ export const ToolsShowcasePage: React.FC = () => {
     navigate('/trial');
   };
 
+  const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
+    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setIsDemoModalOpen(false);
+    setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
+    if (mode === 'demo') setDemoMode(true);
+    else setDemoMode(false);
+    setCurrentView(AppView.DASHBOARD);
+    navigate(ROUTES.AI_CHAT);
+  };
+
   const handleDemoClick = () => {
-    navigate('/demo');
+    setDemoModalMode('demo');
+    setIsDemoModalOpen(true);
   };
 
   const handleTrialClick = () => {
-    navigate('/trial');
+    setDemoModalMode('trial');
+    setIsDemoModalOpen(true);
   };
 
   const handleLoginClick = () => {
-    navigate('/login');
+    navigate(ROUTES.LOGIN);
   };
 
   const handleRegisterClick = () => {
-    navigate('/register');
+    navigate(ROUTES.REGISTER);
+  };
+
+  const handleContactClick = () => {
+    navigate(ROUTES.LEGAL.CONTACT);
   };
 
   return (
@@ -402,33 +426,12 @@ export const ToolsShowcasePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 py-8">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-6 px-2 rounded bg-brand-600 flex items-center justify-center">
-              <span className="text-white font-bold text-[10px] tracking-tight">C</span>
-            </div>
-            <span className="text-sm font-bold tracking-[0.15em] text-white/60 uppercase">
-              Consultify
-            </span>
-          </div>
-          <div className="flex items-center gap-6 text-xs text-white/40">
-            <Link to="/docs" className="hover:text-white/70 transition-colors">
-              Documentation
-            </Link>
-            <Link to="/privacy" className="hover:text-white/70 transition-colors">
-              Privacy
-            </Link>
-            <Link to="/terms" className="hover:text-white/70 transition-colors">
-              Terms
-            </Link>
-            <Link to="/docs/security" className="hover:text-white/70 transition-colors">
-              Security
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
 
       {/* Video Modal */}
       <ToolVideoModal
@@ -436,6 +439,12 @@ export const ToolsShowcasePage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onTryTool={handleTryTool}
+      />
+      <DemoModeModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        mode={demoModalMode}
       />
     </div>
   );

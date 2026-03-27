@@ -1,0 +1,110 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
+import { describe, expect, it, vi } from 'vitest';
+
+import i18n from '../../../src/i18n';
+import { EntryTopBar } from '../../../src/components/Landing/EntryTopBar';
+
+const navigateMock = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+vi.mock('../../../src/store/useAppStore', () => ({
+  useAppStore: () => ({
+    theme: 'dark',
+    toggleTheme: vi.fn(),
+  }),
+}));
+
+function renderTopBar() {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <EntryTopBar
+        onTrialClick={vi.fn()}
+        onDemoClick={vi.fn()}
+        onLoginClick={vi.fn()}
+        onRegisterClick={vi.fn()}
+        isLoggedIn={false}
+        hasWorkspace={false}
+        forceDark
+      />
+    </I18nextProvider>,
+  );
+}
+
+describe('EntryTopBar mobile navigation continuity', () => {
+  it('exposes the canonical public landing IA links inside the mobile menu', async () => {
+    renderTopBar();
+
+    fireEvent.click(screen.getByTestId('landing-mobile-menu-trigger'));
+
+    const panel = screen.getByTestId('landing-mobile-menu-panel');
+    expect(panel).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Product' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Pricing' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Partners' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Help' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Become Partner' })).toBeInTheDocument();
+  });
+
+  it('navigates to public pricing from the mobile menu and closes the panel', async () => {
+    renderTopBar();
+
+    fireEvent.click(screen.getByTestId('landing-mobile-menu-trigger'));
+    fireEvent.click(within(screen.getByTestId('landing-mobile-menu-panel')).getByRole('button', { name: 'Pricing' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/pricing');
+    await waitFor(() =>
+      expect(screen.queryByTestId('landing-mobile-menu-panel')).not.toBeInTheDocument(),
+    );
+  });
+
+  it('routes help to the canonical docs entry from the mobile menu', async () => {
+    renderTopBar();
+
+    fireEvent.click(screen.getByTestId('landing-mobile-menu-trigger'));
+    fireEvent.click(within(screen.getByTestId('landing-mobile-menu-panel')).getByRole('button', { name: 'Help' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/docs');
+    await waitFor(() =>
+      expect(screen.queryByTestId('landing-mobile-menu-panel')).not.toBeInTheDocument(),
+    );
+  });
+
+  it('navigates to become-partner from the mobile menu and closes the panel', async () => {
+    renderTopBar();
+
+    fireEvent.click(screen.getByTestId('landing-mobile-menu-trigger'));
+    fireEvent.click(
+      within(screen.getByTestId('landing-mobile-menu-panel')).getByRole('button', {
+        name: 'Become Partner',
+      }),
+    );
+
+    expect(navigateMock).toHaveBeenCalledWith('/become-partner');
+    await waitFor(() =>
+      expect(screen.queryByTestId('landing-mobile-menu-panel')).not.toBeInTheDocument(),
+    );
+  });
+
+  it('exposes the same canonical IA links in the desktop menu dropdown', () => {
+    renderTopBar();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+
+    expect(screen.getByRole('button', { name: 'Product' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pricing' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Partners' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
+  });
+});

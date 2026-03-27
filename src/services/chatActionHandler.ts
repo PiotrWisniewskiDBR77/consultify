@@ -250,7 +250,7 @@ export async function handleChatAction(
         if (deps.onOpenKpiDrawer) {
           deps.onOpenKpiDrawer(kpiId, params.initiativeId as string | undefined);
         } else {
-          deps.navigate(`/kpi-okr?kpi=${encodeURIComponent(kpiId)}`);
+          deps.navigate(`/benefits?kpi=${encodeURIComponent(kpiId)}`);
         }
         return { success: true };
       }

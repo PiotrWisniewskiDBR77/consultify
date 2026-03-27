@@ -10,10 +10,22 @@ const mockResolveAuthEscalation = vi.fn();
 const mockGetRefreshTimingPolicy = vi.fn();
 const mockSetRefreshTimingPolicy = vi.fn();
 const mockGetConnectorHealth = vi.fn();
+const mockGetIntegrationHealth = vi.fn();
+const mockGetUnresolvedErrors = vi.fn();
+const mockResolveError = vi.fn();
+const mockCheckRateLimit = vi.fn();
+const mockRecordRequest = vi.fn();
+const mockLogSyncError = vi.fn();
 const mockSetConnectorAuthState = vi.fn();
 const mockGetUnresolvedConflicts = vi.fn();
 const mockListGovernedIntegrations = vi.fn();
 const mockResolveConflict = vi.fn();
+const mockGetConnectedIntegrations = vi.fn();
+const mockSyncIntegration = vi.fn();
+const mockUpdateIntegrationStatus = vi.fn();
+const mockDisconnectIntegration = vi.fn();
+const mockDbAll = vi.fn();
+const mockDbRun = vi.fn();
 
 vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getCredentialHealth: (...args: unknown[]) => mockGetCredentialHealth(...args),
@@ -30,9 +42,42 @@ vi.mock('../../../services/v8/pmSyncTruthService.js', () => ({
   resolveConflict: (...args: unknown[]) => mockResolveConflict(...args),
 }));
 
+vi.mock('../../../services/syncGuardrailsService.js', async () => {
+  const actual = await vi.importActual<any>('../../../services/syncGuardrailsService.js');
+  return {
+    ...actual,
+    getIntegrationHealth: (...args: unknown[]) => mockGetIntegrationHealth(...args),
+    getUnresolvedErrors: (...args: unknown[]) => mockGetUnresolvedErrors(...args),
+    resolveError: (...args: unknown[]) => mockResolveError(...args),
+    checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+    recordRequest: (...args: unknown[]) => mockRecordRequest(...args),
+    logSyncError: (...args: unknown[]) => mockLogSyncError(...args),
+  };
+});
+
 vi.mock('../../../services/v8/pmSyncInventoryService.js', () => ({
   listGovernedIntegrations: (...args: unknown[]) => mockListGovernedIntegrations(...args),
 }));
+
+vi.mock('../../../services/integrationHubService.js', async () => {
+  const actual = await vi.importActual<any>('../../../services/integrationHubService.js');
+  return {
+    ...actual,
+    getConnectedIntegrations: (...args: unknown[]) => mockGetConnectedIntegrations(...args),
+    disconnectIntegration: (...args: unknown[]) => mockDisconnectIntegration(...args),
+    syncIntegration: (...args: unknown[]) => mockSyncIntegration(...args),
+    updateIntegrationStatus: (...args: unknown[]) => mockUpdateIntegrationStatus(...args),
+  };
+});
+
+vi.mock('../../../utils/DbPromise.js', async () => {
+  const actual = await vi.importActual<any>('../../../utils/DbPromise.js');
+  return {
+    ...actual,
+    all: (...args: unknown[]) => mockDbAll(...args),
+    run: (...args: unknown[]) => mockDbRun(...args),
+  };
+});
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   getV8Flags: vi.fn().mockResolvedValue({ v8_enabled: true }),
@@ -166,6 +211,16 @@ describe('V8 sync read-only routes', () => {
       reason: null,
     });
     mockGetUnresolvedConflicts.mockResolvedValue([]);
+    mockGetIntegrationHealth.mockResolvedValue({ status: 'healthy', errorRate: 0 });
+    mockResolveError.mockResolvedValue(undefined);
+    mockCheckRateLimit.mockResolvedValue({
+      allowed: true,
+      warnings: [],
+      reason: null,
+      retryAfterMs: null,
+    });
+    mockRecordRequest.mockResolvedValue(undefined);
+    mockLogSyncError.mockResolvedValue(undefined);
     mockListGovernedIntegrations.mockResolvedValue([]);
     mockResolveConflict.mockResolvedValue({
       conflictId: 'conf-1',
@@ -179,6 +234,12 @@ describe('V8 sync read-only routes', () => {
       resolvedBy: UID,
       createdAt: '2025-01-02T00:00:00.000Z',
     });
+    mockGetConnectedIntegrations.mockResolvedValue([]);
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ changes: 1 });
+    mockSyncIntegration.mockResolvedValue({ recordsSynced: 12, duration: 345 });
+    mockUpdateIntegrationStatus.mockResolvedValue({ success: true });
+    mockDisconnectIntegration.mockResolvedValue({ success: true });
   });
 
   it('GET /api/v8/sync/integrations returns governed inventory envelope', async () => {
@@ -228,6 +289,172 @@ describe('V8 sync read-only routes', () => {
       escalated: 0,
     });
     expect(mockGetCredentialHealth).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/sync/connectors returns governed catalog envelope', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/sync/connectors').query({ category: 'project_management' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
+    expect(res.body.data?.count).toBeGreaterThan(0);
+    expect(res.body.data?.connectors?.[0]?.category).toBe('project_management');
+  });
+
+  it('GET /api/v8/sync/health returns governed hub health summary', async () => {
+    mockGetConnectedIntegrations.mockResolvedValue([{ id: 'int-1' }, { id: 'int-2' }]);
+    mockGetIntegrationHealth
+      .mockResolvedValueOnce({ status: 'healthy', errorRate: 0 })
+      .mockResolvedValueOnce({ status: 'degraded', errorRate: 20 });
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/sync/health');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
+    expect(res.body.data?.summary).toEqual({
+      total: 2,
+      healthy: 1,
+      degraded: 1,
+      unhealthy: 0,
+    });
+    expect(mockGetConnectedIntegrations).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/sync/errors returns governed sync error envelope', async () => {
+    mockGetUnresolvedErrors.mockResolvedValue([
+      {
+        id: 'err-1',
+        integrationId: 'int-1',
+        errorType: 'AUTH',
+        errorMessage: 'token expired',
+        isRetryable: false,
+        retryCount: 0,
+        maxRetries: 3,
+        createdAt: '2025-01-02T00:00:00.000Z',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/sync/errors');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.errors?.[0]?.integrationId).toBe('int-1');
+  });
+
+  it('POST /api/v8/sync/errors/:errorId/resolve resolves a governed sync error', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/errors/err-1/resolve').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockResolveError).toHaveBeenCalledWith('err-1');
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/pause pauses an integration through the governed mutation seam', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/pause').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbRun).toHaveBeenCalledWith(expect.stringContaining('is_paused = TRUE'), ['int-1', ORG]);
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/reauth starts a governed reauth flow', async () => {
+    vi.useFakeTimers();
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/reauth').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'pending');
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'connected');
+    vi.useRealTimers();
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/disconnect disconnects through the governed mutation seam', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/disconnect').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDisconnectIntegration).toHaveBeenCalledWith('int-1');
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/resume resumes an integration through the governed mutation seam', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/resume').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('is_paused = FALSE'),
+      ['int-1', ORG],
+    );
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync triggers a governed sync run', async () => {
+    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(res.body.data?.syncRun?.status).toBe('completed');
+    expect(mockCheckRateLimit).toHaveBeenCalledWith(ORG, 'int-1', 'jira');
+    expect(mockRecordRequest).toHaveBeenCalledWith(ORG, 'int-1', 'jira');
+    expect(mockSyncIntegration).toHaveBeenCalledWith('int-1', {});
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync preserves rate-limit guardrails', async () => {
+    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockCheckRateLimit.mockResolvedValueOnce({
+      allowed: false,
+      warnings: ['backoff'],
+      reason: 'Too many requests',
+      retryAfterMs: 1500,
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(429);
+    expect(res.body.code).toBe('RATE_LIMITED');
+    expect(mockRecordRequest).not.toHaveBeenCalled();
+    expect(mockSyncIntegration).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/v8/sync/audit-log returns governed audit envelope', async () => {
+    mockDbAll.mockResolvedValue([
+      {
+        id: 'audit-1',
+        integration_id: 'int-1',
+        action: 'sync_completed',
+        actor_name: 'Ada',
+        details: {},
+        created_at: '2025-01-02T00:00:00.000Z',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/sync/audit-log').query({ limit: 10 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.entries?.[0]?.action).toBe('sync_completed');
   });
 
   it('GET /api/v8/sync/auth/escalations returns list envelope', async () => {

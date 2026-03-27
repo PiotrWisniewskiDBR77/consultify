@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
+const annaAssistantWidgetSpy = vi.fn();
+
 vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: vi.fn(),
 }));
@@ -60,7 +62,10 @@ vi.mock('@/components/Landing/EntryFooter', () => ({
 }));
 
 vi.mock('@/components/Landing/AnnaAssistantWidget', () => ({
-  AnnaAssistantWidget: () => <div>anna-assistant-widget</div>,
+  AnnaAssistantWidget: (props: any) => {
+    annaAssistantWidgetSpy(props);
+    return <div>anna-assistant-widget</div>;
+  },
 }));
 
 vi.mock('@/components/Landing/DemoModeModal', () => ({
@@ -73,6 +78,8 @@ vi.mock('@/components/Landing/LandingFilmModal', () => ({
 
 describe('ProductEntryPage knowledge preview continuity', () => {
   it('renders the landing knowledge preview on the canonical public entry surface', () => {
+    annaAssistantWidgetSpy.mockReset();
+
     render(
       <MemoryRouter>
         <ProductEntryPage
@@ -86,5 +93,12 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     expect(screen.getByText('documentation-section')).toBeInTheDocument();
     expect(screen.getByText('knowledge-preview-section')).toBeInTheDocument();
     expect(screen.getByText('info-sections')).toBeInTheDocument();
+    expect(annaAssistantWidgetSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onDemoClick: expect.any(Function),
+        onTrialClick: expect.any(Function),
+        onContactClick: expect.any(Function),
+      }),
+    );
   });
 });

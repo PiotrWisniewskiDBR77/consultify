@@ -27,7 +27,11 @@ import {
 } from '@/components/shared/PreviewPane';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
-import { V8ResultsApi, type V8ResultsDashboardSnapshot } from '@/services/api/v8/results';
+import {
+  V8ResultsApi,
+  shouldFallbackToLegacyResults,
+  type V8ResultsDashboardSnapshot,
+} from '@/services/api/v8/results';
 import { useConversationStore } from '@/store/useConversationStore';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -87,79 +91,6 @@ interface SummaryInitiativeItem extends PreviewableItem {
   hasRoiRealized: boolean;
   ownerName: string;
 }
-
-const DEMO_SUMMARY_ITEMS: SummaryInitiativeItem[] = [
-  {
-    id: 'demo-si1',
-    title: 'Digital Transformation Program',
-    status: 'DONE',
-    priority: 'HIGH',
-    ownerName: 'Anna Kowalska',
-    updatedAt: '2026-03-10T14:00:00Z',
-    description:
-      'End-to-end digitization of core business processes including CRM, ERP integration, and customer portal launch.',
-    kpiCount: 3,
-    hasKpiMonitoring: true,
-    hasRoiPlan: true,
-    hasRoiRealized: true,
-  },
-  {
-    id: 'demo-si2',
-    title: 'Cloud Migration – Phase 1',
-    status: 'DONE',
-    priority: 'HIGH',
-    ownerName: 'Piotr Zieliński',
-    updatedAt: '2026-02-28T10:00:00Z',
-    description:
-      'Migration of 12 production workloads to AWS including database, compute, and storage tiers.',
-    kpiCount: 2,
-    hasKpiMonitoring: true,
-    hasRoiPlan: true,
-    hasRoiRealized: false,
-  },
-  {
-    id: 'demo-si3',
-    title: 'RPA Implementation – Finance',
-    status: 'DONE',
-    priority: 'MEDIUM',
-    ownerName: 'Marek Nowak',
-    updatedAt: '2026-03-05T09:00:00Z',
-    description:
-      'Automated 8 key finance processes including invoice processing, reconciliation, and reporting.',
-    kpiCount: 1,
-    hasKpiMonitoring: true,
-    hasRoiPlan: true,
-    hasRoiRealized: true,
-  },
-  {
-    id: 'demo-si4',
-    title: 'Customer Experience Redesign',
-    status: 'DONE',
-    priority: 'HIGH',
-    ownerName: 'Katarzyna Wiśniewska',
-    updatedAt: '2026-01-20T16:00:00Z',
-    description:
-      'Complete UX overhaul of customer-facing applications with NPS improvement target of +15 points.',
-    kpiCount: 2,
-    hasKpiMonitoring: true,
-    hasRoiPlan: false,
-    hasRoiRealized: false,
-  },
-  {
-    id: 'demo-si5',
-    title: 'Data Governance Framework',
-    status: 'DONE',
-    priority: 'MEDIUM',
-    ownerName: 'Tomasz Lewandowski',
-    updatedAt: '2026-02-15T11:00:00Z',
-    description:
-      'Established data quality standards, ownership model, and automated monitoring for critical data assets.',
-    kpiCount: 1,
-    hasKpiMonitoring: true,
-    hasRoiPlan: false,
-    hasRoiRealized: false,
-  },
-];
 
 const formatDate = (value: unknown): string => {
   if (!value) return '—';
@@ -250,26 +181,34 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [initiativesRes, kpiRes, v8SnapshotRes] = await Promise.allSettled([
+      const [initiativesRes, v8SnapshotRes, catalogRes] = await Promise.allSettled([
         Api.getInitiativesByStatus('DONE'),
-        Api.get('/benefits/kpi-mappings'),
         V8ResultsApi.getDashboard(),
+        V8ResultsApi.getKpiCatalog(),
       ]);
 
       const initiativesRaw: InitiativeLike[] =
         initiativesRes.status === 'fulfilled' ? (initiativesRes.value as any) : [];
 
-      const kpiPayload = kpiRes.status === 'fulfilled' ? (kpiRes.value as any) : null;
-      const kpiData = (kpiPayload as any)?.data ?? kpiPayload;
-      const kpiRows: KpiMappingLike[] = Array.isArray((kpiData as any)?.data)
-        ? (kpiData as any).data
-        : Array.isArray(kpiData)
-          ? kpiData
-          : [];
-
       const v8Payload = v8SnapshotRes.status === 'fulfilled' ? (v8SnapshotRes.value as any) : null;
       const snapshot = v8Payload?.snapshot ?? null;
       setV8Snapshot(snapshot);
+
+      let kpiRows: KpiMappingLike[] = [];
+      if (catalogRes.status === 'fulfilled') {
+        kpiRows = Array.isArray(catalogRes.value?.mappings) ? (catalogRes.value.mappings as any) : [];
+      } else if (shouldFallbackToLegacyResults(catalogRes.reason)) {
+        const kpiRes = await Api.get('/benefits/kpi-mappings');
+        const kpiPayload = (kpiRes as any) ?? null;
+        const kpiData = (kpiPayload as any)?.data ?? kpiPayload;
+        kpiRows = Array.isArray((kpiData as any)?.data)
+          ? (kpiData as any).data
+          : Array.isArray(kpiData)
+            ? kpiData
+            : [];
+      } else {
+        throw catalogRes.reason;
+      }
 
       const kpiCountByInitiative = new Map<string, number>();
       for (const r of kpiRows) {
@@ -322,9 +261,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
         };
       });
 
-      setItems(mapped.length > 0 ? mapped : DEMO_SUMMARY_ITEMS);
+      setItems(mapped);
     } catch {
-      setItems(DEMO_SUMMARY_ITEMS);
+      setItems([]);
       setV8Snapshot(null);
     } finally {
       setLoading(false);

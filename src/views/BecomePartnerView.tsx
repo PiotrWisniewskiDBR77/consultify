@@ -17,6 +17,9 @@ import {
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { MarketingLayout } from '@/components/Landing/MarketingLayout';
+import { ROUTES } from '@/routes/routeConfig';
+
 /**
  * BecomePartnerView — Partner Recruitment Landing Page
  *
@@ -29,11 +32,11 @@ export const BecomePartnerView: React.FC = () => {
 
   const handleApplyClick = () => {
     // Navigate to partner registration or contact
-    navigate('/register');
+    navigate(ROUTES.REGISTER);
   };
 
   const handleLearnMoreClick = () => {
-    navigate('/');
+    navigate(ROUTES.WELCOME);
   };
 
   const benefits = [
@@ -102,48 +105,16 @@ export const BecomePartnerView: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-navy-950 text-white selection:bg-violet-500/30 overflow-x-hidden relative">
-      {/* Background Atmosphere */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[50%] bg-violet-600/15 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]" />
-        <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] bg-blue-600/8 rounded-full blur-[100px]" />
-      </div>
-
-      {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 backdrop-blur-sm bg-navy-950/80">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-3 group cursor-pointer"
-          >
-            <div className="h-10 px-3 rounded bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:shadow-violet-600/40 transition-all duration-500">
-              <span className="text-white font-bold text-sm tracking-tight">C</span>
-            </div>
-            <span className="text-xl font-bold tracking-[0.1em] text-white/90 group-hover:text-white transition-colors duration-500">
-              CONSULTIFY
-            </span>
-          </button>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/partner')}
-              className="hidden md:flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
-            >
-              <Shield size={16} className="text-violet-400" />
-              Portal Partnera
-            </button>
-            <button
-              onClick={handleApplyClick}
-              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm rounded-xl transition-all duration-300 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/40"
-            >
-              Dołącz Teraz
-            </button>
-          </div>
+    <MarketingLayout>
+      <div className="min-h-[calc(100vh-3.5rem)] bg-navy-950 text-white selection:bg-violet-500/30 overflow-x-hidden relative">
+        {/* Background Atmosphere */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[50%] bg-violet-600/15 rounded-full blur-[150px]" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]" />
+          <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] bg-blue-600/8 rounded-full blur-[100px]" />
         </div>
-      </header>
 
-      <main className="relative z-10 pt-28 pb-20 px-6">
+        <main className="relative z-10 pt-16 pb-20 px-6">
         {/* HERO SECTION */}
         <section className="max-w-5xl mx-auto text-center mb-24 animate-fade-in">
           {/* Badge */}
@@ -187,6 +158,14 @@ export const BecomePartnerView: React.FC = () => {
             >
               Poznaj Consultify
               <ArrowRight size={18} />
+            </button>
+
+            <button
+              onClick={() => navigate(ROUTES.PARTNER.LANDING)}
+              className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
+            >
+              <Shield size={18} className="text-violet-400" />
+              Portal Partnera
             </button>
           </div>
         </section>
@@ -331,35 +310,9 @@ export const BecomePartnerView: React.FC = () => {
           </button>
           <p className="mt-6 text-white/30 text-sm">Bez zobowiązań • Odpowiemy w ciągu 24h</p>
         </section>
-      </main>
-
-      {/* FOOTER */}
-      <footer className="relative z-10 py-12 px-6 border-t border-white/5 bg-navy-950/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-3 opacity-50 hover:opacity-100 transition-all duration-500"
-          >
-            <div className="h-6 px-2 rounded bg-violet-600 flex items-center justify-center">
-              <span className="text-white font-bold text-[10px] tracking-tight">C</span>
-            </div>
-            <span className="text-sm font-bold tracking-[0.1em] text-white">CONSULTIFY</span>
-          </button>
-
-          <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">
-            <a href="/privacy" className="hover:text-violet-400 transition-colors">
-              Prywatność
-            </a>
-            <a href="/terms" className="hover:text-violet-400 transition-colors">
-              Regulamin
-            </a>
-            <a href="/" className="hover:text-violet-400 transition-colors">
-              Strona Główna
-            </a>
-          </div>
-        </div>
-      </footer>
-    </div>
+        </main>
+      </div>
+    </MarketingLayout>
   );
 };
 

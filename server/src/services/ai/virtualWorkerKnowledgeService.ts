@@ -44,6 +44,7 @@ type RagHit = {
   similarity: number;
   documentId?: string;
   productSlug: string;
+  language: string | null;
 };
 
 export type WorkerKnowledgeResult = {
@@ -98,6 +99,53 @@ function uniq<T>(items: T[]): T[] {
 function safeSlice(text: string, maxChars: number): string {
   const v = String(text || '').trim();
   return v.length <= maxChars ? v : v.slice(0, Math.max(0, maxChars - 1)).trimEnd() + '…';
+}
+
+function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.startsWith('pl')) return 'pl';
+  if (normalized.startsWith('en')) return 'en';
+  return null;
+}
+
+function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
+  return normalizeLanguage(locale) === 'pl' ? 'pl' : 'en';
+}
+
+function splitDocsByLanguagePreference(
+  docs: IndexedDoc[],
+  locale?: string
+): {
+  preferredLanguage: 'pl' | 'en';
+  preferredDocs: IndexedDoc[];
+  fallbackDocs: IndexedDoc[];
+} {
+  const preferredLanguage = resolveKnowledgeLanguage(locale);
+  const preferredDocs: IndexedDoc[] = [];
+  const fallbackDocs: IndexedDoc[] = [];
+
+  for (const doc of docs) {
+    const docLanguage = normalizeLanguage(doc.language);
+    if (!docLanguage || docLanguage === preferredLanguage) {
+      preferredDocs.push(doc);
+      continue;
+    }
+    fallbackDocs.push(doc);
+  }
+
+  return {
+    preferredLanguage,
+    preferredDocs,
+    fallbackDocs,
+  };
+}
+
+function scoreLanguagePreference(language: string | null, preferredLanguage: 'pl' | 'en'): number {
+  const normalizedLanguage = normalizeLanguage(language);
+  if (normalizedLanguage === preferredLanguage) return 0;
+  if (!normalizedLanguage) return 1;
+  return 2;
 }
 
 // ---------------------------------------------------------------------------
@@ -178,6 +226,7 @@ async function searchScoped(
         similarity: Number(r.similarity || 0),
         documentId: doc.id,
         productSlug: doc.productSlug,
+        language: doc.language,
       } satisfies RagHit;
     })
     .filter((r) => Boolean(r?.content)) as RagHit[];
@@ -229,6 +278,7 @@ export async function buildWorkerKnowledgeContext(opts: {
 }): Promise<WorkerKnowledgeResult> {
   const query = String(opts.query || '').trim();
   const limit = Math.min(Math.max(opts.limit || 6, 2), 10);
+  const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
 
   const worker = await getWorkerBySlug(opts.workerSlug);
   if (!worker) {
@@ -272,12 +322,28 @@ export async function buildWorkerKnowledgeContext(opts: {
     const { docs, weightMap } = await loadWorkerDocs(assignments);
 
     const primaryDocs = docs.filter((d) => primaryProducts.includes(d.productSlug));
-    const hits = await searchScoped(query, primaryDocs.length > 0 ? primaryDocs : docs, limit);
+    const languageScopedPrimaryDocs = splitDocsByLanguagePreference(primaryDocs, opts.locale);
+    const languageScopedAllDocs = splitDocsByLanguagePreference(docs, opts.locale);
+    const preferredDocs =
+      languageScopedPrimaryDocs.preferredDocs.length > 0
+        ? languageScopedPrimaryDocs.preferredDocs
+        : languageScopedAllDocs.preferredDocs;
+    const fallbackDocs =
+      languageScopedPrimaryDocs.preferredDocs.length > 0
+        ? languageScopedPrimaryDocs.fallbackDocs
+        : languageScopedAllDocs.fallbackDocs;
+
+    const preferredHits = await searchScoped(query, preferredDocs, limit);
+    const hits =
+      preferredHits.length > 0 ? preferredHits : await searchScoped(query, fallbackDocs, limit);
 
     const sorted = hits.sort((a, b) => {
       const aWeight = weightMap.get(a.productSlug) ?? 1.0;
       const bWeight = weightMap.get(b.productSlug) ?? 1.0;
       if (aWeight !== bWeight) return bWeight - aWeight;
+      const aLanguageScore = scoreLanguagePreference(a.language, preferredLanguage);
+      const bLanguageScore = scoreLanguagePreference(b.language, preferredLanguage);
+      if (aLanguageScore !== bLanguageScore) return aLanguageScore - bLanguageScore;
       return b.similarity - a.similarity;
     }).slice(0, limit);
 

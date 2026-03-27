@@ -5,9 +5,15 @@
  * "typing…" indicators, and a presence bar at the top.
  * Uses SSE/polling to sync presence state.
  */
-import { Circle, Users } from 'lucide-react';
+import { Lock, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  type V8MultiplayerLockRecord,
+  type V8MultiplayerSurfacePresence,
+  V8MultiplayerApi,
+} from '@/services/api/v8/multiplayer';
 
 export interface PresenceUser {
   id: string;
@@ -24,7 +30,20 @@ interface CollaborationPresenceProps {
   currentUserId: string;
   currentUserName: string;
   enabled?: boolean;
+  renderIndicator?: boolean;
   onPresenceUpdate?: (users: PresenceUser[]) => void;
+}
+
+interface WorkspacePresenceIndicatorProps {
+  workspaceId?: string | null;
+  currentUserId?: string | null;
+  enabled?: boolean;
+}
+
+interface WorkspaceLockIndicatorProps {
+  workspaceId?: string | null;
+  currentUserId?: string | null;
+  enabled?: boolean;
 }
 
 const PRESENCE_COLORS = [
@@ -52,11 +71,230 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+function getPresenceColor(seed: string): string {
+  const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return PRESENCE_COLORS[Math.abs(hash) % PRESENCE_COLORS.length];
+}
+
+function mapWorkspacePresenceUsers(
+  presence: V8MultiplayerSurfacePresence[],
+  currentUserId?: string | null
+): PresenceUser[] {
+  const now = Date.now();
+  const deduped = new Map<string, V8MultiplayerSurfacePresence>();
+
+  for (const row of presence) {
+    if (!row.userId || row.userId === currentUserId) continue;
+    const lastSeen = Date.parse(row.lastHeartbeat);
+    if (Number.isNaN(lastSeen) || now - lastSeen >= STALE_THRESHOLD_MS) continue;
+
+    const existing = deduped.get(row.userId);
+    const existingLastSeen = existing ? Date.parse(existing.lastHeartbeat) : 0;
+    if (!existing || lastSeen > existingLastSeen) {
+      deduped.set(row.userId, row);
+    }
+  }
+
+  return Array.from(deduped.values()).map((row) => ({
+    id: row.userId,
+    name: row.userId,
+    color: getPresenceColor(row.userId),
+    lastSeen: Date.parse(row.lastHeartbeat),
+    isTyping: row.presenceType === 'typing',
+  }));
+}
+
+function isLockActive(lock: V8MultiplayerLockRecord): boolean {
+  if (lock.releasedAt) return false;
+  const acquiredAt = Date.parse(lock.acquiredAt);
+  if (Number.isNaN(acquiredAt)) return false;
+  return acquiredAt + lock.ttl > Date.now();
+}
+
+function formatLockTypeLabel(lockType: V8MultiplayerLockRecord['lockType'], isPl: boolean): string {
+  switch (lockType) {
+    case 'optimistic_row':
+      return isPl ? 'Wiersz' : 'Row';
+    case 'optimistic_section':
+      return isPl ? 'Sekcja' : 'Section';
+    case 'exclusive_schema':
+      return isPl ? 'Schema' : 'Schema';
+    case 'exclusive_document':
+      return isPl ? 'Document' : 'Document';
+    case 'phase_lock':
+      return isPl ? 'Phase' : 'Phase';
+    case 'advisory_object':
+    default:
+      return isPl ? 'Object' : 'Object';
+  }
+}
+
+function summarizeLockScope(lockScope: string): string {
+  const parts = lockScope.split(':').filter(Boolean);
+  if (parts.length === 0) return lockScope;
+  return parts[parts.length - 1];
+}
+
+function mapWorkspaceLocks(
+  locks: V8MultiplayerLockRecord[],
+  currentUserId?: string | null
+): V8MultiplayerLockRecord[] {
+  return locks.filter((lock) => lock.holderId !== currentUserId && isLockActive(lock));
+}
+
+async function resolveWorkspaceRoomId(workspaceId: string): Promise<string | null> {
+  const binding = await V8MultiplayerApi.getRoomBinding('workspace', workspaceId);
+  return binding.binding?.roomResourceId ?? null;
+}
+
+export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProps> = ({
+  workspaceId,
+  currentUserId,
+  enabled = true,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [activeUsers, setActiveUsers] = useState<PresenceUser[]>([]);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchWorkspacePresence = useCallback(async () => {
+    if (!enabled || !workspaceId) {
+      setActiveUsers([]);
+      return;
+    }
+
+    try {
+      const roomId = await resolveWorkspaceRoomId(workspaceId);
+      if (!roomId) {
+        setActiveUsers([]);
+        return;
+      }
+
+      const response = await V8MultiplayerApi.getRoomPresence(roomId);
+      setActiveUsers(mapWorkspacePresenceUsers(response.presence || [], currentUserId));
+    } catch {
+      setActiveUsers([]);
+    }
+  }, [currentUserId, enabled, workspaceId]);
+
+  useEffect(() => {
+    if (!enabled || !workspaceId) return;
+    fetchWorkspacePresence();
+    pollRef.current = setInterval(fetchWorkspacePresence, POLL_INTERVAL_MS);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [enabled, fetchWorkspacePresence, workspaceId]);
+
+  if (!enabled || activeUsers.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1 px-2" aria-label={isPl ? 'Obecni we workspace' : 'Workspace presence'}>
+      <Users size={11} className="text-sky-500" />
+      <div className="flex items-center -space-x-1.5">
+        {activeUsers.slice(0, 5).map((user) => (
+          <div
+            key={user.id}
+            className="relative"
+            title={`${user.id}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
+          >
+            <div
+              className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-black text-white"
+              style={{ backgroundColor: user.color }}
+            >
+              {getInitials(user.name)}
+            </div>
+            {user.isTyping && (
+              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-navy-900 animate-pulse" />
+            )}
+          </div>
+        ))}
+        {activeUsers.length > 5 && (
+          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-700 border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-bold text-slate-500">
+            +{activeUsers.length - 5}
+          </div>
+        )}
+      </div>
+      <span className="text-[9px] text-sky-600 dark:text-sky-300 ml-1">
+        {activeUsers.length} {isPl ? 'online' : 'online'}
+      </span>
+    </div>
+  );
+};
+
+export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
+  workspaceId,
+  currentUserId,
+  enabled = true,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [activeLocks, setActiveLocks] = useState<V8MultiplayerLockRecord[]>([]);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchWorkspaceLocks = useCallback(async () => {
+    if (!enabled || !workspaceId) {
+      setActiveLocks([]);
+      return;
+    }
+
+    try {
+      const roomId = await resolveWorkspaceRoomId(workspaceId);
+      if (!roomId) {
+        setActiveLocks([]);
+        return;
+      }
+
+      const response = await V8MultiplayerApi.getRoomLocks(roomId);
+      setActiveLocks(mapWorkspaceLocks(response.locks || [], currentUserId));
+    } catch {
+      setActiveLocks([]);
+    }
+  }, [currentUserId, enabled, workspaceId]);
+
+  useEffect(() => {
+    if (!enabled || !workspaceId) return;
+    fetchWorkspaceLocks();
+    pollRef.current = setInterval(fetchWorkspaceLocks, POLL_INTERVAL_MS);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [enabled, fetchWorkspaceLocks, workspaceId]);
+
+  if (!enabled || activeLocks.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1 px-2" aria-label={isPl ? 'Blokady we workspace' : 'Workspace locks'}>
+      <Lock size={11} className="text-amber-500" />
+      <span className="text-[9px] text-amber-700 dark:text-amber-300">
+        {activeLocks.length} {isPl ? 'blocked' : 'locked'}
+      </span>
+      <div className="hidden md:flex items-center gap-1">
+        {activeLocks.slice(0, 2).map((lock) => (
+          <span
+            key={lock.lockId}
+            className="inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+            title={`${lock.holderId} • ${formatLockTypeLabel(lock.lockType, isPl)} • ${lock.lockScope}`}
+          >
+            {formatLockTypeLabel(lock.lockType, isPl)}: {summarizeLockScope(lock.lockScope)}
+          </span>
+        ))}
+        {activeLocks.length > 2 && (
+          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+            +{activeLocks.length - 2}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
   ideaId,
   currentUserId,
   currentUserName,
   enabled = true,
+  renderIndicator = true,
   onPresenceUpdate,
 }) => {
   const { i18n } = useTranslation();
@@ -124,7 +362,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
 
   const activeUsers = remoteUsers.filter((u) => Date.now() - u.lastSeen < STALE_THRESHOLD_MS);
 
-  if (!enabled || activeUsers.length === 0) return null;
+  if (!enabled || !renderIndicator || activeUsers.length === 0) return null;
 
   return (
     <div className="flex items-center gap-1 px-2">

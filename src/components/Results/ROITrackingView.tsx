@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
@@ -189,9 +190,20 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await Api.get('/benefits/roi/portfolio/summary');
-      const data = (res as any)?.data || res;
-      const payload = typeof data?.items !== 'undefined' ? data : { items: [], summary: null };
+      let payload: { items: PortfolioSummary['items']; summary: PortfolioSummary['summary'] | null } = {
+        items: [],
+        summary: null,
+      };
+      try {
+        payload = await V8ResultsApi.getRoiPortfolioSummary();
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        const res = await Api.get('/benefits/roi/portfolio/summary');
+        const data = (res as any)?.data || res;
+        payload = typeof data?.items !== 'undefined' ? data : { items: [], summary: null };
+      }
       setItems((payload.items || []).map((i: any) => ({ ...i, roiStatus: deriveROIStatus(i) })));
       setSummary(payload.summary || null);
     } catch {

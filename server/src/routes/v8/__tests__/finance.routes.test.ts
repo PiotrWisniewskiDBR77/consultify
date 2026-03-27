@@ -5,9 +5,33 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockGetFinanceDashboard = vi.fn();
+const mockListAnalyses = vi.fn();
+const mockGetAnalysisRatios = vi.fn();
+const mockGetAnalysisInsights = vi.fn();
+const mockApproveAnalysis = vi.fn();
+const mockCreateAnalysis = vi.fn();
+const mockRunFullAnalysis = vi.fn();
+const mockDbGet = vi.fn();
+const mockDbAll = vi.fn();
+const mockDbRun = vi.fn();
 
 vi.mock('../../../services/v8/financeIntegrationService.js', () => ({
   getFinanceDashboard: (...args: unknown[]) => mockGetFinanceDashboard(...args),
+}));
+
+vi.mock('../../../services/financialAnalysisService.js', () => ({
+  createAnalysis: (...args: unknown[]) => mockCreateAnalysis(...args),
+  listAnalyses: (...args: unknown[]) => mockListAnalyses(...args),
+  getAnalysisRatios: (...args: unknown[]) => mockGetAnalysisRatios(...args),
+  getAnalysisInsights: (...args: unknown[]) => mockGetAnalysisInsights(...args),
+  approveAnalysis: (...args: unknown[]) => mockApproveAnalysis(...args),
+  runFullAnalysis: (...args: unknown[]) => mockRunFullAnalysis(...args),
+}));
+
+vi.mock('../../../utils/DbPromise.js', () => ({
+  get: (...args: unknown[]) => mockDbGet(...args),
+  all: (...args: unknown[]) => mockDbAll(...args),
+  run: (...args: unknown[]) => mockDbRun(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -103,6 +127,25 @@ describe('V8 finance read-only routes', () => {
       staleSourceRefreshesCount: 0,
       promotionGatePassRate: null,
     });
+    mockListAnalyses.mockResolvedValue([]);
+    mockGetAnalysisRatios.mockResolvedValue([]);
+    mockGetAnalysisInsights.mockResolvedValue([]);
+    mockApproveAnalysis.mockResolvedValue(undefined);
+    mockCreateAnalysis.mockResolvedValue({
+      id: 'analysis-created-1',
+      title: 'Created analysis',
+      status: 'DRAFT',
+      analysisType: 'comprehensive',
+      periods: [],
+      currency: 'PLN',
+      sourceStatementIds: [],
+      createdAt: '2026-03-26T10:00:00.000Z',
+      updatedAt: '2026-03-26T10:00:00.000Z',
+    });
+    mockRunFullAnalysis.mockResolvedValue({ ratios: [] });
+    mockDbGet.mockResolvedValue(null);
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue(undefined);
   });
 
   it('GET /api/v8/finance/dashboard returns envelope and delegates to getFinanceDashboard', async () => {
@@ -113,5 +156,194 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.dashboard?.ingestionPipeline?.totalCount).toBe(0);
     expect(mockGetFinanceDashboard).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/finance/analyses returns envelope and delegates to listAnalyses', async () => {
+    mockListAnalyses.mockResolvedValue([
+      {
+        id: 'analysis-1',
+        title: 'Working capital analysis',
+        description: null,
+        status: 'DRAFT',
+        analysisType: 'financial',
+        periods: ['2025-Q4'],
+        currency: 'PLN',
+        sourceStatementIds: [],
+        createdAt: '2026-03-26T10:00:00.000Z',
+        updatedAt: '2026-03-26T10:05:00.000Z',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/finance/analyses')
+      .query({ status: 'DRAFT', projectId: 'project-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.analyses?.[0]?.title).toBe('Working capital analysis');
+    expect(mockListAnalyses).toHaveBeenCalledWith(ORG, {
+      status: 'DRAFT',
+      projectId: 'project-1',
+    });
+  });
+
+  it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/analyses').send({
+      title: 'Created analysis',
+      analysisType: 'comprehensive',
+      currency: 'PLN',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.analysis?.title).toBe('Created analysis');
+    expect(mockCreateAnalysis).toHaveBeenCalledWith(
+      ORG,
+      expect.objectContaining({
+        title: 'Created analysis',
+        analysisType: 'comprehensive',
+        currency: 'PLN',
+      }),
+      UID,
+    );
+  });
+
+  it('GET /api/v8/finance/analyses/:id/ratios returns envelope and delegates to getAnalysisRatios', async () => {
+    mockListAnalyses.mockResolvedValue([
+      {
+        id: 'analysis-1',
+        title: 'Working capital analysis',
+      },
+    ]);
+    mockGetAnalysisRatios.mockResolvedValue([
+      {
+        category: 'liquidity',
+        ratio_code: 'current_ratio',
+        ratio_name: 'Current ratio',
+        value: 1.42,
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/analyses/analysis-1/ratios');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.ratios?.[0]?.ratio_code).toBe('current_ratio');
+    expect(mockListAnalyses).toHaveBeenCalledWith(ORG);
+    expect(mockGetAnalysisRatios).toHaveBeenCalledWith('analysis-1');
+  });
+
+  it('GET /api/v8/finance/analyses/:id/initiative-proposals returns filtered proposal envelope', async () => {
+    mockListAnalyses.mockResolvedValue([
+      {
+        id: 'analysis-1',
+        title: 'Working capital analysis',
+      },
+    ]);
+    mockGetAnalysisInsights.mockResolvedValue([
+      {
+        id: 'insight-1',
+        insight_type: 'action',
+        title: 'Reduce overdue receivables',
+        description: 'Shorten DSO with collections sprint',
+        priority: 9,
+      },
+      {
+        id: 'insight-2',
+        insight_type: 'quality_note',
+        title: 'Ignore me',
+        description: 'Non-proposal insight',
+        priority: 1,
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/analyses/analysis-1/initiative-proposals');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.proposals).toHaveLength(1);
+    expect(res.body.data?.proposals?.[0]?.title).toBe('Reduce overdue receivables');
+    expect(mockListAnalyses).toHaveBeenCalledWith(ORG);
+    expect(mockGetAnalysisInsights).toHaveBeenCalledWith('analysis-1');
+  });
+
+  it('POST /api/v8/finance/analyses/:id/initiatives creates initiatives from accepted proposals', async () => {
+    mockDbGet.mockResolvedValue({
+      id: 'analysis-1',
+      organization_id: ORG,
+      project_id: 'project-1',
+      title: 'Working capital analysis',
+    });
+    mockDbAll.mockResolvedValue([
+      {
+        id: 'proposal-1',
+        insight_type: 'action',
+        title: 'Reduce overdue receivables',
+        description: 'Shorten DSO with collections sprint',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/analyses/analysis-1/initiatives')
+      .send({ acceptedProposalIds: ['proposal-1'] });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(res.body.data?.initiativeIds).toHaveLength(1);
+    expect(mockDbGet).toHaveBeenCalled();
+    expect(mockDbAll).toHaveBeenCalled();
+    expect(mockDbRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST /api/v8/finance/analyses/:id/run delegates to runFullAnalysis', async () => {
+    mockRunFullAnalysis.mockResolvedValue({
+      ratios: [{ ratio_code: 'current_ratio', value: 1.42 }],
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/analyses/analysis-1/run').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockRunFullAnalysis).toHaveBeenCalledWith(ORG, 'analysis-1');
+  });
+
+  it('POST /api/v8/finance/analyses/:id/approve delegates to approveAnalysis', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/analyses/analysis-1/approve').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockApproveAnalysis).toHaveBeenCalledWith(ORG, 'analysis-1', UID);
+  });
+
+  it('DELETE /api/v8/finance/analyses/:id deletes a non-approved analysis', async () => {
+    mockDbGet.mockResolvedValue({ id: 'analysis-1', status: 'DRAFT' });
+    const app = createApp();
+    const res = await request(app).delete('/api/v8/finance/analyses/analysis-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, deleted: 'analysis-1' });
+    expect(mockDbRun).toHaveBeenCalledWith(
+      'DELETE FROM financial_analysis_insights WHERE analysis_id = ?',
+      ['analysis-1'],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      'DELETE FROM financial_analysis_ratios WHERE analysis_id = ?',
+      ['analysis-1'],
+    );
+    expect(mockDbRun).toHaveBeenCalledWith('DELETE FROM financial_analyses WHERE id = ?', [
+      'analysis-1',
+    ]);
   });
 });

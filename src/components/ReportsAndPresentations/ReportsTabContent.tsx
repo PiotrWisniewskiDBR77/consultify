@@ -224,7 +224,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       id: 'export',
       label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
       icon: Download,
-      onClick: () => actions.exportReportPdf(row.id),
+      onClick: () => actions.exportReportPdf(row),
     },
     {
       id: 'share',
@@ -239,7 +239,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       divider: true,
       variant: 'danger',
       onClick: async () => {
-        const ok = await actions.archiveReport(row.id);
+        const ok = await actions.archiveReport(row);
         if (ok) onRefresh();
       },
     },
@@ -434,7 +434,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
             }
             reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
             onOpen={() => navigate(`/reports/builder/${item.id}`)}
-            onExport={() => actions.exportReportPdf(item.id)}
+            onExport={() => actions.exportReportPdf(item)}
           />
         )}
       >

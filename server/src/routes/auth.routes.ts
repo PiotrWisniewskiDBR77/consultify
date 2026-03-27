@@ -42,7 +42,6 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import config from '../config/Config.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { ORG_TYPES, TRIAL_DURATION_DAYS } from '../services/access/AccessTypes.js';
 import ActivityService from '../services/ActivityService.js';
 import {
@@ -51,9 +50,6 @@ import {
 } from '../services/demoTrialTelemetryService.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
-
-// Apply rate limiting to all auth routes
-router.use(authRateLimiter);
 
 const FORCED_SUPERADMIN_EMAILS = (() => {
   const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');

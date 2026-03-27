@@ -11,6 +11,7 @@ const createRunMutateAsync = vi.fn();
 const acceptPlanMutateAsync = vi.fn();
 const materializeRunMutateAsync = vi.fn();
 const retryRunMutateAsync = vi.fn();
+const captureSnapshotMutateAsync = vi.fn();
 const useV8SnapshotsMock = vi.fn();
 const submitReviewMutateAsync = vi.fn();
 const approveExecutionRunMutateAsync = vi.fn();
@@ -40,6 +41,10 @@ vi.mock('../../../src/hooks/useV8Gate', () => ({
 
 vi.mock('../../../src/hooks/useV8Chat', () => ({
   useV8Snapshots: (...args: any[]) => useV8SnapshotsMock(...args),
+  useV8CaptureSnapshot: () => ({
+    mutateAsync: captureSnapshotMutateAsync,
+    isPending: false,
+  }),
 }));
 
 vi.mock('../../../src/hooks/useV8ArtifactRuns', () => ({
@@ -81,6 +86,7 @@ vi.mock('../../../src/hooks/useV8Execution', () => ({
 
 describe('V8ArtifactRunControl', () => {
   beforeEach(() => {
+    captureSnapshotMutateAsync.mockReset();
     createRunMutateAsync.mockReset();
     acceptPlanMutateAsync.mockReset();
     materializeRunMutateAsync.mockReset();
@@ -279,17 +285,191 @@ describe('V8ArtifactRunControl', () => {
     expect(screen.getByTestId('v8-artifact-run-button')).toBeDisabled();
   });
 
-  it('offers the currently materializable document and presentation outputs in chat control', () => {
+  it('offers snapshot capture when the chat lane has governance context but no snapshots yet', async () => {
+    useV8SnapshotsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+    captureSnapshotMutateAsync.mockResolvedValue({
+      snapshotId: 'snap-new',
+    });
+
+    render(
+      <V8ArtifactRunControl
+        conversationId="conv-1"
+        defaultGoal="Build board update deck"
+        snapshotContext={{
+          workspaceId: '00000000-0000-4000-8000-000000000123',
+          projectId: '00000000-0000-4000-8000-000000000456',
+          effectiveScopeRef: 'workspace',
+          resolvedRoleRef: 'member',
+          privacyMode: false,
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('v8-artifact-run-button')).not.toBeDisabled();
+    fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
+    fireEvent.click(screen.getByTestId('v8-artifact-run-capture-snapshot'));
+
+    await waitFor(() =>
+      expect(captureSnapshotMutateAsync).toHaveBeenCalledWith({
+        workspaceId: '00000000-0000-4000-8000-000000000123',
+        projectId: '00000000-0000-4000-8000-000000000456',
+        conversationId: 'conv-1',
+        executionRunId: null,
+        artifactRefs: [],
+        effectiveScopeRef: 'workspace',
+        resolvedRoleRef: 'member',
+        consumerClass: 'chat',
+        privacyMode: false,
+        sourceContextRefs: [],
+      }),
+    );
+  });
+
+  it('offers document, presentation, and sheet outputs in chat control', () => {
     render(<V8ArtifactRunControl conversationId="conv-1" defaultGoal="Build board update deck" />);
 
     fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
 
     const select = screen.getByTestId('v8-artifact-run-output-type') as HTMLSelectElement;
-    expect(select.options).toHaveLength(2);
+    expect(select.options).toHaveLength(3);
     expect(select.options[0]?.value).toBe('report');
     expect(select.options[0]?.textContent).toBe('Document');
     expect(select.options[1]?.value).toBe('presentation');
     expect(select.options[1]?.textContent).toBe('Presentation');
+    expect(select.options[2]?.value).toBe('sheet');
+    expect(select.options[2]?.textContent).toBe('Sheet');
+  });
+
+  it('allows governed sheet planning and materialization into an existing table target', async () => {
+    createRunMutateAsync.mockResolvedValue({
+      artifactRunId: 'run-sheet-1',
+      executionRunId: 'exec-sheet-1',
+      artifactPlan: {
+        artifactFamily: 'sheet',
+        outputType: 'sheet',
+        titleHint: 'Structured sheet draft',
+        governancePath: 'execution_spine',
+        visibilityScope: 'organization',
+      },
+      run: {
+        runId: 'run-sheet-1',
+        artifactId: null,
+        organizationId: 'org-1',
+        executionRunId: 'exec-sheet-1',
+        contextSnapshotId: 'snap-2',
+        triggerType: 'chat',
+        sourceContextType: 'conversation',
+        sourceContextId: 'conv-1',
+        requestedByUserId: 'user-1',
+        plan: {
+          artifactFamily: 'sheet',
+          outputType: 'sheet',
+          titleHint: 'Structured sheet draft',
+          governancePath: 'execution_spine',
+          visibilityScope: 'organization',
+        },
+        runStatus: 'planned',
+        proposalId: null,
+        retryOfRunId: null,
+        failureReason: null,
+        startedAt: '2026-03-24T10:00:00.000Z',
+        completedAt: null,
+        createdAt: '2026-03-24T10:00:00.000Z',
+        updatedAt: '2026-03-24T10:00:00.000Z',
+      },
+    });
+    acceptPlanMutateAsync.mockResolvedValue({
+      runId: 'run-sheet-1',
+      artifactId: null,
+      organizationId: 'org-1',
+      executionRunId: 'exec-sheet-1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'sheet',
+        outputType: 'sheet',
+        titleHint: 'Structured sheet draft',
+        governancePath: 'execution_spine',
+        visibilityScope: 'organization',
+      },
+      runStatus: 'proposal_created',
+      proposalId: 'proposal-sheet-1',
+      retryOfRunId: null,
+      failureReason: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: null,
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:01:00.000Z',
+    });
+    materializeRunMutateAsync.mockResolvedValue({
+      runId: 'run-sheet-1',
+      artifactId: 'artifact-sheet-1',
+      organizationId: 'org-1',
+      executionRunId: 'exec-sheet-1',
+      contextSnapshotId: 'snap-2',
+      triggerType: 'chat',
+      sourceContextType: 'conversation',
+      sourceContextId: 'conv-1',
+      requestedByUserId: 'user-1',
+      plan: {
+        artifactFamily: 'sheet',
+        outputType: 'sheet',
+        titleHint: 'Structured sheet draft',
+        governancePath: 'execution_spine',
+        visibilityScope: 'organization',
+      },
+      runStatus: 'completed',
+      proposalId: 'proposal-sheet-1',
+      retryOfRunId: null,
+      failureReason: null,
+      startedAt: '2026-03-24T10:00:00.000Z',
+      completedAt: '2026-03-24T10:02:00.000Z',
+      createdAt: '2026-03-24T10:00:00.000Z',
+      updatedAt: '2026-03-24T10:02:00.000Z',
+    });
+
+    render(<V8ArtifactRunControl conversationId="conv-1" defaultGoal="Build governed model sheet" />);
+
+    fireEvent.click(screen.getByTestId('v8-artifact-run-button'));
+    fireEvent.change(screen.getByTestId('v8-artifact-run-output-type'), {
+      target: { value: 'sheet' },
+    });
+    fireEvent.change(screen.getByTestId('v8-artifact-run-sheet-table-id'), {
+      target: { value: 'tbl-governed-1' },
+    });
+    fireEvent.click(screen.getByTestId('v8-artifact-run-plan'));
+
+    await waitFor(() =>
+      expect(createRunMutateAsync).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        contextSnapshotId: 'snap-2',
+        goal: 'Build governed model sheet',
+        requestedArtifactFamily: 'sheet',
+        requestedOutputType: 'sheet',
+      }),
+    );
+
+    fireEvent.click(await screen.findByTestId('v8-artifact-run-accept'));
+    await waitFor(() => expect(acceptPlanMutateAsync).toHaveBeenCalledWith('run-sheet-1'));
+
+    fireEvent.click(await screen.findByTestId('v8-artifact-run-materialize'));
+    await waitFor(() =>
+      expect(materializeRunMutateAsync).toHaveBeenCalledWith({
+        runId: 'run-sheet-1',
+        params: {
+          title: 'Structured sheet draft',
+          config: {
+            tableId: 'tbl-governed-1',
+          },
+        },
+      }),
+    );
   });
 
   it('allows governed presentation planning and materialization from chat control', async () => {

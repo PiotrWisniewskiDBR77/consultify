@@ -125,7 +125,7 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({
         <ConversationBrowser workerId={worker.id} />
       )}
       {activeTab === 'analytics' && (
-        <WorkerAnalyticsDashboard workerId={worker.id} />
+        <WorkerAnalyticsDashboard workerId={worker.id} workerSlug={worker.slug} />
       )}
       {activeTab === 'insights' && (
         <InsightsPanel workerId={worker.id} />

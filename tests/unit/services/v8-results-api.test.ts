@@ -2,11 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
-  v8Post: vi.fn(),
-  v8Put: vi.fn(),
 }));
 
-import { V8ResultsApi } from '@/services/api/v8/results';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 import { v8Get } from '@/services/api/v8/client';
 
 describe('V8ResultsApi', () => {
@@ -50,5 +48,90 @@ describe('V8ResultsApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/results/dashboard');
     expect(data.snapshot.kpiScorecard.totalKpis).toBe(5);
     expect(data.snapshot.roiDashboard.totalRealized).toBe(1200);
+  });
+
+  it('requests the governed ROI portfolio summary from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      organizationId: 'org-1',
+      items: [
+        {
+          initiativeId: 'init-1',
+          initiativeName: 'Initiative Alpha',
+          status: 'DONE',
+          priority: 'HIGH',
+          capex: 100,
+          opexAnnual: 20,
+          projectedBenefit: 300,
+          realizedBenefit: 120,
+          variance: -180,
+          confidence: 'medium',
+          hasRealized: true,
+        },
+      ],
+      summary: {
+        totalProjected: 300,
+        totalRealized: 120,
+        totalCapex: 100,
+        totalVariance: -180,
+        initiativeCount: 1,
+        coveragePercent: 100,
+      },
+    });
+
+    const data = await V8ResultsApi.getRoiPortfolioSummary();
+
+    expect(v8Get).toHaveBeenCalledWith('/results/roi/portfolio-summary');
+    expect(data.summary.totalProjected).toBe(300);
+    expect(data.items[0].initiativeId).toBe('init-1');
+  });
+
+  it('requests the governed KPI catalog from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [{ id: 'kpi-1', name: 'KPI Alpha' }],
+      mappings: [{ id: 'map-1', kpiId: 'kpi-1', initiativeId: 'init-1' }],
+    });
+
+    const data = await V8ResultsApi.getKpiCatalog({ kpiId: 'kpi-1' });
+
+    expect(v8Get).toHaveBeenCalledWith('/results/kpis/catalog', { kpiId: 'kpi-1' });
+    expect(data.kpis[0].id).toBe('kpi-1');
+    expect(data.mappings[0].initiativeId).toBe('init-1');
+  });
+
+  it('requests the governed KPI drawer detail from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [],
+      openCase: null,
+    });
+
+    const data = await V8ResultsApi.getKpiDrawerDetail('kpi-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/results/kpis/kpi-1/drawer-detail');
+    expect(data.kpiId).toBe('kpi-1');
+  });
+
+  it('requests the governed ROI initiative detail from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      organizationId: 'org-1',
+      initiativeId: 'init-1',
+      variance: { hasAssumptions: false, variance: null },
+      assumptions: null,
+      realized: [],
+    });
+
+    const data = await V8ResultsApi.getRoiInitiativeDetail('init-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/results/roi/initiative/init-1/detail');
+    expect(data.initiativeId).toBe('init-1');
+  });
+
+  it('falls back to legacy results routes only for bounded compatibility statuses', () => {
+    expect(shouldFallbackToLegacyResults({ status: 404 })).toBe(true);
+    expect(shouldFallbackToLegacyResults({ status: 501 })).toBe(true);
+    expect(shouldFallbackToLegacyResults({ status: 500 })).toBe(false);
+    expect(shouldFallbackToLegacyResults({ status: 429 })).toBe(false);
   });
 });

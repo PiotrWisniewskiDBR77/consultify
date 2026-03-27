@@ -5,6 +5,7 @@ import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
 import { DemoModeModal } from './DemoModeModal';
+import { AnnaAssistantWidget } from './AnnaAssistantWidget';
 import { EntryFooter } from './EntryFooter';
 import { EntryTopBar } from './EntryTopBar';
 
@@ -18,6 +19,20 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) =>
     useAppStore();
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'demo' | 'trial'>('trial');
+
+  const handleTrialClick = () => {
+    setModalMode('trial');
+    setIsDemoModalOpen(true);
+  };
+
+  const handleDemoClick = () => {
+    setModalMode('demo');
+    setIsDemoModalOpen(true);
+  };
+
+  const handleContactClick = () => {
+    navigate(ROUTES.LEGAL.CONTACT);
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,14 +51,8 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) =>
   return (
     <div className="dark absolute inset-0 bg-[#0A0A1F] text-white overflow-y-auto overflow-x-hidden">
       <EntryTopBar
-        onTrialClick={() => {
-          setModalMode('trial');
-          setIsDemoModalOpen(true);
-        }}
-        onDemoClick={() => {
-          setModalMode('demo');
-          setIsDemoModalOpen(true);
-        }}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
         onLoginClick={() => navigate('/login')}
         onRegisterClick={() => navigate('/register')}
         isLoggedIn={!!currentUser}
@@ -52,6 +61,11 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) =>
       />
       <main className="pt-14">{children}</main>
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={handleDemoClick}
+        onTrialClick={handleTrialClick}
+        onContactClick={handleContactClick}
+      />
       <DemoModeModal
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}

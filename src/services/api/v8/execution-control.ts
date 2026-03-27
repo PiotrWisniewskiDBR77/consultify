@@ -1,4 +1,9 @@
-import { v8Get, v8Post } from './client';
+import { v8Get, v8Patch, v8Post } from './client';
+
+export const shouldFallbackToLegacyExecutionControl = (error: any) => {
+  const status = Number(error?.status);
+  return [400, 404, 405, 501].includes(status);
+};
 
 export interface V8ExecutionRiskSignal {
   id: string;
@@ -112,6 +117,15 @@ export interface V8ExecutionBudgetEntryPayload {
   source?: string;
 }
 
+export interface V8ExecutionRaidMitigationPayload {
+  raidItemId: string;
+  mitigationPlan?: string;
+  responseStrategy?: 'AVOID' | 'TRANSFER' | 'MITIGATE' | 'ACCEPT' | 'ESCALATE';
+  mitigationOwnerId?: string;
+  mitigationDueDate?: string;
+  mitigationStatus?: 'OPEN' | 'IN_PROGRESS' | 'MITIGATED' | 'ACCEPTED' | 'CLOSED';
+}
+
 export const V8ExecutionControlApi = {
   getRiskSignals: (projectId?: string) =>
     v8Get<{ signals: V8ExecutionRiskSignal[]; count: number }>(
@@ -140,6 +154,11 @@ export const V8ExecutionControlApi = {
               .map(([key, value]) => [key, String(value)])
           )
         : undefined
+    ),
+
+  getBudgetInitiativeSummary: (initiativeId: string) =>
+    v8Get<{ summary: V8ExecutionBudgetInitiativeSummary }>(
+      `/execution-control/budget/initiative/${encodeURIComponent(initiativeId)}`
     ),
 
   getBudgetPortfolio: (projectId?: string) =>
@@ -188,6 +207,12 @@ export const V8ExecutionControlApi = {
       oldValue: string | null;
       newValue: string;
     }>('/execution-control/timeline-update', payload),
+
+  updateRaidMitigation: (raidItemId: string, payload: V8ExecutionRaidMitigationPayload) =>
+    v8Patch<{ success: boolean; raidItemId: string }>(
+      `/execution-control/raid/${encodeURIComponent(raidItemId)}/mitigation`,
+      payload
+    ),
 
   createBudgetEntry: (payload: V8ExecutionBudgetEntryPayload) =>
     v8Post<{ success: boolean; id: string }>('/execution-control/budget/entries', payload),

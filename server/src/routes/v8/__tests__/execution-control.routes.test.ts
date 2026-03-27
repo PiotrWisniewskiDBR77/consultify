@@ -14,6 +14,7 @@ const mockGetPersistedDelaySignals = vi.fn();
 const mockPersistDelaySignals = vi.fn();
 const mockGetLevelingAlerts = vi.fn();
 const mockGetCapacityTimeline = vi.fn();
+const mockGetInitiativeBudgetSummary = vi.fn();
 const mockGetPortfolioBudgetSummary = vi.fn();
 const mockDetectOverspendSignals = vi.fn();
 const mockCreateBudgetEntry = vi.fn();
@@ -41,6 +42,7 @@ vi.mock('../../../services/workloadCapacityService.js', () => ({
 
 vi.mock('../../../services/executionBudgetService.js', () => ({
   createBudgetEntry: (...args: unknown[]) => mockCreateBudgetEntry(...args),
+  getInitiativeBudgetSummary: (...args: unknown[]) => mockGetInitiativeBudgetSummary(...args),
   getPortfolioBudgetSummary: (...args: unknown[]) => mockGetPortfolioBudgetSummary(...args),
   detectOverspendSignals: (...args: unknown[]) => mockDetectOverspendSignals(...args),
 }));
@@ -134,6 +136,7 @@ describe('V8 execution-control read-only routes', () => {
     mockPersistDelaySignals.mockResolvedValue({ persisted: 0, alertsSent: 0 });
     mockGetLevelingAlerts.mockResolvedValue([]);
     mockGetCapacityTimeline.mockResolvedValue([]);
+    mockGetInitiativeBudgetSummary.mockResolvedValue(null);
     mockGetPortfolioBudgetSummary.mockResolvedValue({ totals: { planned: 0, actual: 0 } });
     mockDetectOverspendSignals.mockResolvedValue([]);
     mockCreateBudgetEntry.mockResolvedValue('budget-entry-1');
@@ -218,6 +221,29 @@ describe('V8 execution-control read-only routes', () => {
     expect(mockGetPortfolioBudgetSummary).toHaveBeenCalledWith(ORG, undefined);
   });
 
+  it('GET /api/v8/execution-control/budget/initiative/:id returns summary envelope', async () => {
+    const summary = {
+      initiativeId: 'init-1',
+      initiativeName: 'Initiative A',
+      currency: 'USD',
+      planned: { total: 1000, capex: 800, opex: 200 },
+      actual: { total: 600, capex: 500, opex: 100 },
+      variance: { total: -400, percent: 60 },
+      burnRate: 60,
+      forecast: { total: 950, isOverBudget: false },
+      status: 'GREEN',
+    };
+    mockGetInitiativeBudgetSummary.mockResolvedValue(summary);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/execution-control/budget/initiative/init-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
+    expect(res.body.data?.summary).toEqual(summary);
+    expect(mockGetInitiativeBudgetSummary).toHaveBeenCalledWith(ORG, 'init-1');
+  });
+
   it('GET /api/v8/execution-control/capacity/leveling-alerts returns org-scoped alerts', async () => {
     mockGetLevelingAlerts.mockResolvedValue([
       {
@@ -271,6 +297,23 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
     expect(res.body.data?.signalId).toBe('sig-1');
     expect(mockDbRun).toHaveBeenCalled();
+  });
+
+  it('PATCH /api/v8/execution-control/raid/:id/mitigation updates org-scoped mitigation fields', async () => {
+    const app = createApp();
+    const res = await request(app).patch('/api/v8/execution-control/raid/raid-1/mitigation').send({
+      raidItemId: 'raid-1',
+      mitigationPlan: 'Mitigate vendor dependency',
+      mitigationStatus: 'IN_PROGRESS',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
+    expect(res.body.data?.raidItemId).toBe('raid-1');
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE raid_items SET'),
+      expect.arrayContaining(['Mitigate vendor dependency', 'IN_PROGRESS', 'raid-1', ORG])
+    );
   });
 
   it('POST /api/v8/execution-control/delay-signals/detect persists detected rows', async () => {

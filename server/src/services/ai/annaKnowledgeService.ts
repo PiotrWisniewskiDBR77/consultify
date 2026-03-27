@@ -29,6 +29,7 @@ type AnnaRagHit = {
   similarity: number;
   documentId?: string;
   productSlug: string;
+  language: string | null;
 };
 
 type AnnaKnowledgeContextResult = {
@@ -85,6 +86,53 @@ function safeSlice(text: string, maxChars: number): string {
   const value = String(text || '').trim();
   if (value.length <= maxChars) return value;
   return value.slice(0, Math.max(0, maxChars - 1)).trimEnd() + '…';
+}
+
+function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.startsWith('pl')) return 'pl';
+  if (normalized.startsWith('en')) return 'en';
+  return null;
+}
+
+function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
+  return normalizeLanguage(locale) === 'pl' ? 'pl' : 'en';
+}
+
+function splitDocsByLanguagePreference(
+  docs: AnnaIndexedDoc[],
+  locale?: string
+): {
+  preferredLanguage: 'pl' | 'en';
+  preferredDocs: AnnaIndexedDoc[];
+  fallbackDocs: AnnaIndexedDoc[];
+} {
+  const preferredLanguage = resolveKnowledgeLanguage(locale);
+  const preferredDocs: AnnaIndexedDoc[] = [];
+  const fallbackDocs: AnnaIndexedDoc[] = [];
+
+  for (const doc of docs) {
+    const docLanguage = normalizeLanguage(doc.language);
+    if (!docLanguage || docLanguage === preferredLanguage) {
+      preferredDocs.push(doc);
+      continue;
+    }
+    fallbackDocs.push(doc);
+  }
+
+  return {
+    preferredLanguage,
+    preferredDocs,
+    fallbackDocs,
+  };
+}
+
+function scoreLanguagePreference(language: string | null, preferredLanguage: 'pl' | 'en'): number {
+  const normalizedLanguage = normalizeLanguage(language);
+  if (normalizedLanguage === preferredLanguage) return 0;
+  if (!normalizedLanguage) return 1;
+  return 2;
 }
 
 function detectRequestedProducts(query: string): { matchedProducts: string[]; primaryProducts: string[] } {
@@ -195,6 +243,7 @@ async function searchScopedKnowledge(
         similarity: Number(result.similarity || 0),
         documentId: doc.id,
         productSlug: doc.productSlug,
+        language: doc.language,
       } satisfies AnnaRagHit;
     })
     .filter((result) => Boolean(result?.content)) as AnnaRagHit[];
@@ -280,6 +329,7 @@ export async function buildAnnaKnowledgeContext(opts: {
     opts.preferredProducts && opts.preferredProducts.length > 0
       ? uniq([...opts.preferredProducts.filter((product) => product !== 'consultify'), 'consultify'])
       : detected.primaryProducts;
+  const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
 
   try {
     const docs = await loadIndexedProductDocs();
@@ -287,22 +337,50 @@ export async function buildAnnaKnowledgeContext(opts: {
 
     const primaryDocs = primaryProducts.flatMap((product) => docsByProduct[product] || []);
     const allDocs = PRODUCT_ORDER.flatMap((product) => docsByProduct[product] || []);
+    const preferredPrimaryDocs = splitDocsByLanguagePreference(primaryDocs, opts.locale);
+    const preferredAllDocs = splitDocsByLanguagePreference(allDocs, opts.locale);
 
-    const primaryHits = await searchScopedKnowledge(query, primaryDocs, Math.min(limit, 4));
+    const primaryHits = await searchScopedKnowledge(
+      query,
+      preferredPrimaryDocs.preferredDocs,
+      Math.min(limit, 4)
+    );
     const shouldExpandBeyondPrimary =
       explicitCrossProductRequest || preferredCrossProductRequest || primaryHits.length === 0;
     const secondaryHits =
-      primaryHits.length >= limit || allDocs.length === 0 || !shouldExpandBeyondPrimary
+      primaryHits.length >= limit ||
+      preferredAllDocs.preferredDocs.length === 0 ||
+      !shouldExpandBeyondPrimary
         ? []
-        : await searchScopedKnowledge(query, allDocs, limit);
+        : await searchScopedKnowledge(query, preferredAllDocs.preferredDocs, limit);
+    const shouldFallbackAcrossLanguages = primaryHits.length === 0 && secondaryHits.length === 0;
+    const fallbackPrimaryHits = shouldFallbackAcrossLanguages
+      ? await searchScopedKnowledge(query, preferredPrimaryDocs.fallbackDocs, Math.min(limit, 4))
+      : [];
+    const fallbackSecondaryHits =
+      !shouldFallbackAcrossLanguages ||
+      fallbackPrimaryHits.length >= limit ||
+      preferredAllDocs.fallbackDocs.length === 0 ||
+      !shouldExpandBeyondPrimary
+        ? []
+        : await searchScopedKnowledge(query, preferredAllDocs.fallbackDocs, limit);
 
-    const hits = dedupeHits([...primaryHits, ...secondaryHits, ...buildFallbackHits(primaryProducts)])
+    const hits = dedupeHits([
+      ...primaryHits,
+      ...secondaryHits,
+      ...fallbackPrimaryHits,
+      ...fallbackSecondaryHits,
+      ...buildFallbackHits(primaryProducts),
+    ])
       .sort((a, b) => {
         const aPriority = primaryProducts.indexOf(a.productSlug);
         const bPriority = primaryProducts.indexOf(b.productSlug);
         const aScore = aPriority >= 0 ? aPriority : primaryProducts.length + 1;
         const bScore = bPriority >= 0 ? bPriority : primaryProducts.length + 1;
         if (aScore !== bScore) return aScore - bScore;
+        const aLanguageScore = scoreLanguagePreference(a.language, preferredLanguage);
+        const bLanguageScore = scoreLanguagePreference(b.language, preferredLanguage);
+        if (aLanguageScore !== bLanguageScore) return aLanguageScore - bLanguageScore;
         return b.similarity - a.similarity;
       })
       .slice(0, limit);

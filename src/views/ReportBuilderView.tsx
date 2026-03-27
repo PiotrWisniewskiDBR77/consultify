@@ -210,7 +210,7 @@ export const ReportBuilderView: React.FC = () => {
   const handleEditorClose = useCallback(() => {
     // If we came from an assessment (or any other view), navigate back there
     const returnUrl = searchParams.get('returnUrl');
-    navigate(returnUrl ? decodeURIComponent(returnUrl) : '/presentations?tab=reports');
+    navigate(returnUrl ? decodeURIComponent(returnUrl) : '/presentations?tab=documents');
   }, [navigate, searchParams]);
 
   const handleEditorSave = useCallback((id: string) => {
@@ -267,8 +267,8 @@ export const ReportBuilderView: React.FC = () => {
     );
   }
 
-  // In V3 the list/library lives in the unified hub under Presentations.
-  return <Navigate to="/presentations?tab=reports" replace />;
+  // The outputs library uses `documents` as the canonical reports tab query.
+  return <Navigate to="/presentations?tab=documents" replace />;
 };
 
 export default ReportBuilderView;

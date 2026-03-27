@@ -4398,6 +4398,11 @@ export const Api = {
     return res.json();
   },
 
+  shouldFallbackToLegacyMyWorkInbox: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
+  },
+
   getCanonicalInboxStats: async () => {
     const res = await fetch(`${API_URL}/my-work/inbox/canonical/stats`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch canonical inbox stats');
@@ -10879,6 +10884,156 @@ export const Api = {
       return { total: 0, sent: 0, avg_open_rate: 0 };
     }
   },
+  getStakeholderSegments: async (initiativeId?: string): Promise<any[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (initiativeId) params.set('initiativeId', initiativeId);
+      const query = params.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/segments${query ? `?${query}` : ''}`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to fetch stakeholder segments');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err: any) {
+      console.error('[Api] getStakeholderSegments error:', err);
+      throw err;
+    }
+  },
+  getStakeholderPlans: async (initiativeId?: string): Promise<any[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (initiativeId) params.set('initiativeId', initiativeId);
+      const query = params.toString();
+      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/plans${query ? `?${query}` : ''}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch stakeholder plans');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err: any) {
+      console.error('[Api] getStakeholderPlans error:', err);
+      throw err;
+    }
+  },
+  getStakeholderPlanItems: async (planId: string): Promise<any[]> => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/plans/${encodeURIComponent(planId)}/items`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch stakeholder plan items');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err: any) {
+      console.error('[Api] getStakeholderPlanItems error:', err);
+      throw err;
+    }
+  },
+  getSteercoPacks: async (params?: { initiativeId?: string; status?: string }): Promise<any[]> => {
+    try {
+      const search = new URLSearchParams();
+      if (params?.initiativeId) search.set('initiativeId', params.initiativeId);
+      if (params?.status) search.set('status', params.status);
+      const query = search.toString();
+      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/steerco-packs${query ? `?${query}` : ''}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch steerco packs');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err: any) {
+      console.error('[Api] getSteercoPacks error:', err);
+      throw err;
+    }
+  },
+  getStakeholderOverduePlans: async (): Promise<any[]> => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/overdue`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch overdue stakeholder plans');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err: any) {
+      console.error('[Api] getStakeholderOverduePlans error:', err);
+      throw err;
+    }
+  },
+  getStakeholderSendLog: async (params?: {
+    initiativeId?: string;
+    limit?: number;
+  }): Promise<any[]> => {
+    try {
+      const search = new URLSearchParams();
+      if (params?.initiativeId) search.set('initiativeId', params.initiativeId);
+      if (typeof params?.limit === 'number') search.set('limit', String(params.limit));
+      const query = search.toString();
+      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/log${query ? `?${query}` : ''}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch stakeholder send log');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err: any) {
+      console.error('[Api] getStakeholderSendLog error:', err);
+      throw err;
+    }
+  },
+  sendStakeholderPlanItem: async (
+    planId: string,
+    itemId: string,
+    data: {
+      initiativeId?: string;
+      segmentId?: string;
+      recipientCount?: number;
+      followUpTask?: string;
+    } = {}
+  ): Promise<any> => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/plans/${encodeURIComponent(planId)}/items/${encodeURIComponent(itemId)}/send`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to send stakeholder plan item');
+      const payload = await res.json();
+      return payload.data ?? payload;
+    } catch (err: any) {
+      console.error('[Api] sendStakeholderPlanItem error:', err);
+      throw err;
+    }
+  },
+  distributeSteercoPack: async (
+    packId: string,
+    data: {
+      segmentIds?: string[];
+      userIds?: string[];
+      channels?: string[];
+    } = {}
+  ): Promise<any[]> => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/steerco-packs/${encodeURIComponent(packId)}/distribute`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to distribute steerco pack');
+      const payload = await res.json();
+      return payload.data || [];
+    } catch (err: any) {
+      console.error('[Api] distributeSteercoPack error:', err);
+      throw err;
+    }
+  },
   createCommunication: async (data: any) => {
     try {
       const res = await fetch(`${API_URL}/superadmin/communications`, {
@@ -12162,16 +12317,12 @@ export const Api = {
 
   /** V4-NOTE-01: Upload PDF/XLSX/TXT → extract text → create notebook page */
   uploadNotebookFile: async (file: File): Promise<any> => {
-    const form = new FormData();
-    form.append('file', file);
-    const h = getHeaders() as Record<string, string>;
-    const { 'Content-Type': _ct, ...rest } = h;
-    const res = await fetch(`${API_URL}/my-work/notebook/upload`, {
-      method: 'POST',
-      headers: rest,
-      body: form,
-    });
-    return handleResponse(res, 'Failed to upload file');
+    const capture = await Api.notebookCaptureUpload(file);
+    const pageId = String(capture?.pageId || '').trim();
+    if (!pageId) {
+      throw new Error('Notebook capture upload did not return a pageId');
+    }
+    return Api.getNotebookPage(pageId);
   },
 
   createNotebookPage: async (page: {
@@ -12262,6 +12413,23 @@ export const Api = {
     }
   },
 
+  classifyNotebookPage: async (
+    id: string
+  ): Promise<{ pageId: string; suggestedType: string; reason: string; maturity?: string | null }> => {
+    try {
+      return await V8MyWorkApi.classifyNotebookPage(id);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/classify`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to classify notebook page');
+    }
+  },
+
   convertNotebookPage: async (
     id: string,
     target: 'task' | 'decision' | 'initiative' | 'report' | 'presentation' | 'assessment',
@@ -12271,12 +12439,19 @@ export const Api = {
       assessmentType?: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
     }
   ): Promise<{ id: string; type: string; title: string; sourceSessionId?: string }> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/convert`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ target, ...extra }),
-    });
-    return handleResponse(res, 'Failed to convert notebook page');
+    try {
+      return await V8MyWorkApi.convertNotebookPage(id, target, extra);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/convert`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ target, ...extra }),
+      });
+      return handleResponse(res, 'Failed to convert notebook page');
+    }
   },
 
   suggestNotebookTopics: async (
@@ -12307,9 +12482,54 @@ export const Api = {
     return res.json();
   },
 
+  streamNotebookActionExtraction: async (
+    id: string,
+    options: {
+      language?: string;
+      onEvent?: (event: { type: string; [key: string]: unknown }) => void;
+    } = {}
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/extract-actions`, {
+      method: 'POST',
+      headers: {
+        ...getHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ language: options.language ?? 'en' }),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to extract actions');
+    }
+    const reader = res.body?.getReader();
+    if (!reader) {
+      throw new Error('No response stream');
+    }
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          options.onEvent?.(data);
+        } catch {
+          /* ignore parse errors */
+        }
+      }
+    }
+  },
+
   extractNotebookActions: (id: string): EventSource => {
     const token = tokenService.getToken();
-    const url = `${API_URL}/my-work/notebook/pages/${id}/extract-actions?token=${encodeURIComponent(token || '')}`;
+    const url = `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/extract-actions?token=${encodeURIComponent(token || '')}`;
     return new EventSource(url);
   },
 
@@ -12414,31 +12634,52 @@ export const Api = {
       rationale: string;
     }
   ) => {
-    const res = await fetch(`${API_URL}/notebook/pages/${pageId}/ai-proposals`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(res, 'Failed to create AI proposal');
+    try {
+      return await V8MyWorkApi.createNotebookAIProposal(pageId, data);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/notebook/pages/${pageId}/ai-proposals`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return handleResponse(res, 'Failed to create AI proposal');
+    }
   },
 
   notebookGetAIProposals: async (pageId: string, options?: { status?: string; limit?: number }) => {
-    const params = new URLSearchParams();
-    if (options?.status) params.set('status', options.status);
-    if (options?.limit) params.set('limit', String(options.limit));
-    const res = await fetch(`${API_URL}/notebook/pages/${pageId}/ai-proposals?${params}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to get AI proposals');
+    try {
+      return await V8MyWorkApi.getNotebookAIProposals(pageId, options);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const params = new URLSearchParams();
+      if (options?.status) params.set('status', options.status);
+      if (options?.limit) params.set('limit', String(options.limit));
+      const res = await fetch(`${API_URL}/notebook/pages/${pageId}/ai-proposals?${params}`, {
+        headers: getHeaders(),
+      });
+      return handleResponse(res, 'Failed to get AI proposals');
+    }
   },
 
   notebookResolveAIProposal: async (proposalId: string, action: 'accepted' | 'rejected') => {
-    const res = await fetch(`${API_URL}/notebook/ai-proposals/${proposalId}/resolve`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ action }),
-    });
-    return handleResponse(res, 'Failed to resolve AI proposal');
+    try {
+      return await V8MyWorkApi.resolveNotebookAIProposal(proposalId, action);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(`${API_URL}/notebook/ai-proposals/${proposalId}/resolve`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ action }),
+      });
+      return handleResponse(res, 'Failed to resolve AI proposal');
+    }
   },
 
   // ──────────────────────────────────────────────

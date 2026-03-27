@@ -129,6 +129,12 @@ const extractSlashPayload = (raw: string, commands: string[]): string | null => 
   return null;
 };
 
+const isUuidLike = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim(),
+  );
+
 const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   const raw = String(rawContent || '').trim();
   if (!raw) return null;
@@ -301,6 +307,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     aiFreezeStatus,
     aiConfig,
     setAIConfig,
+    currentUser,
+    currentOrganization,
   } = useAppStore();
 
   const {
@@ -1140,6 +1148,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       .find((message) => message.role === 'user' && String(message.content || '').trim().length > 0);
     return String(latestUserMessage?.content || '').trim();
   }, [displayMessages]);
+
+  const v8SnapshotContext = useMemo(() => {
+    const workspaceId = isUuidLike(workspaceContext?.entityId)
+      ? workspaceContext.entityId
+      : isUuidLike(workspaceContext?.projectId)
+        ? workspaceContext.projectId
+        : isUuidLike(currentOrganization?.id)
+          ? currentOrganization.id
+          : null;
+
+    const projectId = isUuidLike(workspaceContext?.projectId) ? workspaceContext.projectId : null;
+    const resolvedRoleRef =
+      typeof currentUser?.role === 'string' && currentUser.role.trim().length > 0
+        ? currentUser.role.trim().toLowerCase()
+        : 'member';
+
+    return {
+      workspaceId,
+      projectId,
+      effectiveScopeRef: 'workspace',
+      resolvedRoleRef,
+      privacyMode: isPrivateMode,
+    };
+  }, [currentOrganization?.id, currentUser?.role, isPrivateMode, workspaceContext?.entityId, workspaceContext?.projectId]);
 
   // ========================================================================
   // V3-B01: Contextual smart suggestions (shown below input after first exchange)
@@ -2814,8 +2846,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           <V8ArtifactRunControl
             conversationId={activeConversationId}
             defaultGoal={latestUserGoalHint}
+            snapshotContext={v8SnapshotContext}
           />
-          <V8ContextIndicator conversationId={activeConversationId} />
+          <V8ContextIndicator
+            conversationId={activeConversationId}
+            defaultGoal={latestUserGoalHint}
+          />
           {isPrivateMode && (
             <div
               className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"

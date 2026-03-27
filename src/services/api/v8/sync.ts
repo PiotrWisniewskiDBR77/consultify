@@ -118,9 +118,93 @@ export interface V8SyncIntegrationInventoryRow {
   } | null;
 }
 
+export interface V8SyncCatalogConnector {
+  id: string;
+  name: string;
+  category: string;
+  capabilities: string[];
+  authType: string;
+  isAvailable: boolean;
+  isV2Ready: boolean;
+  comingSoon: boolean;
+}
+
+export interface V8SyncHealthSummary {
+  total: number;
+  healthy: number;
+  degraded: number;
+  unhealthy: number;
+}
+
+export interface V8SyncErrorItem {
+  id: string;
+  integrationId: string;
+  errorType: string;
+  errorMessage: string;
+  isRetryable: boolean;
+  retryCount: number;
+  maxRetries: number;
+  createdAt: string;
+}
+
+export interface V8SyncAuditEntry {
+  id: string;
+  integration_id: string;
+  action: string;
+  actor_name: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface V8SyncTriggeredRun {
+  id: string;
+  status: string;
+  recordsSynced: number;
+  duration: number;
+}
+
+export const shouldFallbackToLegacySync = (error: any) => {
+  const status = Number(error?.status);
+  return [400, 404, 405, 501].includes(status);
+};
+
 export const V8SyncApi = {
   getIntegrations: () =>
     v8Get<{ integrations: V8SyncIntegrationInventoryRow[]; count: number }>('/sync/integrations'),
+  getConnectors: (params?: { category?: string }) =>
+    v8Get<{ connectors: V8SyncCatalogConnector[]; count: number }>(
+      '/sync/connectors',
+      params?.category ? { category: params.category } : undefined,
+    ),
+  getHubHealth: () => v8Get<{ summary: V8SyncHealthSummary }>('/sync/health'),
+  getErrors: (params?: { integrationId?: string }) =>
+    v8Get<{ errors: V8SyncErrorItem[]; count: number }>(
+      '/sync/errors',
+      params?.integrationId ? { integrationId: params.integrationId } : undefined,
+    ),
+  resolveError: (errorId: string) =>
+    v8Post<{ success: true }>(`/sync/errors/${encodeURIComponent(errorId)}/resolve`, {}),
+  reauthIntegration: (integrationId: string) =>
+    v8Post<{ success: true; message: string }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/reauth`,
+      {},
+    ),
+  disconnectIntegration: (integrationId: string) =>
+    v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/disconnect`, {}),
+  pauseIntegration: (integrationId: string) =>
+    v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/pause`, {}),
+  resumeIntegration: (integrationId: string) =>
+    v8Post<{ success: true }>(`/sync/integrations/${encodeURIComponent(integrationId)}/resume`, {}),
+  runIntegrationSync: (integrationId: string) =>
+    v8Post<{ success: true; syncRun: V8SyncTriggeredRun; warnings?: string[] }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/sync`,
+      {},
+    ),
+  getAuditLog: (params?: { integrationId?: string; limit?: number }) =>
+    v8Get<{ entries: V8SyncAuditEntry[]; count: number }>('/sync/audit-log', {
+      ...(params?.integrationId ? { integrationId: params.integrationId } : {}),
+      ...(typeof params?.limit === 'number' ? { limit: String(params.limit) } : {}),
+    }),
   getAuthHealth: () => v8Get<{ summary: V8SyncCredentialHealthSummary }>('/sync/auth/health'),
   getAuthEscalations: () =>
     v8Get<{ escalations: V8SyncAuthEscalation[]; count: number }>('/sync/auth/escalations'),

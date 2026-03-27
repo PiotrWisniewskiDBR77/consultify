@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { V8ResultsApi, shouldFallbackToLegacyResults } from '@/services/api/v8/results';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
@@ -76,17 +77,27 @@ export const OperationalAnalysisView: React.FC = () => {
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
     try {
-      const [kpisRes, mappingsRes] = await Promise.allSettled([
-        Api.get('/benefits/kpis'),
-        Api.get('/benefits/kpi-mappings'),
-      ]);
+      let kpisList: any[] = [];
+      let mappingsList: any[] = [];
+      try {
+        const catalog = await V8ResultsApi.getKpiCatalog();
+        kpisList = Array.isArray(catalog?.kpis) ? catalog.kpis : [];
+        mappingsList = Array.isArray(catalog?.mappings) ? catalog.mappings : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyResults(error)) {
+          throw error;
+        }
+        const [kpisRes, mappingsRes] = await Promise.allSettled([
+          Api.get('/benefits/kpis'),
+          Api.get('/benefits/kpi-mappings'),
+        ]);
+        const kpisPayload: any = kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
+        kpisList = (kpisPayload?.data || []) as any[];
 
-      const kpisPayload: any = kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
-      const kpisList = (kpisPayload?.data || []) as any[];
-
-      const mappingsPayload: any =
-        mappingsRes.status === 'fulfilled' ? (mappingsRes.value as any) : null;
-      const mappingsList = (mappingsPayload?.data || []) as any[];
+        const mappingsPayload: any =
+          mappingsRes.status === 'fulfilled' ? (mappingsRes.value as any) : null;
+        mappingsList = (mappingsPayload?.data || []) as any[];
+      }
 
       const byKpi = new Map<string, Array<{ id: string; name: string }>>();
       for (const m of mappingsList || []) {

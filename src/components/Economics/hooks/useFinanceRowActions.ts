@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { type FinanceModelRow, type FinanceRow, type FinanceStatementRow } from '../financeTypes';
@@ -67,7 +68,14 @@ export function useFinanceRowActions({
           await Api.delete(`/api/economics/budgets/${rawId}`);
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
-          await Api.delete(`/api/economics/financial-analyses/${row.id}`);
+          try {
+            await V8FinanceApi.deleteAnalysis(row.id);
+          } catch (error) {
+            if (!shouldFallbackToLegacyFinance(error)) {
+              throw error;
+            }
+            await Api.delete(`/api/economics/financial-analyses/${row.id}`);
+          }
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
           await Api.delete(`/api/economics/valuations/${row.id}`);
@@ -119,11 +127,22 @@ export function useFinanceRowActions({
           });
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
-          await Api.post('/api/economics/financial-analyses', {
-            title: copyTitle,
-            analysisType: row.kind === 'investment' ? 'investment_case' : 'comprehensive',
-            currency: 'PLN',
-          });
+          try {
+            await V8FinanceApi.createAnalysis({
+              title: copyTitle,
+              analysisType: row.kind === 'investment' ? 'investment_case' : 'comprehensive',
+              currency: 'PLN',
+            });
+          } catch (error) {
+            if (!shouldFallbackToLegacyFinance(error)) {
+              throw error;
+            }
+            await Api.post('/api/economics/financial-analyses', {
+              title: copyTitle,
+              analysisType: row.kind === 'investment' ? 'investment_case' : 'comprehensive',
+              currency: 'PLN',
+            });
+          }
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
           const detail = (await Api.get(`/api/economics/valuations/${row.id}`)) as any;
@@ -265,7 +284,14 @@ export function useFinanceRowActions({
             variant: 'primary',
             onClick: async () => {
               try {
-                await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
+                try {
+                  await V8FinanceApi.approveAnalysis(row.id);
+                } catch (error) {
+                  if (!shouldFallbackToLegacyFinance(error)) {
+                    throw error;
+                  }
+                  await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
+                }
                 await loadAnalyses();
                 toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
               } catch (e: any) {
@@ -283,7 +309,14 @@ export function useFinanceRowActions({
           icon: RefreshCw,
           onClick: async () => {
             try {
-              await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
+              try {
+                await V8FinanceApi.runAnalysis(row.id);
+              } catch (error) {
+                if (!shouldFallbackToLegacyFinance(error)) {
+                  throw error;
+                }
+                await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
+              }
               await loadAnalyses();
               toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
             } catch (e: any) {

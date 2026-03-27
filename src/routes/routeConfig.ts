@@ -140,6 +140,7 @@ export const ROUTES = {
     ROOT: '/superadmin',
     OVERVIEW: '/superadmin/overview',
     CUSTOMERS: '/superadmin/customers',
+    CUSTOMERS_COMMUNICATION: '/superadmin/customers/communication',
     AI_PLATFORM: '/superadmin/ai-platform',
     SYSTEM: '/superadmin/system',
     CONTENT: '/superadmin/content',
@@ -195,8 +196,10 @@ export const ROUTES = {
   CHANGELOG: '/changelog',
 
   // Knowledge & Pricing
+  DOCS: '/docs',
   KNOWLEDGE_BASE: '/knowledge',
   PRICING: '/pricing',
+  APP_PRICING: '/app/pricing',
   EXECUTIVE: '/executive',
 } as const;
 
@@ -261,7 +264,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.FULL_STEP2_INITIATIVES]: ROUTES.INITIATIVES,
   [AppView.FULL_STEP3_ROADMAP]: ROUTES.ROADMAP,
   [AppView.FULL_STEP4_ROI]: ROUTES.ROI,
-  [AppView.ECONOMICS]: ROUTES.ECONOMICS,
+  [AppView.ECONOMICS]: ROUTES.FINANCE,
   [AppView.FULL_STEP5_EXECUTION]: ROUTES.EXECUTION,
   [AppView.IMPLEMENTATION]: ROUTES.IMPLEMENTATION,
   [AppView.FULL_PILOT_EXECUTION]: ROUTES.IMPLEMENTATION,
@@ -361,6 +364,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   // SuperAdmin
   [AppView.SUPERADMIN_OVERVIEW]: ROUTES.SUPERADMIN.OVERVIEW,
   [AppView.SUPERADMIN_CUSTOMERS]: ROUTES.SUPERADMIN.CUSTOMERS,
+  [AppView.SUPERADMIN_COMMUNICATION]: ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION,
   [AppView.SUPERADMIN_AI_PLATFORM]: ROUTES.SUPERADMIN.AI_PLATFORM,
   [AppView.SUPERADMIN_AI_INFRASTRUCTURE]: ROUTES.SUPERADMIN.AI_PLATFORM,
   [AppView.SUPERADMIN_AI_DEVELOPMENT]: ROUTES.SUPERADMIN.AI_PLATFORM,
@@ -396,7 +400,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   // Partner
   [AppView.PARTNER_LANDING]: ROUTES.PARTNER.LANDING,
   [AppView.PARTNER_PRICING]: ROUTES.PARTNER.PRICING,
-  [AppView.APP_PRICING]: ROUTES.PRICING,
+  [AppView.APP_PRICING]: ROUTES.APP_PRICING,
   [AppView.PARTNER_PROVIDER_HOME]: ROUTES.PARTNER.DASHBOARD,
   [AppView.PARTNER_DASHBOARD]: ROUTES.PARTNER.DASHBOARD,
   [AppView.PARTNER_CLIENT_ACCESS]: ROUTES.PARTNER.CLIENTS,
@@ -430,8 +434,8 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.MASTERCLASS]: ROUTES.AI_CHAT,
   [AppView.RESOURCES]: ROUTES.AI_CHAT,
   [AppView.EXECUTIVE_VIEW]: ROUTES.EXECUTIVE,
-  [AppView.KNOWLEDGE_BASE]: ROUTES.KNOWLEDGE_BASE,
-  [AppView.KNOWLEDGE_BASE_ARTICLE]: ROUTES.KNOWLEDGE_BASE,
+  [AppView.KNOWLEDGE_BASE]: ROUTES.DOCS,
+  [AppView.KNOWLEDGE_BASE_ARTICLE]: ROUTES.DOCS,
   [AppView.STATUS_PAGE]: ROUTES.AI_CHAT,
   [AppView.CHANGELOG]: ROUTES.AI_CHAT,
   [AppView.HELP_ANALYTICS]: ROUTES.AI_CHAT,
@@ -476,6 +480,8 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
+  if (normalized.startsWith(ROUTES.DOCS)) return AppView.KNOWLEDGE_BASE;
+  if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
@@ -483,6 +489,8 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.PARTNER.LANDING)) return AppView.PARTNER_LANDING;
   // SuperAdmin: map nested routes to the correct section view
   if (normalized.startsWith(ROUTES.SUPERADMIN.OVERVIEW)) return AppView.SUPERADMIN_OVERVIEW;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION))
+    return AppView.SUPERADMIN_COMMUNICATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS)) return AppView.SUPERADMIN_CUSTOMERS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.AI_PLATFORM)) return AppView.SUPERADMIN_AI_PLATFORM;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CONTENT)) return AppView.SUPERADMIN_CONTENT;
@@ -498,6 +506,9 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;
   if (normalized.startsWith(ROUTES.CONTEXT_BUILDER.ROOT)) return AppView.CONTEXT_BUILDER;
   if (normalized.startsWith(ROUTES.ORGANIZATION.ROOT)) return AppView.ORGANIZATION_PROFILE;
+  if (normalized.startsWith(ROUTES.FINANCE) || normalized.startsWith(ROUTES.ECONOMICS)) {
+    return AppView.ECONOMICS;
+  }
 
   // Reports module: /reports (entry), /reports/builder, /reports/management
   if (normalized.startsWith(ROUTES.REPORTS.ROOT)) {

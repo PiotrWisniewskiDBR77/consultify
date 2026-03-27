@@ -11,6 +11,7 @@ import {
   normalizeLanguageCode,
   SUPPORTED_LANGUAGES,
 } from '../../i18n';
+import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 
 interface EntryTopBarProps {
@@ -43,13 +44,10 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const navRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
-    { label: t('nav.home', 'Home'), href: '/' },
-    { label: t('nav.howItWorks', 'How it works'), href: '/how-it-works' },
-    { label: t('nav.forWhom', 'For whom'), href: '/for-whom' },
-    { label: t('nav.ourStory', 'Our story'), href: '/our-story' },
-    { label: t('nav.resources', 'Resources'), href: '/resources' },
-    { label: t('nav.pricing', 'Pricing'), href: '/pricing' },
-    { label: t('nav.enterprise', 'Enterprise'), href: '/enterprise' },
+    { label: t('nav.product', 'Product'), href: ROUTES.WELCOME },
+    { label: t('nav.pricing', 'Pricing'), href: ROUTES.PRICING },
+    { label: t('nav.partners', 'Partners'), href: ROUTES.BECOME_PARTNER },
+    { label: t('nav.help', 'Help'), href: ROUTES.DOCS },
   ];
   const { theme, toggleTheme } = useAppStore();
   const effectiveTheme = forceDark ? 'dark' : theme;
@@ -127,7 +125,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
               partner: {
                 label: t('partner.becomePartner', 'Become Partner'),
                 icon: <Handshake size={13} />,
-                onClick: () => navigate('/become-partner'),
+                onClick: () => navigate(ROUTES.BECOME_PARTNER),
               },
               demo: { label: t('landing.topBar.demo', 'Demo'), icon: null, onClick: onDemoClick },
               trial: {
@@ -358,7 +356,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
           {/* Log in */}
           <button
-            onClick={() => navigate('/login')}
+            onClick={onLoginClick}
             className="px-4 py-1.5 text-sm font-medium transition-all duration-200 cursor-pointer rounded-full"
             style={{
               color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
@@ -383,7 +381,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
           {/* Sign up — filled pill */}
           <button
-            onClick={() => navigate('/register')}
+            onClick={() => onRegisterClick?.()}
             className="px-5 py-1.5 rounded-full text-sm font-semibold text-white transition-all duration-200 cursor-pointer"
             style={{
               background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
@@ -405,6 +403,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-full transition-colors"
+            data-testid="landing-mobile-menu-trigger"
             style={{
               color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)',
               background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
@@ -414,6 +413,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 ? t('common.closeMenu', 'Close menu')
                 : t('common.openMenu', 'Open menu')
             }
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -426,6 +426,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.18 }}
                 className="absolute top-full left-0 right-0 shadow-2xl"
+                data-testid="landing-mobile-menu-panel"
                 style={{
                   background: isDark ? 'rgba(10,8,30,0.96)' : 'rgba(255,255,255,0.97)',
                   borderBottom: isDark
@@ -435,6 +436,26 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 }}
               >
                 <nav className="flex flex-col p-4 gap-2 max-w-7xl mx-auto">
+                  {navLinks.map((link) => (
+                    <button
+                      key={link.href}
+                      onClick={() => {
+                        navigate(link.href);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 rounded-full text-sm font-medium transition-all"
+                      style={{
+                        color: isDark ? 'rgba(255,255,255,0.68)' : 'rgba(0,0,0,0.68)',
+                        background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                        border: isDark
+                          ? '1px solid rgba(255,255,255,0.08)'
+                          : '1px solid rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      {link.label}
+                    </button>
+                  ))}
+
                   <div
                     className="h-px my-1"
                     style={{
@@ -443,6 +464,13 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                   />
 
                   {[
+                    {
+                      label: t('partner.becomePartner', 'Become Partner'),
+                      onClick: () => {
+                        navigate(ROUTES.BECOME_PARTNER);
+                        setIsMobileMenuOpen(false);
+                      },
+                    },
                     {
                       label: t('landing.topBar.demo', 'Demo'),
                       onClick: () => {

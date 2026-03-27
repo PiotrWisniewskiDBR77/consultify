@@ -25,6 +25,10 @@ import {
   getActiveDeviations,
   resolveDeviation,
   getROIDashboard,
+  getROIPortfolioSummary,
+  getROIInitiativeDetail,
+  getResultsKpiCatalog,
+  getResultsKpiDrawerDetail,
   getROIByDateRange,
   getReviewPackTimeline,
   getReconciliationHealth,
@@ -271,6 +275,241 @@ describe('getROIDashboard', () => {
 
     const dash = await getROIDashboard(ORG_ID);
     expect(dash.overallRealizationRate).toBeNull();
+  });
+});
+
+describe('getROIPortfolioSummary', () => {
+  it('bridges org-scoped ROI assumptions and realized values into a portfolio summary', async () => {
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          initiative_id: INITIATIVE_ID,
+          initiative_name: 'Initiative Alpha',
+          status: 'DONE',
+          priority: 'HIGH',
+          capex: 100,
+          opex_annual: 25,
+          expected_revenue_delta: 300,
+          expected_cost_delta: 50,
+          confidence: 'medium',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          initiative_id: INITIATIVE_ID,
+          total_rev: 120,
+          total_cost: 40,
+          total_savings: 10,
+        },
+      ]);
+
+    const summary = await getROIPortfolioSummary(ORG_ID);
+
+    expect(summary.organizationId).toBe(ORG_ID);
+    expect(summary.items).toHaveLength(1);
+    expect(summary.items[0]).toMatchObject({
+      initiativeId: INITIATIVE_ID,
+      initiativeName: 'Initiative Alpha',
+      projectedBenefit: 350,
+      realizedBenefit: 170,
+      variance: -180,
+      hasRealized: true,
+    });
+    expect(summary.summary).toEqual({
+      totalProjected: 350,
+      totalRealized: 170,
+      totalCapex: 100,
+      totalVariance: -180,
+      initiativeCount: 1,
+      coveragePercent: 100,
+    });
+  });
+});
+
+describe('getROIInitiativeDetail', () => {
+  it('bridges initiative variance, assumptions, and realized rows for the active ROI drawer', async () => {
+    mockDbGet.mockResolvedValueOnce({
+      expected_revenue_delta: 300,
+      expected_cost_delta: 50,
+      capex: 100,
+      opex_annual: 20,
+      horizon_months: 24,
+      effect_start_date: '2026-01-01',
+      confidence: 'medium',
+      assumptions_owner: 'owner-1',
+      assumptions_text: 'Assumption text',
+      expected_roi_percent: 10,
+      expected_npv: 200,
+      expected_payback_months: 18,
+    });
+    mockDbAll.mockResolvedValueOnce([
+      {
+        id: 'real-1',
+        period_month: '2026-03-01',
+        realized_revenue_delta: 120,
+        realized_cost_delta: 40,
+        realized_savings: 10,
+        variance_notes: 'note',
+        recorded_by: 'user-1',
+        created_at: '2026-03-05T00:00:00.000Z',
+      },
+    ]);
+
+    const detail = await getROIInitiativeDetail(INITIATIVE_ID, ORG_ID);
+
+    expect(detail.organizationId).toBe(ORG_ID);
+    expect(detail.initiativeId).toBe(INITIATIVE_ID);
+    expect(detail.variance.hasAssumptions).toBe(true);
+    expect(detail.variance.projected?.totalBenefit).toBe(350);
+    expect(detail.variance.realized?.totalBenefit).toBe(170);
+    expect(detail.variance.variance?.absolute).toBe(-180);
+    expect(detail.assumptions?.assumptionsOwner).toBe('owner-1');
+    expect(detail.realized).toHaveLength(1);
+    expect(detail.realized[0].periodMonth).toBe('2026-03-01');
+  });
+});
+
+describe('getResultsKpiCatalog', () => {
+  it('bridges KPI rows and initiative mappings for active Results surfaces', async () => {
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          id: KPI_ID,
+          initiative_id: INITIATIVE_ID,
+          initiative_name: 'Initiative Alpha',
+          name: 'KPI Alpha',
+          description: 'desc',
+          unit: '%',
+          baseline_value: 10,
+          target_value: 20,
+          measurement_frequency: 'MONTHLY',
+          alert_threshold: 5,
+          alert_direction: 'BELOW',
+          is_primary: true,
+          sort_order: 1,
+          owner_user_id: 'owner-1',
+          owner_first_name: 'Ada',
+          owner_last_name: 'Lovelace',
+          direction: 'HIGHER_IS_BETTER',
+          threshold_mode: 'PERCENT_FROM_TARGET',
+          amber_threshold_pct: 10,
+          red_threshold_pct: 20,
+          amber_threshold_abs: null,
+          red_threshold_abs: null,
+          current_value: 18,
+          latest_value: 18,
+          latest_period_start: '2026-03-01',
+          prev_value: 15,
+          prev_period_start: '2026-02-01',
+          open_case_id: 'case-1',
+          open_case_severity: 'RED',
+          open_case_status: 'OPEN',
+          created_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-03-02T00:00:00.000Z',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'map-1',
+          initiative_id: INITIATIVE_ID,
+          initiative_name: 'Initiative Alpha',
+          kpi_id: KPI_ID,
+          kpi_name: 'KPI Alpha',
+          impact_direction: 'increase',
+        },
+      ]);
+
+    const catalog = await getResultsKpiCatalog(ORG_ID, { kpiId: KPI_ID });
+
+    expect(catalog.organizationId).toBe(ORG_ID);
+    expect(catalog.kpis).toHaveLength(1);
+    expect(catalog.kpis[0]).toMatchObject({
+      id: KPI_ID,
+      initiativeId: INITIATIVE_ID,
+      initiativeName: 'Initiative Alpha',
+      ownerName: 'Ada Lovelace',
+      isOnTarget: false,
+    });
+    expect(catalog.mappings).toEqual([
+      {
+        id: 'map-1',
+        initiativeId: INITIATIVE_ID,
+        initiativeName: 'Initiative Alpha',
+        kpiId: KPI_ID,
+        kpiName: 'KPI Alpha',
+        impactDirection: 'increase',
+      },
+    ]);
+  });
+});
+
+describe('getResultsKpiDrawerDetail', () => {
+  it('bridges KPI measurements and the open deviation case for the active drawer surface', async () => {
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          id: 'm-1',
+          kpi_id: KPI_ID,
+          value: 12,
+          period_start: '2026-03-01',
+          period_end: null,
+          measurement_frequency: 'MONTHLY',
+          notes: 'note',
+          created_at: '2026-03-02T00:00:00.000Z',
+          user_id: 'user-1',
+          user_first_name: 'Ada',
+          user_last_name: 'Lovelace',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'case-1',
+          kpi_id: KPI_ID,
+          organization_id: ORG_ID,
+          period_start: '2026-03-01',
+          period_end: '2026-03-31',
+          severity: 'RED',
+          status: 'OPEN',
+          owner_user_id: 'owner-1',
+          deviation_summary: 'Below target',
+          rca_text: 'Root cause',
+          evidence_text: null,
+          evidence_ref: null,
+          resolution_notes: null,
+          detected_at: '2026-03-03T00:00:00.000Z',
+          acknowledged_at: null,
+          resolved_at: null,
+          closed_at: null,
+          created_at: '2026-03-03T00:00:00.000Z',
+          updated_at: '2026-03-03T00:00:00.000Z',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'action-1',
+          case_id: 'case-1',
+          title: 'Follow up',
+          owner_user_id: 'owner-1',
+          due_date: '2026-03-10',
+          status: 'OPEN',
+          created_at: '2026-03-03T00:00:00.000Z',
+          updated_at: '2026-03-03T00:00:00.000Z',
+        },
+      ]);
+
+    const detail = await getResultsKpiDrawerDetail(KPI_ID, ORG_ID);
+
+    expect(detail.organizationId).toBe(ORG_ID);
+    expect(detail.kpiId).toBe(KPI_ID);
+    expect(detail.measurements).toHaveLength(1);
+    expect(detail.measurements[0]).toMatchObject({
+      id: 'm-1',
+      periodKey: '2026-03',
+      createdBy: { id: 'user-1', firstName: 'Ada', lastName: 'Lovelace' },
+    });
+    expect(detail.openCase?.id).toBe('case-1');
+    expect(detail.openCase?.actions).toHaveLength(1);
+    expect(detail.openCase?.actions[0].title).toBe('Follow up');
   });
 });
 

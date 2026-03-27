@@ -61,7 +61,10 @@ import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayo
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
-import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
+import {
+  shouldFallbackToLegacyExecutionControl,
+  V8ExecutionControlApi,
+} from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import {
   getStatusActions,
@@ -860,8 +863,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     const loadRiskSignals = async () => {
       try {
-        const data = await V8ExecutionControlApi.getRiskSignals(currentProjectId || undefined).catch(() =>
-          (async () => {
+        const data = await V8ExecutionControlApi.getRiskSignals(currentProjectId || undefined).catch(
+          (error) => {
+            if (!shouldFallbackToLegacyExecutionControl(error)) {
+              throw error;
+            }
+            return (async () => {
             const token = localStorage.getItem('token');
             if (!token) return { signals: [] };
             const params = new URLSearchParams();
@@ -871,7 +878,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             });
             if (!res.ok) return { signals: [] };
             return res.json();
-          })()
+            })();
+          }
         );
         setRiskSignals(data.signals || []);
       } catch {
@@ -882,8 +890,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       try {
         const data = await V8ExecutionControlApi.getDelaySignals(
           currentProjectId ? { projectId: currentProjectId } : undefined
-        ).catch(() =>
-          (async () => {
+        ).catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return (async () => {
             const token = localStorage.getItem('token');
             if (!token) return { signals: [] };
             const params = new URLSearchParams();
@@ -893,8 +904,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             });
             if (!res.ok) return { signals: [] };
             return res.json();
-          })()
-        );
+          })();
+        });
         setDelaySignals(data.signals || []);
       } catch {
         // delay signals are non-blocking
@@ -910,22 +921,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const loadGovernedControlTower = async () => {
       try {
         const [warningsData, alertsData, timelineData] = await Promise.all([
-          V8ExecutionControlApi.getTimelineWarnings(currentProjectId || undefined).catch(() =>
-            fetchLegacyExecutionControl<{ warnings: GovernedTimelineWarning[]; total: number }>(
+          V8ExecutionControlApi.getTimelineWarnings(currentProjectId || undefined).catch((error) => {
+            if (!shouldFallbackToLegacyExecutionControl(error)) {
+              throw error;
+            }
+            return fetchLegacyExecutionControl<{ warnings: GovernedTimelineWarning[]; total: number }>(
               '/api/execution-control/warnings',
               currentProjectId ? { projectId: currentProjectId } : undefined
-            )
-          ),
-          V8ExecutionControlApi.getCapacityLevelingAlerts().catch(() =>
-            fetchLegacyExecutionControl<{ alerts: GovernedCapacityAlert[] }>(
+            );
+          }),
+          V8ExecutionControlApi.getCapacityLevelingAlerts().catch((error) => {
+            if (!shouldFallbackToLegacyExecutionControl(error)) {
+              throw error;
+            }
+            return fetchLegacyExecutionControl<{ alerts: GovernedCapacityAlert[] }>(
               '/api/execution-control/capacity/leveling-alerts'
-            )
-          ),
-          V8ExecutionControlApi.getCapacityTimeline().catch(() =>
-            fetchLegacyExecutionControl<{ weeks: GovernedCapacityWeek[] }>(
+            );
+          }),
+          V8ExecutionControlApi.getCapacityTimeline().catch((error) => {
+            if (!shouldFallbackToLegacyExecutionControl(error)) {
+              throw error;
+            }
+            return fetchLegacyExecutionControl<{ weeks: GovernedCapacityWeek[] }>(
               '/api/execution-control/capacity/timeline'
-            )
-          ),
+            );
+          }),
         ]);
 
         if (cancelled) return;
@@ -2550,7 +2570,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           reason,
         })
           .then((data) => ({ ok: true, json: async () => data }))
-          .catch(fallbackRequest);
+          .catch((error) => {
+            if (!shouldFallbackToLegacyExecutionControl(error)) {
+              throw error;
+            }
+            return fallbackRequest();
+          });
         const json = await response.json().catch(() => ({}));
         if (!response.ok) {
           const msg =

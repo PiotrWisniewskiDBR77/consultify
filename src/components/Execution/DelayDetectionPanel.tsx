@@ -20,7 +20,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { V8ExecutionControlApi } from '@/services/api/v8/execution-control';
+import {
+  shouldFallbackToLegacyExecutionControl,
+  V8ExecutionControlApi,
+} from '@/services/api/v8/execution-control';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -101,13 +104,16 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
 
       // Try to persist detections (admin-only). Non-blocking: ignore 403/401.
       try {
-        await V8ExecutionControlApi.detectDelaySignals(projectId).catch(() =>
-          fetch('/api/execution-control/delay-signals/detect', {
+        await V8ExecutionControlApi.detectDelaySignals(projectId).catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetch('/api/execution-control/delay-signals/detect', {
             method: 'POST',
             headers,
             body: JSON.stringify({ projectId: projectId || null }),
-          })
-        );
+          });
+        });
       } catch {
         // non-blocking
       }
@@ -117,7 +123,10 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
         const persistedData = await V8ExecutionControlApi.getDelaySignals({
           projectId,
           persisted: true,
-        }).catch(async () => {
+        }).catch(async (error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
           const persistedRes = await fetch(
             `/api/execution-control/delay-signals?${params.toString()}&persisted=true`,
             { headers }
@@ -139,7 +148,10 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
       // Fallback to live detection (e.g., if persisted is restricted).
       const data = await V8ExecutionControlApi.getDelaySignals(
         projectId ? { projectId } : undefined
-      ).catch(async () => {
+      ).catch(async (error) => {
+        if (!shouldFallbackToLegacyExecutionControl(error)) {
+          throw error;
+        }
         const liveRes = await fetch(`/api/execution-control/delay-signals?${params}`, { headers });
         if (!liveRes.ok) {
           const err = await liveRes.json().catch(() => ({}));
@@ -185,13 +197,16 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
       };
       const res = await V8ExecutionControlApi.dismissDelaySignal(payload)
         .then(() => ({ ok: true, json: async () => ({}) }))
-        .catch(() =>
-          fetch('/api/execution-control/delay-signals/dismiss', {
+        .catch((error) => {
+          if (!shouldFallbackToLegacyExecutionControl(error)) {
+            throw error;
+          }
+          return fetch('/api/execution-control/delay-signals/dismiss', {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-          })
-        );
+          });
+        });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         toast.error((err as any)?.error || t('execution.delay.dismissFailed', 'Failed to dismiss'));

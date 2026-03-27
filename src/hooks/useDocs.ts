@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
 const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
+const LEGACY_KB_BASE = '/api/kb';
 
 
 // ============================================
@@ -69,7 +70,7 @@ const fetchCategories = async (language: string = 'en'): Promise<KbCategory[]> =
     );
     return data.data?.categories || data.categories || data || [];
   } catch {
-    const response = await fetch(`/api/knowledge-base/categories?lang=${language}`);
+    const response = await fetch(`${LEGACY_KB_BASE}/categories?lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch categories');
     const data = await response.json();
     return data.categories || data || [];
@@ -115,7 +116,7 @@ const fetchArticles = async (params: {
         total: data.total || 0,
       };
     } catch {
-      const response = await fetch(`/api/knowledge-base/articles?${searchParams}`);
+      const response = await fetch(`${LEGACY_KB_BASE}/articles?${searchParams}`);
       if (!response.ok) throw new Error('Failed to fetch articles');
       return response.json();
     }
@@ -137,7 +138,7 @@ const fetchArticleBySlug = async (
       const data = await V8KnowledgeBaseApi.getArticleBySlug(slug, language);
       return data.article as KbArticle;
     } catch {
-      const response = await fetch(`/api/knowledge-base/articles/${slug}?lang=${language}`);
+      const response = await fetch(`${LEGACY_KB_BASE}/articles/${slug}?lang=${language}`);
       if (!response.ok) {
         if (response.status === 404) return null;
         throw new Error('Failed to fetch article');
@@ -161,7 +162,7 @@ const fetchFeaturedArticles = async (
       const data = await V8KnowledgeBaseApi.getFeaturedArticles(language, limit);
       return data.articles as KbArticleListItem[];
     } catch {
-      const response = await fetch(`/api/knowledge-base/featured?lang=${language}&limit=${limit}`);
+      const response = await fetch(`${LEGACY_KB_BASE}/featured?lang=${language}&limit=${limit}`);
       if (!response.ok) throw new Error('Failed to fetch featured articles');
       const data = await response.json();
       return data.articles || data || [];
@@ -184,9 +185,7 @@ const searchArticles = async (
       const data = await V8KnowledgeBaseApi.searchArticles(query, language);
       return data.articles as KbArticleListItem[];
     } catch {
-      const response = await fetch(
-        `/api/knowledge-base/search?q=${encodeURIComponent(query)}&lang=${language}`
-      );
+      const response = await fetch(`${LEGACY_KB_BASE}/search?q=${encodeURIComponent(query)}&lang=${language}`);
       if (!response.ok) throw new Error('Failed to search articles');
       const data = await response.json();
       return data.articles || data || [];
@@ -203,7 +202,7 @@ const trackArticleView = async (articleId: string): Promise<void> => {
     });
     if (!response.ok) throw new Error('public v8 unavailable');
   } catch {
-    await fetch(`/api/knowledge-base/articles/${articleId}/view`, {
+    await fetch(`${LEGACY_KB_BASE}/articles/${articleId}/view`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });

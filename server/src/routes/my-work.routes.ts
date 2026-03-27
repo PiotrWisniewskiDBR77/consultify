@@ -27,6 +27,7 @@ import { createOutcomeFromCluster, materializeClusters } from '../services/ideaC
 import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
 import { getAiNews, pickTipOfDay } from '../services/homeCoverFeedService.js';
+import notebookService from '../services/notebookService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { radarActionService } from '../services/radar/radarActionService.js';
 import { radarService } from '../services/radar/radarService.js';
@@ -7602,33 +7603,6 @@ const notebookUpload = multer({
   },
 });
 
-async function extractTextFromBuffer(
-  buffer: Buffer,
-  mimetype: string,
-  originalname: string
-): Promise<string> {
-  const ext = path.extname(originalname || '').toLowerCase();
-  if (ext === '.pdf' || mimetype === 'application/pdf') {
-    const pdfParse = (await import('pdf-parse')).default as (
-      buf: Buffer
-    ) => Promise<{ text: string }>;
-    const data = await pdfParse(buffer);
-    return String(data?.text || '');
-  }
-  if (ext === '.xlsx' || ext === '.xls' || mimetype?.includes('spreadsheet')) {
-    const XLSX = await import('xlsx');
-    const wb = XLSX.read(buffer, { type: 'buffer' });
-    const lines: string[] = [];
-    for (const name of wb.SheetNames) {
-      const ws = wb.Sheets[name];
-      const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t' });
-      lines.push(`=== ${name} ===`, csv);
-    }
-    return lines.join('\n');
-  }
-  return buffer.toString('utf-8');
-}
-
 router.post(
   '/notebook/upload',
   notebookUpload.single('file'),
@@ -7640,29 +7614,18 @@ router.post(
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, TXT, MD)' });
 
-    let text: string;
+    let captureResult: { pageId: string };
     try {
-      text = await extractTextFromBuffer(file.buffer, file.mimetype, file.originalname);
+      captureResult = await notebookService.capture(orgId, userId, {
+        source: 'upload',
+        fileBuffer: file.buffer,
+        fileMimetype: file.mimetype,
+        fileOriginalname: file.originalname,
+      });
     } catch (e: any) {
-      logger.warn('[MyWork] Notebook upload extraction failed:', e?.message);
+      logger.warn('[MyWork] Notebook upload capture failed:', e?.message);
       return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
     }
-    const safeText = (text || '').trim().slice(0, 500000);
-    const title = (
-      path.basename(file.originalname, path.extname(file.originalname)) || 'Untitled'
-    ).slice(0, 200);
-
-    const id = uuidv4();
-    const now = new Date().toISOString();
-    const contentJson = JSON.stringify({
-      type: 'doc',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text: safeText.slice(0, 5000) }] }],
-    });
-    await queryHelpers.queryRun(
-      `INSERT INTO notebook_pages (id, owner_user_id, organization_id, title, content_json, content_text, tags_json, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, '[]', 'active', ?, ?)`,
-      [id, userId, orgId, title, contentJson, safeText, now, now]
-    );
 
     const row = await queryHelpers.queryOne<any>(
       `SELECT id, owner_user_id as "ownerUserId", organization_id as "organizationId", project_id as "projectId",
@@ -7670,7 +7633,7 @@ router.post(
         maturity, icon, summary, coalesce(status, 'active') as status, coalesce(pinned, 0) as pinned,
         converted_to_json as "convertedToJson", created_at as "createdAt", updated_at as "updatedAt"
        FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [id]
+      [captureResult.pageId]
     );
     const parseCT = (r: any) =>
       r?.convertedToJson

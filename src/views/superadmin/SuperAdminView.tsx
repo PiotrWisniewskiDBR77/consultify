@@ -180,6 +180,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
             case AppView.SUPERADMIN_ORGANIZATIONS:
             case AppView.SUPERADMIN_USERS:
+            case AppView.SUPERADMIN_COMMUNICATION:
             case AppView.SUPERADMIN_FEEDBACK:
             case AppView.SUPERADMIN_BULK_OPERATIONS:
               return (
@@ -189,6 +190,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                       ? 'organizations'
                       : currentView === AppView.SUPERADMIN_USERS
                         ? 'users'
+                        : currentView === AppView.SUPERADMIN_COMMUNICATION
+                          ? 'communication'
                         : currentView === AppView.SUPERADMIN_FEEDBACK
                           ? 'feedback'
                           : 'bulk-ops'

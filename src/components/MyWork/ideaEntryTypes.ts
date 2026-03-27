@@ -40,6 +40,8 @@ export const IDEA_STAGE_COLORS: Record<IdeaStageV5, string> = {
   converted: 'from-slate-400/20 to-gray-400/10 text-slate-600 dark:text-slate-400',
 };
 
+export type IdeaStageListBucket = 'spark' | 'incubating' | 'shaping' | 'ready' | 'promoted';
+
 const LEGACY_STAGE_MAP: Record<string, IdeaStageV5> = {
   seed: 'spark',
   spark: 'spark',
@@ -62,6 +64,20 @@ export function normalizeStageToV5(raw?: string | null): IdeaStageV5 {
     .toLowerCase()
     .trim();
   return LEGACY_STAGE_MAP[s] || 'spark';
+}
+
+const V5_TO_LIST_BUCKET: Record<IdeaStageV5, IdeaStageListBucket> = {
+  spark: 'spark',
+  framing: 'incubating',
+  exploring: 'incubating',
+  structuring: 'shaping',
+  validating: 'ready',
+  ready_to_convert: 'ready',
+  converted: 'promoted',
+};
+
+export function bucketIdeaStageForList(raw?: string | null): IdeaStageListBucket {
+  return V5_TO_LIST_BUCKET[normalizeStageToV5(raw)];
 }
 
 // ── Entry types ─────────────────────────────────────────────────────────────

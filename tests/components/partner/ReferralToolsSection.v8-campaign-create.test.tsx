@@ -1,0 +1,206 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const tMock = (_key: string, fallback?: string) => fallback || _key;
+
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: tMock,
+    i18n: { language: 'en' },
+  }),
+}));
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    delete: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/api/v8', () => ({
+  V8PartnerApi: {
+    deleteCampaignLink: vi.fn(),
+    getReferralAnalytics: vi.fn(),
+    createCampaignLink: vi.fn(),
+  },
+  shouldFallbackToLegacyPartner: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
+  },
+}));
+
+import { ReferralToolsSection } from '@/views/partner/sections/ReferralToolsSection';
+import { Api } from '@/services/api';
+import { V8PartnerApi } from '@/services/api/v8';
+
+describe('ReferralToolsSection V8 campaign create seam', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(Api.get).mockResolvedValue({
+      success: true,
+      data: {
+        referralCode: 'PARTNER-123',
+        referralLink: 'https://example.com/r/PARTNER-123',
+        referralLinkSlug: 'PARTNER-123',
+        campaignLinks: [
+          {
+            id: 'campaign-1',
+            name: 'Spring launch',
+            slug: 'spring-launch',
+            fullUrl: 'https://example.com/?c=spring-launch',
+            clickCount: 0,
+            signupCount: 0,
+            conversionCount: 0,
+            isActive: true,
+            createdAt: '2026-03-26T10:00:00.000Z',
+          },
+        ],
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.getReferralAnalytics).mockResolvedValue({
+      analytics: {
+        totalClicks: 42,
+        uniqueClicks: 30,
+        signups: 8,
+        trials: 5,
+        paidCustomers: 3,
+        conversionRate: 10,
+        clicksByDay: [],
+        clicksBySource: [],
+      },
+      days: 30,
+    } as any);
+  });
+
+  it('prefers governed campaign creation before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.createCampaignLink).mockResolvedValue({
+      campaignLink: {
+        id: 'campaign-1',
+        name: 'Spring launch',
+        slug: 'spring-launch',
+      },
+    } as any);
+
+    render(<ReferralToolsSection subsection="referral-tools" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'New Campaign' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'New Campaign' }));
+    });
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('e.g., LinkedIn Q1')).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByPlaceholderText('e.g., LinkedIn Q1'), {
+      target: { value: 'Spring launch' },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    });
+
+    await waitFor(() => {
+      expect(V8PartnerApi.createCampaignLink).toHaveBeenCalledWith({
+        name: 'Spring launch',
+        utmSource: undefined,
+        utmMedium: undefined,
+        utmCampaign: undefined,
+      });
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/campaign-links', expect.anything());
+  });
+
+  it('falls back to legacy campaign creation on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.createCampaignLink).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({
+      success: true,
+      data: { id: 'campaign-legacy-1' },
+    } as any);
+
+    render(<ReferralToolsSection subsection="referral-tools" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'New Campaign' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'New Campaign' }));
+    });
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('e.g., LinkedIn Q1')).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByPlaceholderText('e.g., LinkedIn Q1'), {
+      target: { value: 'Spring launch' },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/partners/campaign-links', {
+        name: 'Spring launch',
+        utmSource: undefined,
+        utmMedium: undefined,
+        utmCampaign: undefined,
+      });
+    });
+  });
+
+  it('prefers governed campaign deletion before legacy fallback', async () => {
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.mocked(V8PartnerApi.deleteCampaignLink).mockResolvedValue({
+      success: true,
+      deleted: 'campaign-1',
+    } as any);
+
+    render(<ReferralToolsSection subsection="referral-tools" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Spring launch')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTitle('Delete'));
+    });
+
+    await waitFor(() => {
+      expect(V8PartnerApi.deleteCampaignLink).toHaveBeenCalledWith('campaign-1');
+    });
+
+    expect(Api.delete).not.toHaveBeenCalledWith('/api/partners/campaign-links/campaign-1');
+  });
+
+  it('falls back to legacy campaign deletion on bounded compatibility statuses', async () => {
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.mocked(V8PartnerApi.deleteCampaignLink).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
+
+    render(<ReferralToolsSection subsection="referral-tools" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Spring launch')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTitle('Delete'));
+    });
+
+    await waitFor(() => {
+      expect(Api.delete).toHaveBeenCalledWith('/api/partners/campaign-links/campaign-1');
+    });
+  });
+});

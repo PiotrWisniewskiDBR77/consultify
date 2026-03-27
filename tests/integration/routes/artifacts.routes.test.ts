@@ -61,6 +61,62 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     expect(createArtifactAccessGrantMock).not.toHaveBeenCalled();
   });
 
+  it('returns canonical action-target metadata for report artifacts', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'art-1',
+      originRuntime: 'report',
+      originRecordId: 'report-77',
+      ownerUserId: 'owner-1',
+    });
+
+    const res = await request(app).get('/api/artifacts/art-1/action-target');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      data: {
+        artifactId: 'art-1',
+        originRuntime: 'report',
+        originRecordId: 'report-77',
+        openPath: '/reports/builder/report-77',
+        exportPath: '/api/report-builder/report-77/export/pdf',
+        deletePath: '/api/report-builder/report-77',
+        reviewPath: '/api/artifacts/art-1/start-review',
+        authority: 'report_builder',
+      },
+    });
+  });
+
+  it('returns canonical action-target metadata for presentation artifacts', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    getArtifactForUserMock.mockResolvedValue({
+      artifactId: 'art-2',
+      originRuntime: 'presentation',
+      originRecordId: 'deck-77',
+      ownerUserId: 'owner-1',
+    });
+
+    const res = await request(app).get('/api/artifacts/art-2/action-target');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      data: {
+        artifactId: 'art-2',
+        originRuntime: 'presentation',
+        originRecordId: 'deck-77',
+        openPath: '/presentations/builder/deck-77',
+        exportPath: '/api/presentations/decks/deck-77/download',
+        deletePath: '/api/presentations/decks/deck-77',
+        reviewPath: '/api/artifacts/art-2/start-review',
+        authority: 'presentations_runtime',
+      },
+    });
+  });
+
   it('allows access grant mutation for artifact owners', async () => {
     verifyTokenMock.mockImplementation((req: any) => {
       req.user = { id: 'owner-1', organizationId: 'org-1', role: 'USER' };

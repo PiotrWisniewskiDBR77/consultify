@@ -1,4 +1,4 @@
-import { v8Get } from './client';
+import { v8Delete, v8Get, v8Post, v8Put } from './client';
 
 export interface V8PartnerReferralAnalytics {
   totalClicks: number;
@@ -23,10 +23,113 @@ export interface V8PartnerEarningsSummary {
   currency: string;
 }
 
+export interface V8PartnerPayoutRequestPayload {
+  payoutAccountId?: string;
+  notes?: string;
+  amount?: number;
+}
+
+export interface V8PartnerPayoutRequestResult {
+  id: string;
+  status?: string;
+  netAmount?: number;
+  grossAmount?: number;
+  currency?: string;
+}
+
+export interface V8PartnerCampaignCreatePayload {
+  name: string;
+  description?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  destinationUrl?: string;
+}
+
+export interface V8PartnerCampaignLink {
+  id: string;
+  name: string;
+  slug: string;
+  fullUrl?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  clickCount?: number;
+  signupCount?: number;
+  conversionCount?: number;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+export interface V8PartnerCampaignDeleteResult {
+  success: boolean;
+  deleted: string;
+}
+
+export interface V8PartnerOrganizationUpdatePayload {
+  name: string;
+  taxId?: string;
+  contactEmail: string;
+  contactPhone?: string;
+  website?: string;
+}
+
+export interface V8PartnerOrganizationUpdateResult {
+  success: boolean;
+  message: string;
+}
+
+export interface V8PartnerSpecializationsUpdatePayload {
+  specializations: string[];
+}
+
+export interface V8PartnerSpecializationsUpdateResult {
+  success: boolean;
+  message: string;
+}
+
+export interface V8PartnerRegionsUpdatePayload {
+  regions: string[];
+}
+
+export interface V8PartnerRegionsUpdateResult {
+  success: boolean;
+  message: string;
+}
+
+export interface V8PartnerListingUpdatePayload {
+  publicListingEnabled: boolean;
+}
+
+export interface V8PartnerListingUpdateResult {
+  success: boolean;
+  publicListingEnabled: boolean;
+}
+
+export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
+  const status = Number((error as { status?: number })?.status);
+  return [400, 404, 405, 501].includes(status);
+};
+
 export const V8PartnerApi = {
   getReferralAnalytics: (days = 30) =>
     v8Get<{ analytics: V8PartnerReferralAnalytics; days: number }>('/partner/referral-analytics', {
       days: String(days),
     }),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
+  requestPayout: (body: V8PartnerPayoutRequestPayload = {}) =>
+    v8Post<{ payout: V8PartnerPayoutRequestResult }>('/partner/payouts/request', body),
+  createCampaignLink: (body: V8PartnerCampaignCreatePayload) =>
+    v8Post<{ campaignLink: V8PartnerCampaignLink }>('/partner/campaign-links', body),
+  deleteCampaignLink: (campaignId: string) =>
+    v8Delete<V8PartnerCampaignDeleteResult>(`/partner/campaign-links/${campaignId}`),
+  updateOrganization: (body: V8PartnerOrganizationUpdatePayload) =>
+    v8Put<V8PartnerOrganizationUpdateResult>('/partner/organization', body),
+  updateOrganizationSpecializations: (body: V8PartnerSpecializationsUpdatePayload) =>
+    v8Put<V8PartnerSpecializationsUpdateResult>('/partner/organization/specializations', body),
+  updateOrganizationRegions: (body: V8PartnerRegionsUpdatePayload) =>
+    v8Put<V8PartnerRegionsUpdateResult>('/partner/organization/regions', body),
+  updateOrganizationListing: (body: V8PartnerListingUpdatePayload) =>
+    v8Put<V8PartnerListingUpdateResult>('/partner/organization/listing', body),
 };

@@ -27,11 +27,11 @@ The matrix is intentionally narrower than the package-wide `V8.0 + V8.1` closure
 
 | area | requirement | status | current truth | evidence |
 | --- | --- | --- | --- | --- |
-| `Chat + planning` | chat can plan governed artifact creation | `fulfilled` | `V8ArtifactRunControl` plans, accepts, retries, and materializes `document` + `presentation` | `tests/components/AIChat/V8ArtifactRunControl.test.tsx`, `tests/integration/routes/artifact-runs.routes.sqlite.integration.test.ts` |
+| `Chat + planning` | chat can plan governed artifact creation | `fulfilled` | `V8ArtifactRunControl` plans, accepts, retries, and materializes `document` + `presentation`, and now also exposes bounded `sheet` planning/materialization against an existing governed table target | `tests/components/AIChat/V8ArtifactRunControl.test.tsx`, `tests/integration/routes/artifact-runs.routes.sqlite.integration.test.ts`, `evidence/191-v81-sheet-artifactrun-materialize-parity-seam.md` |
 | `Artifact substrate` | one canonical artifact identity for surfaced outputs | `fulfilled` | `/api/artifacts` is the canonical registry path for surfaced outputs in the `V8.1` slice | `tests/integration/services/artifactRegistryService.sqlite.integration.test.ts`, `tests/components/ReportsAndPresentations/useRapData.canonicalArtifacts.test.tsx` |
 | `Document runtime` | governed durable document creation, review, export visibility, reopenability | `fulfilled` | governed `ArtifactRun` completion is closed for `document`; library/My Work/open paths are live | same as above plus `tests/components/ReportsAndPresentations/ReportsAndPresentationsHub.canonicalDataPath.test.tsx` |
 | `Presentation runtime` | equivalent durable governed presentation behavior | `fulfilled` | governed `ArtifactRun` completion is closed for `presentation`; chat, routes, library and reopen path are live | `tests/integration/services/artifactRegistryService.sqlite.integration.test.ts`, `tests/integration/routes/artifact-runs.routes.sqlite.integration.test.ts`, `tests/components/AIChat/V8ArtifactRunControl.test.tsx` |
-| `Sheet runtime` | sheet participates honestly in the shared artifact system | `deferred` | governed registry/open/export path is implemented; chat-driven `ArtifactRun` materialization remains explicitly deferred | `tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts`, deferred ledger in `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md` |
+| `Sheet runtime` | sheet participates honestly in the shared artifact system | `fulfilled` | governed registry/open/export path is implemented, and bounded chat-driven `ArtifactRun` materialization now completes into the canonical sheet artifact substrate when an existing governed table target is supplied | `tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts`, `tests/integration/routes/artifact-runs.routes.sqlite.integration.test.ts`, `tests/components/AIChat/V8ArtifactRunControl.test.tsx`, `evidence/192-v81-sheet-artifactrun-t4-acceptance.md` |
 | `Outputs Library` | one canonical home with rich artifact semantics | `fulfilled` | aggregate tabs are registry-backed and now expose visibility, review, exports, and source semantics | `tests/components/ReportsAndPresentations/useRapData.canonicalArtifacts.test.tsx`, `tests/components/ReportsAndPresentations/ReportsAndPresentationsHub.canonicalDataPath.test.tsx`, `tests/e2e/smoke/outputs-library-canonical-artifacts.spec.ts` |
 | `My Work` | My Work is a perspective over the same registry | `fulfilled` | `Needs review`, `Recent mine`, and `Recent outputs` are served from canonical endpoints | `tests/components/MyWork/HomeView.outputs.test.tsx`, `tests/components/ReportsAndPresentations/useRapData.canonicalArtifacts.test.tsx` |
 | `Object-linked outputs` | linked outputs are visible on required major surfaces | `partial` | initiatives, finance analyses, and notebooks are now wired; interview and some source-object surfaces are still not consistently covered | component proof + local surface wiring in `InitiativeCompactPanel`, `FinancialAnalysisPanel`, `NotebookContextPanel` |
@@ -46,7 +46,6 @@ The matrix is intentionally narrower than the package-wide `V8.0 + V8.1` closure
 
 These do not invalidate the current `V8.1` closure claim when stated explicitly:
 
-- `sheet` chat-driven `ArtifactRun` materialization,
 - broader cloud publishing parity beyond the current export/open baseline,
 - broader object-linked propagation outside the already wired key surfaces.
 
@@ -56,12 +55,12 @@ These do not invalidate the current `V8.1` closure claim when stated explicitly:
 
 ### Local `V8.1` verdict
 
-`closed locally and staging-closed with explicit sheet deferral`
+`closed locally and staging-closed with bounded sheet parity now closed`
 
 Reason:
 
 - governed `document` and `presentation` flows are complete,
-- `sheet` scope is implemented honestly and explicitly deferred where parity does not yet exist,
+- `sheet` scope is now implemented honestly through the bounded existing-table ArtifactRun path,
 - Outputs Library, My Work, and key object-linked surfaces are registry-true,
 - targeted tests and local browser smoke are green.
 

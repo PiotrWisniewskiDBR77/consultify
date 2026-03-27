@@ -20,8 +20,26 @@ interface AnalyticsData {
   topKnowledgeSources: Array<{ source: string; count: number }>;
 }
 
+interface AnnaFunnelSummaryData {
+  summary: {
+    totalEvents: number;
+    byEvent: Record<string, number>;
+    localeDistribution: Record<string, number>;
+    fallbackReasons: Record<string, number>;
+    handoffTargets: Record<string, number>;
+  };
+  recentEvents: Array<{
+    id: string;
+    eventType: string;
+    source: string;
+    metadata: Record<string, unknown>;
+    createdAt: string;
+  }>;
+}
+
 interface WorkerAnalyticsDashboardProps {
   workerId: string;
+  workerSlug?: string;
 }
 
 const OUTCOME_LABELS: Record<string, string> = {
@@ -44,18 +62,31 @@ const OUTCOME_COLORS: Record<string, string> = {
 
 export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> = ({
   workerId,
+  workerSlug,
 }) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [annaFunnel, setAnnaFunnel] = useState<AnnaFunnelSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        const response = await Api.get(`/api/virtual-workers/${workerId}/analytics`);
-        const payload = response?.data?.data ?? response?.data;
+        const [workerResponse, annaResponse] = await Promise.all([
+          Api.get(`/api/virtual-workers/${workerId}/analytics`),
+          workerSlug === 'anna' ? Api.get('/api/superadmin/analytics/anna-funnel') : Promise.resolve(null),
+        ]);
+
+        const payload = workerResponse?.data?.data ?? workerResponse?.data;
         if (payload) {
           setData(payload);
+        }
+
+        if (workerSlug === 'anna' && annaResponse) {
+          const annaPayload = annaResponse?.data?.data ?? annaResponse?.data;
+          if (annaPayload) {
+            setAnnaFunnel(annaPayload);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch analytics:', err);
@@ -64,7 +95,7 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
       }
     };
     fetchAnalytics();
-  }, [workerId]);
+  }, [workerId, workerSlug]);
 
   if (loading) {
     return (
@@ -83,6 +114,8 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
   }
 
   const totalOutcomes = Object.values(data.outcomeDistribution).reduce((a, b) => a + b, 0);
+  const annaByEvent = annaFunnel?.summary.byEvent || {};
+  const annaRecentEvents = annaFunnel?.recentEvents || [];
 
   return (
     <div className="space-y-6">
@@ -113,6 +146,99 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
           color="text-blue-500"
         />
       </div>
+
+      {workerSlug === 'anna' && annaFunnel && (
+        <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Public Anna Funnel
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Backend-backed summary for the current public landing Anna funnel.
+              </p>
+            </div>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              {annaFunnel.summary.totalEvents} total events
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KpiCard
+              icon={<BarChart3 size={18} />}
+              label="Widget Opens"
+              value={String(annaByEvent.landing_anna_widget_opened || 0)}
+              color="text-cyan-500"
+            />
+            <KpiCard
+              icon={<MessageSquare size={18} />}
+              label="Messages Sent"
+              value={String(annaByEvent.landing_anna_message_sent || 0)}
+              color="text-violet-500"
+            />
+            <KpiCard
+              icon={<TrendingUp size={18} />}
+              label="Handoffs"
+              value={String(annaByEvent.landing_anna_handoff_clicked || 0)}
+              color="text-emerald-500"
+            />
+            <KpiCard
+              icon={<Clock size={18} />}
+              label="Fallbacks"
+              value={String(annaByEvent.landing_anna_fallback_shown || 0)}
+              color="text-amber-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <SummaryList
+              title="Locales"
+              emptyLabel="No locale distribution yet."
+              items={annaFunnel.summary.localeDistribution}
+            />
+            <SummaryList
+              title="Handoff Targets"
+              emptyLabel="No handoff targets yet."
+              items={annaFunnel.summary.handoffTargets}
+            />
+            <SummaryList
+              title="Fallback Reasons"
+              emptyLabel="No fallback reasons yet."
+              items={annaFunnel.summary.fallbackReasons}
+            />
+          </div>
+
+          <div className="mt-6">
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+              Recent Public Anna Events
+            </h4>
+            {annaRecentEvents.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">No public Anna events yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {annaRecentEvents.slice(0, 5).map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        {event.eventType}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {formatEventMetadata(event.metadata)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                      {formatTimestamp(event.createdAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Outcome Distribution */}
@@ -247,3 +373,43 @@ const KpiCard: React.FC<{
     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{label}</p>
   </div>
 );
+
+const SummaryList: React.FC<{
+  title: string;
+  emptyLabel: string;
+  items: Record<string, number>;
+}> = ({ title, emptyLabel, items }) => {
+  const entries = Object.entries(items).sort(([, a], [, b]) => b - a);
+
+  return (
+    <div>
+      <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{title}</h4>
+      {entries.length === 0 ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</p>
+      ) : (
+        <div className="space-y-2">
+          {entries.map(([label, count]) => (
+            <div key={label} className="flex items-center justify-between">
+              <span className="text-sm text-slate-700 dark:text-slate-300">{label}</span>
+              <span className="text-sm font-medium text-slate-900 dark:text-white">{count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+function formatEventMetadata(metadata: Record<string, unknown>): string {
+  return Object.entries(metadata)
+    .filter(([, value]) => value !== null && value !== undefined && value !== '')
+    .slice(0, 3)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(' · ');
+}
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}

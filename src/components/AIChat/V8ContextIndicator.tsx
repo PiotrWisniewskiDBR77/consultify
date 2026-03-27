@@ -1,16 +1,18 @@
-import { Search, ShieldCheck } from 'lucide-react';
+import { GitBranch, Loader2, Search, ShieldCheck, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useV8Gate } from '@/hooks/useV8Gate';
-import { useV8Snapshots } from '@/hooks/useV8Chat';
+import { useV8CreateHandoff, useV8Handoffs, useV8Snapshots } from '@/hooks/useV8Chat';
 import { useV8ConversationRetrievalTraces } from '@/hooks/useV8Retrieval';
 
 interface V8ContextIndicatorProps {
   conversationId: string | null;
+  defaultGoal?: string;
 }
 
-export function V8ContextIndicator({ conversationId }: V8ContextIndicatorProps) {
+export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8ContextIndicatorProps) {
   const { t } = useTranslation();
   const { showV8Chat } = useV8Gate();
   const [isOpen, setIsOpen] = useState(false);
@@ -19,19 +21,53 @@ export function V8ContextIndicator({ conversationId }: V8ContextIndicatorProps) 
     showV8Chat && conversationId ? conversationId : undefined,
   );
   const {
+    data: handoffs,
+    isLoading: handoffsLoading,
+    isError: handoffsError,
+  } = useV8Handoffs(showV8Chat && conversationId ? conversationId : undefined);
+  const createHandoff = useV8CreateHandoff();
+  const {
     data: retrievalTraces,
     isLoading: retrievalLoading,
     isError: retrievalError,
   } = useV8ConversationRetrievalTraces(showV8Chat && conversationId ? conversationId : undefined);
 
   if (!showV8Chat) return null;
-  if ((isLoading || isError) && (retrievalLoading || retrievalError)) return null;
+  if ((isLoading || isError) && (retrievalLoading || retrievalError) && (handoffsLoading || handoffsError))
+    return null;
 
   const items = Array.isArray(snapshots) ? snapshots : [];
+  const handoffItems = Array.isArray(handoffs) ? handoffs : [];
   const traces = Array.isArray(retrievalTraces) ? retrievalTraces : [];
+  const latestSnapshot = items.length > 0 ? items[items.length - 1] : null;
   const latestTrace = traces.length > 0 ? traces[traces.length - 1] : null;
+  const latestHandoff = handoffItems.length > 0 ? handoffItems[handoffItems.length - 1] : null;
+  const normalizedGoal = defaultGoal.trim();
+  const canCreateHandoff =
+    Boolean(conversationId) &&
+    Boolean(latestSnapshot?.snapshotId) &&
+    normalizedGoal.length > 0 &&
+    latestHandoff?.goal !== normalizedGoal;
 
-  if (items.length === 0 && traces.length === 0) return null;
+  if (items.length === 0 && traces.length === 0 && handoffItems.length === 0) return null;
+
+  const handleCreateHandoff = async () => {
+    if (!conversationId || !latestSnapshot?.snapshotId || !normalizedGoal) return;
+    try {
+      await createHandoff.mutateAsync({
+        conversationId,
+        contextSnapshotId: latestSnapshot.snapshotId,
+        goal: normalizedGoal,
+      });
+      toast.success(t('v8.handoffCreated', 'Governed handoff created from the active conversation'));
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('v8.handoffCreateFailed', 'Failed to create governed handoff'),
+      );
+    }
+  };
 
   return (
     <div className="relative">
@@ -48,6 +84,12 @@ export function V8ContextIndicator({ conversationId }: V8ContextIndicatorProps) 
           <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-violet-700 dark:border-violet-800/70 dark:bg-violet-950/50 dark:text-violet-300">
             <Search size={10} />
             RAG {traces.length}
+          </span>
+        )}
+        {handoffItems.length > 0 && (
+          <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-sky-700 dark:border-sky-800/70 dark:bg-sky-950/50 dark:text-sky-300">
+            <GitBranch size={10} />
+            H {handoffItems.length}
           </span>
         )}
       </button>
@@ -70,6 +112,68 @@ export function V8ContextIndicator({ conversationId }: V8ContextIndicatorProps) 
                 count: items.length,
               })}
             </div>
+          </div>
+
+          <div
+            className={`mt-3 rounded-xl border p-3 ${
+              handoffItems.length > 0
+                ? 'border-sky-200 bg-sky-50/80 dark:border-sky-900/60 dark:bg-sky-950/20'
+                : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70'
+            }`}
+          >
+            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-900 dark:text-slate-100">
+              <GitBranch size={13} />
+              {t('v8.handoffSummary', 'Governed handoffs')}
+            </div>
+
+            {latestHandoff ? (
+              <div
+                data-testid="v8-handoff-summary"
+                className="mt-2 space-y-2 text-xs text-slate-700 dark:text-slate-200"
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
+                    <div className="opacity-70">{t('v8.handoffCount', 'Handoffs')}</div>
+                    <div className="mt-0.5 font-medium">{handoffItems.length}</div>
+                  </div>
+                  <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
+                    <div className="opacity-70">{t('v8.handoffIntent', 'Intent')}</div>
+                    <div className="mt-0.5 font-medium">{latestHandoff.intentClassification?.intentType || 'unknown'}</div>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
+                  <div className="opacity-70">{t('v8.handoffGoal', 'Latest goal')}</div>
+                  <div className="mt-0.5 font-medium">{latestHandoff.goal}</div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[11px] text-sky-800 dark:text-sky-200">
+                  <span>{t('v8.handoffRun', 'Run')}: {latestHandoff.executionRunId}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'v8.handoffEmpty',
+                  'No governed handoffs recorded for this conversation yet.',
+                )}
+              </div>
+            )}
+
+            {canCreateHandoff && (
+              <button
+                type="button"
+                data-testid="v8-handoff-create"
+                onClick={handleCreateHandoff}
+                disabled={createHandoff.isPending}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300 bg-white px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:bg-sky-950/60"
+              >
+                {createHandoff.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={16} />
+                )}
+                {t('v8.handoffCreateAction', 'Create governed handoff')}
+              </button>
+            )}
           </div>
 
           <div

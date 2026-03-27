@@ -27,10 +27,14 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { DemoModeModal } from '@/components/Landing/DemoModeModal';
+import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
 import { EntryTopBar } from '@/components/Landing/EntryTopBar';
 import { AUDIT_METHODOLOGIES, AuditMethodology } from '@/data/auditShowcaseData';
+import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { AppView, SessionMode } from '@/types';
 
 // ============================================
 // DYNAMIC ICON
@@ -205,23 +209,46 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
 export const AuditsShowcasePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
+    useAppStore();
+  const [isDemoModalOpen, setIsDemoModalOpen] = React.useState(false);
+  const [demoModalMode, setDemoModalMode] = React.useState<'demo' | 'trial'>('trial');
+
+  const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
+    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setIsDemoModalOpen(false);
+    setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
+    if (mode === 'demo') setDemoMode(true);
+    else setDemoMode(false);
+    setCurrentView(AppView.DASHBOARD);
+    navigate(ROUTES.AI_CHAT);
+  };
 
   const handleStartAssessment = () => {
-    navigate('/login');
+    navigate(ROUTES.LOGIN);
   };
 
   const handleToolsHubClick = () => {
     navigate('/tools');
   };
 
+  const handleContactClick = () => {
+    navigate(ROUTES.LEGAL.CONTACT);
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-navy-950 relative selection:bg-purple-500 selection:text-white">
       <EntryTopBar
-        onTrialClick={() => navigate('/trial')}
-        onDemoClick={() => navigate('/demo')}
-        onLoginClick={() => navigate('/login')}
-        onRegisterClick={() => navigate('/register')}
+        onTrialClick={() => {
+          setDemoModalMode('trial');
+          setIsDemoModalOpen(true);
+        }}
+        onDemoClick={() => {
+          setDemoModalMode('demo');
+          setIsDemoModalOpen(true);
+        }}
+        onLoginClick={() => navigate(ROUTES.LOGIN)}
+        onRegisterClick={() => navigate(ROUTES.REGISTER)}
         isLoggedIn={!!currentUser}
         hasWorkspace={!!currentUser?.hasWorkspace}
       />
@@ -327,6 +354,23 @@ export const AuditsShowcasePage: React.FC = () => {
       </div>
 
       <EntryFooter />
+      <AnnaAssistantWidget
+        onDemoClick={() => {
+          setDemoModalMode('demo');
+          setIsDemoModalOpen(true);
+        }}
+        onTrialClick={() => {
+          setDemoModalMode('trial');
+          setIsDemoModalOpen(true);
+        }}
+        onContactClick={handleContactClick}
+      />
+      <DemoModeModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        mode={demoModalMode}
+      />
     </div>
   );
 };

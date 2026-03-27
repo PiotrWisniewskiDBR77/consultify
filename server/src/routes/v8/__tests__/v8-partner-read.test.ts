@@ -4,6 +4,11 @@ import request from 'supertest';
 
 const mockGetReferralAnalytics = vi.fn();
 const mockGetEarningsSummary = vi.fn();
+const mockRequestPayout = vi.fn();
+const mockCreateCampaignLink = vi.fn();
+const mockDeleteCampaignLink = vi.fn();
+const mockDbRun = vi.fn();
+const mockDbTransaction = vi.fn();
 const mockGetActivePartnerOrgIdForUser = vi.fn();
 const mockIsV8Enabled = vi.fn();
 const mockIsV8ShadowMode = vi.fn();
@@ -15,13 +20,25 @@ vi.mock('../../../services/partnerOrgResolution.js', () => ({
 vi.mock('../../../services/partnerReferralService.js', () => ({
   default: {
     getReferralAnalytics: (...args: unknown[]) => mockGetReferralAnalytics(...args),
+    createCampaignLink: (...args: unknown[]) => mockCreateCampaignLink(...args),
+    deleteCampaignLink: (...args: unknown[]) => mockDeleteCampaignLink(...args),
   },
 }));
 
 vi.mock('../../../services/partnerCommissionService.js', () => ({
   default: {
     getEarningsSummary: (...args: unknown[]) => mockGetEarningsSummary(...args),
+    requestPayout: (...args: unknown[]) => mockRequestPayout(...args),
   },
+}));
+
+vi.mock('../../../database/Database.js', () => ({
+  getDatabase: () => ({ mocked: true }),
+}));
+
+vi.mock('../../../utils/DbPromise.js', () => ({
+  run: (...args: unknown[]) => mockDbRun(...args),
+  transaction: (...args: unknown[]) => mockDbTransaction(...args),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -124,6 +141,22 @@ describe('V8 partner read bridge', () => {
       readyForPayout: 20,
       currency: 'EUR',
     });
+    mockRequestPayout.mockResolvedValue({
+      id: 'payout-1',
+      status: 'requested',
+      grossAmount: 150,
+      netAmount: 148.5,
+      currency: 'EUR',
+    });
+    mockCreateCampaignLink.mockResolvedValue({
+      id: 'campaign-1',
+      name: 'Spring launch',
+      slug: 'spring-launch',
+      fullUrl: 'https://example.com/?c=spring-launch',
+    });
+    mockDeleteCampaignLink.mockResolvedValue(true);
+    mockDbRun.mockResolvedValue({ changes: 1 });
+    mockDbTransaction.mockResolvedValue({ success: true });
   });
 
   it('GET /api/v8/partner/referral-analytics resolves partnerOrgId from user and calls service', async () => {
@@ -165,5 +198,170 @@ describe('V8 partner read bridge', () => {
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('PARTNER_ORG_REQUIRED');
     expect(mockGetEarningsSummary).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/partner/payouts/request delegates to requestPayout with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/partner/payouts/request').send({
+      notes: 'Please process this cycle',
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockRequestPayout).toHaveBeenCalledWith({
+      partnerOrgId: 'partner-org-resolved',
+      payoutAccountId: undefined,
+      requestedBy: 'user-partner-1',
+      notes: 'Please process this cycle',
+    });
+    expect(res.body.data.payout.id).toBe('payout-1');
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('POST /api/v8/partner/campaign-links delegates to createCampaignLink with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/partner/campaign-links').send({
+      name: 'Spring launch',
+      utmSource: 'newsletter',
+      utmMedium: 'email',
+      utmCampaign: 'spring-launch',
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockCreateCampaignLink).toHaveBeenCalledWith({
+      partnerOrgId: 'partner-org-resolved',
+      name: 'Spring launch',
+      description: undefined,
+      utmSource: 'newsletter',
+      utmMedium: 'email',
+      utmCampaign: 'spring-launch',
+      utmContent: undefined,
+      destinationUrl: undefined,
+    });
+    expect(res.body.data.campaignLink.id).toBe('campaign-1');
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('DELETE /api/v8/partner/campaign-links/:linkId delegates to deleteCampaignLink with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).delete('/api/v8/partner/campaign-links/campaign-1');
+
+    expect(res.status).toBe(200);
+    expect(mockDeleteCampaignLink).toHaveBeenCalledWith('partner-org-resolved', 'campaign-1');
+    expect(res.body.data).toEqual({ success: true, deleted: 'campaign-1' });
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('PUT /api/v8/partner/organization updates company info with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/partner/organization').send({
+      name: 'Test Partner Co',
+      taxId: 'DE123456789',
+      contactEmail: 'partner@example.com',
+      contactPhone: '+49 30 12345',
+      website: 'https://test.example.com',
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.anything(),
+      `UPDATE partner_organizations
+       SET name = ?, tax_id = ?, contact_email = ?, contact_phone = ?, website = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [
+        'Test Partner Co',
+        'DE123456789',
+        'partner@example.com',
+        '+49 30 12345',
+        'https://test.example.com',
+        'partner-org-resolved',
+      ],
+    );
+    expect(res.body.data).toEqual({
+      success: true,
+      message: 'Organization updated successfully',
+    });
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('PUT /api/v8/partner/organization/specializations updates specializations with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/partner/organization/specializations').send({
+      specializations: ['DRD', 'SIRI', 'DRD'],
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDbTransaction).toHaveBeenCalledWith([
+      {
+        sql: `DELETE FROM partner_specializations WHERE partner_org_id = ?`,
+        params: ['partner-org-resolved'],
+      },
+      {
+        sql: `INSERT INTO partner_specializations (id, partner_org_id, framework, certified, created_at)
+              VALUES (?, ?, ?, FALSE, NOW())
+              ON CONFLICT (partner_org_id, framework) DO NOTHING`,
+        params: [expect.any(String), 'partner-org-resolved', 'DRD'],
+      },
+      {
+        sql: `INSERT INTO partner_specializations (id, partner_org_id, framework, certified, created_at)
+              VALUES (?, ?, ?, FALSE, NOW())
+              ON CONFLICT (partner_org_id, framework) DO NOTHING`,
+        params: [expect.any(String), 'partner-org-resolved', 'SIRI'],
+      },
+    ]);
+    expect(res.body.data).toEqual({
+      success: true,
+      message: 'Specializations updated successfully',
+    });
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('PUT /api/v8/partner/organization/regions updates regions with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/partner/organization/regions').send({
+      regions: ['DACH', 'CEE', 'DACH'],
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDbTransaction).toHaveBeenCalledWith([
+      {
+        sql: `DELETE FROM partner_regions WHERE partner_org_id = ?`,
+        params: ['partner-org-resolved'],
+      },
+      {
+        sql: `INSERT INTO partner_regions (id, partner_org_id, region, is_primary, created_at)
+              VALUES (?, ?, ?, FALSE, NOW())
+              ON CONFLICT (partner_org_id, region) DO NOTHING`,
+        params: [expect.any(String), 'partner-org-resolved', 'DACH'],
+      },
+      {
+        sql: `INSERT INTO partner_regions (id, partner_org_id, region, is_primary, created_at)
+              VALUES (?, ?, ?, FALSE, NOW())
+              ON CONFLICT (partner_org_id, region) DO NOTHING`,
+        params: [expect.any(String), 'partner-org-resolved', 'CEE'],
+      },
+    ]);
+    expect(res.body.data).toEqual({
+      success: true,
+      message: 'Regions updated successfully',
+    });
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
+  });
+
+  it('PUT /api/v8/partner/organization/listing updates listing with partnerOrgId', async () => {
+    const app = createApp();
+    const res = await request(app).put('/api/v8/partner/organization/listing').send({
+      publicListingEnabled: true,
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.anything(),
+      `UPDATE partner_organizations
+       SET public_listing_enabled = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [true, 'partner-org-resolved'],
+    );
+    expect(res.body.data).toEqual({ success: true, publicListingEnabled: true });
+    expect(res.body.meta.contract).toBe('partner_runtime_read_v1');
   });
 });

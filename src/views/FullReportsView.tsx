@@ -1,19 +1,12 @@
 /**
  * Full Reports View
- * Main entry point for Management Reports module
- *
- * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
+ * Deprecated shim: old management reports entry now resolves to the canonical
+ * outputs library documents lane.
  */
 
 import React from 'react';
-
-import { SplitLayout } from '../components/layout/SplitLayout';
-import { ReportsHub } from '../components/Reports/Management/ReportsHub';
+import { Navigate } from 'react-router-dom';
 
 export const FullReportsView: React.FC = () => {
-  return (
-    <SplitLayout title="Management Reports">
-      <ReportsHub />
-    </SplitLayout>
-  );
+  return <Navigate to="/presentations?tab=documents" replace />;
 };

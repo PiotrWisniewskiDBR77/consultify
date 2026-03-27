@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { KbArticleListItem, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
+import { ROUTES } from '../../routes/routeConfig';
 
 // ============================================
 // DYNAMIC ICON
@@ -105,21 +106,31 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
 
 interface KnowledgePreviewSectionProps {
   className?: string;
+  onTrialClick?: () => void;
 }
 
 export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = ({
   className = '',
+  onTrialClick,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: articles = [], isLoading } = useKnowledgePublicPreview(3);
 
   const handleCTAClick = () => {
-    navigate('/trial');
+    if (onTrialClick) {
+      onTrialClick();
+      return;
+    }
+    navigate(ROUTES.TRIAL_ENTRY);
   };
 
   const handleExploreAll = () => {
-    navigate('/trial');
+    if (onTrialClick) {
+      onTrialClick();
+      return;
+    }
+    navigate(ROUTES.TRIAL_ENTRY);
   };
 
   if (isLoading) {

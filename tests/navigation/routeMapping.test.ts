@@ -179,6 +179,7 @@ describe('Critical Navigation Paths', () => {
     { view: AppView.IMPLEMENTATION, expectedRoute: '/implementation', name: 'Implementation' },
     { view: AppView.BENEFITS_REALIZATION, expectedRoute: '/benefits', name: 'Benefits' },
     { view: AppView.SETTINGS_PROFILE_MODULE, expectedRoute: '/settings/profile', name: 'Settings' },
+    { view: AppView.ECONOMICS, expectedRoute: '/finance', name: 'Finance' },
     { view: AppView.ADMIN_DASHBOARD, expectedRoute: '/admin', name: 'Admin' },
   ];
 

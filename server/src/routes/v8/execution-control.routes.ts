@@ -17,6 +17,7 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   createBudgetEntry,
   detectOverspendSignals,
+  getInitiativeBudgetSummary,
   getPortfolioBudgetSummary,
 } from '../../services/executionBudgetService.js';
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
@@ -96,6 +97,15 @@ const CreateBudgetEntrySchema = z.object({
   source: z.string().optional(),
 });
 
+const MitigationUpdateSchema = z.object({
+  raidItemId: z.string().min(1),
+  mitigationPlan: z.string().optional(),
+  responseStrategy: z.enum(['AVOID', 'TRANSFER', 'MITIGATE', 'ACCEPT', 'ESCALATE']).optional(),
+  mitigationOwnerId: z.string().optional(),
+  mitigationDueDate: z.string().optional(),
+  mitigationStatus: z.enum(['OPEN', 'IN_PROGRESS', 'MITIGATED', 'ACCEPTED', 'CLOSED']).optional(),
+});
+
 /**
  * GET /api/v8/execution-control/risk-signals
  * Heuristic risk signals for the V8 org (optional project filter).
@@ -129,6 +139,53 @@ router.post(
 
     return res.json({
       data: { success: true, signalId },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+router.patch(
+  '/raid/:id/mitigation',
+  validateBody(MitigationUpdateSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { mitigationPlan, responseStrategy, mitigationOwnerId, mitigationDueDate, mitigationStatus } =
+      req.body;
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (mitigationPlan !== undefined) {
+      updates.push('mitigation_plan = ?');
+      params.push(mitigationPlan);
+    }
+    if (responseStrategy !== undefined) {
+      updates.push('response_strategy = ?');
+      params.push(responseStrategy);
+    }
+    if (mitigationOwnerId !== undefined) {
+      updates.push('mitigation_owner_id = ?');
+      params.push(mitigationOwnerId);
+    }
+    if (mitigationDueDate !== undefined) {
+      updates.push('mitigation_due_date = ?');
+      params.push(mitigationDueDate);
+    }
+    if (mitigationStatus !== undefined) {
+      updates.push('mitigation_status = ?');
+      params.push(mitigationStatus);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update', code: 'EXECUTION_MITIGATION_EMPTY_PATCH' });
+    }
+
+    updates.push('updated_at = NOW()');
+    params.push(req.params.id, organizationId);
+
+    await dbRun(`UPDATE raid_items SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`, params);
+
+    return res.json({
+      data: { success: true, raidItemId: String(req.params.id) },
       meta: executionControlMutationMeta(),
     });
   })
@@ -297,6 +354,24 @@ router.get(
     const weeks = await getCapacityTimeline(organizationId, initiativeId);
     return res.json({
       data: { weeks },
+      meta: executionControlMeta(),
+    });
+  }),
+);
+
+/**
+ * GET /api/v8/execution-control/budget/initiative/:initiativeId
+ */
+router.get(
+  '/budget/initiative/:initiativeId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const summary = await getInitiativeBudgetSummary(organizationId, String(req.params.initiativeId));
+    if (!summary) {
+      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_BUDGET_INITIATIVE_NOT_FOUND' });
+    }
+    return res.json({
+      data: { summary },
       meta: executionControlMeta(),
     });
   }),

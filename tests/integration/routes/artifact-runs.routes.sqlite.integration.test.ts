@@ -16,6 +16,7 @@ const sqliteCtx = vi.hoisted(() => {
 
 const spineMocks = vi.hoisted(() => ({
   initiateHandoff: vi.fn(),
+  getRun: vi.fn().mockResolvedValue({ state: 'proposals_ready' }),
   transitionRunState: vi.fn().mockResolvedValue({}),
   createProposal: vi.fn(),
   submitForReview: vi.fn().mockResolvedValue({}),
@@ -86,6 +87,7 @@ vi.mock('../../../server/src/services/v8/chatExecutionService.js', () => ({
 }));
 
 vi.mock('../../../server/src/services/v8/executionSpineService.js', () => ({
+  getRun: (...args: unknown[]) => spineMocks.getRun(...args),
   transitionRunState: (...args: unknown[]) => spineMocks.transitionRunState(...args),
   createProposal: (...args: unknown[]) => spineMocks.createProposal(...args),
   submitForReview: (...args: unknown[]) => spineMocks.submitForReview(...args),
@@ -131,6 +133,7 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
   beforeEach(async () => {
     await clearArtifactSubstrateTables(sqliteCtx.db);
     spineMocks.initiateHandoff.mockReset();
+    spineMocks.getRun.mockReset();
     spineMocks.transitionRunState.mockReset();
     spineMocks.createProposal.mockReset();
     spineMocks.submitForReview.mockReset();
@@ -138,6 +141,7 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
     spineMocks.applyRun.mockReset();
     spineMocks.completeRun.mockReset();
     spineMocks.transitionRunState.mockResolvedValue({});
+    spineMocks.getRun.mockResolvedValue({ state: 'proposals_ready' });
     spineMocks.submitForReview.mockResolvedValue({});
     spineMocks.approveRun.mockResolvedValue({});
     spineMocks.applyRun.mockResolvedValue({});
@@ -273,6 +277,43 @@ describe('artifact-runs routes (sqlite-backed integration)', () => {
         language: 'en',
         theme: 'modern',
         confidentiality: 'internal',
+      },
+    });
+
+    expect(materializeRes.status).toBe(200);
+    expect(materializeRes.body.data).toEqual(
+      expect.objectContaining({
+        runId,
+        runStatus: 'completed',
+      }),
+    );
+    expect(materializeRes.body.data.artifactId).toBeTruthy();
+  });
+
+  it('materializes a sheet run through the governed artifact-run route when a governed table target is provided', async () => {
+    spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-run-sheet-1' });
+    spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-sheet-1' });
+
+    const createRes = await request(app).post('/api/artifact-runs/from-chat').send({
+      conversationId: 'conv-sheet-1',
+      contextSnapshotId: 'snap-sheet-1',
+      goal: 'Create a governed spreadsheet',
+      requestedArtifactFamily: 'sheet',
+      requestedOutputType: 'sheet',
+    });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.data.run.plan.outputType).toBe('sheet');
+    const runId = String(createRes.body.data.run.runId);
+
+    const acceptRes = await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
+    expect(acceptRes.status).toBe(200);
+    expect(acceptRes.body.data.runStatus).toBe('proposal_created');
+
+    const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
+      title: 'Governed matrix',
+      config: {
+        tableId: 'tbl-governed-1',
       },
     });
 

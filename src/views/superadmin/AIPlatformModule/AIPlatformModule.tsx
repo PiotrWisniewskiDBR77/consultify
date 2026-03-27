@@ -74,6 +74,8 @@ import { MarketInboxTab } from './Operations/MarketInboxTab';
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
 import { SLAManagementTab } from './Operations/SLAManagementTab';
+import { AICoreRuntimePanel } from '../../../components/Admin/AI/AICoreRuntimePanel';
+import { PromptOsRuntimeSummaryPanel } from '../../../components/Admin/AI/PromptOsRuntimeSummaryPanel';
 import { AccessControlTab } from './Security/AccessControlTab';
 // Security Tab Components
 import { APIKeysTab } from './Security/APIKeysTab';
@@ -135,6 +137,7 @@ const AI_PLATFORM_TABS: MainTab[] = [
       { id: 'health-monitoring', label: 'Health Monitoring', icon: <HeartPulse size={16} /> },
       { id: 'performance-dashboard', label: 'Performance', icon: <Activity size={16} /> },
       { id: 'sla-management', label: 'SLA Management', icon: <Shield size={16} /> },
+      { id: 'ai-core-runtime', label: 'AI core runtime', icon: <Code size={16} /> },
       { id: 'prompt-os-runtime', label: 'Prompt OS runtime', icon: <Code size={16} /> },
       { id: 'market-inbox', label: 'Market Inbox', icon: <Database size={16} /> },
     ],
@@ -231,6 +234,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'operations/health-monitoring': 'superadmin_ai_operations_health',
       'operations/performance-dashboard': 'superadmin_ai_operations_performance',
       'operations/sla-management': 'superadmin_ai_operations_sla',
+      'operations/ai-core-runtime': 'superadmin_ai_operations',
       'operations/prompt-os-runtime': 'superadmin_ai_operations',
       'operations/market-inbox': 'superadmin_ai_operations_market_inbox',
       'analytics/llm-observatory': 'superadmin_ai_analytics_llm_observatory',
@@ -309,6 +313,8 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <PerformanceDashboardTab />;
       case 'operations/sla-management':
         return <SLAManagementTab />;
+      case 'operations/ai-core-runtime':
+        return <AICoreRuntimePanel />;
       case 'operations/prompt-os-runtime':
         return <PromptOsRuntimeSummaryPanel />;
       case 'operations/market-inbox':

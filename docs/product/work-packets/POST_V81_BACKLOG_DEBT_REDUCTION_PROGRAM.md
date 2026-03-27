@@ -4,8 +4,10 @@
 > Owner: Manager Agent
 > Scope: post-closure backlog reduction after the frozen `V8 + V8.1` wave
 > Authority inputs: `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, `docs/product/work-packets/V8_V81_FINAL_SIGNOFF_MEMO.md`, `docs/product/work-packets/V8_V81_FINAL_GO_DECISION.md`, `docs/product/work-packets/V8_V81_WAVE_CLOSURE_DECLARATION.md`
-> Last updated: 2026-03-26
+> Last updated: 2026-03-27
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
+> Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
+> Current state: active - broader canonical `/` and public marketing breadth
 
 ---
 
@@ -65,14 +67,14 @@ Lanes previously accepted as `hold bounded` that now require explicit promotion 
 
 Current items:
 
-- `Chat`
-- `AI core`
-- `Execution / delivery control`
-- `Results / KPI / ROI`
-- `Finance`
-- `Partner Program`
-- `Sync / connectors / interoperability`
-- `Multiplayer / collaboration`
+- no `T2` lane is currently active
+- broader parity expansion in `Chat`
+- broader parity expansion in `AI core`
+- broader write/read breadth in `Results / KPI / ROI`
+- broader ingest / model / budget / valuation breadth in `Finance`
+- broader onboarding / client-access / payout-settings / statement breadth in `Partner Program`
+- broader OAuth / completion breadth in `Sync / connectors / interoperability`
+- broader realtime / collaboration breadth in `Multiplayer / collaboration`
 
 ### `T3` - Adjunct and side-lane debt
 
@@ -80,7 +82,7 @@ Non-core side lanes that are real backlog but should not reopen already accepted
 
 Current items:
 
-- `Notes` adjuncts (`ai-proposals`, `classify`, upload/convert)
+- notebook upload / attachment breadth after bounded `Notes` adjunct acceptance
 - object-linked outputs breadth not required by current package acceptance
 
 ### `T4` - Explicitly deferred product backlog
@@ -89,11 +91,15 @@ Visible backlog that remains outside execution until separately approved.
 
 Current items:
 
-- `Mobile`
+- broader `Mobile` redesign outside the active bounded lane
 - broad `Landing page` redesign
-- broad `Communication` expansion
-- standalone `Edukacja` outside KB
-- `sheet` chat-driven `ArtifactRun` materialization parity
+- broader canonical `/` copy / section-order / visual-system work beyond the accepted homepage IA cut
+- `Landing Anna prompt-quality / retrieval-quality`
+- `Landing Anna multilingual expansion`
+- `Landing Anna` broader voice UX / architecture
+- `Landing Anna` backend analytics / dashboard breadth
+
+Historical accepted `T4` lanes remain recorded in the lane map below; the list above shows what still remains to be closed or explicitly retired.
 
 ---
 
@@ -250,56 +256,50 @@ The following do **not** qualify as done:
 
 ## 9. Active execution slice
 
+Current state:
+
+- broader canonical `/` and public marketing breadth is the active promoted lane
+
 ### Slice name
 
-`Post-closure exception closure pack v1`
+broader canonical `/` and public marketing breadth
 
 ### Scope
 
-This first slice covers only:
+The accepted `Landing page redesign` and `Landing homepage IA` lanes now close the bounded public shell, CTA, and top-level IA seams.
 
-1. `Calendar`
-2. `Organization / Admin / Superadmin`
-3. debt-program orchestration needed to run the next tranches cleanly
+The next broader public lane is now explicitly promoted from visible backlog into active execution.
 
 ### Three-agent assignment
 
-- `Agent A`: maintain this program, tranche rules, and acceptance state
-- `Agent B`: tighten runtime/API correctness for `Calendar` and `Admin`
-- `Agent C`: tighten surface/proof coherence for `Calendar` and `Admin`
+- `Manager`: maintain this program, tranche rules, and final execution board discipline
+- `Agent A`: keep broader canonical `/` and public marketing breadth scope honest and prepare the first real bounded public-marketing packet
+- `Agent B`: own runtime/surface closure for the active public-marketing lane once the first bounded packet is chosen
 
 ### Exit criteria
 
-- `Calendar` is either staging-proven end-to-end or reduced to one explicit carried runtime blocker with no ambiguity,
-- `Admin / Superadmin` exposes read-only bounded V8 diagnostics coherently enough for operator verification,
-- and the post-closure program exists as a stable execution authority.
+- the active broader public-marketing lane keeps bounded packet discipline,
+- accepted bounded evidence remains the authority for previously closed lanes,
+- and Anna, mobile, or platform breadth do not get silently folded into the public-marketing lane.
 
-### Current finisher status
+### Current lane status
 
-The first 3-agent finisher pass is now executed and documented in
-`evidence/101-v8-tranche0-three-agent-finisher-proof.md`.
+The active lane is documented in `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`.
 
 Current result:
 
-- `Calendar` is now staging-proven end-to-end for the bounded V8 slice, including visible governed `conflicts` degradation and successful create-submit,
-- `Organization / Admin / Superadmin` now has a valid superadmin staging route/session, but the bounded V8 diagnostics surface still does not appear in `Health Monitoring`,
-- the tranche is no longer ambiguous on `Calendar`, but it is not yet acceptance-complete because `Admin / Superadmin` still remains open.
-
-Post-pass hardening now completed:
-
-- `Calendar` submit path is hardened to native form submission to reduce viewport and automation sensitivity,
-- `Calendar` fresh staging proof confirms `conflicts` degradation is governed in-surface while `POST /api/v8/my-work/calendar/events` still succeeds,
-- `Organization / Admin / Superadmin` client-side role handling is normalized across route guards, active sidebar navigation, and supporting admin surfaces for `SUPERADMIN` / `SUPER_ADMIN`,
-- `Organization / Admin / Superadmin` auth callback redirect is normalized so superadmin sessions are no longer forced through `/chat` after login,
-- `Organization / Admin / Superadmin` RouterSync and centralized permission resolution are normalized so restored sessions and permission-gated surfaces treat `SUPER_ADMIN` as the same operator role,
-- fresh staging proof now confirms the remaining blocker is no longer superadmin session entitlement on staging,
-- the remaining `Admin / Superadmin` blocker is narrowed further to staging surface continuity for the new bounded V8 diagnostics panel in `Health Monitoring`,
-- acceptance still remains pending on fresh staging proof.
+- `Landing Anna` broader voice UX / architecture is now accepted in `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md`,
+- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`,
+- the active lane split-brain map is recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`,
+- the lane is active in evidence-first mode while the first real broader public-marketing packet is being chosen,
+- Anna voice productization beyond bounded continuity remains accepted/capped rather than silently folded into this public-marketing lane.
 
 ### Explicitly out of scope
 
+- `Landing Anna` broader voice UX / architecture
+- broader `Mobile` redesign
 - `Chat` / `AI core` expansion
-- `Execution`, `Results`, `Finance`, `Partner` write parity
+- `Results`, `Finance`, `Partner` write parity
 - `Sync` OAuth completion
 - `Multiplayer` websocket expansion
 - `Reports / Presentations` full cleanup
@@ -307,27 +307,171 @@ Post-pass hardening now completed:
 
 ---
 
-## 10. Initial lane map
+## 10. Route to 100%
+
+This section is the finish-line view for the whole post-`V8/V8.1` cleanup program.
+
+### What "100%" means here
+
+The program reaches `100%` only when **all** remaining visible backlog themes are handled in one of two explicit ways:
+
+1. promoted, implemented, regression-covered, evidenced, and accepted as a bounded lane, or
+2. formally retired from this program with a written note that they are no longer part of the closure target.
+
+Accepted bounded lanes already listed in this document remain done; they do not need to be reopened unless a new broader lane is explicitly created.
+
+### Current completion snapshot
+
+- `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the currently promoted scopes
+- the bounded `T4` unlock series is complete through the Anna broader voice UX / architecture acceptance
+- broader canonical `/` and public marketing breadth is the one active non-deferred lane
+- what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
+
+### Remaining work to reach 100%
+
+| remaining theme | current posture | why it still remains | recommended order | finish condition |
+| --- | --- | --- | --- | --- |
+| `Landing Anna prompt-quality / retrieval-quality` | done | best next user-visible quality gain after Anna continuity plateau; explicitly recommended by `evidence/318-v81-post-backlog-leading-next-unlock-candidate-after-anna.md` | `1` | public Anna now gives materially better typed and voice-bootstrap answers through a bounded accepted prompt/retrieval lane |
+| `Landing Anna multilingual expansion` | done | accepted work now covers the full bounded public app-locale language set through Spanish, German, Japanese, and Arabic continuity packets | `2` | Anna supports the chosen target language set on the live public surface, or the scope is explicitly capped and retired |
+| `Landing Anna backend analytics / dashboard breadth` | done | current Anna telemetry has been closed into bounded backend ingest plus operator readback continuity without broadening into full dashboard productization | `3` | agreed Anna analytics surface and data contract exist, are used, and are evidenced, or the need is explicitly retired |
+| `Landing Anna` broader voice UX / architecture | done | the bounded same-session continuity, channel truth, and public voice-config authority cuts are complete; remaining productization is broader architecture work that should not be smuggled into one more pseudo-small packet | `4` | live voice UX/architecture is either deliberately productized as a broader redesign or formally capped at the accepted bounded state |
+| broader canonical `/` and public marketing breadth | active | accepted landing packets closed authority and bounded IA seams, but not the broader copy / section-order / visual-system redesign; that broader residual is now explicitly promoted | `5` | canonical `/` and public marketing breadth is either completed as a deliberate redesign lane or retired from this program |
+| broader `Mobile` redesign | visible, not promoted | bounded mobile entry and overlay continuity are done, but full mobile product breadth was never promoted | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
+| broader `Chat` / `AI core` parity expansion | visible, not promoted | current bounded work closed the active seam, not the full product/runtime breadth | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
+| broader `Results / KPI / ROI` parity | visible, not promoted | accepted lane closed bounded read/runtime truth seams; broader write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
+| broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
+| broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
+| broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
+| broader `Multiplayer / collaboration` breadth | visible, not promoted | accepted lane closed presence + lock indicators only; deeper realtime collaboration was never promoted | `12` | remaining collaboration breadth is closed or explicitly retired |
+| broader `Notes` adjunct / object-linked outputs breadth | visible, not promoted | accepted lane closed AI proposals + convert continuity only; attachment/upload/output breadth remains outside current package acceptance | `13` | remaining notes/output breadth is closed or explicitly retired |
+
+### Recommended execution order
+
+#### Phase A - Finish the Anna value path first
+
+1. `Landing Anna prompt-quality / retrieval-quality`
+2. `Landing Anna multilingual expansion`
+3. `Landing Anna backend analytics / dashboard breadth`
+4. `Landing Anna` broader voice UX / architecture
+
+Reason:
+
+- Anna is the clearest still-open public-facing theme
+- its foundation is already hardened across placement, fallback, telemetry integrity, and reopen continuity
+- the next packets here are more coherent than jumping immediately into scattered platform breadth
+
+#### Phase B - Close the remaining public-surface breadth
+
+1. broader canonical `/` and marketing redesign
+2. broader `Mobile` redesign
+
+Reason:
+
+- these are still visible on the public surface
+- they are easier to scope cleanly once the Anna strategy is no longer moving underneath them
+
+#### Phase C - Finish broader product parity expansion
+
+1. `Chat` / `AI core`
+2. `Results / KPI / ROI`
+3. `Finance`
+4. `Partner Program`
+5. `Sync / connectors / interoperability`
+6. `Multiplayer / collaboration`
+7. `Notes` adjunct / object-linked outputs
+
+Reason:
+
+- these are important, but they are broader platform follow-ons after the bounded closure program already achieved its acceptance target
+- they should be promoted deliberately as new work, not mixed back into the closed tranche history
+
+### Required manager decisions before work starts again
+
+Before the program resumes, each remaining theme needs one explicit choice:
+
+1. `promote now` - create a new charter and bounded lane
+2. `keep visible` - remain in backlog, not active
+3. `retire from 100% target` - remove from this program's finish line and track elsewhere
+
+Without these decisions, the program will stay technically truthful but operationally stuck in `held`.
+
+### Practical finish-line rule
+
+From this point on, the shortest honest route to `100%` is **not** to keep slicing random micro-fixes.
+It is to process the remaining themes one by one until this section contains no visible backlog themes except explicitly retired ones.
+
+---
+
+## 11. Initial lane map
 
 | lane | taxonomy | tranche | current posture | next packet |
 | --- | --- | --- | --- | --- |
 | `Calendar` | `T0` | `Tranche 0` | done - staging proven | no further packet inside `Tranche 0`; proof is recorded in `evidence/104-v8-calendar-create-submit-live-proof.md` |
-| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | active - valid session, diagnostics surface still missing | explain and close the staging gap where `Health Monitoring` omits the bounded V8 diagnostics panel |
-| `Reports / Presentations` | `T1` | `Tranche 1` | parked | remove API/UI split-brain |
-| `Idea workspace` | `T1` | `Tranche 1` | parked | resolve runtime red / collaboration split-brain |
-| `Execution / delivery control` | `T2` | `Tranche 2` | parked | charter broader write continuity slice |
-| `Results / KPI / ROI` | `T2` | `Tranche 2` | parked | charter workflow/write parity slice |
-| `Finance` | `T2` | `Tranche 2` | parked | charter ingest and mutation parity slice |
-| `Partner Program` | `T2` | `Tranche 2` | parked | charter lifecycle and payout parity slice |
-| `Sync / connectors / interoperability` | `T2` | `Tranche 2` | parked | charter provider auth and mutation slice |
-| `Multiplayer / collaboration` | `T2` | `Tranche 2` | parked | charter realtime behavior slice |
-| `Notes` adjuncts | `T3` | `Tranche 3` | parked | bounded adjunct recovery only |
-| `Mobile` / broad `Landing` / broad `Communication` / standalone `Edukacja` / `sheet ArtifactRun` parity | `T4` | `Parking lot` | deferred | explicit product unlock required |
+| `Organization / Admin / Superadmin` | `T0` | `Tranche 0` | done - staging proven | no further packet inside `Tranche 0`; proof is recorded in `evidence/106-v8-superadmin-health-monitoring-live-proof.md` |
+| `Reports / Presentations` | `T1` | `Tranche 1` | done - authority unified and accepted | no further packet inside current `T1`; acceptance is recorded in `evidence/110-v81-reports-presentations-t1-acceptance.md` |
+| `Idea workspace` | `T1` | `Tranche 1` | done - bounded split-brain removed and accepted | no further packet inside current `T1`; acceptance is recorded in `evidence/119-v81-idea-workspace-t1-acceptance.md` |
+| `Execution / delivery control` | `T2` | `Tranche 2` | done - bounded execution-control lane accepted | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/125-v81-execution-delivery-control-t2-acceptance.md` |
+| `Results / KPI / ROI` | `T2` | `Tranche 2` | done - bounded results lane accepted after runtime, ROI, KPI read seam, KPI drawer detail, and hub/summary catalog packets closed | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/134-v81-results-kpi-roi-t2-acceptance.md` |
+| `Finance` | `T2` | `Tranche 2` | done - bounded finance lane accepted after route authority, runtime strip, analysis read/create/delete, initiative flow, and operator mutation packets closed | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/154-v81-finance-t2-acceptance.md` |
+| `Partner Program` | `T2` | `Tranche 2` | done - bounded partner lane accepted after payout request, campaign create/delete, and profile settings seams closed | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/163-v81-partner-program-t2-acceptance.md` |
+| `Sync / connectors / interoperability` | `T2` | `Tranche 2` | done - bounded sync lane accepted after entry canonicalization, hub observability, error-resolution, pause/resume, run-now, reauth, and disconnect packets closed | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/142-v81-sync-connectors-interoperability-t2-acceptance.md` |
+| `Multiplayer / collaboration` | `T2` | `Tranche 2` | done - bounded multiplayer lane accepted after governed workspace header presence and lock-indicator slices landed on `IdeaTableTool` | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/167-v81-multiplayer-collaboration-t2-acceptance.md` |
+| `Chat` | `T2` | `Tranche 2` | done - bounded chat lane accepted after active-surface snapshot entry plus conversation-scoped governed handoff readback and creation continuity landed on the live chat header strip | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/176-v81-chat-t2-acceptance.md` |
+| `AI core` | `T2` | `Tranche 2` | done - bounded AI-core lane accepted after active operator-surface runtime summary, tool catalog, and tool-policy readback continuity landed in `AI Platform -> Operations` | no further packet inside current bounded `T2`; acceptance is recorded in `evidence/180-v81-ai-core-t2-acceptance.md` |
+| `Notes` adjuncts | `T3` | `Tranche 3` | done - bounded notes adjunct lane accepted after notebook AI proposals and notebook convert continuity both moved onto governed V8-first seams | no further packet inside the current bounded `T3`; acceptance is recorded in `evidence/171-v81-notes-adjuncts-t3-acceptance.md` |
+| `Communication` | `T4` | `Parking lot` | done - bounded communication lane accepted after superadmin authority/stats continuity plus stakeholder runtime read/send/distribution continuity | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/188-v81-communication-t4-acceptance.md` |
+| `Edukacja` | `T4` | `Parking lot` | done - bounded edukacja lane accepted after the mounted KB fallback seam and docs entry-authority seam both landed through the documented `Help / Knowledge Base` bridge | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/197-v81-edukacja-t4-acceptance.md` |
+| `Landing docs truth` | `T4` | `Parking lot` | done - bounded docs-truth lane accepted after canonical landing docs were normalized around the existing Anna LP contract | accepted in `evidence/226-v81-landing-docs-truth-t4-acceptance.md`; held-state recorded in `evidence/227-v81-post-backlog-program-held-state-after-landing-docs-truth.md`; any Anna embedding work remains separate visible backlog |
+| `Landing Anna handoff` | `T4` | `Parking lot` | done - bounded Anna handoff lane accepted after the live widget exposed contract-aligned `Demo`, `Trial`, and `Contact` CTA authority and canonical `/` routed those handoffs through the shared landing conversion contract | accepted in `evidence/230-v81-landing-anna-handoff-t4-acceptance.md`; held-state recorded in `evidence/231-v81-post-backlog-program-held-state-after-landing-anna-handoff.md`; any broader Anna prompt, analytics, voice-mode degraded handling, or placement work remains separate visible backlog |
+| `Landing Anna guardrails` | `T4` | `Parking lot` | done - bounded Anna guardrails lane accepted after `POST /api/public/anna/chat` gained per-session rate limiting and the live widget surfaced the polite `429` message instead of generic failure copy | accepted in `evidence/234-v81-landing-anna-guardrails-t4-acceptance.md`; held-state recorded in `evidence/235-v81-post-backlog-program-held-state-after-landing-anna-guardrails.md`; any broader Anna analytics, prompt-quality, voice-mode degraded handling, or placement work remains separate visible backlog |
+| `Landing Anna language fallback` | `T4` | `Parking lot` | done - bounded Anna language-fallback lane accepted after the public Anna route gained unsupported-language detection and the live widget surfaced the English fallback note instead of continuing the normal chat path | accepted in `evidence/238-v81-landing-anna-language-fallback-t4-acceptance.md`; held-state recorded in `evidence/239-v81-post-backlog-program-held-state-after-landing-anna-language-fallback.md`; any broader Anna analytics, prompt-quality, multilingual expansion, voice-mode degraded handling, or placement work remains separate visible backlog |
+| `Landing Anna degraded fallback` | `T4` | `Parking lot` | done - bounded Anna degraded-fallback lane accepted after the public Anna route and widget converged on the contract-level static service-unavailable message | accepted in `evidence/242-v81-landing-anna-degraded-fallback-t4-acceptance.md`; held-state recorded in `evidence/243-v81-post-backlog-program-held-state-after-landing-anna-degraded-fallback.md`; any broader Anna analytics, prompt-quality, multilingual expansion, voice-mode degraded handling, or placement work remains separate visible backlog |
+| `Landing Anna voice degraded fallback` | `T4` | `Parking lot` | done - bounded Anna voice degraded-fallback lane accepted after the public voice surface converged on the same static degraded-state message and stopped exposing technical setup details | accepted in `evidence/246-v81-landing-anna-voice-degraded-fallback-t4-acceptance.md`; held-state recorded in `evidence/247-v81-post-backlog-program-held-state-after-landing-anna-voice-degraded-fallback.md`; any broader Anna analytics, prompt-quality, multilingual expansion, placement breadth, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna shared-shell placement` | `T4` | `Parking lot` | done - bounded Anna shared-shell placement lane accepted after `MarketingLayout` inherited the public Anna widget and its shared demo/trial/contact handoff authority | accepted in `evidence/250-v81-landing-anna-shared-shell-placement-t4-acceptance.md`; held-state recorded in `evidence/251-v81-post-backlog-program-held-state-after-landing-anna-shared-shell-placement.md`; any bespoke-page Anna placement, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna resources placement` | `T4` | `Parking lot` | done - bounded Anna resources-placement lane accepted after the bespoke `ResourcesPage` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/254-v81-landing-anna-resources-placement-t4-acceptance.md`; held-state recorded in `evidence/255-v81-post-backlog-program-held-state-after-landing-anna-resources-placement.md`; any remaining bespoke-page Anna placement, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna tools placement` | `T4` | `Parking lot` | done - bounded Anna tools-placement lane accepted after the bespoke `ToolsShowcasePage` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/258-v81-landing-anna-tools-placement-t4-acceptance.md`; held-state recorded in `evidence/259-v81-post-backlog-program-held-state-after-landing-anna-tools-placement.md`; any remaining bespoke-page Anna placement, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna audits placement` | `T4` | `Parking lot` | done - bounded Anna audits-placement lane accepted after the bespoke `AuditsShowcasePage` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/262-v81-landing-anna-audits-placement-t4-acceptance.md`; held-state recorded in `evidence/263-v81-post-backlog-program-held-state-after-landing-anna-audits-placement.md`; any remaining bespoke-page Anna placement, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna contact placement` | `T4` | `Parking lot` | done - bounded Anna contact-placement lane accepted after the bespoke `ContactView` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/266-v81-landing-anna-contact-placement-t4-acceptance.md`; held-state recorded in `evidence/267-v81-post-backlog-program-held-state-after-landing-anna-contact-placement.md`; any remaining bespoke-page Anna placement on `About`, `Security`, or pricing pages, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna about placement` | `T4` | `Parking lot` | done - bounded Anna about-placement lane accepted after the bespoke `AboutView` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/270-v81-landing-anna-about-placement-t4-acceptance.md`; held-state recorded in `evidence/271-v81-post-backlog-program-held-state-after-landing-anna-about-placement.md`; any remaining bespoke-page Anna placement on `Security` or pricing pages, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna security placement` | `T4` | `Parking lot` | done - bounded Anna security-placement lane accepted after the bespoke `SecurityView` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/274-v81-landing-anna-security-placement-t4-acceptance.md`; held-state recorded in `evidence/275-v81-post-backlog-program-held-state-after-landing-anna-security-placement.md`; any remaining bespoke-page Anna placement on pricing pages, analytics, prompt-quality, multilingual expansion, or deeper voice implementation work remains separate visible backlog |
+| `Landing Anna pricing placement` | `T4` | `Parking lot` | done - bounded Anna pricing-placement lane accepted after the bespoke `PricingView` shell gained the public Anna widget and retained its existing demo/trial/contact authority | accepted in `evidence/278-v81-landing-anna-pricing-placement-t4-acceptance.md`; held-state recorded in `evidence/279-v81-post-backlog-program-held-state-after-landing-anna-pricing-placement.md`; the current bounded public Anna placement series is complete, and any residual Anna analytics, prompt-quality, multilingual expansion, deeper voice implementation, or separately promoted breadth work remains separate visible backlog |
+| `Landing Anna analytics` | `T4` | `Parking lot` | done - bounded Anna analytics lane accepted after the public widget gained thin funnel telemetry for open, message send, handoff, and fallback exposure while preserving current UX continuity | accepted in `evidence/282-v81-landing-anna-analytics-t4-acceptance.md`; held-state recorded in `evidence/283-v81-post-backlog-program-held-state-after-landing-anna-analytics.md`; any remaining Anna prompt-quality, multilingual expansion, deeper voice implementation, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna voice close continuity` | `T4` | `Parking lot` | done - bounded Anna voice-close-continuity lane accepted after the floating widget launcher close path was aligned with the in-panel close action so active voice sessions are always torn down through the existing continuity seam | accepted in `evidence/286-v81-landing-anna-voice-close-continuity-t4-acceptance.md`; held-state recorded in `evidence/287-v81-post-backlog-program-held-state-after-landing-anna-voice-close-continuity.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna voice event integrity` | `T4` | `Parking lot` | done - bounded Anna voice-event-integrity lane accepted after the public widget stopped emitting `/voice-event` telemetry for failed voice starts that never reached a real live session | accepted in `evidence/290-v81-landing-anna-voice-event-integrity-t4-acceptance.md`; held-state recorded in `evidence/291-v81-post-backlog-program-held-state-after-landing-anna-voice-event-integrity.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna open telemetry integrity` | `T4` | `Parking lot` | done - bounded Anna open-telemetry-integrity lane accepted after the public widget stopped emitting duplicate `landing_anna_widget_opened` events for repeated open signals while already open | accepted in `evidence/294-v81-landing-anna-open-telemetry-integrity-t4-acceptance.md`; held-state recorded in `evidence/295-v81-post-backlog-program-held-state-after-landing-anna-open-telemetry-integrity.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna reopen error reset` | `T4` | `Parking lot` | done - bounded Anna reopen-error-reset lane accepted after the public widget stopped carrying stale transient request-error state into a fresh open transition | accepted in `evidence/298-v81-landing-anna-reopen-error-reset-t4-acceptance.md`; held-state recorded in `evidence/299-v81-post-backlog-program-held-state-after-landing-anna-reopen-error-reset.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna reopen draft reset` | `T4` | `Parking lot` | done - bounded Anna reopen-draft-reset lane accepted after the public widget stopped carrying stale unsent draft input into a fresh open transition | accepted in `evidence/302-v81-landing-anna-reopen-draft-reset-t4-acceptance.md`; held-state recorded in `evidence/303-v81-post-backlog-program-held-state-after-landing-anna-reopen-draft-reset.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna reopen in-flight continuity` | `T4` | `Parking lot` | done - bounded Anna reopen-in-flight-continuity lane accepted after the public widget stopped carrying stale text loading and late replies from a prior visible session into a fresh reopen | accepted in `evidence/306-v81-landing-anna-reopen-inflight-continuity-t4-acceptance.md`; held-state recorded in `evidence/307-v81-post-backlog-program-held-state-after-landing-anna-reopen-inflight-continuity.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna voice reopen connecting continuity` | `T4` | `Parking lot` | done - bounded Anna voice-reopen-connecting-continuity lane accepted after the public widget stopped accepting stale voice callbacks from a prior connecting attempt into a fresh reopen | accepted in `evidence/310-v81-landing-anna-voice-reopen-connecting-continuity-t4-acceptance.md`; held-state recorded in `evidence/311-v81-post-backlog-program-held-state-after-landing-anna-voice-reopen-connecting-continuity.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna voice reopen error proof` | `T4` | `Parking lot` | done - bounded Anna voice-reopen-error-proof lane accepted after regression coverage locked that stale `onerror` from a superseded attempt does not surface stale error state after reopen | accepted in `evidence/314-v81-landing-anna-voice-reopen-error-proof-t4-acceptance.md`; held-state recorded in `evidence/315-v81-post-backlog-program-held-state-after-landing-anna-voice-reopen-error-proof.md`; any remaining Anna prompt-quality, multilingual expansion, broader voice UX/architecture work, or backend analytics/dashboard breadth remains separate visible backlog |
+| `Landing Anna prompt-quality / retrieval-quality` | `T4` | `Parking lot` | done - broader Anna quality lane accepted after locale-aware retrieval quality, follow-up retrieval continuity, worker prompt merge continuity, worker locale-aware retrieval quality, answer-structure prompt shaping, and history shaping all landed as bounded packets | chartered in `docs/product/work-packets/T4_LANDING_ANNA_PROMPT_QUALITY_CHARTER.md`; split-brain map recorded in `evidence/319-v81-landing-anna-prompt-quality-split-brain-map.md`; packets recorded in `evidence/320-v81-landing-anna-locale-aware-retrieval-quality-seam.md`, `evidence/321-v81-landing-anna-follow-up-retrieval-continuity-seam.md`, `evidence/322-v81-landing-anna-worker-prompt-merge-continuity-seam.md`, `evidence/323-v81-landing-anna-worker-locale-aware-retrieval-quality-seam.md`, `evidence/324-v81-landing-anna-answer-structure-prompt-shaping-seam.md`, and `evidence/325-v81-landing-anna-history-shaping-seam.md`; accepted in `evidence/326-v81-landing-anna-prompt-quality-t4-acceptance.md` |
+| `Landing page redesign` | `T4` | `Parking lot` | done - bounded redesign lane accepted after live-route shell and CTA parity packets landed across `/become-partner`, `/tools`, `/resources`, and `/audits` | accepted in `evidence/216-v81-landing-page-redesign-t4-acceptance.md`; held-state recorded in `evidence/217-v81-post-backlog-program-held-state-after-landing-page-redesign.md`; any canonical `/` IA mismatch remains separate visible backlog |
+| `Landing homepage IA` | `T4` | `Parking lot` | done - bounded homepage IA lane accepted after topbar nav authority plus knowledge-preview and footer CTA authority were aligned on canonical `/` | accepted in `evidence/222-v81-landing-homepage-ia-t4-acceptance.md`; held-state recorded in `evidence/223-v81-post-backlog-program-held-state-after-landing-homepage-ia.md`; any homepage section-order, copy, or visual-system gap remains separate visible backlog |
+| `Mobile / Landing` | `T4` | `Parking lot` | done - bounded mobile/landing lane accepted after public pricing authority, mobile topbar nav continuity, partner CTA continuity, and refreshed landing-mobile Playwright proof landed on the canonical public surface | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/203-v81-mobile-landing-t4-acceptance.md` |
+| `Mobile breadth` | `T4` | `Parking lot` | done - bounded authenticated mobile lane accepted after bottom-nav canonical authority, mobile `AI` entry continuity, and sidebar overlay dismissal proof landed on the live shell | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/208-v81-mobile-breadth-t4-acceptance.md` |
+| `sheet ArtifactRun parity` | `T4` | `Parking lot` | done - bounded sheet ArtifactRun lane accepted after active chat `sheet` planning plus governed materialize-to-table continuity landed on the same control strip/runtime chain | no further packet inside the accepted bounded `T4`; acceptance is recorded in `evidence/192-v81-sheet-artifactrun-t4-acceptance.md` |
 
 ---
 
-## 11. Change log
+## 12. Change log
 
+- 2026-03-27: accepted `Landing Anna` broader voice UX / architecture in `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md` after the bounded continuity, channel-truth, and config-authority packet chain reduced the lane to a broader architecture residual that should not be forced into another pseudo-small packet
+- 2026-03-27: promoted broader canonical `/` and public marketing breadth into active execution through `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md` and recorded the initial broader public-marketing split-brain map in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md` so the first honest redesign-shaped packet can be chosen explicitly
+- 2026-03-27: promoted `Landing Anna` broader voice UX / architecture into active execution through `docs/product/work-packets/T4_LANDING_ANNA_BROADER_VOICE_UX_ARCHITECTURE_CHARTER.md` and recorded the initial architecture split-brain map in `evidence/337-v81-landing-anna-broader-voice-ux-architecture-split-brain-map.md` so the next real bounded voice packet can be chosen honestly
+- 2026-03-27: accepted `Landing Anna backend analytics / dashboard breadth` in `evidence/336-v81-landing-anna-backend-analytics-dashboard-breadth-t4-acceptance.md` after bounded public funnel ingest and operator readback continuity landed, so the next Anna residual is broader voice UX / architecture rather than more hidden analytics seams
+- 2026-03-27: landed the second bounded packet inside `Landing Anna backend analytics / dashboard breadth` by adding operator readback continuity in `evidence/335-v81-landing-anna-operator-readback-continuity-seam.md`, so the new Anna funnel summary is now visible on the existing worker analytics operator path instead of remaining backend-only
+- 2026-03-27: promoted `Landing Anna backend analytics / dashboard breadth` into active execution through `docs/product/work-packets/T4_LANDING_ANNA_BACKEND_ANALYTICS_DASHBOARD_BREADTH_CHARTER.md`, recorded the split-brain map in `evidence/333-v81-landing-anna-backend-analytics-dashboard-breadth-split-brain-map.md`, and landed the first bounded packet via public funnel ingest continuity in `evidence/334-v81-landing-anna-public-funnel-ingest-continuity-seam.md`
+- 2026-03-27: landed the fourth bounded packet inside `Landing Anna multilingual expansion` by adding Arabic public continuity in `evidence/331-v81-landing-anna-arabic-public-continuity-seam.md`, then accepted the lane in `evidence/332-v81-landing-anna-multilingual-expansion-t4-acceptance.md` because Anna now covers the full current public app-locale set without smaller honest multilingual residue
+- 2026-03-27: landed the third bounded packet inside `Landing Anna multilingual expansion` by adding Japanese public continuity in `evidence/330-v81-landing-anna-japanese-public-continuity-seam.md`, so Anna now treats Japanese as supported on the live public path instead of collapsing Japanese script traffic into unsupported-language fallback
+- 2026-03-27: landed the second bounded packet inside `Landing Anna multilingual expansion` by adding German public continuity in `evidence/329-v81-landing-anna-german-public-continuity-seam.md`, so Anna now treats German as supported on the live public path instead of collapsing German traffic into unsupported-language fallback
+- 2026-03-27: promoted `Landing Anna multilingual expansion` into active execution through `docs/product/work-packets/T4_LANDING_ANNA_MULTILINGUAL_EXPANSION_CHARTER.md`, recorded the split-brain map in `evidence/327-v81-landing-anna-multilingual-expansion-split-brain-map.md`, and landed the first bounded packet via Spanish public continuity in `evidence/328-v81-landing-anna-spanish-public-continuity-seam.md`
+- 2026-03-27: accepted `Landing Anna prompt-quality / retrieval-quality` in `evidence/326-v81-landing-anna-prompt-quality-t4-acceptance.md` after six bounded packets landed, so the lane is now closed and the remaining Anna multilingual, analytics/dashboard, and broader voice breadth stay queued as separate themes
+- 2026-03-27: landed the sixth bounded packet inside `Landing Anna prompt-quality / retrieval-quality` by adding history shaping in `evidence/325-v81-landing-anna-history-shaping-seam.md`, so short follow-up prompts now receive explicit recent-topic context at prompt level instead of relying only on raw history and retrieval expansion
+- 2026-03-27: landed the fifth bounded packet inside `Landing Anna prompt-quality / retrieval-quality` by adding answer-structure prompt shaping in `evidence/324-v81-landing-anna-answer-structure-prompt-shaping-seam.md`, so the public Anna runtime now explicitly answers in LP-safe form: direct answer first, short public-value explanation second, and only one natural CTA when it helps
+- 2026-03-27: landed the fourth bounded packet inside `Landing Anna prompt-quality / retrieval-quality` by adding worker locale-aware retrieval quality in `evidence/323-v81-landing-anna-worker-locale-aware-retrieval-quality-seam.md`, so worker-backed Anna retrieval now honors the visitor language before cross-language fallback just like the main public Anna path
+- 2026-03-26: landed the third bounded packet inside `Landing Anna prompt-quality / retrieval-quality` by adding worker prompt merge continuity in `evidence/322-v81-landing-anna-worker-prompt-merge-continuity-seam.md`, so worker-level Anna prompt customization now refines the public LP contract instead of replacing it
+- 2026-03-26: landed the second bounded packet inside `Landing Anna prompt-quality / retrieval-quality` by adding follow-up retrieval continuity in `evidence/321-v81-landing-anna-follow-up-retrieval-continuity-seam.md`, so short follow-up public prompts now inherit the previous user topic before Anna retrieval runs
+- 2026-03-26: promoted `Landing Anna prompt-quality / retrieval-quality` into active execution through `docs/product/work-packets/T4_LANDING_ANNA_PROMPT_QUALITY_CHARTER.md`, recorded the split-brain map in `evidence/319-v81-landing-anna-prompt-quality-split-brain-map.md`, and closed the first bounded packet via locale-aware retrieval quality in `evidence/320-v81-landing-anna-locale-aware-retrieval-quality-seam.md`
 - 2026-03-26: created the first post-closure debt reduction program and activated `Post-closure exception closure pack v1`
 - 2026-03-26: executed the first 3-agent finisher pass and recorded the live stopping state in `evidence/101-v8-tranche0-three-agent-finisher-proof.md`; `Calendar` and `Admin/Superadmin` remain active but are now narrowed to one blocker each
 - 2026-03-26: linked the operational tracker `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md` and recorded follow-up hardening for `Calendar` submit flow and `Admin / Superadmin` role normalization
@@ -336,3 +480,108 @@ Post-pass hardening now completed:
 - 2026-03-26: recorded post-deploy staging proof in `evidence/102-v8-superadmin-post-deploy-staging-proof.md`; remaining blocker is narrowed to staging session entitlement
 - 2026-03-26: recorded valid superadmin staging session and fresh workspace deploy proof in `evidence/103-v8-superadmin-valid-session-no-v8-diagnostics-proof.md`; remaining blocker is now the missing bounded V8 diagnostics surface in `Health Monitoring`
 - 2026-03-26: recorded final calendar staging proof in `evidence/104-v8-calendar-create-submit-live-proof.md`; `Calendar` is now closed as staging-proven for the bounded V8 slice
+- 2026-03-26: recorded fresh-shell continuity narrowing in `evidence/105-v8-superadmin-fresh-shell-continuity-proof.md`; latest shell and local build contain the bounded diagnostics panel, while live re-proof remains blocked by logout/session continuity and temporary `429` auth throttling
+- 2026-03-26: recorded final superadmin staging proof in `evidence/106-v8-superadmin-health-monitoring-live-proof.md`; the bounded diagnostics surface is live, `v8/admin/*` requests fire from `Health Monitoring`, logout continuity is clean, and `Tranche 0` is now acceptance-complete
+- 2026-03-26: promoted `Reports / Presentations` into active `Tranche 1` execution and recorded the first split-brain map in `evidence/107-v81-reports-presentations-split-brain-map.md`
+- 2026-03-26: standardized the reports outputs-library URL contract to `tab=documents` while preserving `tab=reports` as a compatibility alias, so `Reports / Presentations` now has one canonical deep-link for the documents lane
+- 2026-03-26: unified reports primary-action target resolution in `useRapData`, so the reports lane now uses one explicit contract for registry-backed rows vs origin-owned report actions before the backend authority convergence
+- 2026-03-26: added `GET /api/artifacts/:id/action-target` as a thin registry-to-origin seam for reports/presentations and removed dead reports/presentations lazy entries from the live router path, further narrowing the active split-brain surface
+- 2026-03-26: consumed `action-target` in the live outputs-library UI and recorded the result in `evidence/108-v81-reports-presentations-action-target-seam.md`; `Reports / Presentations` now has canonical registry list reads plus one explicit backend seam for primary report/presentation actions
+- 2026-03-26: neutralized historical report entry leftovers by converting `ReportsEntryRouter` and `FullReportsView` into redirect shims to the canonical outputs library documents lane, recorded in `evidence/109-v81-reports-presentations-legacy-entry-neutralization.md`
+- 2026-03-26: accepted `Reports / Presentations` for `T1` completion in `evidence/110-v81-reports-presentations-t1-acceptance.md`; the bounded split-brain removal packet is now closed
+- 2026-03-26: promoted `Idea workspace` into active `Tranche 1` execution, recorded the split-brain map in `evidence/111-v81-idea-workspace-split-brain-map.md`, and closed the first bounded packet by aligning `artifact=idea:*` deep links with the canonical My Work intent bridge in `evidence/112-v81-idea-workspace-artifact-deeplink-parity.md`
+- 2026-03-26: narrowed the Idea workspace notebook client split by routing classify through `Api.classifyNotebookPage()` instead of a local raw fetch, recorded in `evidence/113-v81-idea-workspace-notebook-classify-client-seam.md`
+- 2026-03-26: closed notebook classify as a V8-first notebook contract packet in `evidence/114-v81-idea-workspace-notebook-classify-v8-contract.md`, adding the missing V8 route/client path and guarded legacy fallback behavior
+- 2026-03-26: removed list/workspace stage normalization drift by routing list-boundary stage mapping through the shared V5 stage model, recorded in `evidence/115-v81-idea-workspace-stage-normalization-boundary.md`
+- 2026-03-26: converged notebook upload onto the shared capture seam for the live UI and reduced the legacy `/api/my-work/notebook/upload` path to a compatibility shim over `notebookService.capture()`, recorded in `evidence/116-v81-idea-workspace-notebook-upload-capture-seam.md`
+- 2026-03-26: moved remaining live notebook consumers off direct route usage into shared client seams, including note suggestion surfaces and action extraction streaming, recorded in `evidence/117-v81-idea-workspace-notebook-consumer-client-seams.md`
+- 2026-03-26: cleaned up residual Idea workspace authority drift by neutralizing `IdeasMindMap` into a canonical redirect shim and bounding inbox fallback behavior, recorded in `evidence/118-v81-idea-workspace-residual-authority-cleanup.md`
+- 2026-03-26: accepted `Idea workspace` for `T1` completion in `evidence/119-v81-idea-workspace-t1-acceptance.md`; the bounded split-brain removal packet is now closed
+- 2026-03-26: promoted `Execution / delivery control` to the single active `T2` lane via `docs/product/work-packets/T2_EXECUTION_DELIVERY_CONTROL_CHARTER.md`, recorded the execution split-brain map in `evidence/120-v81-execution-delivery-control-split-brain-map.md`, and closed the first bounded route/auth consistency packet in `evidence/121-v81-execution-delivery-route-guard-consistency.md`
+- 2026-03-26: bounded execution-control fallback discipline across `ExecutionHub` and the active execution-control panels, recorded in `evidence/122-v81-execution-control-fallback-discipline.md`, so transient V8 failures no longer silently downgrade the live execution lane to legacy routes
+- 2026-03-26: added V8 initiative-budget summary parity for the active `BudgetControlPanel` surface in `evidence/123-v81-execution-budget-initiative-v8-parity.md`, removing the remaining legacy-only budget summary read from the live execution lane
+- 2026-03-26: added V8 RAID mitigation parity for the active `MitigationPanel` surface in `evidence/124-v81-execution-raid-mitigation-v8-parity.md`, removing the remaining obvious legacy-only execution-control write from the live execution lane
+- 2026-03-26: accepted `Execution / delivery control` for bounded `T2` completion in `evidence/125-v81-execution-delivery-control-t2-acceptance.md`; remaining PMO/action-queue/operator breadth is now explicitly treated as broader parity, not a blocker for the accepted bounded lane
+- 2026-03-26: promoted `Results / KPI / ROI` to the active `T2` lane via `docs/product/work-packets/T2_RESULTS_KPI_ROI_CHARTER.md`, recorded the results split-brain map in `evidence/126-v81-results-kpi-roi-split-brain-map.md`, and closed the first bounded route canonicalization packet in `evidence/127-v81-results-route-canonicalization.md`
+- 2026-03-26: removed synthetic `DEMO_*` fallback from the active results summary and KPI surfaces so governed V8 snapshot strips no longer coexist with fake records; packet recorded in `evidence/128-v81-results-runtime-truth-alignment.md`
+- 2026-03-26: added V8 ROI portfolio summary parity for the active ROI portfolio views and moved them onto a V8-first client seam with bounded fallback, recorded in `evidence/129-v81-results-roi-portfolio-v8-parity.md`
+- 2026-03-26: added V8 ROI detail drawer parity for variance/assumptions/realized continuity and moved `ROIDetailDrawer` onto a V8-first detail seam with bounded fallback, recorded in `evidence/130-v81-results-roi-detail-drawer-v8-parity.md`
+- 2026-03-26: added V8 KPI catalog + mappings parity for active Results KPI surfaces and moved the operational/reporting/drawer identity reads onto a shared V8-first seam, recorded in `evidence/131-v81-results-kpi-read-seam-v8-parity.md`
+- 2026-03-26: added V8 KPI drawer detail parity for active measurement/deviation continuity and moved `KPITimeSeriesDrawer` onto a governed V8-first detail seam with bounded fallback, recorded in `evidence/132-v81-results-kpi-drawer-detail-v8-parity.md`
+- 2026-03-26: moved `ResultsHub` and `ResultsSummaryView` onto the shared governed KPI catalog seam for active KPI monitoring reads, recorded in `evidence/133-v81-results-hub-summary-kpi-catalog-parity.md`
+- 2026-03-26: accepted `Results / KPI / ROI` for bounded `T2` completion in `evidence/134-v81-results-kpi-roi-t2-acceptance.md`; remaining legacy-backed writes and broader operator breadth are now treated as broader parity work rather than blockers for the bounded active lane
+- 2026-03-26: promoted `Sync / connectors / interoperability` to the active `T2` lane via `docs/product/work-packets/T2_SYNC_CONNECTORS_INTEROPERABILITY_CHARTER.md`, recorded the sync split-brain map in `evidence/135-v81-sync-connectors-split-brain-map.md`, and closed the first bounded entry canonicalization packet in `evidence/136-v81-sync-entry-canonicalization.md`
+- 2026-03-26: added V8 sync hub observability parity for catalog, health summary, unresolved errors, and audit log; moved `UnifiedSyncHub` onto governed V8-first seams with bounded fallback, recorded in `evidence/137-v81-sync-hub-observability-v8-parity.md`
+- 2026-03-26: added V8 sync error-resolution parity for the active sync hub recovery action and moved error resolution onto a governed V8-first mutation seam with bounded fallback, recorded in `evidence/138-v81-sync-error-resolution-v8-parity.md`
+- 2026-03-26: added V8 sync pause/resume parity for the active sync hub lifecycle controls and moved pause/resume onto governed V8-first mutation seams with bounded fallback, recorded in `evidence/139-v81-sync-pause-resume-v8-parity.md`
+- 2026-03-26: added V8 sync run-now parity for the active sync hub lifecycle trigger and moved manual sync execution onto a governed V8-first mutation seam with bounded fallback, recorded in `evidence/140-v81-sync-run-now-v8-parity.md`
+- 2026-03-26: added V8 sync reauth parity for the active sync hub token-recovery action and moved reauthorization onto a governed V8-first mutation seam with bounded fallback, recorded in `evidence/141-v81-sync-reauth-v8-parity.md`
+- 2026-03-26: added V8 sync disconnect parity for the active sync hub lifecycle action and moved disconnect onto a governed V8-first mutation seam with bounded fallback, recorded in `evidence/143-v81-sync-disconnect-v8-parity.md`
+- 2026-03-26: completed the bounded operator-control surface and accepted `Sync / connectors / interoperability` for bounded `T2` completion in `evidence/142-v81-sync-connectors-interoperability-t2-acceptance.md`
+- 2026-03-26: promoted `Finance` to the active `T2` lane via `docs/product/work-packets/T2_FINANCE_CHARTER.md`, recorded the finance split-brain map in `evidence/144-v81-finance-split-brain-map.md`, and closed the first bounded entry/shell packet in `evidence/145-v81-finance-entry-route-shell-parity.md`
+- 2026-03-26: added V8 finance analyses list/read parity for the active finance analysis and investment tabs, moved `useFinanceData` onto `/api/v8/finance/analyses` with bounded fallback, and recorded the packet in `evidence/146-v81-finance-analyses-list-read-seam.md`
+- 2026-03-26: added V8 finance analysis preview ratios parity for the active finance table-preview flow, moved `useFinanceSelection` onto `/api/v8/finance/analyses/:analysisId/ratios` with bounded fallback, and recorded the packet in `evidence/147-v81-finance-analysis-ratios-preview-seam.md`
+- 2026-03-26: removed raw legacy reads from `FinancialAnalysisWorkspace` and aligned the dedicated analysis workspace to shared governed V8-first list/ratio seams, recorded in `evidence/148-v81-finance-analysis-workspace-v8-read-seam.md`
+- 2026-03-26: added V8 finance initiative-proposals parity for the export-to-initiatives dialog, moved `ExportToOutputDialog` onto `/api/v8/finance/analyses/:analysisId/initiative-proposals` with bounded fallback, and recorded the packet in `evidence/149-v81-finance-initiative-proposals-v8-read-seam.md`
+- 2026-03-26: added V8 finance initiative creation accept parity for the export-to-initiatives dialog, moved `Create Initiatives` onto `/api/v8/finance/analyses/:analysisId/initiatives` with bounded fallback, and recorded the packet in `evidence/150-v81-finance-initiative-create-accept-v8-seam.md`
+- 2026-03-26: added V8 finance analysis operator mutation parity for `run` and `approve`, moved both table-row and preview-footer analysis actions onto `/api/v8/finance/analyses/:analysisId/*` with bounded fallback, and recorded the packet in `evidence/151-v81-finance-analysis-operator-mutations-v8-seam.md`
+- 2026-03-26: added V8 finance analysis creation parity for the active create entry points, moved `CreateAnalysisModal`, `FinancialAnalysisWorkspace`, and duplicate actions onto `/api/v8/finance/analyses` with bounded fallback, and recorded the packet in `evidence/152-v81-finance-analysis-create-v8-seam.md`
+- 2026-03-26: added V8 finance analysis delete parity for active removal actions, moved `useFinanceRowActions` delete onto `/api/v8/finance/analyses/:analysisId` with bounded fallback, and recorded the packet in `evidence/153-v81-finance-analysis-delete-v8-seam.md`
+- 2026-03-26: accepted `Finance` for bounded `T2` completion in `evidence/154-v81-finance-t2-acceptance.md`; the remaining statements/models/budgets/valuations/import breadth is now explicitly treated as broader parity work rather than an active lane blocker
+- 2026-03-26: promoted `Partner Program` into active `T2` execution with charter `docs/product/work-packets/T2_PARTNER_PROGRAM_CHARTER.md`, recorded the split-brain map in `evidence/155-v81-partner-program-split-brain-map.md`, and selected partner payout request continuity as the first bounded packet
+- 2026-03-26: added V8 partner payout-request parity for the visible earnings workflow, moved `EarningsSection` `Request Payout` onto `/api/v8/partner/payouts/request` with bounded fallback, and recorded the packet in `evidence/156-v81-partner-payout-request-v8-seam.md`
+- 2026-03-26: added V8 partner campaign-create parity for the visible referral-tools workflow, moved `ReferralToolsSection` `Create Campaign Link` onto `/api/v8/partner/campaign-links` with bounded fallback, and recorded the packet in `evidence/157-v81-partner-campaign-create-v8-seam.md`
+- 2026-03-26: added V8 partner campaign-delete parity for the visible referral-tools workflow, moved campaign removal onto `/api/v8/partner/campaign-links/:linkId` with bounded fallback, and recorded the packet in `evidence/158-v81-partner-campaign-delete-v8-seam.md`
+- 2026-03-26: added V8 partner public-listing parity for the visible profile workflow, moved the `PartnerPortalView` directory visibility toggle onto `/api/v8/partner/organization/listing` with bounded fallback, and recorded the packet in `evidence/159-v81-partner-public-listing-v8-seam.md`
+- 2026-03-26: added V8 partner company-info parity for the visible profile workflow, moved `PartnerPortalView` company-info save onto `/api/v8/partner/organization` with bounded fallback, and recorded the packet in `evidence/160-v81-partner-company-info-v8-seam.md`
+- 2026-03-26: added V8 partner specializations parity for the visible profile workflow, moved `PartnerPortalView` specializations save onto `/api/v8/partner/organization/specializations` with bounded fallback, and recorded the packet in `evidence/161-v81-partner-specializations-v8-seam.md`
+- 2026-03-26: added V8 partner regions parity for the visible profile workflow, moved `PartnerPortalView` regions save onto `/api/v8/partner/organization/regions` with bounded fallback, and recorded the packet in `evidence/162-v81-partner-regions-v8-seam.md`
+- 2026-03-26: accepted `Partner Program` for bounded `T2` completion in `evidence/163-v81-partner-program-t2-acceptance.md`; remaining onboarding/client-access breadth, statement data sources, and placeholder payout-settings UI are now treated as broader parity work rather than blockers for the active lane
+- 2026-03-26: promoted `Multiplayer / collaboration` into active `T2` execution with charter `docs/product/work-packets/T2_MULTIPLAYER_COLLABORATION_CHARTER.md`, recorded the split-brain map in `evidence/164-v81-multiplayer-collaboration-split-brain-map.md`, and selected the bounded first packet around governed workspace tool header presence indicators
+- 2026-03-26: added governed V8-first workspace header presence continuity for `Multiplayer / collaboration`, wired `IdeaTableTool` to the persisted room-binding/presence bridge behind `v8_multiplayer_enabled`, and recorded the packet in `evidence/165-v81-multiplayer-header-presence-v8-seam.md`
+- 2026-03-26: added governed V8-first workspace lock visibility for `Multiplayer / collaboration`, wired `IdeaTableTool` to persisted room-lock truth behind `v8_multiplayer_enabled`, and accepted the lane for bounded `T2` completion in `evidence/167-v81-multiplayer-collaboration-t2-acceptance.md`
+- 2026-03-26: promoted `Notes` adjuncts into active `T3` execution with charter `docs/product/work-packets/T3_NOTES_ADJUNCTS_CHARTER.md`, recorded the split-brain map in `evidence/168-v81-notes-adjuncts-split-brain-map.md`, and selected notebook AI proposals as the first bounded packet
+- 2026-03-26: added governed V8-first notebook AI proposal continuity for `Notes` adjuncts, moved notebook proposal list/create/resolve onto `/api/v8/my-work/notebook/*`, and recorded the packet in `evidence/169-v81-notes-ai-proposals-v8-seam.md`
+- 2026-03-26: added governed V8-first notebook convert continuity for `Notes` adjuncts, moved notebook convert onto `/api/v8/my-work/notebook/pages/:id/convert`, recorded the packet in `evidence/170-v81-notes-convert-v8-seam.md`, and accepted the bounded lane in `evidence/171-v81-notes-adjuncts-t3-acceptance.md`
+- 2026-03-26: promoted `Chat` into active `T2` execution with charter `docs/product/work-packets/T2_CHAT_CLOSURE_CHARTER.md`, recorded the split-brain map in `evidence/172-v81-chat-split-brain-map.md`, and selected `B-02 chat-execution-retrieval closure` as the first bounded packet
+- 2026-03-26: extended the governed V8 chat spine onto the active chat surface by adding bounded snapshot-entry continuity for `V8ArtifactRunControl`, recorded the packet in `evidence/173-v81-chat-execution-retrieval-surface-seam.md`, and kept the lane active for one possible handoff readback follow-up
+- 2026-03-26: surfaced conversation-scoped governed handoff readback on the active chat header strip via `V8ContextIndicator`, recorded the packet in `evidence/174-v81-chat-handoff-readback-seam.md`, and kept the lane active for a possible handoff creation follow-up
+- 2026-03-26: added governed handoff creation continuity on the active chat header strip via `V8ContextIndicator`, recorded the packet in `evidence/175-v81-chat-handoff-creation-seam.md`, and accepted the bounded `Chat` lane in `evidence/176-v81-chat-t2-acceptance.md`
+- 2026-03-26: promoted `AI core` into active `T2` execution with charter `docs/product/work-packets/T2_AI_CORE_CHARTER.md`, recorded the split-brain map in `evidence/177-v81-ai-core-split-brain-map.md`, and selected `B-02 ai-core exposure completion` as the first bounded packet
+- 2026-03-26: added a governed `AI core runtime` operator surface to `AI Platform -> Operations`, recorded the packet in `evidence/178-v81-ai-core-runtime-operator-exposure-seam.md`, and kept the lane active for a possible tool-policy readback follow-up
+- 2026-03-26: added governed AI-core tool-policy readback continuity on the active operator surface via `AICoreRuntimePanel`, recorded the packet in `evidence/179-v81-ai-core-tool-policy-readback-seam.md`, and accepted the bounded `AI core` lane in `evidence/180-v81-ai-core-t2-acceptance.md`
+- 2026-03-26: recorded the clean bounded hold state in `evidence/181-v81-post-backlog-program-held-state.md`; no non-deferred promoted lane remains active, so the program is now held pending explicit `T4` unlock or a new mandate
+- 2026-03-26: explicitly unlocked `Communication` from the `T4` parking lot, promoted it with charter `docs/product/work-packets/T4_COMMUNICATION_CHARTER.md`, recorded the split-brain map in `evidence/182-v81-communication-split-brain-map.md`, and closed the first bounded packet via canonical superadmin communication entry authority in `evidence/183-v81-communication-superadmin-entry-authority-seam.md`
+- 2026-03-26: added superadmin communication stats read continuity on `CustomerCommunicationView`, recorded the packet in `evidence/184-v81-communication-superadmin-stats-read-seam.md`, and set the next bounded candidate to the separate `stakeholder-comm` runtime slice
+- 2026-03-26: moved the next bounded communication packet into the separate `stakeholder-comm` runtime by routing `PeopleChangeWorkspace` communication reads through a shared API seam, recorded in `evidence/185-v81-communication-stakeholder-runtime-read-seam.md`
+- 2026-03-26: added a visible stakeholder communication `plan-item send` action on `PeopleChangeWorkspace`, routed plan-item read/send through shared API seams, and recorded the packet in `evidence/186-v81-communication-stakeholder-plan-item-send-seam.md`
+- 2026-03-26: added steerco-pack distribution continuity on `PeopleChangeWorkspace`, recorded the packet in `evidence/187-v81-communication-steerco-pack-distribution-seam.md`, accepted the bounded `Communication` lane in `evidence/188-v81-communication-t4-acceptance.md`, and returned the program to held bounded state in `evidence/189-v81-post-backlog-program-held-state-after-communication.md`
+- 2026-03-26: explicitly unlocked `sheet ArtifactRun parity`, promoted it with charter `docs/product/work-packets/T4_SHEET_ARTIFACTRUN_PARITY_CHARTER.md`, recorded the split-brain map in `evidence/190-v81-sheet-artifactrun-split-brain-map.md`, closed the bounded sheet plan/materialize seam in `evidence/191-v81-sheet-artifactrun-materialize-parity-seam.md`, accepted the lane in `evidence/192-v81-sheet-artifactrun-t4-acceptance.md`, and returned the program to held bounded state in `evidence/193-v81-post-backlog-program-held-state-after-sheet-artifactrun.md`
+- 2026-03-26: explicitly unlocked `Edukacja`, promoted it through the documented `Help / Knowledge Base` bridge with charter `docs/product/work-packets/T4_EDUKACJA_CHARTER.md`, recorded the split-brain map in `evidence/194-v81-edukacja-split-brain-map.md`, and closed the first bounded docs/KB fallback seam in `evidence/195-v81-edukacja-kb-fallback-seam.md`
+- 2026-03-26: canonicalized `Edukacja` entry authority to `/docs`, reduced legacy `/knowledge` to a compatibility redirect shim, recorded the packet in `evidence/196-v81-edukacja-entry-authority-seam.md`, accepted the lane in `evidence/197-v81-edukacja-t4-acceptance.md`, and returned the program to held bounded state in `evidence/198-v81-post-backlog-program-held-state-after-edukacja.md`
+- 2026-03-26: explicitly unlocked `Mobile / Landing`, promoted it with charter `docs/product/work-packets/T4_MOBILE_LANDING_CHARTER.md`, recorded the split-brain map in `evidence/199-v81-mobile-landing-split-brain-map.md`, and closed the first bounded public pricing route-authority seam in `evidence/200-v81-mobile-landing-pricing-route-authority-seam.md`
+- 2026-03-26: restored narrow-viewport public nav continuity on the canonical landing topbar menu, recorded the packet in `evidence/201-v81-mobile-landing-mobile-nav-continuity-seam.md`, and kept `Mobile / Landing` active for the next bounded mobile continuity cut
+- 2026-03-26: restored `Become Partner` CTA continuity inside the canonical landing mobile menu, recorded the packet in `evidence/202-v81-mobile-landing-mobile-partner-cta-continuity-seam.md`, and kept `Mobile / Landing` active for the next bounded mobile continuity cut
+- 2026-03-26: refreshed real Playwright proof for the current landing mobile flow in `tests/e2e/mobile-responsive.spec.ts`, accepted `Mobile / Landing` in `evidence/203-v81-mobile-landing-t4-acceptance.md`, and returned the program to held bounded state in `evidence/204-v81-post-backlog-program-held-state-after-mobile-landing.md`
+- 2026-03-26: explicitly unlocked `Mobile breadth`, promoted it with charter `docs/product/work-packets/T4_MOBILE_BREADTH_CHARTER.md`, recorded the split-brain map in `evidence/205-v81-mobile-breadth-split-brain-map.md`, and closed the first bounded authenticated bottom-nav authority seam in `evidence/206-v81-mobile-breadth-bottom-nav-authority-seam.md`
+- 2026-03-26: aligned the bottom-nav mobile `AI` entry with the canonical full-chat path, recorded the packet in `evidence/207-v81-mobile-breadth-bottom-nav-ai-entry-seam.md`, and kept `Mobile breadth` active for one more authenticated-shell proof/overlay cut
+- 2026-03-26: added authenticated mobile sidebar overlay continuity on click/`Escape`, accepted `Mobile breadth` in `evidence/208-v81-mobile-breadth-t4-acceptance.md`, and returned the program to held bounded state in `evidence/209-v81-post-backlog-program-held-state-after-mobile-breadth.md`
+- 2026-03-26: explicitly unlocked `Landing page redesign`, promoted it with charter `docs/product/work-packets/T4_LANDING_PAGE_REDESIGN_CHARTER.md`, recorded the split-brain map in `evidence/210-v81-landing-redesign-split-brain-map.md`, and closed the first bounded `/become-partner` marketing-shell parity seam in `evidence/211-v81-landing-redesign-become-partner-shell-parity-seam.md`
+- 2026-03-26: moved `/tools` onto the shared landing footer contract, recorded the packet in `evidence/212-v81-landing-redesign-tools-footer-shell-parity-seam.md`, and kept `Landing page redesign` active for one more public shell/CTA or canonical-IA cut
+- 2026-03-26: aligned `/resources` topbar `Demo` and `Trial` actions to the shared modal-backed CTA contract, recorded the packet in `evidence/213-v81-landing-redesign-resources-cta-authority-seam.md`, and kept `Landing page redesign` active for one more public CTA-authority or canonical-IA cut
+- 2026-03-26: aligned `/tools` topbar `Demo` and `Trial` actions to the shared modal-backed CTA contract, recorded the packet in `evidence/214-v81-landing-redesign-tools-cta-authority-seam.md`, and kept `Landing page redesign` active for one more public CTA-authority or canonical-IA cut
+- 2026-03-26: aligned `/audits` topbar `Demo` and `Trial` actions to the shared modal-backed CTA contract, recorded the packet in `evidence/215-v81-landing-redesign-audits-cta-authority-seam.md`, and kept `Landing page redesign` active pending bounded acceptance or one final canonical `/` IA cut
+- 2026-03-26: accepted `Landing page redesign` in `evidence/216-v81-landing-page-redesign-t4-acceptance.md` and returned the program to held bounded state in `evidence/217-v81-post-backlog-program-held-state-after-landing-page-redesign.md`
+- 2026-03-26: promoted `Landing homepage IA` with charter `docs/product/work-packets/T4_LANDING_HOMEPAGE_IA_CHARTER.md`, recorded the split-brain map in `evidence/218-v81-landing-homepage-ia-split-brain-map.md`, and closed the first bounded topbar IA authority seam in `evidence/219-v81-landing-homepage-ia-topbar-authority-seam.md`
+- 2026-03-26: aligned `KnowledgePreviewSection` CTA authority on canonical `/` to the shared trial conversion contract, recorded the packet in `evidence/220-v81-landing-homepage-knowledge-preview-cta-authority-seam.md`, and kept `Landing homepage IA` active pending bounded acceptance or one more homepage seam
+- 2026-03-26: aligned footer `Demo` and `Trial` CTA authority on canonical `/` to the shared conversion contract in `evidence/221-v81-landing-homepage-footer-cta-authority-seam.md`, accepted `Landing homepage IA` in `evidence/222-v81-landing-homepage-ia-t4-acceptance.md`, and returned the program to held bounded state in `evidence/223-v81-post-backlog-program-held-state-after-landing-homepage-ia.md`
+- 2026-03-26: promoted `Landing docs truth` with charter `docs/product/work-packets/T4_LANDING_DOCS_TRUTH_CHARTER.md`, normalized stale Anna-contract missing-file claims in `evidence/225-v81-landing-docs-truth-anna-contract-seam.md`, accepted the lane in `evidence/226-v81-landing-docs-truth-t4-acceptance.md`, and returned the program to held bounded state in `evidence/227-v81-post-backlog-program-held-state-after-landing-docs-truth.md`
+- 2026-03-26: promoted `Landing Anna handoff` with charter `docs/product/work-packets/T4_LANDING_ANNA_HANDOFF_CHARTER.md`, closed the live widget CTA authority seam in `evidence/229-v81-landing-anna-handoff-cta-authority-seam.md`, accepted the lane in `evidence/230-v81-landing-anna-handoff-t4-acceptance.md`, and returned the program to held bounded state in `evidence/231-v81-post-backlog-program-held-state-after-landing-anna-handoff.md`
+- 2026-03-26: promoted `Landing Anna guardrails` with charter `docs/product/work-packets/T4_LANDING_ANNA_GUARDRAILS_CHARTER.md`, closed the Anna per-session rate-limit seam in `evidence/233-v81-landing-anna-guardrails-rate-limit-seam.md`, accepted the lane in `evidence/234-v81-landing-anna-guardrails-t4-acceptance.md`, and returned the program to held bounded state in `evidence/235-v81-post-backlog-program-held-state-after-landing-anna-guardrails.md`
+- 2026-03-26: promoted `Landing Anna language fallback` with charter `docs/product/work-packets/T4_LANDING_ANNA_LANGUAGE_FALLBACK_CHARTER.md`, closed the unsupported-language seam in `evidence/237-v81-landing-anna-language-fallback-seam.md`, accepted the lane in `evidence/238-v81-landing-anna-language-fallback-t4-acceptance.md`, and returned the program to held bounded state in `evidence/239-v81-post-backlog-program-held-state-after-landing-anna-language-fallback.md`
+- 2026-03-26: promoted `Landing Anna degraded fallback` with charter `docs/product/work-packets/T4_LANDING_ANNA_DEGRADED_FALLBACK_CHARTER.md`, closed the service-unavailable seam in `evidence/241-v81-landing-anna-degraded-fallback-seam.md`, accepted the lane in `evidence/242-v81-landing-anna-degraded-fallback-t4-acceptance.md`, and returned the program to held bounded state in `evidence/243-v81-post-backlog-program-held-state-after-landing-anna-degraded-fallback.md`
+- 2026-03-26: promoted `Landing Anna voice degraded fallback` with charter `docs/product/work-packets/T4_LANDING_ANNA_VOICE_DEGRADED_FALLBACK_CHARTER.md`, closed the no-technical-details voice seam in `evidence/245-v81-landing-anna-voice-degraded-fallback-seam.md`, accepted the lane in `evidence/246-v81-landing-anna-voice-degraded-fallback-t4-acceptance.md`, and returned the program to held bounded state in `evidence/247-v81-post-backlog-program-held-state-after-landing-anna-voice-degraded-fallback.md`
+- 2026-03-26: promoted `Landing Anna shared-shell placement` with charter `docs/product/work-packets/T4_LANDING_ANNA_SHARED_SHELL_PLACEMENT_CHARTER.md`, closed the shared marketing-shell placement seam in `evidence/249-v81-landing-anna-shared-shell-placement-seam.md`, accepted the lane in `evidence/250-v81-landing-anna-shared-shell-placement-t4-acceptance.md`, and returned the program to held bounded state in `evidence/251-v81-post-backlog-program-held-state-after-landing-anna-shared-shell-placement.md`
+- 2026-03-26: promoted `Landing Anna resources placement` with charter `docs/product/work-packets/T4_LANDING_ANNA_RESOURCES_PLACEMENT_CHARTER.md`, closed the bespoke `ResourcesPage` placement seam in `evidence/253-v81-landing-anna-resources-placement-seam.md`, accepted the lane in `evidence/254-v81-landing-anna-resources-placement-t4-acceptance.md`, and returned the program to held bounded state in `evidence/255-v81-post-backlog-program-held-state-after-landing-anna-resources-placement.md`
+- 2026-03-26: promoted `Landing Anna tools placement` with charter `docs/product/work-packets/T4_LANDING_ANNA_TOOLS_PLACEMENT_CHARTER.md`, closed the bespoke `ToolsShowcasePage` placement seam in `evidence/257-v81-landing-anna-tools-placement-seam.md`, accepted the lane in `evidence/258-v81-landing-anna-tools-placement-t4-acceptance.md`, and returned the program to held bounded state in `evidence/259-v81-post-backlog-program-held-state-after-landing-anna-tools-placement.md`
+- 2026-03-26: promoted `Landing Anna audits placement` with charter `docs/product/work-packets/T4_LANDING_ANNA_AUDITS_PLACEMENT_CHARTER.md`, closed the bespoke `AuditsShowcasePage` placement seam in `evidence/261-v81-landing-anna-audits-placement-seam.md`, accepted the lane in `evidence/262-v81-landing-anna-audits-placement-t4-acceptance.md`, and returned the program to held bounded state in `evidence/263-v81-post-backlog-program-held-state-after-landing-anna-audits-placement.md`

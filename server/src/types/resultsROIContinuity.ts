@@ -397,6 +397,198 @@ export interface ROIDashboardSummary {
   }>;
 }
 
+export interface ROIPortfolioSummaryItem {
+  initiativeId: string;
+  initiativeName: string;
+  status: string;
+  priority: string;
+  capex: number;
+  opexAnnual: number;
+  projectedBenefit: number;
+  realizedBenefit: number;
+  variance: number;
+  confidence: string | null;
+  hasRealized: boolean;
+}
+
+export interface ROIPortfolioSummary {
+  organizationId: string;
+  items: ROIPortfolioSummaryItem[];
+  summary: {
+    totalProjected: number;
+    totalRealized: number;
+    totalCapex: number;
+    totalVariance: number;
+    initiativeCount: number;
+    coveragePercent: number;
+  };
+}
+
+export interface ROIInitiativeVarianceDetail {
+  hasAssumptions: boolean;
+  projected?: {
+    totalBenefit: number;
+    revenueDelta?: number | null;
+    costDelta?: number | null;
+    capex?: number | null;
+    opexAnnual?: number | null;
+    roiPercent?: number | null;
+    npv?: number | null;
+    paybackMonths?: number | null;
+    horizonMonths?: number | null;
+    confidence?: string | null;
+  };
+  realized?: {
+    revenueDelta: number;
+    costDelta: number;
+    savings: number;
+    totalBenefit: number;
+    dataPoints: number;
+  };
+  variance?: {
+    absolute: number;
+    percent: number;
+    status: 'on_track' | 'below_plan' | 'above_plan';
+  } | null;
+}
+
+export interface ROIAssumptionsDetail {
+  expectedRevenueDelta?: number | null;
+  expectedCostDelta?: number | null;
+  capex?: number | null;
+  opexAnnual?: number | null;
+  horizonMonths?: number | null;
+  effectStartDate?: string | null;
+  confidence?: string | null;
+  assumptionsOwner?: string | null;
+  assumptionsText?: string | null;
+}
+
+export interface ROIRealizedDetailEntry {
+  id: string;
+  periodMonth: string;
+  realizedRevenueDelta?: number | null;
+  realizedCostDelta?: number | null;
+  realizedSavings?: number | null;
+  varianceNotes?: string | null;
+  recordedBy?: string | null;
+  createdAt?: string | null;
+}
+
+export interface ROIInitiativeDetail {
+  organizationId: string;
+  initiativeId: string;
+  variance: ROIInitiativeVarianceDetail;
+  assumptions: ROIAssumptionsDetail | null;
+  realized: ROIRealizedDetailEntry[];
+}
+
+export interface ResultsKpiCatalogEntry {
+  id: string;
+  initiativeId?: string | null;
+  initiativeName?: string | null;
+  name: string;
+  description?: string | null;
+  unit?: string | null;
+  baselineValue?: number | null;
+  targetValue: number | null;
+  measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  alertThreshold?: number | null;
+  alertDirection: 'BELOW' | 'ABOVE';
+  isPrimary: boolean;
+  sortOrder: number;
+  latestValue?: number | null;
+  latestMeasurementDate?: string | null;
+  prevValue?: number | null;
+  prevMeasurementDate?: string | null;
+  isOnTarget: boolean;
+  createdAt: string;
+  updatedAt?: string | null;
+  ownerUserId?: string | null;
+  ownerName?: string | null;
+  direction?: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+  thresholdMode?: 'ABSOLUTE' | 'PERCENT_FROM_TARGET';
+  amberThresholdPct?: number | null;
+  redThresholdPct?: number | null;
+  amberThresholdAbs?: number | null;
+  redThresholdAbs?: number | null;
+  openDeviationCase?: {
+    id: string;
+    severity: 'AMBER' | 'RED';
+    status: string;
+  } | null;
+}
+
+export interface ResultsKpiCatalogMapping {
+  id: string;
+  initiativeId: string;
+  initiativeName?: string | null;
+  kpiId: string;
+  kpiName?: string | null;
+  impactDirection?: string | null;
+}
+
+export interface ResultsKpiCatalog {
+  organizationId: string;
+  kpis: ResultsKpiCatalogEntry[];
+  mappings: ResultsKpiCatalogMapping[];
+}
+
+export interface ResultsKpiDrawerAction {
+  id: string;
+  title: string;
+  ownerUserId?: string | null;
+  dueDate?: string | null;
+  status: 'OPEN' | 'DONE' | 'CANCELLED';
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface ResultsKpiDrawerCase {
+  id: string;
+  kpiId: string;
+  organizationId: string;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  severity: 'AMBER' | 'RED';
+  status: string;
+  ownerUserId?: string | null;
+  deviationSummary?: string | null;
+  rcaText?: string | null;
+  evidenceText?: string | null;
+  evidenceRef?: string | null;
+  resolutionNotes?: string | null;
+  detectedAt?: string | null;
+  acknowledgedAt?: string | null;
+  resolvedAt?: string | null;
+  closedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  actions: ResultsKpiDrawerAction[];
+}
+
+export interface ResultsKpiDrawerDetail {
+  organizationId: string;
+  kpiId: string;
+  measurements: Array<{
+    id: string;
+    kpiId: string;
+    value: number;
+    measuredAt: string | null;
+    periodStart?: string | null;
+    periodEnd?: string | null;
+    periodKey?: string | null;
+    notes?: string | null;
+    createdAt: string;
+    createdBy?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  }>;
+  openCase: ResultsKpiDrawerCase | null;
+}
+
 export interface ReviewPackTimelineEntry {
   packId: string;
   reviewPeriod: string;

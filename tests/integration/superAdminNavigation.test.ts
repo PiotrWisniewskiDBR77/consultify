@@ -25,6 +25,7 @@ describe('SuperAdmin navigation mapping', () => {
     expect(appViewToSection[AppView.SUPERADMIN_DASHBOARD]).toBe('overview');
     expect(appViewToSection[AppView.SUPERADMIN_ORGANIZATIONS]).toBe('customers');
     expect(appViewToSection[AppView.SUPERADMIN_USERS]).toBe('customers');
+    expect(appViewToSection[AppView.SUPERADMIN_COMMUNICATION]).toBe('customers');
     expect(appViewToSection[AppView.SUPERADMIN_BILLING]).toBe('revenue');
     expect(appViewToSection[AppView.SUPERADMIN_SECURITY_POLICIES]).toBe('security');
   });
@@ -33,6 +34,7 @@ describe('SuperAdmin navigation mapping', () => {
     expect(ROUTES.SUPERADMIN.ROOT).toBe('/superadmin');
     expect(ROUTES.SUPERADMIN.OVERVIEW).toBe('/superadmin/overview');
     expect(ROUTES.SUPERADMIN.CUSTOMERS).toBe('/superadmin/customers');
+    expect(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION).toBe('/superadmin/customers/communication');
     expect(ROUTES.SUPERADMIN.AI_PLATFORM).toBe('/superadmin/ai-platform');
     expect(ROUTES.SUPERADMIN.SYSTEM).toBe('/superadmin/system');
     expect(ROUTES.SUPERADMIN.REVENUE).toBe('/superadmin/revenue');

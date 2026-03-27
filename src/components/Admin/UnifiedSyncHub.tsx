@@ -46,11 +46,16 @@ import {
 } from '@/services/api/v8/multiplayer';
 import {
   V8SyncApi,
+  shouldFallbackToLegacySync,
   type V8SyncConnectorAuthState,
+  type V8SyncAuditEntry,
   type V8SyncAuthEscalation,
   type V8SyncConnectorHealthSummary,
+  type V8SyncCatalogConnector,
   type V8SyncConflictRecord,
   type V8SyncCredentialHealthSummary,
+  type V8SyncErrorItem,
+  type V8SyncHealthSummary,
   type V8SyncIntegrationInventoryRow,
   type V8SyncProviderFamily,
   type V8SyncRefreshTimingPolicy,
@@ -383,6 +388,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const fetchCatalog = useCallback(async () => {
     try {
+      try {
+        const data = await V8SyncApi.getConnectors();
+        setCatalog((data.connectors || []) as CatalogConnector[]);
+        return;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+      }
       const res = await fetch(`${API_URL}/sync-hub/connectors`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -395,6 +409,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const fetchHealth = useCallback(async () => {
     try {
+      try {
+        const data = await V8SyncApi.getHubHealth();
+        setHealthSummary((data.summary || null) as V8SyncHealthSummary | null);
+        return;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+      }
       const res = await fetch(`${API_URL}/sync-hub/health`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -407,6 +430,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const fetchErrors = useCallback(async () => {
     try {
+      try {
+        const data = await V8SyncApi.getErrors();
+        setErrors((data.errors || []) as SyncErrorItem[]);
+        return;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+      }
       const res = await fetch(`${API_URL}/sync-hub/errors`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -546,6 +578,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const fetchAuditLog = useCallback(async () => {
     try {
+      try {
+        const data = await V8SyncApi.getAuditLog();
+        setAuditLog((data.entries || []) as V8SyncAuditEntry[]);
+        return;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+      }
       const res = await fetch(`${API_URL}/sync-hub/audit-log`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -629,11 +670,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const handleDisconnect = async (integrationId: string) => {
     try {
-      const res = await fetch(`${API_URL}/sync-hub/disconnect/${integrationId}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
+      let res: Response | null = null;
+      try {
+        await V8SyncApi.disconnectIntegration(integrationId);
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+        res = await fetch(`${API_URL}/sync-hub/disconnect/${integrationId}`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+      }
+      if (!res || res.ok) {
         toast.success(t('integrations.syncHub.disconnected', 'Integration disconnected'));
         trackFunnelEvent('integration_disconnected', { integrationId });
         await loadAll();
@@ -645,6 +694,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const handleReauth = async (integrationId: string) => {
     try {
+      try {
+        await V8SyncApi.reauthIntegration(integrationId);
+        toast.success(t('integrations.syncHub.reauthStarted', 'Re-authorization started'));
+        trackFunnelEvent('integration_reauth_completed', { integrationId });
+        setTimeout(() => loadAll(), 3000);
+        return;
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+      }
+
       const res = await fetch(`${API_URL}/sync-hub/reauth/${integrationId}`, {
         method: 'POST',
         headers: getHeaders(),
@@ -661,10 +722,17 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const handlePause = async (integrationId: string) => {
     try {
-      await fetch(`${API_URL}/sync-hub/pause/${integrationId}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
+      try {
+        await V8SyncApi.pauseIntegration(integrationId);
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+        await fetch(`${API_URL}/sync-hub/pause/${integrationId}`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+      }
       toast.success(t('integrations.syncHub.paused', 'Sync paused'));
       await loadAll();
     } catch {
@@ -674,10 +742,17 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const handleResume = async (integrationId: string) => {
     try {
-      await fetch(`${API_URL}/sync-hub/resume/${integrationId}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
+      try {
+        await V8SyncApi.resumeIntegration(integrationId);
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+        await fetch(`${API_URL}/sync-hub/resume/${integrationId}`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+      }
       toast.success(t('integrations.syncHub.resumed', 'Sync resumed'));
       await loadAll();
     } catch {
@@ -688,26 +763,50 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const handleSync = async (integrationId: string) => {
     setSyncing(integrationId);
     try {
-      const res = await fetch(`${API_URL}/sync-hub/sync/${integrationId}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      try {
+        const data = await V8SyncApi.runIntegrationSync(integrationId);
         toast.success(t('integrations.syncHub.syncComplete', 'Sync completed'));
         trackFunnelEvent('integration_sync_run_completed', { integrationId, status: 'success' });
         if (data.warnings?.length) {
           data.warnings.forEach((w: string) => toast(w, { icon: '⚠️' }));
         }
-      } else if (res.status === 429) {
-        toast.error(data.reason || 'Rate limited');
-        trackFunnelEvent('integration_sync_run_completed', {
-          integrationId,
-          status: 'rate_limited',
+      } catch (error: any) {
+        if (!shouldFallbackToLegacySync(error)) {
+          if (Number(error?.status) === 429) {
+            toast.error(error?.reason || error?.message || 'Rate limited');
+            trackFunnelEvent('integration_sync_run_completed', {
+              integrationId,
+              status: 'rate_limited',
+            });
+          } else {
+            toast.error(error?.error || error?.message || 'Sync failed');
+            trackFunnelEvent('integration_sync_run_completed', { integrationId, status: 'failed' });
+          }
+          await loadAll();
+          return;
+        }
+
+        const res = await fetch(`${API_URL}/sync-hub/sync/${integrationId}`, {
+          method: 'POST',
+          headers: getHeaders(),
         });
-      } else {
-        toast.error(data.error || 'Sync failed');
-        trackFunnelEvent('integration_sync_run_completed', { integrationId, status: 'failed' });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success(t('integrations.syncHub.syncComplete', 'Sync completed'));
+          trackFunnelEvent('integration_sync_run_completed', { integrationId, status: 'success' });
+          if (data.warnings?.length) {
+            data.warnings.forEach((w: string) => toast(w, { icon: '⚠️' }));
+          }
+        } else if (res.status === 429) {
+          toast.error(data.reason || 'Rate limited');
+          trackFunnelEvent('integration_sync_run_completed', {
+            integrationId,
+            status: 'rate_limited',
+          });
+        } else {
+          toast.error(data.error || 'Sync failed');
+          trackFunnelEvent('integration_sync_run_completed', { integrationId, status: 'failed' });
+        }
       }
       await loadAll();
     } catch {
@@ -719,10 +818,17 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
   const handleResolveError = async (errorId: string) => {
     try {
-      await fetch(`${API_URL}/sync-hub/errors/${errorId}/resolve`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
+      try {
+        await V8SyncApi.resolveError(errorId);
+      } catch (error) {
+        if (!shouldFallbackToLegacySync(error)) {
+          throw error;
+        }
+        await fetch(`${API_URL}/sync-hub/errors/${errorId}/resolve`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+      }
       toast.success('Error resolved');
       await fetchErrors();
     } catch {

@@ -31,6 +31,10 @@ import type {
   KPIScorecardSummary,
   KPITrendPoint,
   ROIDashboardSummary,
+  ROIPortfolioSummary,
+  ROIInitiativeDetail,
+  ResultsKpiDrawerDetail,
+  ResultsKpiCatalog,
   ReviewPackTimelineEntry,
   ReconciliationHealthSummary,
   ResultsDashboardSnapshot,
@@ -845,6 +849,127 @@ interface RoiInitiativeAggRow {
   realized_sum: number;
 }
 
+interface LegacyRoiAssumptionRow {
+  initiative_id: string;
+  initiative_name: string;
+  status: string;
+  priority: string;
+  capex: number | null;
+  opex_annual: number | null;
+  expected_revenue_delta: number | null;
+  expected_cost_delta: number | null;
+  confidence: string | null;
+}
+
+interface LegacyRoiRealizedAggRow {
+  initiative_id: string;
+  total_rev: number | null;
+  total_cost: number | null;
+  total_savings: number | null;
+}
+
+interface LegacyRoiRealizedRow {
+  id: string;
+  period_month: string;
+  realized_revenue_delta: number | null;
+  realized_cost_delta: number | null;
+  realized_savings: number | null;
+  variance_notes: string | null;
+  recorded_by: string | null;
+  created_at: string | null;
+}
+
+interface LegacyResultsKpiRow {
+  id: string;
+  initiative_id: string | null;
+  initiative_name: string | null;
+  name: string;
+  description: string | null;
+  unit: string | null;
+  baseline_value: number | null;
+  target_value: number | null;
+  measurement_frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  alert_threshold: number | null;
+  alert_direction: 'BELOW' | 'ABOVE';
+  is_primary: boolean | null;
+  sort_order: number | null;
+  owner_user_id: string | null;
+  owner_first_name: string | null;
+  owner_last_name: string | null;
+  direction: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER' | null;
+  threshold_mode: 'ABSOLUTE' | 'PERCENT_FROM_TARGET' | null;
+  amber_threshold_pct: number | null;
+  red_threshold_pct: number | null;
+  amber_threshold_abs: number | null;
+  red_threshold_abs: number | null;
+  current_value: number | null;
+  latest_value: number | null;
+  latest_period_start: string | null;
+  prev_value: number | null;
+  prev_period_start: string | null;
+  open_case_id: string | null;
+  open_case_severity: 'AMBER' | 'RED' | null;
+  open_case_status: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+interface LegacyResultsKpiMappingRow {
+  id: string;
+  initiative_id: string;
+  initiative_name: string | null;
+  kpi_id: string;
+  kpi_name: string | null;
+  impact_direction: string | null;
+}
+
+interface LegacyKpiTimeSeriesRow {
+  id: string;
+  kpi_id: string;
+  value: number;
+  period_start: string | null;
+  period_end: string | null;
+  measurement_frequency: string | null;
+  notes: string | null;
+  created_at: string;
+  user_id: string | null;
+  user_first_name: string | null;
+  user_last_name: string | null;
+}
+
+interface LegacyDeviationCaseRow {
+  id: string;
+  kpi_id: string;
+  organization_id: string;
+  period_start: string | null;
+  period_end: string | null;
+  severity: 'AMBER' | 'RED';
+  status: string;
+  owner_user_id: string | null;
+  deviation_summary: string | null;
+  rca_text: string | null;
+  evidence_text: string | null;
+  evidence_ref: string | null;
+  resolution_notes: string | null;
+  detected_at: string | null;
+  acknowledged_at: string | null;
+  resolved_at: string | null;
+  closed_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+interface LegacyDeviationActionRow {
+  id: string;
+  case_id: string;
+  title: string;
+  owner_user_id: string | null;
+  due_date: string | null;
+  status: 'OPEN' | 'DONE' | 'CANCELLED';
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 /**
  * ROI realization aggregates for dashboards.
  */
@@ -895,6 +1020,486 @@ export async function getROIDashboard(organizationId: string): Promise<ROIDashbo
       entryCount: r.entry_count,
       realizedSum: r.realized_sum,
     })),
+  };
+}
+
+/**
+ * ROI portfolio rollup for the active Results ROI surfaces.
+ * This is a bounded V8 bridge over the existing org-scoped ROI assumptions and realized tables.
+ */
+export async function getROIPortfolioSummary(organizationId: string): Promise<ROIPortfolioSummary> {
+  const assumptions = await dbAll<LegacyRoiAssumptionRow>(
+    `SELECT
+       ra.initiative_id,
+       i.name AS initiative_name,
+       i.status,
+       i.priority,
+       ra.capex,
+       ra.opex_annual,
+       ra.expected_revenue_delta,
+       ra.expected_cost_delta,
+       ra.confidence
+     FROM roi_assumptions ra
+     JOIN initiatives i ON i.id = ra.initiative_id
+     WHERE ra.organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const realized = await dbAll<LegacyRoiRealizedAggRow>(
+    `SELECT
+       initiative_id,
+       SUM(realized_revenue_delta) AS total_rev,
+       SUM(realized_cost_delta) AS total_cost,
+       SUM(realized_savings) AS total_savings
+     FROM roi_realized_values
+     WHERE organization_id = ?
+     GROUP BY initiative_id`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const realizedMap = new Map<string, LegacyRoiRealizedAggRow>();
+  for (const row of realized || []) {
+    if (row.initiative_id) {
+      realizedMap.set(row.initiative_id, row);
+    }
+  }
+
+  const items = (assumptions || []).map((row) => {
+    const realizedRow = realizedMap.get(row.initiative_id);
+    const projectedBenefit = (row.expected_revenue_delta || 0) + (row.expected_cost_delta || 0);
+    const realizedBenefit = realizedRow
+      ? (realizedRow.total_rev || 0) +
+        (realizedRow.total_cost || 0) +
+        (realizedRow.total_savings || 0)
+      : 0;
+
+    return {
+      initiativeId: row.initiative_id,
+      initiativeName: row.initiative_name,
+      status: row.status,
+      priority: row.priority,
+      capex: row.capex || 0,
+      opexAnnual: row.opex_annual || 0,
+      projectedBenefit,
+      realizedBenefit,
+      variance: realizedBenefit - projectedBenefit,
+      confidence: row.confidence,
+      hasRealized: Boolean(realizedRow),
+    };
+  });
+
+  const totalProjected = items.reduce((sum, item) => sum + item.projectedBenefit, 0);
+  const totalRealized = items.reduce((sum, item) => sum + item.realizedBenefit, 0);
+  const totalCapex = items.reduce((sum, item) => sum + item.capex, 0);
+  const coveragePercent =
+    items.length > 0 ? Math.round((items.filter((item) => item.hasRealized).length / items.length) * 100) : 0;
+
+  return {
+    organizationId,
+    items,
+    summary: {
+      totalProjected,
+      totalRealized,
+      totalCapex,
+      totalVariance: totalRealized - totalProjected,
+      initiativeCount: items.length,
+      coveragePercent,
+    },
+  };
+}
+
+/**
+ * Initiative-level ROI detail bridge for the active ROI drawer surface.
+ */
+export async function getROIInitiativeDetail(
+  initiativeId: string,
+  organizationId: string,
+): Promise<ROIInitiativeDetail> {
+  const assumptionRow = await dbGet<LegacyRoiAssumptionRow & Record<string, unknown>>(
+    `SELECT * FROM roi_assumptions WHERE initiative_id = ? AND organization_id = ?`,
+    [initiativeId, organizationId],
+    { fallback: true },
+  );
+
+  const realizedRows = await dbAll<LegacyRoiRealizedRow>(
+    `SELECT * FROM roi_realized_values
+     WHERE initiative_id = ? AND organization_id = ?
+     ORDER BY period_month DESC`,
+    [initiativeId, organizationId],
+    { fallback: true },
+  );
+
+  const realizedList = realizedRows || [];
+  const totalRealizedRevDelta = realizedList.reduce((sum, row) => sum + (row.realized_revenue_delta || 0), 0);
+  const totalRealizedCostDelta = realizedList.reduce((sum, row) => sum + (row.realized_cost_delta || 0), 0);
+  const totalRealizedSavings = realizedList.reduce((sum, row) => sum + (row.realized_savings || 0), 0);
+
+  let variance: ROIInitiativeDetail['variance'];
+  let assumptions: ROIInitiativeDetail['assumptions'] = null;
+
+  if (!assumptionRow) {
+    variance = { hasAssumptions: false, variance: null };
+  } else {
+    const projectedBenefit =
+      Number(assumptionRow.expected_revenue_delta || 0) + Number(assumptionRow.expected_cost_delta || 0);
+    const realizedBenefit = totalRealizedRevDelta + totalRealizedCostDelta + totalRealizedSavings;
+    const varianceAbs = realizedBenefit - projectedBenefit;
+    const variancePct =
+      projectedBenefit !== 0 ? (varianceAbs / Math.abs(projectedBenefit)) * 100 : 0;
+
+    variance = {
+      hasAssumptions: true,
+      projected: {
+        revenueDelta: Number(assumptionRow.expected_revenue_delta || 0),
+        costDelta: Number(assumptionRow.expected_cost_delta || 0),
+        totalBenefit: projectedBenefit,
+        capex: Number(assumptionRow.capex || 0),
+        opexAnnual: Number(assumptionRow.opex_annual || 0),
+        roiPercent: Number(assumptionRow.expected_roi_percent || 0),
+        npv: Number(assumptionRow.expected_npv || 0),
+        paybackMonths: Number(assumptionRow.expected_payback_months || 0),
+        horizonMonths: Number(assumptionRow.horizon_months || 0),
+        confidence: String(assumptionRow.confidence || ''),
+      },
+      realized: {
+        revenueDelta: totalRealizedRevDelta,
+        costDelta: totalRealizedCostDelta,
+        savings: totalRealizedSavings,
+        totalBenefit: realizedBenefit,
+        dataPoints: realizedList.length,
+      },
+      variance: {
+        absolute: varianceAbs,
+        percent: Math.round(variancePct * 10) / 10,
+        status: variancePct > 10 ? 'above_plan' : variancePct < -10 ? 'below_plan' : 'on_track',
+      },
+    };
+
+    assumptions = {
+      expectedRevenueDelta: assumptionRow.expected_revenue_delta as number | null,
+      expectedCostDelta: assumptionRow.expected_cost_delta as number | null,
+      capex: assumptionRow.capex as number | null,
+      opexAnnual: assumptionRow.opex_annual as number | null,
+      horizonMonths: assumptionRow.horizon_months as number | null,
+      effectStartDate: assumptionRow.effect_start_date as string | null,
+      confidence: (assumptionRow.confidence as string | null) ?? null,
+      assumptionsOwner: (assumptionRow.assumptions_owner as string | null) ?? null,
+      assumptionsText: (assumptionRow.assumptions_text as string | null) ?? null,
+    };
+  }
+
+  return {
+    organizationId,
+    initiativeId,
+    variance,
+    assumptions,
+    realized: realizedList.map((row) => ({
+      id: row.id,
+      periodMonth: row.period_month,
+      realizedRevenueDelta: row.realized_revenue_delta,
+      realizedCostDelta: row.realized_cost_delta,
+      realizedSavings: row.realized_savings,
+      varianceNotes: row.variance_notes,
+      recordedBy: row.recorded_by,
+      createdAt: row.created_at,
+    })),
+  };
+}
+
+/**
+ * Shared KPI catalog + mapping bridge for active Results read surfaces.
+ */
+export async function getResultsKpiCatalog(
+  organizationId: string,
+  options: { kpiId?: string } = {},
+): Promise<ResultsKpiCatalog> {
+  const params: Array<string> = [organizationId, organizationId, organizationId, organizationId];
+  let kpiFilterSql = '';
+  if (options.kpiId) {
+    kpiFilterSql = ' AND k.id = ?';
+    params.push(options.kpiId);
+  }
+
+  const kpiRows = await dbAll<LegacyResultsKpiRow>(
+    `SELECT
+       k.id,
+       k.initiative_id,
+       i.name AS initiative_name,
+       k.name,
+       k.description,
+       k.unit,
+       k.baseline_value,
+       k.target_value,
+       k.measurement_frequency,
+       k.alert_threshold,
+       k.alert_direction,
+       k.is_primary,
+       k.sort_order,
+       k.owner_user_id,
+       u.first_name AS owner_first_name,
+       u.last_name AS owner_last_name,
+       k.direction,
+       k.threshold_mode,
+       k.amber_threshold_pct,
+       k.red_threshold_pct,
+       k.amber_threshold_abs,
+       k.red_threshold_abs,
+       k.current_value,
+       ts.value AS latest_value,
+       ts.period_start AS latest_period_start,
+       ts_prev.value AS prev_value,
+       ts_prev.period_start AS prev_period_start,
+       c.id AS open_case_id,
+       c.severity AS open_case_severity,
+       c.status AS open_case_status,
+       k.created_at,
+       k.updated_at
+     FROM initiative_kpis k
+     LEFT JOIN initiatives i ON i.id = k.initiative_id
+     LEFT JOIN users u ON u.id = k.owner_user_id
+     LEFT JOIN LATERAL (
+       SELECT value, period_start
+       FROM kpi_time_series
+       WHERE kpi_id = k.id AND organization_id = ?
+       ORDER BY period_start DESC, created_at DESC
+       LIMIT 1
+     ) ts ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT value, period_start
+       FROM kpi_time_series
+       WHERE kpi_id = k.id AND organization_id = ?
+       ORDER BY period_start DESC, created_at DESC
+       OFFSET 1
+       LIMIT 1
+     ) ts_prev ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT id, severity, status
+       FROM kpi_deviation_cases
+       WHERE organization_id = ? AND kpi_id = k.id AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+       ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
+       LIMIT 1
+     ) c ON TRUE
+     WHERE COALESCE(k.organization_id, i.organization_id) = ?${kpiFilterSql}
+     ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC`,
+    params,
+    { fallback: true },
+  );
+
+  const mappingParams: Array<string> = [organizationId];
+  let mappingFilterSql = '';
+  if (options.kpiId) {
+    mappingFilterSql = ' AND m.kpi_id = ?';
+    mappingParams.push(options.kpiId);
+  }
+
+  const mappingRows = await dbAll<LegacyResultsKpiMappingRow>(
+    `SELECT
+       m.id,
+       m.initiative_id,
+       i.name AS initiative_name,
+       m.kpi_id,
+       ik.name AS kpi_name,
+       m.impact_direction
+     FROM initiative_kpi_mappings m
+     LEFT JOIN initiative_kpis ik ON ik.id = m.kpi_id
+     LEFT JOIN initiatives i ON i.id = m.initiative_id
+     WHERE m.organization_id = ?${mappingFilterSql}`,
+    mappingParams,
+    { fallback: true },
+  );
+
+  const kpis = (kpiRows || []).map((row) => {
+    const latestValue = row.latest_value ?? row.current_value ?? null;
+    const targetValue = row.target_value ?? null;
+    const direction = row.direction || 'HIGHER_IS_BETTER';
+    const isOnTarget =
+      latestValue == null || targetValue == null
+        ? false
+        : direction === 'LOWER_IS_BETTER'
+          ? Number(latestValue) <= Number(targetValue)
+          : Number(latestValue) >= Number(targetValue);
+
+    return {
+      id: row.id,
+      initiativeId: row.initiative_id,
+      initiativeName: row.initiative_name,
+      name: row.name,
+      description: row.description,
+      unit: row.unit,
+      baselineValue: row.baseline_value,
+      targetValue,
+      measurementFrequency: row.measurement_frequency || 'MONTHLY',
+      alertThreshold: row.alert_threshold,
+      alertDirection: row.alert_direction || 'BELOW',
+      isPrimary: Boolean(row.is_primary),
+      sortOrder: row.sort_order ?? 0,
+      latestValue,
+      latestMeasurementDate: row.latest_period_start,
+      prevValue: row.prev_value != null ? Number(row.prev_value) : null,
+      prevMeasurementDate: row.prev_period_start,
+      isOnTarget,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      ownerUserId: row.owner_user_id,
+      ownerName:
+        row.owner_first_name || row.owner_last_name
+          ? `${row.owner_first_name || ''} ${row.owner_last_name || ''}`.trim()
+          : null,
+      direction,
+      thresholdMode: row.threshold_mode || 'PERCENT_FROM_TARGET',
+      amberThresholdPct: row.amber_threshold_pct,
+      redThresholdPct: row.red_threshold_pct,
+      amberThresholdAbs: row.amber_threshold_abs,
+      redThresholdAbs: row.red_threshold_abs,
+      openDeviationCase: row.open_case_id
+        ? {
+            id: row.open_case_id,
+            severity: row.open_case_severity || 'AMBER',
+            status: row.open_case_status || 'OPEN',
+          }
+        : null,
+    };
+  });
+
+  const mappings = (mappingRows || []).map((row) => ({
+    id: row.id,
+    initiativeId: row.initiative_id,
+    initiativeName: row.initiative_name,
+    kpiId: row.kpi_id,
+    kpiName: row.kpi_name,
+    impactDirection: row.impact_direction,
+  }));
+
+  return {
+    organizationId,
+    kpis,
+    mappings,
+  };
+}
+
+function deriveLegacyKpiPeriodKey(
+  periodStart: string | null,
+  measurementFrequency: string | null,
+): string | null {
+  if (!periodStart) return null;
+  const d = new Date(periodStart);
+  if (Number.isNaN(d.getTime())) return null;
+  const freq = String(measurementFrequency || 'MONTHLY').toUpperCase();
+  if (freq === 'DAILY') return periodStart.slice(0, 10);
+  if (freq === 'WEEKLY') {
+    const year = d.getUTCFullYear();
+    const firstDay = new Date(Date.UTC(year, 0, 1));
+    const dayOfYear = Math.floor((d.getTime() - firstDay.getTime()) / 86400000) + 1;
+    const week = Math.ceil(dayOfYear / 7);
+    return `${year}-W${String(week).padStart(2, '0')}`;
+  }
+  if (freq === 'QUARTERLY') {
+    const quarter = Math.floor(d.getUTCMonth() / 3) + 1;
+    return `${d.getUTCFullYear()}-Q${quarter}`;
+  }
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * KPI drawer detail bridge for active Results time-series and deviation continuity.
+ */
+export async function getResultsKpiDrawerDetail(
+  kpiId: string,
+  organizationId: string,
+): Promise<ResultsKpiDrawerDetail> {
+  const measurementRows = await dbAll<LegacyKpiTimeSeriesRow>(
+    `SELECT
+       ts.*,
+       k.measurement_frequency,
+       u.id AS user_id,
+       u.first_name AS user_first_name,
+       u.last_name AS user_last_name
+     FROM kpi_time_series ts
+     LEFT JOIN initiative_kpis k ON k.id = ts.kpi_id
+     LEFT JOIN users u ON u.id = ts.recorded_by
+     WHERE ts.kpi_id = ? AND ts.organization_id = ?
+     ORDER BY ts.period_start DESC, ts.created_at DESC`,
+    [kpiId, organizationId],
+    { fallback: true },
+  );
+
+  const caseRows = await dbAll<LegacyDeviationCaseRow>(
+    `SELECT *
+     FROM kpi_deviation_cases
+     WHERE organization_id = ? AND kpi_id = ?
+       AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+     ORDER BY detected_at DESC, created_at DESC`,
+    [organizationId, kpiId],
+    { fallback: true },
+  );
+
+  const openCaseRow = (caseRows || [])[0] || null;
+  const actionRows = openCaseRow
+    ? await dbAll<LegacyDeviationActionRow>(
+        `SELECT *
+         FROM kpi_deviation_actions
+         WHERE case_id = ?
+         ORDER BY created_at ASC`,
+        [openCaseRow.id],
+        { fallback: true },
+      )
+    : [];
+
+  return {
+    organizationId,
+    kpiId,
+    measurements: (measurementRows || []).map((row) => ({
+      id: row.id,
+      kpiId: row.kpi_id,
+      value: row.value,
+      measuredAt: row.period_start,
+      periodStart: row.period_start,
+      periodEnd: row.period_end,
+      periodKey: deriveLegacyKpiPeriodKey(row.period_start, row.measurement_frequency),
+      notes: row.notes,
+      createdAt: row.created_at,
+      createdBy: row.user_id
+        ? {
+            id: row.user_id,
+            firstName: row.user_first_name || '',
+            lastName: row.user_last_name || '',
+          }
+        : undefined,
+    })),
+    openCase: openCaseRow
+      ? {
+          id: openCaseRow.id,
+          kpiId: openCaseRow.kpi_id,
+          organizationId: openCaseRow.organization_id,
+          periodStart: openCaseRow.period_start,
+          periodEnd: openCaseRow.period_end,
+          severity: openCaseRow.severity,
+          status: openCaseRow.status,
+          ownerUserId: openCaseRow.owner_user_id,
+          deviationSummary: openCaseRow.deviation_summary,
+          rcaText: openCaseRow.rca_text,
+          evidenceText: openCaseRow.evidence_text,
+          evidenceRef: openCaseRow.evidence_ref,
+          resolutionNotes: openCaseRow.resolution_notes,
+          detectedAt: openCaseRow.detected_at,
+          acknowledgedAt: openCaseRow.acknowledged_at,
+          resolvedAt: openCaseRow.resolved_at,
+          closedAt: openCaseRow.closed_at,
+          createdAt: openCaseRow.created_at,
+          updatedAt: openCaseRow.updated_at,
+          actions: (actionRows || []).map((row) => ({
+            id: row.id,
+            title: row.title,
+            ownerUserId: row.owner_user_id,
+            dueDate: row.due_date,
+            status: row.status,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          })),
+        }
+      : null,
   };
 }
 

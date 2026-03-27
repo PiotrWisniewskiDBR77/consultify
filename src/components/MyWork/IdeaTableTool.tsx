@@ -62,8 +62,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { useAppStore } from '@/store/useAppStore';
 
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { AddColumnDialog } from './table/AddColumnDialog';
@@ -79,6 +81,8 @@ import {
   CellCursor,
   CollaborationPresence,
   type PresenceUser,
+  WorkspaceLockIndicator,
+  WorkspacePresenceIndicator,
 } from './table/CollaborationPresence';
 import { autoAssignColors, ColorPalette } from './table/ColorPalette';
 import {
@@ -199,6 +203,19 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const currentUser = useAppStore((state) => state.currentUser);
+  const currentOrganization = useAppStore((state) => state.currentOrganization);
+  const currentUserId = currentUser?.id || 'current-user';
+  const currentUserName =
+    currentUser?.displayName ||
+    [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ').trim() ||
+    currentUser?.email ||
+    'Me';
+  const workspaceId = currentOrganization?.id || currentUser?.organizationId || null;
+  const { isEnabled: isV8MultiplayerEnabled } = useV8FeatureFlag(
+    'v8_multiplayer_enabled',
+    currentUser?.isAuthenticated === true
+  );
 
   // ── Data connectors ────────────────────────────────────────────────────────
   const connectors = useConnectors(ideaId);
@@ -220,8 +237,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // ── Table Platform real-time collaboration ─────────────────────────────────
   const realtime = useTableRealtime({
     tableId: platformActive ? ideaId : null,
-    userId: 'current-user',
-    userName: 'Me',
+    userId: currentUserId,
+    userName: currentUserName,
   });
 
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
@@ -315,7 +332,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     ideaId,
     locked,
     isPl,
-    currentUserName: 'Me',
+    currentUserName,
     nodesUndo,
     sort,
     filters,
@@ -900,9 +917,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           status: 'todo',
           [dateCol.key]: dateStr,
           created_time: now,
-          created_by: 'current-user',
+          created_by: currentUserId,
           last_edited_time: now,
-          last_edited_by: 'current-user',
+          last_edited_by: currentUserId,
         },
         position: { x: 0, y: 0 },
       };
@@ -1114,15 +1131,26 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           </div>
 
           {/* Collaboration Presence */}
+          <WorkspacePresenceIndicator
+            workspaceId={workspaceId}
+            currentUserId={currentUserId}
+            enabled={isV8MultiplayerEnabled}
+          />
+          <WorkspaceLockIndicator
+            workspaceId={workspaceId}
+            currentUserId={currentUserId}
+            enabled={isV8MultiplayerEnabled}
+          />
           <CollaborationPresence
             ideaId={ideaId}
-            currentUserId="current-user"
-            currentUserName="Me"
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
             enabled={true}
+            renderIndicator={!isV8MultiplayerEnabled}
             onPresenceUpdate={setRemotePresenceUsers}
           />
           {usePlatform && realtime.presence.length > 0 && (
-            <PresenceIndicators presence={realtime.presence} currentUserId="current-user" />
+            <PresenceIndicators presence={realtime.presence} currentUserId={currentUserId} />
           )}
 
           {/* View tabs */}
@@ -2162,9 +2190,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     status: 'todo',
                     ...defaults,
                     created_time: now,
-                    created_by: 'current-user',
+                    created_by: currentUserId,
                     last_edited_time: now,
-                    last_edited_by: 'current-user',
+                    last_edited_by: currentUserId,
                   },
                   position: { x: 0, y: 0 },
                 };

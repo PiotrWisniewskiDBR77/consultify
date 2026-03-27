@@ -308,6 +308,19 @@ export const Sidebar: React.FC = () => {
 
   const sidebarWidthClass = showFull ? 'w-64' : 'w-16';
 
+  React.useEffect(() => {
+    if (!isSidebarOpen || (!isMobile && !isTablet)) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobile, isSidebarOpen, isTablet, setIsSidebarOpen]);
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -318,6 +331,7 @@ export const Sidebar: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
+            data-testid="mobile-sidebar-overlay"
             className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />

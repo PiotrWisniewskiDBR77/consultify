@@ -14,6 +14,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import {
   type FinanceAnalysisRow,
@@ -939,7 +940,14 @@ export function useFinancePreview({
           label: t('finance.actions.reanalyze', 'Przelicz ponownie'),
           onClick: async () => {
             try {
-              await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
+              try {
+                await V8FinanceApi.runAnalysis(row.id);
+              } catch (error) {
+                if (!shouldFallbackToLegacyFinance(error)) {
+                  throw error;
+                }
+                await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
+              }
               await loadAnalyses();
               await loadAnalysisPreviewRatios(row.id);
               toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
@@ -965,7 +973,14 @@ export function useFinancePreview({
             label: t('finance.actions.approve', 'Zatwierdź'),
             onClick: async () => {
               try {
-                await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
+                try {
+                  await V8FinanceApi.approveAnalysis(row.id);
+                } catch (error) {
+                  if (!shouldFallbackToLegacyFinance(error)) {
+                    throw error;
+                  }
+                  await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
+                }
                 await loadAnalyses();
                 toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
               } catch (e: any) {

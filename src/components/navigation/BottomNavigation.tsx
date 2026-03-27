@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { useAppStore } from '../../store/useAppStore';
+import { useConversationStore } from '../../store/useConversationStore';
 import { AppView } from '../../types';
 
 interface NavItem {
@@ -35,6 +36,7 @@ export const BottomNavigation: React.FC = () => {
   const { isMobile } = useDeviceType();
   const { currentView, setCurrentView, setIsSidebarOpen, toggleChatCollapse, isChatCollapsed } =
     useAppStore();
+  const setDisplayMode = useConversationStore((state) => state.setDisplayMode);
 
   // Don't render on non-mobile devices
   if (!isMobile) return null;
@@ -50,13 +52,13 @@ export const BottomNavigation: React.FC = () => {
       id: 'assessment',
       label: t('licensedTools.moduleName', 'Licensed Tools'),
       icon: <ClipboardCheck size={22} />,
-      view: AppView.ASSESSMENT_DRD,
+      view: AppView.ASSESSMENT_OVERVIEW,
     },
     {
       id: 'initiatives',
       label: t('sidebar.module3_1', 'Inicjatywy'),
       icon: <Lightbulb size={22} />,
-      view: AppView.FULL_STEP2_INITIATIVES,
+      view: AppView.PORTFOLIO_ROADMAP,
     },
     {
       id: 'ai',
@@ -76,9 +78,8 @@ export const BottomNavigation: React.FC = () => {
     if (item.action === 'openSidebar') {
       setIsSidebarOpen(true);
     } else if (item.action === 'openChat') {
-      if (isChatCollapsed) {
-        toggleChatCollapse();
-      }
+      setDisplayMode('full');
+      setCurrentView(AppView.AI_CHAT);
     } else if (item.view) {
       setCurrentView(item.view);
     }
@@ -94,7 +95,11 @@ export const BottomNavigation: React.FC = () => {
 
     // Check for initiative views
     if (item.id === 'initiatives') {
-      return currentView === AppView.FULL_STEP2_INITIATIVES;
+      return (
+        currentView === AppView.PORTFOLIO_ROADMAP ||
+        currentView === AppView.FULL_STEP2_INITIATIVES ||
+        currentView === AppView.INITIATIVE_MANAGEMENT
+      );
     }
 
     // Check for MyWork views (unified home)
@@ -124,6 +129,7 @@ export const BottomNavigation: React.FC = () => {
             <button
               key={item.id}
               onClick={() => handleNavClick(item)}
+              data-testid={`bottom-nav-${item.id}`}
               className={`
                                 flex-1 flex flex-col items-center justify-center gap-0.5 
                                 transition-all duration-200 relative touch-target no-select
@@ -143,7 +149,7 @@ export const BottomNavigation: React.FC = () => {
               <div
                 className={`
                                 relative flex items-center justify-center
-                                ${item.id === 'ai' && !isChatCollapsed ? 'animate-pulse' : ''}
+                                ${item.id === 'ai' && currentView === AppView.AI_CHAT ? 'animate-pulse' : ''}
                             `}
               >
                 {item.icon}

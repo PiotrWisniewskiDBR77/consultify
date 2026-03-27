@@ -15,6 +15,11 @@ import {
   applyGovernedInboxTriage,
   VALID_INBOX_TRIAGE_ACTIONS,
 } from '../../services/inboxTriageService.js';
+import {
+  convertNotebookPage,
+  NotebookConversionError,
+} from '../../services/notebookConversionService.js';
+import notebookService from '../../services/notebookService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -34,6 +39,11 @@ const V8_INBOX_TRIAGE_MUTATION_CONTRACT = 'my_work_inbox_triage_mutation_v1';
 const V8_INBOX_AI_ASSIST_CONTRACT = 'my_work_inbox_ai_assist_v1';
 const V8_NOTEBOOK_CONTRACT = 'my_work_notebook_v1';
 const V8_CALENDAR_CONTRACT = 'my_work_calendar_v1';
+const notebookProposalSchema = z.object({
+  proposalType: z.enum(['insert', 'replace', 'append']),
+  blockContent: z.record(z.string(), z.unknown()),
+  rationale: z.string().max(2000),
+});
 
 async function requireCanonicalInboxTable(res: Response): Promise<boolean> {
   const isTestGateway =
@@ -103,6 +113,74 @@ async function requireNotebookPagesTable(res: Response): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+function classifyNotebookSuggestion(input: { title?: string | null; contentText?: string | null }) {
+  const text = String(input.contentText || input.title || '').toLowerCase();
+
+  let suggestedType = 'none';
+  let reason = '';
+
+  const decisionKeywords = [
+    'decide',
+    'decision',
+    'approve',
+    'reject',
+    'choose',
+    'option',
+    'alternative',
+    'decyzja',
+    'zdecydować',
+    'opcja',
+  ];
+  const taskKeywords = [
+    'todo',
+    'action',
+    'implement',
+    'fix',
+    'create',
+    'build',
+    'do',
+    'task',
+    'step',
+    'zadanie',
+    'zrobić',
+    'naprawić',
+  ];
+  const ideaKeywords = [
+    'idea',
+    'concept',
+    'what if',
+    'imagine',
+    'brainstorm',
+    'explore',
+    'pomysł',
+    'koncept',
+  ];
+
+  const decisionScore = decisionKeywords.filter((keyword) => text.includes(keyword)).length;
+  const taskScore = taskKeywords.filter((keyword) => text.includes(keyword)).length;
+  const ideaScore = ideaKeywords.filter((keyword) => text.includes(keyword)).length;
+
+  const actionItemCount = (
+    text.match(/[-•]\s*(create|fix|update|send|review|check|build|implement|add|remove)/gi) || []
+  ).length;
+
+  if (actionItemCount >= 2) {
+    suggestedType = 'tasks';
+    reason = `Found ${actionItemCount} action items`;
+  } else if (decisionScore > taskScore && decisionScore > ideaScore && decisionScore >= 2) {
+    suggestedType = 'decision';
+    reason = 'Contains decision-related language';
+  } else if (taskScore > decisionScore && taskScore > ideaScore && taskScore >= 2) {
+    suggestedType = 'task';
+    reason = 'Contains task-oriented language';
+  } else if (ideaScore >= 2) {
+    suggestedType = 'idea';
+    reason = 'Contains exploratory/idea language';
+  }
+
+  return { suggestedType, reason };
 }
 
 const parseTagsArray = (input: unknown): string[] => {
@@ -1097,6 +1175,175 @@ router.put(
       data: { id, status },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
+  }),
+);
+
+router.post(
+  '/notebook/pages/:id/classify',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const pageId = String(req.params.id || '').trim();
+    const page = await queryHelpers.queryOne<any>(
+      `SELECT id, title, content_text as "contentText", maturity
+       FROM notebook_pages
+       WHERE id = ? AND owner_user_id = ? AND organization_id = ? LIMIT 1`,
+      [pageId, userId, organizationId],
+    );
+
+    if (!page) {
+      return res.status(404).json({ error: 'Page not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+
+    const suggestion = classifyNotebookSuggestion(page);
+    return res.json({
+      data: {
+        pageId,
+        ...suggestion,
+        maturity: page.maturity ?? null,
+      },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/notebook/pages/:id/ai-proposals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const pageId = String(req.params.id || '').trim();
+    const parsed = notebookProposalSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.message, code: 'NOTEBOOK_AI_PROPOSAL_INVALID' });
+    }
+
+    const proposal = await notebookService.createAIProposal(
+      organizationId,
+      userId,
+      pageId,
+      parsed.data,
+    );
+
+    return res.status(201).json({
+      data: proposal,
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.get(
+  '/notebook/pages/:id/ai-proposals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const pageId = String(req.params.id || '').trim();
+    const status = req.query.status ? String(req.query.status) : undefined;
+    const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
+
+    const proposals = await notebookService.getProposalsForPage(organizationId, pageId, {
+      status,
+      limit,
+    });
+
+    return res.json({
+      data: { proposals },
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/notebook/ai-proposals/:proposalId/resolve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const schema = z.object({ action: z.enum(['accepted', 'rejected']) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.message, code: 'NOTEBOOK_AI_PROPOSAL_ACTION_INVALID' });
+    }
+
+    const proposal = await notebookService.resolveAIProposal(
+      organizationId,
+      String(req.params.proposalId || '').trim(),
+      userId,
+      parsed.data.action,
+    );
+
+    if (!proposal) {
+      return res.status(404).json({ error: 'Proposal not found', code: 'NOTEBOOK_AI_PROPOSAL_NOT_FOUND' });
+    }
+
+    return res.json({
+      data: proposal,
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  }),
+);
+
+router.post(
+  '/notebook/pages/:id/convert',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const pageId = String(req.params.id || '').trim();
+    const target = String(req.body?.target || '')
+      .trim()
+      .toLowerCase();
+
+    if (
+      !['task', 'decision', 'initiative', 'report', 'presentation', 'assessment'].includes(target)
+    ) {
+      return res.status(400).json({
+        error: 'target must be task|decision|initiative|report|presentation|assessment',
+        code: 'NOTEBOOK_CONVERT_TARGET_INVALID',
+      });
+    }
+
+    try {
+      const result = await convertNotebookPage({
+        pageId,
+        orgId: organizationId,
+        userId,
+        target: target as
+          | 'task'
+          | 'decision'
+          | 'initiative'
+          | 'report'
+          | 'presentation'
+          | 'assessment',
+        title: typeof req.body?.title === 'string' ? req.body.title : undefined,
+        description: typeof req.body?.description === 'string' ? req.body.description : undefined,
+        assessmentType:
+          typeof req.body?.assessmentType === 'string'
+            ? (String(req.body.assessmentType).toUpperCase() as
+                | 'DRD'
+                | 'SIRI'
+                | 'ADMA'
+                | 'CMMI'
+                | 'LEAN')
+            : undefined,
+      });
+
+      return res.status(201).json({
+        data: result,
+        meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+      });
+    } catch (error) {
+      if (error instanceof NotebookConversionError) {
+        return res.status(error.status).json({
+          error: error.message,
+          code: error.code,
+        });
+      }
+      throw error;
+    }
   }),
 );
 

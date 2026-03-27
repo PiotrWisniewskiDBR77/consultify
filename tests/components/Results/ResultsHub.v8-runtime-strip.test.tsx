@@ -52,7 +52,12 @@ vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
 }));
 
 vi.mock('../../../src/components/Results/ResultsKpisTableV3', () => ({
-  ResultsKpisTableV3: () => <div>results-kpis-table</div>,
+  ResultsKpisTableV3: ({ kpis }: any) => (
+    <div>
+      <div>results-kpis-table</div>
+      <div data-testid="results-kpi-count">{Array.isArray(kpis) ? kpis.length : -1}</div>
+    </div>
+  ),
 }));
 
 vi.mock('../../../src/components/Results/ResultsKPITable', () => ({
@@ -93,6 +98,11 @@ vi.mock('../../../src/services/api', () => ({
 vi.mock('../../../src/services/api/v8/results', () => ({
   V8ResultsApi: {
     getDashboard: vi.fn(),
+    getKpiCatalog: vi.fn(),
+  },
+  shouldFallbackToLegacyResults: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
   },
 }));
 
@@ -143,6 +153,11 @@ describe('ResultsHub V8 runtime strip', () => {
         recentReviewPacks: [],
       },
     } as any);
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'dbr77',
+      kpis: [],
+      mappings: [],
+    } as any);
   });
 
   it('shows governed runtime pills in summary and keeps them after switching tabs', async () => {
@@ -154,6 +169,7 @@ describe('ResultsHub V8 runtime strip', () => {
 
     await waitFor(() => {
       expect(V8ResultsApi.getDashboard).toHaveBeenCalled();
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
       expect(screen.getByText('Governed KPIs')).toBeInTheDocument();
     });
 
@@ -179,5 +195,28 @@ describe('ResultsHub V8 runtime strip', () => {
 
     expect(screen.getByText('Realized ROI')).toBeInTheDocument();
     expect(screen.getByText('Reconciliation')).toBeInTheDocument();
+  });
+
+  it('does not backfill demo KPI rows when governed strip is present but KPI payload is empty', async () => {
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalled();
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('kpis');
+      expect(screen.getByTestId('results-kpi-count')).toHaveTextContent('0');
+    });
+
+    expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpis');
+    expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpi-mappings');
   });
 });

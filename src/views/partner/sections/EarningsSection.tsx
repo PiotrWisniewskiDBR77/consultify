@@ -31,7 +31,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { V8PartnerApi, type V8PartnerEarningsSummary } from '@/services/api/v8';
+import {
+  shouldFallbackToLegacyPartner,
+  V8PartnerApi,
+  type V8PartnerEarningsSummary,
+} from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
 interface EarningsSummary {
@@ -265,11 +269,21 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
     try {
       setRequestingPayout(true);
-      const response = await Api.post('/api/partners/payouts/request', {
-        amount: summary.readyForPayout,
-      });
+      let response: any;
+      try {
+        response = await V8PartnerApi.requestPayout({
+          amount: summary.readyForPayout,
+        });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.post('/api/partners/payouts/request', {
+          amount: summary.readyForPayout,
+        });
+      }
 
-      if (response?.success) {
+      if (response?.success || response?.payout) {
         toast.success(t('partner.earnings.payoutRequested', 'Payout request submitted!'));
         // Refresh data
         await fetchEarnings();

@@ -47,6 +47,7 @@ import { PartnerSection } from '../../components/Partner/PartnerSidebar';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import {
+  shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerEarningsSummary,
   type V8PartnerReferralAnalytics,
@@ -2386,7 +2387,15 @@ const ProfileSection: React.FC<{
   const handleSaveCompanyInfo = async () => {
     try {
       setSaving(true);
-      const response = await Api.put('/api/partners/organization', formData);
+      let response: any;
+      try {
+        response = await V8PartnerApi.updateOrganization(formData);
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.put('/api/partners/organization', formData);
+      }
       if (response?.success) {
         toast.success('Company information updated');
         fetchOrganization();
@@ -2404,9 +2413,19 @@ const ProfileSection: React.FC<{
   const handleSaveSpecializations = async () => {
     try {
       setSaving(true);
-      const response = await Api.put('/api/partners/organization/specializations', {
-        specializations: selectedSpecializations,
-      });
+      let response: any;
+      try {
+        response = await V8PartnerApi.updateOrganizationSpecializations({
+          specializations: selectedSpecializations,
+        });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.put('/api/partners/organization/specializations', {
+          specializations: selectedSpecializations,
+        });
+      }
       if (response?.success) {
         toast.success('Specializations updated');
       } else {
@@ -2423,9 +2442,19 @@ const ProfileSection: React.FC<{
   const handleSaveRegions = async () => {
     try {
       setSaving(true);
-      const response = await Api.put('/api/partners/organization/regions', {
-        regions: selectedRegions,
-      });
+      let response: any;
+      try {
+        response = await V8PartnerApi.updateOrganizationRegions({
+          regions: selectedRegions,
+        });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.put('/api/partners/organization/regions', {
+          regions: selectedRegions,
+        });
+      }
       if (response?.success) {
         toast.success('Regions updated');
       } else {
@@ -2443,10 +2472,20 @@ const ProfileSection: React.FC<{
     try {
       setSaving(true);
       const newValue = !publicListingEnabled;
-      const response = await Api.put('/api/partners/organization/listing', {
-        publicListingEnabled: newValue,
-      });
-      if (response?.success) {
+      let response: any;
+      try {
+        response = await V8PartnerApi.updateOrganizationListing({
+          publicListingEnabled: newValue,
+        });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.put('/api/partners/organization/listing', {
+          publicListingEnabled: newValue,
+        });
+      }
+      if (response?.success || typeof response?.publicListingEnabled === 'boolean') {
         setPublicListingEnabled(newValue);
         toast.success(newValue ? 'Public listing enabled' : 'Public listing disabled');
       } else {
@@ -2744,6 +2783,7 @@ const ProfileSection: React.FC<{
           <button
             onClick={handleToggleListing}
             disabled={saving}
+            aria-label="Toggle public listing"
             className={cn(
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
               publicListingEnabled ? 'bg-violet-600' : 'bg-slate-300 dark:bg-navy-600'

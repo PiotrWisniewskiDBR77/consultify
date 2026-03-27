@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -24,6 +25,21 @@ router.use(defaultRateLimiter);
  * GET /api/superadmin/analytics/demo-trial
  * Demo/trial funnel analytics from conversion_events
  */
+router.get(
+  '/anna-funnel',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const analytics = await getPublicAnnaFunnelSummary(30);
+      return res.json(analytics);
+    } catch (error: any) {
+      logger.error('[Analytics] Anna funnel analytics error:', error);
+      return res.status(500).json({ error: error?.message || 'Failed to fetch Anna funnel analytics' });
+    }
+  })
+);
+
 router.get(
   '/demo-trial',
   verifyToken,

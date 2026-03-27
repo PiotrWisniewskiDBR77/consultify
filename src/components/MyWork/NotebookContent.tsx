@@ -1170,45 +1170,38 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
     const classify = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/my-work/notebook/pages/${activePage.id}/classify`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.suggestedType && data.suggestedType !== 'none') {
-            const typeLabel = data.suggestedType === 'tasks' ? 'action items' : data.suggestedType;
-            toast(
-              (t) => (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">
-                    {isPolish
-                      ? `Ta notatka wygląda jak ${typeLabel}. Konwertować?`
-                      : `This note looks like ${typeLabel}. Convert?`}
-                  </span>
-                  <button
-                    onClick={() => {
-                      toast.dismiss(t.id);
-                      if (data.suggestedType === 'tasks') {
-                        setActionItemsOpen(true);
-                      } else {
-                        window.dispatchEvent(
-                          new CustomEvent(`notebook-create-${data.suggestedType}`, {
-                            detail: { text: activePage.title },
-                          })
-                        );
-                      }
-                    }}
-                    className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-500/20 text-purple-700 hover:bg-purple-500/30"
-                  >
-                    {isPolish ? 'Konwertuj' : 'Convert'}
-                  </button>
-                </div>
-              ),
-              { duration: 8000 }
-            );
-          }
+        const data = await Api.classifyNotebookPage(activePage.id);
+        if (data.suggestedType && data.suggestedType !== 'none') {
+          const typeLabel = data.suggestedType === 'tasks' ? 'action items' : data.suggestedType;
+          toast(
+            (t) => (
+              <div className="flex items-center gap-2">
+                <span className="text-sm">
+                  {isPolish
+                    ? `Ta notatka wygląda jak ${typeLabel}. Konwertować?`
+                    : `This note looks like ${typeLabel}. Convert?`}
+                </span>
+                <button
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    if (data.suggestedType === 'tasks') {
+                      setActionItemsOpen(true);
+                    } else {
+                      window.dispatchEvent(
+                        new CustomEvent(`notebook-create-${data.suggestedType}`, {
+                          detail: { text: activePage.title },
+                        })
+                      );
+                    }
+                  }}
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-500/20 text-purple-700 hover:bg-purple-500/30"
+                >
+                  {isPolish ? 'Konwertuj' : 'Convert'}
+                </button>
+              </div>
+            ),
+            { duration: 8000 }
+          );
         }
       } catch {
         /* ignore classification errors */

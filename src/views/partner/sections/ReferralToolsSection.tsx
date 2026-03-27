@@ -27,7 +27,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { V8PartnerApi, type V8PartnerReferralAnalytics } from '@/services/api/v8';
+import {
+  shouldFallbackToLegacyPartner,
+  V8PartnerApi,
+  type V8PartnerReferralAnalytics,
+} from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
 interface CampaignLink {
@@ -180,14 +184,27 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
     try {
       setCreating(true);
-      const response = await Api.post('/api/partners/campaign-links', {
-        name: newCampaign.name,
-        utmSource: newCampaign.utmSource || undefined,
-        utmMedium: newCampaign.utmMedium || undefined,
-        utmCampaign: newCampaign.utmCampaign || undefined,
-      });
+      let response: any;
+      try {
+        response = await V8PartnerApi.createCampaignLink({
+          name: newCampaign.name,
+          utmSource: newCampaign.utmSource || undefined,
+          utmMedium: newCampaign.utmMedium || undefined,
+          utmCampaign: newCampaign.utmCampaign || undefined,
+        });
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.post('/api/partners/campaign-links', {
+          name: newCampaign.name,
+          utmSource: newCampaign.utmSource || undefined,
+          utmMedium: newCampaign.utmMedium || undefined,
+          utmCampaign: newCampaign.utmCampaign || undefined,
+        });
+      }
 
-      if (response?.success) {
+      if (response?.success || response?.campaignLink) {
         // Refresh tools to get updated list
         await fetchTools();
         setShowNewCampaign(false);
@@ -221,9 +238,17 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
     try {
       setDeleting(campaignId);
-      const response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
+      let response: any;
+      try {
+        response = await V8PartnerApi.deleteCampaignLink(campaignId);
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
+      }
 
-      if (response?.success) {
+      if (response?.success || response?.deleted) {
         // Remove from local state
         setTools((prev) =>
           prev

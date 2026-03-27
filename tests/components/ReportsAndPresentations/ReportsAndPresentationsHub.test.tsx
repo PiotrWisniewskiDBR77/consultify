@@ -128,4 +128,14 @@ describe('ReportsAndPresentationsHub', () => {
 
     expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_documents');
   });
+
+  it('treats documents as the canonical reports tab query', () => {
+    render(
+      <MemoryRouter initialEntries={['/presentations?tab=documents']}>
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_documents');
+  });
 });

@@ -3,7 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '../../services/api';
+import { Api } from '../../services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
 
 interface Analysis {
   id: string;
@@ -221,10 +222,16 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
 
   const fetchAnalyses = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses`, { headers: getHeaders() });
-      if (!res.ok) return;
-      const data = await res.json();
-      setAnalyses(Array.isArray(data.analyses) ? data.analyses : []);
+      let data: any;
+      try {
+        data = await V8FinanceApi.getAnalyses();
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        data = await Api.get('/api/economics/financial-analyses');
+      }
+      setAnalyses(Array.isArray(data?.analyses) ? data.analyses : []);
     } catch {
       toast.error(t('finance.analysis.loadFailed', 'Failed to load financial analyses'));
     } finally {
@@ -235,15 +242,16 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   const selectAnalysis = useCallback(async (analysis: Analysis) => {
     setSelected(analysis);
     try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses/${analysis.id}/ratios`, {
-        headers: getHeaders(),
-      });
-      if (!res.ok) {
-        setRatios([]);
-        return;
+      let data: any;
+      try {
+        data = await V8FinanceApi.getAnalysisRatios(analysis.id);
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        data = await Api.get(`/api/economics/financial-analyses/${analysis.id}/ratios`);
       }
-      const data = await res.json();
-      setRatios(Array.isArray(data.ratios) ? data.ratios : []);
+      setRatios(Array.isArray(data?.ratios) ? data.ratios : []);
     } catch {
       setRatios([]);
     }
@@ -268,16 +276,15 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   const handleCreate = useCallback(async () => {
     if (!newTitle.trim()) return;
     try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle.trim() }),
-      });
-      if (!res.ok) {
-        toast.error(t('finance.analysis.createFailed', 'Failed to create analysis'));
-        return;
+      let data: any;
+      try {
+        data = await V8FinanceApi.createAnalysis({ title: newTitle.trim() });
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        data = await Api.post('/api/economics/financial-analyses', { title: newTitle.trim() });
       }
-      const data = await res.json();
       setShowCreate(false);
       setNewTitle('');
       await fetchAnalyses();
