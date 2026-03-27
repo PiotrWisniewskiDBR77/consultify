@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `26`
+- landed packets in the current active lane: `27`
 
 ---
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md`
+- current packet: `evidence/477-v81-broader-sync-post-settings-connect-readback-authority-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether one more thinner settings-lifecycle continuity seam remains after settings readback/connect alignment`
+- next action: `promote settings disconnect authority continuity on the governed sync path as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
