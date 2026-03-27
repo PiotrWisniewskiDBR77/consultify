@@ -226,6 +226,24 @@ describe('V8FinanceApi', () => {
     expect(data.matches[0].chunkText).toBe('Revenue increased due to seasonality.');
   });
 
+  it('posts governed finance statement detect through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      statementId: 'statement-1',
+      statementPackId: 'pack-1',
+      ingestRunId: 'ingest-run-1',
+      detection: {
+        statementType: 'P&L',
+        periodLabel: 'Q1 2026',
+      },
+    });
+
+    const data = await V8FinanceApi.detectStatement('statement-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/statements/statement-1/detect', {});
+    expect(data.statementId).toBe('statement-1');
+    expect((data.detection as Record<string, unknown>).statementType).toBe('P&L');
+  });
+
   it('posts governed finance statement confirm through the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       success: true,

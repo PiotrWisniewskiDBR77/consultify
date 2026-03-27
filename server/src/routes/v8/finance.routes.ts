@@ -23,15 +23,21 @@ import {
 import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import {
+  classifyStatementDocument,
   confirmStatement as confirmFinancialStatement,
+  detectStatementType,
   evaluateStatementReadiness,
   getLatestStatementIngestRun,
+  loadStatementSourceText,
   recordStatementQualityRun,
   recordStatementSourceArtifact,
+  resolveStatementColumnSelection,
   snapshotCanonicalStatementVersion,
   startStatementIngestRun,
+  updateStatementMetadata,
   updateStatementIngestRun,
 } from '../../services/financialStatementService.js';
+import type { DetectionResult } from '../../services/financialStatementService.js';
 import { listModels } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
@@ -44,6 +50,7 @@ import { saveStatementValuesFlow } from '../../services/financialStatementValueW
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -64,6 +71,7 @@ async function ensureStatementIngestRun(params: {
   documentClass?: string;
   extractionStrategy?: string;
   templateFamily?: string | null;
+  rawTextLength?: number;
 }) {
   const existingRunId = await getLatestStatementIngestRun(params.statementId);
   if (existingRunId) {
@@ -81,8 +89,19 @@ async function ensureStatementIngestRun(params: {
     documentClass: params.documentClass,
     extractionStrategy: params.extractionStrategy,
     templateFamily: params.templateFamily,
+    rawTextLength: params.rawTextLength,
     createdBy: params.createdBy,
   });
+}
+
+function normalizeStatementTypeInput(value: unknown): 'P&L' | 'BS' | 'CF' | null {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'PL' || normalized === 'P&L') return 'P&L';
+  if (normalized === 'BS') return 'BS';
+  if (normalized === 'CF') return 'CF';
+  return null;
 }
 
 /**
@@ -246,6 +265,152 @@ router.get(
         query,
         matches,
         authoritativeForNumbers: false,
+      },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/statements/:statementId/detect',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const statementId = String(req.params.statementId || '');
+    const statement = (await getStatementDetail(organizationId, statementId)) as Record<string, any> | null;
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+
+    const text = await loadStatementSourceText(statementId, String(statement.notes || ''));
+    if (!text) {
+      return res.status(400).json({ error: 'No extracted text available — re-upload the PDF' });
+    }
+
+    const ingestRunId = await ensureStatementIngestRun({
+      statementId,
+      organizationId,
+      createdBy: userId,
+      sourceFileName: statement.source_file_name,
+      sourceFilePath: statement.source_file_path,
+      parseMethod: statement.parse_method,
+      documentClass: statement.document_class,
+      extractionStrategy: statement.extraction_strategy,
+      templateFamily: statement.template_family,
+      rawTextLength: text.length,
+    });
+
+    const autoDetection = detectStatementType(text);
+    const manualStatementType = normalizeStatementTypeInput(req.body?.statementType);
+    const manualSelectionApplied = Boolean(manualStatementType);
+    const containedStatementTypes = Array.isArray(autoDetection.containedStatementTypes)
+      ? autoDetection.containedStatementTypes
+      : [];
+    const effectiveStatementType =
+      manualStatementType ||
+      normalizeStatementTypeInput(autoDetection.statementType) ||
+      normalizeStatementTypeInput(statement.statement_type) ||
+      'P&L';
+    const detection: DetectionResult = {
+      ...autoDetection,
+      statementType: effectiveStatementType,
+      periodStart: String(req.body?.periodStart || '').trim() || autoDetection.periodStart,
+      periodEnd: String(req.body?.periodEnd || '').trim() || autoDetection.periodEnd,
+      periodLabel: String(req.body?.periodLabel || '').trim() || autoDetection.periodLabel,
+      currency: String(req.body?.currency || '').trim() || autoDetection.currency,
+      scaling:
+        ((String(req.body?.scaling || '').trim() || autoDetection.scaling) as DetectionResult['scaling']) ||
+        'thousands',
+      confidence:
+        manualSelectionApplied &&
+        ((autoDetection.containedStatementTypes || []).length > 1 ||
+          autoDetection.statementType !== manualStatementType)
+          ? 1
+          : autoDetection.confidence,
+    };
+
+    const columnSelection = resolveStatementColumnSelection(text, detection);
+    const documentProfile = classifyStatementDocument({
+      fileName: statement.source_file_name,
+      parseMethod: statement.parse_method,
+      text,
+    });
+
+    try {
+      await updateStatementMetadata(statementId, {
+        statementType: detection.statementType,
+        periodStart: detection.periodStart,
+        periodEnd: detection.periodEnd,
+        periodLabel: detection.periodLabel,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        overallConfidence: detection.confidence,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+      });
+    } catch (error) {
+      logger.warn('[V8 Finance] Detect metadata persistence failed; continuing with request-local selection', {
+        statementId,
+        requestedStatementType: req.body?.statementType,
+        effectiveStatementType: detection.statementType,
+        error: String((error as Error)?.message || error || 'unknown'),
+      });
+    }
+
+    const statementPackId = await syncStatementToPack(statementId);
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'detection',
+      stage: 'detect',
+      contentJson: { detection, documentProfile, columnSelection },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'detect',
+      runStatus: 'running',
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
+      rawTextLength: text.length,
+    });
+    if (organizationId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId,
+        stage: 'detect',
+        resultStatus: autoDetection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
+        readinessStatus: 'pending',
+        strategy: documentProfile.extractionStrategy,
+        summary: 'Detection metadata persisted for statement.',
+        reasonCodes:
+          autoDetection.statementType === 'UNKNOWN'
+            ? ['DETECTION_UNKNOWN_FALLBACK']
+            : ['DETECTION_METADATA_UPDATED'],
+        payload: detection,
+        createdBy: userId,
+      });
+    }
+
+    return res.json({
+      data: {
+        statementId,
+        statementPackId,
+        ingestRunId,
+        detection: {
+          ...detection,
+          containedStatementTypes,
+          containsMultipleStatements:
+            documentProfile.documentClass === 'mixed_report' || containedStatementTypes.length > 1,
+        },
+        documentProfile,
+        columnSelection,
       },
       meta: financeMeta(),
     });

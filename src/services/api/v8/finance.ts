@@ -218,6 +218,15 @@ export interface V8FinanceStatementConfirmResult {
   readiness?: Record<string, unknown>;
 }
 
+export interface V8FinanceStatementDetectResult {
+  statementId: string;
+  statementPackId?: string | null;
+  ingestRunId?: string | null;
+  detection: Record<string, unknown>;
+  documentProfile?: Record<string, unknown>;
+  columnSelection?: Record<string, unknown>;
+}
+
 export interface V8FinanceStatementValuesSaveResult {
   statementId: string;
   statementPackId?: string | null;
@@ -298,6 +307,8 @@ export const V8FinanceApi = {
         ...(typeof params.limit === 'number' ? { limit: params.limit } : {}),
       },
     ),
+  detectStatement: (statementId: string, body: Record<string, unknown> = {}) =>
+    v8Post<V8FinanceStatementDetectResult>(`/finance/statements/${statementId}/detect`, body),
   confirmStatement: (statementId: string) =>
     v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, {}),
   putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>

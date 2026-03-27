@@ -227,6 +227,17 @@ async function confirmStatementWithFallback(statementId: string) {
   }
 }
 
+async function detectStatementWithFallback(statementId: string) {
+  try {
+    return await V8FinanceApi.detectStatement(statementId, {});
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/detect`, {});
+  }
+}
+
 async function saveStatementValuesWithFallback(
   statementId: string,
   values: Array<Record<string, unknown>>,
@@ -517,7 +528,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      await Api.post(`/api/finance-statements/${detail.id}/detect`, {});
+      await detectStatementWithFallback(detail.id);
       const extracted = (await Api.post(`/api/finance-statements/${detail.id}/extract`, {})) as {
         lines?: Array<{
           originalLabel: string;

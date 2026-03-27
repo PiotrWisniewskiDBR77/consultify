@@ -19,13 +19,18 @@ const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
+const mockClassifyStatementDocument = vi.fn();
 const mockConfirmStatement = vi.fn();
+const mockDetectStatementType = vi.fn();
 const mockEvaluateStatementReadiness = vi.fn();
 const mockGetLatestStatementIngestRun = vi.fn();
+const mockLoadStatementSourceText = vi.fn();
 const mockRecordStatementQualityRun = vi.fn();
 const mockRecordStatementSourceArtifact = vi.fn();
+const mockResolveStatementColumnSelection = vi.fn();
 const mockSnapshotCanonicalStatementVersion = vi.fn();
 const mockStartStatementIngestRun = vi.fn();
+const mockUpdateStatementMetadata = vi.fn();
 const mockUpdateStatementIngestRun = vi.fn();
 const mockSaveStatementValuesFlow = vi.fn();
 const mockRunFullAnalysis = vi.fn();
@@ -63,13 +68,18 @@ vi.mock('../../../services/financialStatementReadService.js', () => ({
 }));
 
 vi.mock('../../../services/financialStatementService.js', () => ({
+  classifyStatementDocument: (...args: unknown[]) => mockClassifyStatementDocument(...args),
   confirmStatement: (...args: unknown[]) => mockConfirmStatement(...args),
+  detectStatementType: (...args: unknown[]) => mockDetectStatementType(...args),
   evaluateStatementReadiness: (...args: unknown[]) => mockEvaluateStatementReadiness(...args),
   getLatestStatementIngestRun: (...args: unknown[]) => mockGetLatestStatementIngestRun(...args),
+  loadStatementSourceText: (...args: unknown[]) => mockLoadStatementSourceText(...args),
   recordStatementQualityRun: (...args: unknown[]) => mockRecordStatementQualityRun(...args),
   recordStatementSourceArtifact: (...args: unknown[]) => mockRecordStatementSourceArtifact(...args),
+  resolveStatementColumnSelection: (...args: unknown[]) => mockResolveStatementColumnSelection(...args),
   snapshotCanonicalStatementVersion: (...args: unknown[]) => mockSnapshotCanonicalStatementVersion(...args),
   startStatementIngestRun: (...args: unknown[]) => mockStartStatementIngestRun(...args),
+  updateStatementMetadata: (...args: unknown[]) => mockUpdateStatementMetadata(...args),
   updateStatementIngestRun: (...args: unknown[]) => mockUpdateStatementIngestRun(...args),
 }));
 
@@ -222,7 +232,22 @@ describe('V8 finance read-only routes', () => {
       coverageSummary: { total: 0, computed: 0, na: 0, coveragePct: 0 },
     });
     mockSearchStatementDocumentIntelligence.mockResolvedValue([]);
+    mockClassifyStatementDocument.mockReturnValue({
+      documentClass: 'financial_statement',
+      extractionStrategy: 'table',
+      templateFamily: 'standard',
+    });
     mockConfirmStatement.mockResolvedValue(undefined);
+    mockDetectStatementType.mockReturnValue({
+      statementType: 'P&L',
+      periodStart: '2026-01-01',
+      periodEnd: '2026-03-31',
+      periodLabel: 'Q1 2026',
+      currency: 'PLN',
+      scaling: 'units',
+      confidence: 0.93,
+      containedStatementTypes: ['P&L'],
+    });
     mockEvaluateStatementReadiness.mockReturnValue({
       isReady: true,
       readinessStatus: 'ready',
@@ -231,10 +256,15 @@ describe('V8 finance read-only routes', () => {
       reasonCodes: [],
     });
     mockGetLatestStatementIngestRun.mockResolvedValue('ingest-run-1');
+    mockLoadStatementSourceText.mockResolvedValue('Revenue 100');
     mockRecordStatementQualityRun.mockResolvedValue(undefined);
     mockRecordStatementSourceArtifact.mockResolvedValue(undefined);
+    mockResolveStatementColumnSelection.mockReturnValue({
+      selectedPeriodLabel: 'Q1 2026',
+    });
     mockSnapshotCanonicalStatementVersion.mockResolvedValue(undefined);
     mockStartStatementIngestRun.mockResolvedValue('ingest-run-1');
+    mockUpdateStatementMetadata.mockResolvedValue(undefined);
     mockUpdateStatementIngestRun.mockResolvedValue(undefined);
     mockSaveStatementValuesFlow.mockResolvedValue({
       statementId: 'statement-1',
@@ -455,6 +485,65 @@ describe('V8 finance read-only routes', () => {
       query: 'revenue',
       limit: 3,
     });
+  });
+
+  it('POST /api/v8/finance/statements/:id/detect returns envelope and delegates to statement detect flow', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'P&L',
+      source_file_name: 'acme-q1.csv',
+      source_file_path: '/tmp/acme-q1.csv',
+      parse_method: 'ocr',
+      document_class: 'financial_statement',
+      extraction_strategy: 'table',
+      template_family: 'standard',
+      notes: 'revenue data',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/statements/statement-1/detect').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.statementId).toBe('statement-1');
+    expect(res.body.data?.ingestRunId).toBe('ingest-run-1');
+    expect(res.body.data?.detection?.statementType).toBe('P&L');
+    expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
+    expect(mockLoadStatementSourceText).toHaveBeenCalledWith('statement-1', 'revenue data');
+    expect(mockDetectStatementType).toHaveBeenCalledWith('Revenue 100');
+    expect(mockResolveStatementColumnSelection).toHaveBeenCalledWith(
+      'Revenue 100',
+      expect.objectContaining({ statementType: 'P&L' }),
+    );
+    expect(mockUpdateStatementMetadata).toHaveBeenCalledWith(
+      'statement-1',
+      expect.objectContaining({
+        statementType: 'P&L',
+        currency: 'PLN',
+      }),
+    );
+    expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
+    expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statementId: 'statement-1',
+        artifactType: 'detection',
+        stage: 'detect',
+      }),
+    );
+    expect(mockUpdateStatementIngestRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ingestRunId: 'ingest-run-1',
+        currentStage: 'detect',
+        runStatus: 'running',
+      }),
+    );
+    expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statementId: 'statement-1',
+        organizationId: ORG,
+        stage: 'detect',
+      }),
+    );
   });
 
   it('POST /api/v8/finance/statements/:id/confirm returns envelope and delegates to statement confirm flow', async () => {
