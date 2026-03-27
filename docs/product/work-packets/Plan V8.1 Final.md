@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Partner Program` parity
-- landed packets in the active lane: `3`
+- landed packets in the active lane: `6`
 
 ---
 
@@ -87,7 +87,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
-| `10` | broader `Partner Program` parity | `Phase C` | `active` | onboarding, client-access, statement sources, and payout-settings remain, and payout history is now the first active broader packet | broader partner breadth is accepted |
+| `10` | broader `Partner Program` parity | `Phase C` | `active` | accepted partner payout/campaign/profile seams are already closed, and six broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, and partner-home onboarding status while deeper onboarding, client-access, statement-source, and payout-settings breadth still remain | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
 | `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: fifth broader packet recorded in `evidence/423-v81-broader-partner-referred-customer-lifecycle-readback-seam.md`
-- reason: after the shared referral-tools body moved onto governed reads, the active partner portal still showed only a thin referred-customer list even though the governed attribution seam already carried lifecycle depth such as signup completion, first payment, commission rate, duration, and lifetime value
+- latest evidence: sixth broader packet recorded in `evidence/424-v81-broader-partner-home-onboarding-status-readback-seam.md`
+- reason: `client-access` still fans out into multiple placeholder-only legacy endpoints, but the connected `partner-home` surface still showed static onboarding progress even though a real onboarding status contract already existed, so the smallest honest next cut was governed onboarding status readback on the active partner home
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `referred-customer lifecycle readback seam`
-- last accepted packet: `referred-customer lifecycle readback seam`
+- current packet: `partner-home onboarding status readback seam`
+- last accepted packet: `partner-home onboarding status readback seam`
 - blocker: `none`
-- next action: `assess whether onboarding or client-access breadth now contains the next smallest honest broader-partner packet after referred-customer lifecycle readback continuity`
+- next action: `assess whether deeper onboarding continuity or client-access breadth now contains the next smallest honest broader-partner packet after partner-home onboarding status readback continuity`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

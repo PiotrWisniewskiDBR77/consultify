@@ -14,6 +14,7 @@ const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
 const mockCreateCampaignLink = vi.fn();
 const mockDeleteCampaignLink = vi.fn();
+const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbTransaction = vi.fn();
 const mockGetActivePartnerOrgIdForUser = vi.fn();
@@ -48,6 +49,7 @@ vi.mock('../../../database/Database.js', () => ({
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
+  get: (...args: unknown[]) => mockDbGet(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
   transaction: (...args: unknown[]) => mockDbTransaction(...args),
 }));
@@ -208,6 +210,13 @@ describe('V8 partner read bridge', () => {
       fullUrl: 'https://example.com/?c=spring-launch',
     });
     mockDeleteCampaignLink.mockResolvedValue(true);
+    mockDbGet.mockResolvedValue({
+      terms_accepted: 1,
+      privacy_accepted: 1,
+      pricing_tier: 'professional',
+      payment_setup: 0,
+      completed: 0,
+    });
     mockDbRun.mockResolvedValue({ changes: 1 });
     mockDbTransaction.mockResolvedValue({ success: true });
   });
@@ -267,6 +276,22 @@ describe('V8 partner read bridge', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.tools.referralCode).toBe('ACME-2024');
     expect(res.body.data.tools.campaignLinks).toEqual([]);
+  });
+
+  it('GET /api/v8/partner/onboarding-status returns onboarding readback with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/onboarding-status');
+
+    expect(res.status).toBe(200);
+    expect(mockDbGet).toHaveBeenCalled();
+    expect(res.body.data.status).toEqual({
+      termsAccepted: true,
+      privacyAccepted: true,
+      pricingTier: 'professional',
+      paymentSetup: false,
+      completed: false,
+    });
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
   it('GET /api/v8/partner/earnings-summary returns earnings with partner meta', async () => {

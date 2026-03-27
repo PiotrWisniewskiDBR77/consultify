@@ -107,6 +107,14 @@ export interface V8PartnerReferralTools {
   campaignLinks: V8PartnerReferralToolsCampaignLink[];
 }
 
+export interface V8PartnerOnboardingStatus {
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  pricingTier: string | null;
+  paymentSetup: boolean;
+  completed: boolean;
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -187,6 +195,8 @@ export const V8PartnerApi = {
     v8Get<{ analytics: V8PartnerReferralAnalytics; days: number }>('/partner/referral-analytics', {
       days: String(days),
     }),
+  getOnboardingStatus: () =>
+    v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   getReferralTools: () => v8Get<{ tools: V8PartnerReferralTools }>('/partner/referral-tools'),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
   getAttributions: () => v8Get<{ attributions: V8PartnerAttribution[] }>('/partner/attributions'),

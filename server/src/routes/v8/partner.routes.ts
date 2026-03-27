@@ -49,6 +49,52 @@ function buildReferralToolsFallback() {
 }
 
 /**
+ * GET /api/v8/partner/onboarding-status
+ */
+router.get(
+  '/onboarding-status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    const db = getDatabase();
+    const row = await DbPromise.get<{
+      terms_accepted?: boolean | number | null;
+      privacy_accepted?: boolean | number | null;
+      pricing_tier?: string | null;
+      payment_setup?: boolean | number | null;
+      completed?: boolean | number | null;
+    }>(
+      db,
+      `SELECT terms_accepted, privacy_accepted, pricing_tier, payment_setup, completed
+       FROM user_onboarding_status
+       WHERE user_id = ?`,
+      [userId]
+    );
+    return res.json({
+      data: {
+        status: {
+          termsAccepted: Boolean(row?.terms_accepted),
+          privacyAccepted: Boolean(row?.privacy_accepted),
+          pricingTier: row?.pricing_tier ?? null,
+          paymentSetup: Boolean(row?.payment_setup),
+          completed: Boolean(row?.completed),
+        },
+      },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/partner/referral-tools
  */
 router.get(

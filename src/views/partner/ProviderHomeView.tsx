@@ -48,9 +48,16 @@ import {
   Wallet,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
+import { Api } from '../../services/api';
+import {
+  shouldFallbackToLegacyPartner,
+  V8PartnerApi,
+  type V8PartnerOnboardingStatus,
+} from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 
 // ============================================================================
@@ -383,16 +390,120 @@ const TierProgressionSection: React.FC = () => {
 
 const OnboardingChecklistSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<V8PartnerOnboardingStatus>({
+    termsAccepted: false,
+    privacyAccepted: false,
+    pricingTier: null,
+    paymentSetup: false,
+    completed: false,
+  });
+
+  const normalizeOnboardingStatus = useCallback(
+    (payload: any): V8PartnerOnboardingStatus => ({
+      termsAccepted: Boolean(payload?.termsAccepted ?? payload?.terms_accepted),
+      privacyAccepted: Boolean(payload?.privacyAccepted ?? payload?.privacy_accepted),
+      pricingTier:
+        payload?.pricingTier === undefined ? (payload?.pricing_tier ?? null) : payload.pricingTier,
+      paymentSetup: Boolean(payload?.paymentSetup ?? payload?.payment_setup),
+      completed: Boolean(payload?.completed),
+    }),
+    []
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStatus = async () => {
+      try {
+        const response = await V8PartnerApi.getOnboardingStatus();
+        if (!cancelled && response?.status) {
+          setStatus(normalizeOnboardingStatus(response.status));
+        }
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) return;
+        try {
+          const legacy = await Api.get('/onboarding/status');
+          if (!cancelled) {
+            setStatus(normalizeOnboardingStatus(legacy));
+          }
+        } catch {
+          // Keep default pending state when neither seam resolves.
+        }
+      }
+    };
+
+    void loadStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [normalizeOnboardingStatus]);
+
+  const goToOnboarding = useCallback(() => {
+    navigate('/setup/onboarding');
+  }, [navigate]);
 
   const steps = [0, 1, 2, 3].map((i) => ({
     id: i + 1,
-    title: t(`partner.onboarding.steps.${i}.title`),
-    description: t(`partner.onboarding.steps.${i}.description`),
-    why: t(`partner.onboarding.steps.${i}.why`),
-    time: t(`partner.onboarding.steps.${i}.time`),
-    completed: i === 0,
-    cta: t(`partner.onboarding.steps.${i}.cta`),
-    bonus: i === 1 ? t(`partner.onboarding.steps.${i}.bonus`) : undefined,
+    title: [
+      t('partner.onboarding.termsTitle', 'Accept terms and privacy'),
+      t('partner.onboarding.pricingTitle', 'Choose pricing tier'),
+      t('partner.onboarding.paymentTitle', 'Set up payment'),
+      t('partner.onboarding.completeTitle', 'Complete onboarding'),
+    ][i],
+    description: [
+      t(
+        'partner.onboarding.termsDescription',
+        'Confirm legal acceptance so your partner workspace can start with the correct guardrails.'
+      ),
+      t(
+        'partner.onboarding.pricingDescription',
+        'Pick the pricing tier that matches your partner operating model.'
+      ),
+      t(
+        'partner.onboarding.paymentDescription',
+        'Add payment setup to unlock the full commercial onboarding path.'
+      ),
+      t(
+        'partner.onboarding.completeDescription',
+        'Finish the onboarding flow so your workspace is ready for day-to-day partner operations.'
+      ),
+    ][i],
+    why: [
+      t(
+        'partner.onboarding.termsWhy',
+        'This keeps your onboarding record aligned with the real workspace contract.'
+      ),
+      t(
+        'partner.onboarding.pricingWhy',
+        'The selected tier determines how the onboarding flow configures your workspace.'
+      ),
+      t(
+        'partner.onboarding.paymentWhy',
+        'Payment readiness is a real onboarding milestone, not a static checklist guess.'
+      ),
+      t(
+        'partner.onboarding.completeWhy',
+        'A completed onboarding state unlocks the intended downstream trial and workspace behavior.'
+      ),
+    ][i],
+    time: ['1 min', '1 min', '2 min', '1 min'][i],
+    completed: [
+      status.termsAccepted && status.privacyAccepted,
+      Boolean(status.pricingTier),
+      status.paymentSetup,
+      status.completed,
+    ][i],
+    cta: [
+      t('partner.onboarding.termsCta', 'Review terms'),
+      t('partner.onboarding.pricingCta', 'Choose plan'),
+      t('partner.onboarding.paymentCta', 'Set up payment'),
+      t('partner.onboarding.completeCta', 'Finish onboarding'),
+    ][i],
+    bonus:
+      i === 1 && status.pricingTier
+        ? t('partner.onboarding.pricingBonus', `Current tier: ${status.pricingTier}`)
+        : undefined,
     secure: i === 3,
   }));
 
@@ -499,7 +610,10 @@ const OnboardingChecklistSection: React.FC = () => {
                 )}
 
                 {!step.completed && (
-                  <button className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors">
+                  <button
+                    onClick={goToOnboarding}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
                     {step.cta}
                     <ChevronRight className="w-4 h-4" />
                   </button>

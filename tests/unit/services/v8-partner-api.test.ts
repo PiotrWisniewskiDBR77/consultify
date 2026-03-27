@@ -71,6 +71,23 @@ describe('V8PartnerApi', () => {
     expect(data.tools.referralCode).toBe('PARTNER-123');
   });
 
+  it('requests partner onboarding status from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      status: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        pricingTier: 'professional',
+        paymentSetup: false,
+        completed: false,
+      },
+    });
+
+    const data = await V8PartnerApi.getOnboardingStatus();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/onboarding-status');
+    expect(data.status.pricingTier).toBe('professional');
+  });
+
   it('requests partner earnings summary from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       earnings: {
