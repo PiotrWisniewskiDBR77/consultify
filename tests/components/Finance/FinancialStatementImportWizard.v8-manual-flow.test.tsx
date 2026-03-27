@@ -31,6 +31,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     detectStatement: vi.fn(),
     extractStatement: vi.fn(),
     mapStatement: vi.fn(),
+    putStatementValues: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -75,6 +76,15 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     return view;
   }
 
+  async function advanceToMapStep() {
+    await openManualDetectStep();
+    fireEvent.click(screen.getByRole('button', { name: 'Extract Financial Lines' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('financial-statement-mapping-editor')).toBeTruthy();
+    });
+  }
+
   it('prefers governed detect/extract/map and canonical lines before legacy fallback in the wizard manual flow', async () => {
     vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
@@ -110,13 +120,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       throw new Error(`Unexpected GET ${url}`);
     });
 
-    await openManualDetectStep();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Extract Financial Lines' }));
-
-    await waitFor(() => {
-      expect(screen.getByText('financial-statement-mapping-editor')).toBeTruthy();
-    });
+    await advanceToMapStep();
 
     expect(V8FinanceApi.detectStatement).toHaveBeenCalledWith('statement-1', {
       statementType: 'P&L',
@@ -189,13 +193,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       throw new Error(`Unexpected GET ${url}`);
     });
 
-    await openManualDetectStep();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Extract Financial Lines' }));
-
-    await waitFor(() => {
-      expect(screen.getByText('financial-statement-mapping-editor')).toBeTruthy();
-    });
+    await advanceToMapStep();
 
     expect(V8FinanceApi.detectStatement).toHaveBeenCalledWith('statement-1', {
       statementType: 'P&L',
@@ -221,5 +219,108 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     });
     expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {});
     expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/canonical-lines');
+  });
+
+  it('prefers governed values save before legacy fallback in the wizard manual flow', async () => {
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.9,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      statementId: 'statement-1',
+      savedCount: 1,
+      readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
+      validation: { status: 'pass', messages: [] },
+    } as any);
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected POST ${url}`);
+    });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+    vi.mocked(Api.put).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected PUT ${url}`);
+    });
+
+    await advanceToMapStep();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
+        values: expect.any(Array),
+      });
+    });
+
+    expect(Api.put).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
+      values: expect.any(Array),
+    });
+  });
+
+  it('falls back to legacy values save in the wizard manual flow on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.9,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected POST ${url}`);
+    });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+    vi.mocked(Api.put).mockResolvedValue({
+      savedCount: 1,
+      readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
+      validation: { status: 'pass', messages: [] },
+    } as any);
+
+    await advanceToMapStep();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
+
+    await waitFor(() => {
+      expect(Api.put).toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
+        values: expect.any(Array),
+      });
+    });
+
+    expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
+      values: expect.any(Array),
+    });
   });
 });

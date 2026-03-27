@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `16`
+- landed packets in the active lane: `17`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `import wizard manual detect/extract/map V8 seam` recorded in `evidence/402-v81-broader-finance-import-wizard-manual-detect-extract-map-v8-seam.md`
-- reason: after the active workspace recovery chain landed, the next smallest honest residual was the manual `FinancialStatementImportWizard` detect/extract/map/canonical-lines stage still defaulting to legacy finance-statements endpoints
+- latest evidence: `import wizard values save V8 seam` recorded in `evidence/403-v81-broader-finance-import-wizard-values-save-v8-seam.md`
+- reason: after the manual import detect/extract/map stage landed on governed seams, the next smallest honest residual was the wizard `Save & Validate` action still defaulting to the legacy finance-statements values-save endpoint
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `FinancialStatementImportWizard` manual detect/extract/map/canonical-lines continuity
-- last accepted packet: `import wizard manual detect/extract/map V8 seam`
+- current packet: `FinancialStatementImportWizard` values-save continuity
+- last accepted packet: `import wizard values save V8 seam`
 - blocker: `none`
-- next action: `assess whether FinancialStatementImportWizard values-save continuity is the next honest broader Finance packet after the manual detect/extract/map closure`
+- next action: `assess whether FinancialStatementImportWizard confirm continuity is the next honest broader Finance packet after values-save closure`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

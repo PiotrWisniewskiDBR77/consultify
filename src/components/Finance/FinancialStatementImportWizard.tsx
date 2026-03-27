@@ -157,6 +157,17 @@ async function getCanonicalLinesWithFallback() {
   }
 }
 
+async function saveStatementValuesWithFallback(statementId: string, values: Array<Record<string, unknown>>) {
+  try {
+    return await V8FinanceApi.putStatementValues(statementId, { values });
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.put(`/api/finance-statements/${statementId}/values`, { values });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -409,18 +420,17 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setLoading(true);
     setError(null);
     try {
-      const data = await Api.put(`/api/finance-statements/${statementId}/values`, {
-        values: mappedValues.map((v) => ({
-          canonicalLineId: v.canonicalLineId,
-          originalLabel: v.originalLabel,
-          value: v.value,
-          confidence: v.confidence,
-          sourceRow: v.sourceRow,
-          mappingStatus: v.mappingStatus,
-          isNonFinancial: v.isNonFinancial,
-          classificationReason: v.classificationReason,
-        })),
-      });
+      const values = mappedValues.map((v) => ({
+        canonicalLineId: v.canonicalLineId,
+        originalLabel: v.originalLabel,
+        value: v.value,
+        confidence: v.confidence,
+        sourceRow: v.sourceRow,
+        mappingStatus: v.mappingStatus,
+        isNonFinancial: v.isNonFinancial,
+        classificationReason: v.classificationReason,
+      }));
+      const data = await saveStatementValuesWithFallback(statementId, values);
       setValidation((data as any)?.validation || null);
       setReadiness(
         (data as any)?.readiness
@@ -448,7 +458,6 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       setLoading(false);
     }
   };
-
   // ── Step 4: Confirm ──
 
   const handleConfirm = async () => {
