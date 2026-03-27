@@ -45,6 +45,7 @@ export interface V8SyncIntegrationInventoryRow {
   onboardingStatus:
     | 'pending_external_auth_or_configuration'
     | 'pending_external_auth'
+    | 'authorization_callback_received_pending_verification'
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation'
     | null;
@@ -82,10 +83,41 @@ function mapOnboardingStatus(
 ):
   | 'pending_external_auth_or_configuration'
   | 'pending_external_auth'
+  | 'authorization_callback_received_pending_verification'
   | 'pending_configuration'
   | 'configuration_submitted_pending_validation'
   | null {
   if (status !== 'pending') return null;
+
+  if (authType === 'oauth2' && configuredFields.length >= configFields.length) {
+    return 'pending_external_auth';
+  }
+
+  if (status === 'pending' && authType === 'oauth2' && configFields.length === 0) {
+    return 'pending_external_auth';
+  }
+
+  return hasAllRequiredFields ? 'configuration_submitted_pending_validation' : 'pending_configuration';
+}
+
+function mapPendingOnboardingStatusFromAuth(
+  status: string,
+  authState: string,
+  authType: string,
+  configFields: string[],
+  configuredFields: string[],
+):
+  | 'pending_external_auth_or_configuration'
+  | 'pending_external_auth'
+  | 'authorization_callback_received_pending_verification'
+  | 'pending_configuration'
+  | 'configuration_submitted_pending_validation'
+  | null {
+  if (status !== 'pending') return null;
+
+  if (authState === 'connected_pending_verification') {
+    return 'authorization_callback_received_pending_verification';
+  }
 
   const hasAllRequiredFields =
     configFields.length === 0 || configuredFields.length >= configFields.length;
@@ -145,7 +177,13 @@ export async function listGovernedIntegrations(
       const derivedHealth = mapInventoryHealth(health.syncStatus, health.healthy);
       const configuredFields = connector ? getConfiguredFields(connector.configFields, parsedConfig) : [];
       const onboardingStatus = connector
-        ? mapOnboardingStatus(derivedStatus, connector.authType, connector.configFields, configuredFields)
+        ? mapPendingOnboardingStatusFromAuth(
+            derivedStatus,
+            health.authState,
+            connector.authType,
+            connector.configFields,
+            configuredFields,
+          )
         : null;
 
       return {

@@ -297,6 +297,7 @@ Current result:
 - the fourth real bounded broader sync packet landed in `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md` by adding governed pending-config submission continuity on the active sync hub while keeping broader OAuth callback completion explicitly out of scope,
 - the fifth real bounded broader sync packet landed in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md` by keeping governed reauthorization in honest pending state instead of auto-claiming recovery before external auth callback completion exists,
 - the post-reauth residual assessment recorded in `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md` confirmed there is no thinner honest broader-sync packet left before explicit external authorization callback continuity,
+- the sixth real bounded broader sync packet landed in `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md` by adding governed external-auth session preparation plus public callback landing readback, so the active sync hub can now record callback arrival without pretending full ready-state recovery already exists,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -459,6 +460,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the sixth real bounded packet inside broader `Sync` completion by adding governed external-auth session preparation plus public callback landing readback in `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md`, so the active sync hub can now surface callback preparation and callback-received verification-pending truth without pretending full post-auth recovery already exists
 - 2026-03-27: recorded the broader `Sync` post-reauth residual assessment in `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md`, confirming that no thinner honest broader-sync packet remains before explicit external authorization callback continuity
 - 2026-03-27: landed the fifth real bounded packet inside broader `Sync` completion by keeping governed reauthorization in honest pending state in `evidence/447-v81-broader-sync-reauth-pending-state-honesty-seam.md`, so the active sync hub no longer auto-claims recovered `connected` truth before external auth callback completion actually exists
 - 2026-03-27: landed the fourth real bounded packet inside broader `Sync` completion by adding governed pending config submission continuity on the active sync hub in `evidence/446-v81-broader-sync-pending-config-submission-continuity-seam.md`, so operators can now save required provider setup fields on pending integrations without pretending OAuth callback completion already exists

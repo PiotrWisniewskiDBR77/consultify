@@ -344,6 +344,8 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.integration?.configuredFields).toEqual(['site_url', 'cloud_id']);
     expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.data?.externalAuth?.callbackUrl).toContain('/api/sync-hub/external-auth/callback?state=');
+    expect(res.body.data?.externalAuth?.state).toBeTruthy();
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE integrations'),
       ['{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123"}', 'int-pending-1', ORG],
@@ -352,6 +354,13 @@ describe('V8 sync read-only routes', () => {
       expect.stringContaining('INSERT INTO integration_audit_log'),
       expect.arrayContaining([ORG, 'int-pending-1', 'configuration_updated', UID, UID]),
     );
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      targetState: 'connecting',
+      transitionedBy: UID,
+      reason: 'external_auth_prepared',
+    });
   });
 
   it('GET /api/v8/sync/health returns governed hub health summary', async () => {
@@ -431,6 +440,7 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(res.body.data?.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.data?.externalAuth?.callbackUrl).toContain('/api/sync-hub/external-auth/callback?state=');
     expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'pending');
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',

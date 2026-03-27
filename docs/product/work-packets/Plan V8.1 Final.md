@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `5`
+- landed packets in the current active lane: `6`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: post-reauth residual assessment recorded in `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md`
-- reason: after the first five broader-sync packets landed, no thinner active residual remained before explicit external authorization callback continuity
+- latest evidence: sixth broader sync packet recorded in `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md`
+- reason: after the post-reauth assessment promoted callback continuity, the live sync stack still could not record external auth callback arrival or surface the resulting verification-pending truth
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/448-v81-broader-sync-post-reauth-residual-assessment.md`
+- current packet: `evidence/449-v81-broader-sync-external-auth-callback-landing-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote external authorization callback continuity as the next honest broader sync packet because no thinner post-reauth residual remains`
+- next action: `assess whether post-callback verification / ready-state promotion continuity or post-auth refresh / recovery continuity is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

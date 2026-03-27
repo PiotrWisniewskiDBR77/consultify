@@ -719,6 +719,11 @@ describe('UnifiedSyncHub V8 health continuity', () => {
         configuredFields: ['site_url', 'cloud_id'],
         onboardingStatus: 'pending_external_auth',
       },
+      externalAuth: {
+        callbackUrl: 'https://example.com/api/sync-hub/external-auth/callback?state=prepared',
+        state: 'prepared',
+        expiresAt: '2026-03-27T19:00:00.000Z',
+      },
     } as any);
 
     render(<UnifiedSyncHub />);
@@ -761,5 +766,58 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(screen.getByText('cloud id saved')).toBeInTheDocument();
     expect(screen.getByText('{{configured}} of {{total}} required setup fields saved.')).toBeInTheDocument();
     expect(screen.getByText('Finish external auth to enable sync controls')).toBeInTheDocument();
+    expect(screen.getByText('Governed external auth return is prepared')).toBeInTheDocument();
+    expect(
+      screen.getByText('https://example.com/api/sync-hub/external-auth/callback?state=prepared'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows callback-received pending verification honesty on the governed hub', async () => {
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-pending-3',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'pending',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 10,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: 'authorization_callback_received_pending_verification',
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Jira'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'The external authorization callback was received. Verification is still pending before sync controls become available.',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Verification still pending before sync controls unlock')).toBeInTheDocument();
   });
 });

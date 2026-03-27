@@ -113,6 +113,7 @@ export interface V8SyncIntegrationInventoryRow {
   onboardingStatus:
     | 'pending_external_auth_or_configuration'
     | 'pending_external_auth'
+    | 'authorization_callback_received_pending_verification'
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation'
     | null;
@@ -158,8 +159,15 @@ export interface V8SyncConfiguredIntegration {
   onboardingStatus:
     | 'pending_external_auth_or_configuration'
     | 'pending_external_auth'
+    | 'authorization_callback_received_pending_verification'
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation';
+}
+
+export interface V8SyncExternalAuthSession {
+  callbackUrl: string;
+  state: string;
+  expiresAt: string;
 }
 
 export interface V8SyncHealthSummary {
@@ -220,6 +228,7 @@ export const V8SyncApi = {
   configureIntegration: (integrationId: string, payload: { config?: Record<string, unknown> }) =>
     v8Post<{
       integration: V8SyncConfiguredIntegration;
+      externalAuth?: V8SyncExternalAuthSession;
     }>(`/sync/integrations/${encodeURIComponent(integrationId)}/configure`, payload ?? { config: {} }),
   getHubHealth: () => v8Get<{ summary: V8SyncHealthSummary }>('/sync/health'),
   getErrors: (params?: { integrationId?: string }) =>
@@ -236,8 +245,10 @@ export const V8SyncApi = {
       onboardingStatus:
         | 'pending_external_auth_or_configuration'
         | 'pending_external_auth'
+        | 'authorization_callback_received_pending_verification'
         | 'pending_configuration'
         | 'configuration_submitted_pending_validation';
+      externalAuth?: V8SyncExternalAuthSession;
     }>(
       `/sync/integrations/${encodeURIComponent(integrationId)}/reauth`,
       {},

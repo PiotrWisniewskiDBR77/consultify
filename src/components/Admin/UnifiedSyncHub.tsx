@@ -107,10 +107,17 @@ interface IntegrationItem {
   onboardingStatus:
     | 'pending_external_auth_or_configuration'
     | 'pending_external_auth'
+    | 'authorization_callback_received_pending_verification'
     | 'pending_configuration'
     | 'configuration_submitted_pending_validation'
     | null;
   connector: ConnectorInfo | null;
+}
+
+interface ExternalAuthSessionInfo {
+  callbackUrl: string;
+  state: string;
+  expiresAt: string;
 }
 
 interface CatalogConnector extends ConnectorInfo {
@@ -337,6 +344,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [editingPendingConfigId, setEditingPendingConfigId] = useState<string | null>(null);
   const [savingPendingConfigId, setSavingPendingConfigId] = useState<string | null>(null);
   const [pendingConfigDrafts, setPendingConfigDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [externalAuthSessions, setExternalAuthSessions] = useState<Record<string, ExternalAuthSessionInfo>>({});
 
   const v8ConnectorHealthTargets = useMemo<V8ConnectorHealthTarget[]>(() => {
     const byConnectorId = new Map<string, V8ConnectorHealthTarget>();
@@ -757,6 +765,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       try {
         const data = await V8SyncApi.configureIntegration(integration.id, { config });
         onboardingStatus = data.integration.onboardingStatus;
+        if (data.externalAuth) {
+          setExternalAuthSessions((current) => ({ ...current, [integration.id]: data.externalAuth }));
+        }
       } catch (error) {
         if (!shouldFallbackToLegacySync(error)) {
           throw error;
@@ -827,6 +838,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     try {
       try {
         const data = await V8SyncApi.reauthIntegration(integrationId);
+        if (data.externalAuth) {
+          setExternalAuthSessions((current) => ({ ...current, [integrationId]: data.externalAuth }));
+        }
         toast.success(
           data.onboardingStatus === 'pending_external_auth'
             ? t(
@@ -1154,12 +1168,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       (field) => !configuredFieldSet.has(field),
     );
     const isEditingPendingConfig = editingPendingConfigId === int.id;
+    const externalAuthSession = externalAuthSessions[int.id] || null;
     const pendingSetupDescription =
       int.onboardingStatus === 'pending_external_auth'
         ? t(
             'integrations.syncHub.setupPendingAuthOnlyDesc',
             'Required provider configuration is saved. Complete external auth before sync controls become available.',
           )
+        : int.onboardingStatus === 'authorization_callback_received_pending_verification'
+          ? t(
+              'integrations.syncHub.setupCallbackReceivedDesc',
+              'The external authorization callback was received. Verification is still pending before sync controls become available.',
+            )
         : int.onboardingStatus === 'configuration_submitted_pending_validation'
           ? t(
               'integrations.syncHub.setupPendingValidationDesc',
@@ -1392,6 +1412,25 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           )}
                         </div>
                       )}
+                      {externalAuthSession && int.onboardingStatus === 'pending_external_auth' && (
+                        <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-3 text-[11px] text-sky-100">
+                          <div className="font-medium text-sky-200">
+                            {t(
+                              'integrations.syncHub.externalAuthPrepared',
+                              'Governed external auth return is prepared',
+                            )}
+                          </div>
+                          <div className="mt-1 text-sky-100/80 break-all">
+                            {externalAuthSession.callbackUrl}
+                          </div>
+                          <div className="mt-1 text-sky-100/60">
+                            {t(
+                              'integrations.syncHub.externalAuthPreparedDesc',
+                              'Use this callback URL in the provider authorization flow. It expires automatically if left unused.',
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1473,7 +1512,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   {isPendingOnboarding && (
                     <span className="px-3 py-1.5 text-xs rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      {int.onboardingStatus === 'pending_external_auth'
+                      {int.onboardingStatus === 'authorization_callback_received_pending_verification'
+                        ? t(
+                            'integrations.syncHub.setupPendingControlsVerification',
+                            'Verification still pending before sync controls unlock',
+                          )
+                        : int.onboardingStatus === 'pending_external_auth'
                         ? t(
                             'integrations.syncHub.setupPendingControlsAuthOnly',
                             'Finish external auth to enable sync controls',

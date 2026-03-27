@@ -30,6 +30,8 @@ import {
   recordRequest,
   resolveError,
 } from '../services/syncGuardrailsService.js';
+import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
+import { consumeSyncExternalAuthSession } from '../services/syncExternalAuthSessionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
@@ -54,6 +56,29 @@ async function logAudit(
      VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?::JSONB)`,
     [orgId, integrationId, action, actorId, actorName, JSON.stringify(details)]
   );
+}
+
+function renderExternalAuthCallbackHtml(title: string, message: string): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>
+      body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+      .card { max-width: 480px; padding: 24px; border: 1px solid #334155; border-radius: 16px; background: rgba(15,23,42,0.95); box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+      h1 { margin: 0 0 12px; font-size: 20px; }
+      p { margin: 0; line-height: 1.5; color: #cbd5e1; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>${title}</h1>
+      <p>${message}</p>
+    </div>
+  </body>
+</html>`;
 }
 
 // ================================================================
@@ -145,6 +170,63 @@ const ConnectSchema = z.object({
   config: z.record(z.string(), z.unknown()).optional(),
   displayName: z.string().optional(),
 });
+
+router.get(
+  '/external-auth/callback',
+  asyncHandler(async (req: Request, res: Response) => {
+    const state = typeof req.query.state === 'string' ? req.query.state.trim() : '';
+    if (!state) {
+      return res
+        .status(400)
+        .send(
+          renderExternalAuthCallbackHtml(
+            'Authorization callback failed',
+            'The authorization callback is missing a valid state token.',
+          ),
+        );
+    }
+
+    const session = consumeSyncExternalAuthSession(state);
+    if (!session) {
+      return res
+        .status(400)
+        .send(
+          renderExternalAuthCallbackHtml(
+            'Authorization callback expired',
+            'The external authorization session is no longer valid. Start the sync authorization flow again from Consultify.',
+          ),
+        );
+    }
+
+    await setConnectorAuthState({
+      connectorId: session.connectorId,
+      organizationId: session.organizationId,
+      targetState: 'connected_pending_verification',
+      transitionedBy: 'external_auth_callback',
+      reason: 'external_auth_callback_received',
+    });
+    await logAudit(
+      session.organizationId,
+      session.integrationId,
+      'external_auth_callback_received',
+      'external_auth_callback',
+      'external_auth_callback',
+      {
+        connectorId: session.connectorId,
+        mode: session.mode,
+      },
+    );
+
+    return res
+      .status(200)
+      .send(
+        renderExternalAuthCallbackHtml(
+          'Authorization callback received',
+          'Consultify recorded the external authorization return. Verification is still pending before sync controls become available.',
+        ),
+      );
+  }),
+);
 
 router.post(
   '/connect',

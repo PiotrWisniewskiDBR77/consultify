@@ -29,6 +29,7 @@ import {
   syncIntegration,
   updateIntegrationStatus,
 } from '../../services/integrationHubService.js';
+import { issueSyncExternalAuthSession } from '../../services/syncExternalAuthSessionService.js';
 import {
   checkRateLimit,
   getIntegrationHealth,
@@ -55,6 +56,10 @@ function syncReadMeta() {
 
 function syncMutationMeta() {
   return { version: 'v8' as const, contract: V8_SYNC_RUNTIME_MUTATION_CONTRACT };
+}
+
+function buildExternalAuthCallbackUrl(req: AuthRequest, state: string): string {
+  return `${req.protocol}://${req.get('host')}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
 }
 
 async function logIntegrationAudit(
@@ -352,6 +357,35 @@ router.post(
       status: integration.status,
     });
 
+    let externalAuth:
+      | {
+          callbackUrl: string;
+          state: string;
+          expiresAt: string;
+        }
+      | undefined;
+
+    if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+      await setConnectorAuthState({
+        connectorId: connector.id,
+        organizationId,
+        targetState: 'connecting',
+        transitionedBy: actorId,
+        reason: 'external_auth_prepared',
+      });
+      const session = issueSyncExternalAuthSession({
+        integrationId,
+        organizationId,
+        connectorId: connector.id,
+        mode: 'connect',
+      });
+      externalAuth = {
+        callbackUrl: buildExternalAuthCallbackUrl(req, session.state),
+        state: session.state,
+        expiresAt: new Date(session.expiresAt).toISOString(),
+      };
+    }
+
     return res.json({
       data: {
         integration: {
@@ -361,6 +395,7 @@ router.post(
           configuredFields,
           onboardingStatus,
         },
+        externalAuth,
       },
       meta: syncMutationMeta(),
     });
@@ -454,11 +489,23 @@ router.post(
       onboardingStatus,
     });
 
+    const session = issueSyncExternalAuthSession({
+      integrationId,
+      organizationId,
+      connectorId: connector.id,
+      mode: 'reauth',
+    });
+
     return res.json({
       data: {
         success: true as const,
         message: 'Re-authorization initiated',
         onboardingStatus,
+        externalAuth: {
+          callbackUrl: buildExternalAuthCallbackUrl(req, session.state),
+          state: session.state,
+          expiresAt: new Date(session.expiresAt).toISOString(),
+        },
       },
       meta: syncMutationMeta(),
     });

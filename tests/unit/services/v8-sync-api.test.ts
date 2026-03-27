@@ -124,6 +124,11 @@ describe('V8SyncApi', () => {
         configuredFields: ['site_url', 'cloud_id'],
         onboardingStatus: 'pending_external_auth',
       },
+      externalAuth: {
+        callbackUrl: 'https://example.com/api/sync-hub/external-auth/callback?state=abc',
+        state: 'abc',
+        expiresAt: '2026-03-27T19:00:00.000Z',
+      },
     });
 
     const data = await V8SyncApi.configureIntegration('int-1', {
@@ -135,6 +140,7 @@ describe('V8SyncApi', () => {
     });
     expect(data.integration.configuredFields).toEqual(['site_url', 'cloud_id']);
     expect(data.integration.onboardingStatus).toBe('pending_external_auth');
+    expect(data.externalAuth?.state).toBe('abc');
   });
 
   it('posts governed reauthorization without claiming immediate recovery', async () => {
@@ -142,6 +148,11 @@ describe('V8SyncApi', () => {
       success: true,
       message: 'Re-authorization initiated',
       onboardingStatus: 'pending_external_auth',
+      externalAuth: {
+        callbackUrl: 'https://example.com/api/sync-hub/external-auth/callback?state=reauth',
+        state: 'reauth',
+        expiresAt: '2026-03-27T19:00:00.000Z',
+      },
     });
 
     const data = await V8SyncApi.reauthIntegration('int-1');
@@ -149,6 +160,7 @@ describe('V8SyncApi', () => {
     expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/reauth', {});
     expect(data.success).toBe(true);
     expect(data.onboardingStatus).toBe('pending_external_auth');
+    expect(data.externalAuth?.state).toBe('reauth');
   });
 
   it('requests governed hub health summary from the V8 namespace', async () => {
