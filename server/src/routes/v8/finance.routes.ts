@@ -69,6 +69,7 @@ import {
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
 import {
+  approveModel,
   computeModel,
   getModel,
   getOutputs,
@@ -317,6 +318,33 @@ router.post(
         periodCount: result.periods.length,
         validationSummary,
       },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/models/:modelId/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const result = await approveModel(modelId, userId);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error || 'Approval failed' });
+    }
+
+    return res.json({
+      data: { success: true, status: 'approved' },
       meta: financeMeta(),
     });
   }),

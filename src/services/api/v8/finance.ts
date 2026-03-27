@@ -114,6 +114,11 @@ export interface V8FinanceModelComputeResult {
   };
 }
 
+export interface V8FinanceModelApproveResult {
+  success: boolean;
+  status: string;
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -375,6 +380,8 @@ export const V8FinanceApi = {
     }),
   computeModel: (modelId: string) =>
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
+  approveModel: (modelId: string) =>
+    v8Post<V8FinanceModelApproveResult>(`/finance/models/${modelId}/approve`, {}),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>

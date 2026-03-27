@@ -48,6 +48,17 @@ async function computeModelWithFallback(modelId: string) {
   }
 }
 
+async function approveModelWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.approveModel(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/financial-modeling/models/${modelId}/approve`, {});
+  }
+}
+
 interface FinancePreviewPanelProps {
   statementPreviewDetail: PreviewDataState['statementPreviewDetail'];
   statementPreviewRatios: PreviewDataState['statementPreviewRatios'];
@@ -932,7 +943,7 @@ export function useFinancePreview({
           label: t('finance.actions.approve', 'Zatwierdź'),
           onClick: async () => {
             try {
-              await Api.post(`/api/financial-modeling/models/${row.id}/approve`, {});
+              await approveModelWithFallback(row.id);
               await loadModels();
               toast.success(t('finance.toast.modelApproved', 'Model zatwierdzony'));
             } catch (e: any) {

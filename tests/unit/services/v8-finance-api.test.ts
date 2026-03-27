@@ -173,6 +173,19 @@ describe('V8FinanceApi', () => {
     expect(data.validationSummary.warning).toBe(1);
   });
 
+  it('posts governed finance model approve through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      status: 'approved',
+    });
+
+    const data = await V8FinanceApi.approveModel('model-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/models/model-1/approve', {});
+    expect(data.success).toBe(true);
+    expect(data.status).toBe('approved');
+  });
+
   it('requests governed finance statement packs from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statementPacks: [

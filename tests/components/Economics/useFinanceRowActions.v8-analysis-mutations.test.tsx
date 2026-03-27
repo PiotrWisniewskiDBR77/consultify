@@ -28,6 +28,7 @@ vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     runAnalysis: vi.fn(),
     approveAnalysis: vi.fn(),
+    approveModel: vi.fn(),
     computeModel: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -70,6 +71,13 @@ const predictionRow = {
   title: 'Revenue forecast',
   status: 'DRAFT',
   predictionType: 'model',
+} as any;
+
+const modelRow = {
+  id: 'model-1',
+  kind: 'models',
+  title: 'Revenue forecast',
+  status: 'DRAFT',
 } as any;
 
 describe('useFinanceRowActions V8 analysis mutations', () => {
@@ -146,5 +154,37 @@ describe('useFinanceRowActions V8 analysis mutations', () => {
 
     expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
     expect(baseParams.loadPredictionPreview).toHaveBeenCalledWith('model-1');
+  });
+
+  it('prefers governed model approve action before legacy fallback', async () => {
+    vi.mocked(V8FinanceApi.approveModel).mockResolvedValue({ success: true, status: 'approved' } as any);
+
+    const { result } = renderHook(() => useFinanceRowActions(baseParams));
+    const actions = result.current.getRowActions(modelRow);
+    const approveAction = actions.find((action) => action.id === 'approve');
+
+    await act(async () => {
+      await approveAction?.onClick();
+    });
+
+    expect(V8FinanceApi.approveModel).toHaveBeenCalledWith('model-1');
+    expect(baseParams.loadModels).toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+  });
+
+  it('falls back to legacy model approve action on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.approveModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    const { result } = renderHook(() => useFinanceRowActions(baseParams));
+    const actions = result.current.getRowActions(modelRow);
+    const approveAction = actions.find((action) => action.id === 'approve');
+
+    await act(async () => {
+      await approveAction?.onClick();
+    });
+
+    expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+    expect(baseParams.loadModels).toHaveBeenCalled();
   });
 });

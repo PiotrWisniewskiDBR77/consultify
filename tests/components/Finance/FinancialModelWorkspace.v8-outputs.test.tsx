@@ -35,6 +35,7 @@ vi.mock('@/services/api', () => {
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    approveModel: vi.fn(),
     computeModel: vi.fn(),
     getModel: vi.fn(),
     getModelOutputs: vi.fn(),
@@ -169,6 +170,47 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
 
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+    });
+  });
+
+  it('prefers governed model approve before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.approveModel).mockResolvedValue({ success: true, status: 'approved' } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.approveModel).toHaveBeenCalledWith('model-1');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+  });
+
+  it('falls back to legacy model approve in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.approveModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
     });
   });
 });

@@ -45,6 +45,7 @@ vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     runAnalysis: vi.fn(),
     approveAnalysis: vi.fn(),
+    approveModel: vi.fn(),
     computeModel: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
@@ -100,6 +101,14 @@ const predictionRow = {
   updatedAt: '2026-03-26T10:00:00.000Z',
 } as any;
 
+const modelRow = {
+  id: 'model-1',
+  kind: 'models',
+  title: 'Revenue forecast',
+  status: 'DRAFT',
+  updatedAt: '2026-03-26T10:00:00.000Z',
+} as any;
+
 function FooterHarness() {
   const { renderPreviewFooter } = useFinancePreview(previewParams as any);
   return <>{renderPreviewFooter(analysisRow)}</>;
@@ -108,6 +117,11 @@ function FooterHarness() {
 function PredictionFooterHarness() {
   const { renderPreviewFooter } = useFinancePreview(previewParams as any);
   return <>{renderPreviewFooter(predictionRow)}</>;
+}
+
+function ModelFooterHarness() {
+  const { renderPreviewFooter } = useFinancePreview(previewParams as any);
+  return <>{renderPreviewFooter(modelRow)}</>;
 }
 
 describe('FinancePreviewPanel V8 analysis mutations', () => {
@@ -187,6 +201,39 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
       expect(previewParams.loadPredictionPreview).toHaveBeenCalledWith('model-1');
+    });
+  });
+
+  it('prefers governed preview model approve action before legacy fallback', async () => {
+    vi.mocked(V8FinanceApi.approveModel).mockResolvedValue({ success: true, status: 'approved' } as any);
+
+    render(<ModelFooterHarness />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Zatwierdź' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.approveModel).toHaveBeenCalledWith('model-1');
+      expect(previewParams.loadModels).toHaveBeenCalled();
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+  });
+
+  it('falls back to legacy preview model approve action on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.approveModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    render(<ModelFooterHarness />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Zatwierdź' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+      expect(previewParams.loadModels).toHaveBeenCalled();
     });
   });
 });

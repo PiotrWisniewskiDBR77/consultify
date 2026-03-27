@@ -154,6 +154,17 @@ async function computeModelWithFallback(modelId: string) {
   }
 }
 
+async function approveModelWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.approveModel(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/financial-modeling/models/${modelId}/approve`, {});
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -456,7 +467,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     if (!selectedModel) return;
     setLoading(true);
     try {
-      const data = await Api.post(`/api/financial-modeling/models/${selectedModel.id}/approve`, {});
+      const data = await approveModelWithFallback(selectedModel.id);
       if ((data as any)?.success) {
         trackFunnelEvent('financial_model_approved', { modelId: selectedModel.id });
         await selectModel(selectedModel.id);

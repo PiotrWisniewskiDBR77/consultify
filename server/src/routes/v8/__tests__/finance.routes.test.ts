@@ -11,6 +11,7 @@ const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
+const mockApproveModel = vi.fn();
 const mockComputeModel = vi.fn();
 const mockGetOutputs = vi.fn();
 const mockGetValidations = vi.fn();
@@ -81,6 +82,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
+  approveModel: (...args: unknown[]) => mockApproveModel(...args),
   computeModel: (...args: unknown[]) => mockComputeModel(...args),
   getModel: (...args: unknown[]) => mockGetModel(...args),
   getOutputs: (...args: unknown[]) => mockGetOutputs(...args),
@@ -585,6 +587,24 @@ describe('V8 finance read-only routes', () => {
       expect.objectContaining({ overallStatus: 'warning' }),
       'base',
     );
+  });
+
+  it('POST /api/v8/finance/models/:id/approve returns envelope and delegates to approveModel', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+    });
+    mockApproveModel.mockResolvedValue({ success: true });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/model-1/approve').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, status: 'approved' });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID);
   });
 
   it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {
