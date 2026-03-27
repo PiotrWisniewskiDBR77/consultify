@@ -150,6 +150,42 @@
         }
       ]
     },
+    "extendedScope": {
+      "badge": "Beyond classic consulting",
+      "heading": "Consultify extends consulting into finance, deliverables, and daily execution.",
+      "sub": "The platform does not stop at advisory logic. It carries strategic work into financial intelligence, executive-ready outputs, and the operating workspace where teams continue the work.",
+      "items": [
+        {
+          "title": "Financial Intelligence",
+          "description": "Consultify extends classic consulting with financial models, analysis, valuation, and forecasting.",
+          "bullets": [
+            "Financial models",
+            "Financial analysis",
+            "Company valuation",
+            "Forecasting"
+          ]
+        },
+        {
+          "title": "Reports & Presentations",
+          "description": "Consultify turns live work into reports, executive presentations, and consulting deliverables.",
+          "bullets": [
+            "Reports",
+            "Executive presentations",
+            "Consulting deliverables"
+          ]
+        },
+        {
+          "title": "My Work",
+          "description": "Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.",
+          "bullets": [
+            "Tasks",
+            "Decisions",
+            "Ideas",
+            "Notes"
+          ]
+        }
+      ]
+    },
     "profitHero": {
       "h1": {
         "line1": "Consultify is the",

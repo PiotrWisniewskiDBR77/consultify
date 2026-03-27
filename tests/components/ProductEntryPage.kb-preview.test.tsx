@@ -49,6 +49,10 @@ vi.mock('@/components/Landing/HowItWorksSection', () => ({
   HowItWorksSection: () => <div>how-it-works-section</div>,
 }));
 
+vi.mock('@/components/Landing/ExtendedScopeSection', () => ({
+  ExtendedScopeSection: () => <div>extended-scope-section</div>,
+}));
+
 vi.mock('@/components/Landing/ForWhomSection', () => ({
   ForWhomSection: () => <div>for-whom-section</div>,
 }));
@@ -128,6 +132,7 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     const whereItHappens = screen.getByText('where-it-happens-section');
     const valueJourney = screen.getByText('value-journey-section');
     const howItWorks = screen.getByText('how-it-works-section');
+    const extendedScope = screen.getByText('extended-scope-section');
     const forWhom = screen.getByText('for-whom-section');
     const documentation = screen.getByText('documentation-section');
     const knowledgePreview = screen.getByText('knowledge-preview-section');
@@ -144,6 +149,10 @@ describe('ProductEntryPage knowledge preview continuity', () => {
     expect(valueJourney.compareDocumentPosition(howItWorks)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
+    expect(howItWorks.compareDocumentPosition(extendedScope)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(extendedScope.compareDocumentPosition(forWhom)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(hero.compareDocumentPosition(whereItHappens)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(whereItHappens.compareDocumentPosition(howItWorks)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(howItWorks.compareDocumentPosition(forWhom)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);

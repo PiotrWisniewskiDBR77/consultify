@@ -2443,6 +2443,42 @@
         }
       ]
     },
+    "extendedScope": {
+      "badge": "Poza klasyczny consulting",
+      "heading": "Consultify rozszerza consulting o finanse, deliverables i codzienne dowożenie pracy.",
+      "sub": "Platforma nie kończy się na logice doradczej. Przenosi pracę strategiczną do financial intelligence, executive-ready outputów i workspace'u operacyjnego, w którym zespół kontynuuje pracę.",
+      "items": [
+        {
+          "title": "Financial Intelligence",
+          "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
+          "bullets": [
+            "Modele finansowe",
+            "Analiza finansowa",
+            "Wycena spółki",
+            "Forecasting"
+          ]
+        },
+        {
+          "title": "Reports & Presentations",
+          "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
+          "bullets": [
+            "Raporty",
+            "Prezentacje executive",
+            "Consulting deliverables"
+          ]
+        },
+        {
+          "title": "My Work",
+          "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
+          "bullets": [
+            "Taski",
+            "Decyzje",
+            "Pomysły",
+            "Notatki"
+          ]
+        }
+      ]
+    },
     "profitHero": {
       "h1": {
         "line1": "Consultify to",

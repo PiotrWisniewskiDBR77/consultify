@@ -9,6 +9,7 @@ import { DocumentationSection } from '../components/Landing/DocumentationSection
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { EpicHeroSection } from '../components/Landing/EpicHeroSection';
+import { ExtendedScopeSection } from '../components/Landing/ExtendedScopeSection';
 import { ForWhomSection } from '../components/Landing/ForWhomSection';
 import { HowItWorksSection } from '../components/Landing/HowItWorksSection';
 import { InfoSections } from '../components/Landing/InfoSections';
@@ -121,6 +122,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <ValueJourneySection />
 
         <HowItWorksSection />
+
+        <ExtendedScopeSection />
 
         <ForWhomSection />
 

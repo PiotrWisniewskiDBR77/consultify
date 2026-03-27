@@ -68,9 +68,9 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 ### Current success metric
 
-- completed remaining themes: `4 / 13`
-- active lane: broader canonical `/` and public marketing breadth
-- landed packets in the active lane: `4`
+- completed remaining themes: `5 / 13`
+- active lane: broader `Mobile` redesign
+- landed packets in the active lane: `0`
 
 ---
 
@@ -82,8 +82,8 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `2` | `Landing Anna multilingual expansion` | `Phase A` | `done` | current work now covers the full bounded app-locale language set on the live public surface | chosen language set works end-to-end on the live public surface |
 | `3` | `Landing Anna backend analytics / dashboard breadth` | `Phase A` | `done` | current telemetry has been closed into bounded backend ingest plus operator readback continuity on the live Anna path | Anna operator analytics surface and data contract exist and are evidenced |
 | `4` | `Landing Anna` broader voice UX / architecture | `Phase A` | `done` | bounded continuity/config/channel truth work is now complete; the remaining residual is broader productization that should not be smuggled into one more pseudo-small packet | voice lane reached bounded acceptance without forcing a full public voice redesign |
-| `5` | broader canonical `/` and public marketing breadth | `Phase B` | `active` | accepted landing work closed authority/IA seams, not full redesign breadth, so the broader public marketing residual is now explicitly promoted | public marketing breadth is closed with explicit redesign acceptance |
-| `6` | broader `Mobile` redesign | `Phase B` | `queued` | accepted mobile work closed bounded continuity only | broader mobile responsive/product breadth is accepted |
+| `5` | broader canonical `/` and public marketing breadth | `Phase B` | `done` | accepted landing work plus the bounded canonical `/` packet chain now close the smallest honest homepage narrative residuals | public marketing breadth reached bounded acceptance without forcing a broader redesign program |
+| `6` | broader `Mobile` redesign | `Phase B` | `active` | accepted mobile work closed bounded continuity only, so the broader responsive/product residual is now explicitly promoted | broader mobile responsive/product breadth is accepted |
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `queued` | current bounded seams do not cover the wider product/runtime breadth | broader chat and AI operator parity is accepted |
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `queued` | wider write/operator breadth still remains | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `queued` | ingest, models, budgets, valuations, and wider writes remain | finance breadth is accepted beyond bounded analysis seams |
@@ -164,15 +164,15 @@ No lane should jump directly from `queued` to `done`.
 ### Current lane
 
 - status: `active`
-- lane: broader canonical `/` and public marketing breadth
-- latest evidence: `broader canonical / value-journey seam` recorded in `evidence/351-v81-broader-canonical-public-marketing-value-journey-seam.md`
-- reason: the Anna voice lane is now boundedly accepted, and the next honest residual is broader canonical `/` and public marketing breadth rather than another hidden Anna micro-packet
+- lane: broader `Mobile` redesign
+- latest evidence: `broader Mobile redesign split-brain map` recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
+- reason: the broader canonical public-marketing lane is now boundedly accepted, and the next honest residual is broader mobile redesign rather than more hidden public-marketing micro-packets
 
 ### Next three lanes
 
-1. broader canonical `/` and public marketing breadth
-2. broader `Mobile` redesign
-3. broader `Chat / AI core` parity expansion
+1. broader `Mobile` redesign
+2. broader `Chat / AI core` parity expansion
+3. broader `Results / KPI / ROI` parity
 
 ### Active blockers
 
@@ -320,24 +320,24 @@ Use the following structure for each lane as it becomes active:
 
 #### broader canonical `/` and public marketing breadth
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`
 - split-brain map: `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`
-- current packet: `canonical / extended-scope narrative seam`
-- last accepted packet: `none`
+- current packet: `none`
+- last accepted packet: `canonical / extended-scope narrative seam`
 - blocker: `none`
-- next action: `land the missing canonical / extended-scope narrative seam without silently broadening into a full public rebrand`
-- acceptance evidence: `none`
+- next action: `hold bounded acceptance unless a broader public marketing redesign is explicitly promoted`
+- acceptance evidence: `evidence/354-v81-broader-canonical-public-marketing-t4-acceptance.md`
 
 #### broader `Mobile` redesign
 
-- status: `queued`
-- charter: `not written yet`
-- split-brain map: `not written yet`
-- current packet: `not defined yet`
+- status: `active`
+- charter: `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`
+- split-brain map: `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
+- current packet: `assess the first real bounded broader-mobile packet after the split-brain map`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `wait for canonical public breadth stabilization`
+- next action: `choose the smallest honest broader-mobile packet without silently broadening into a whole responsive rewrite`
 - acceptance evidence: `none`
 
 #### broader `Chat / AI core` parity expansion
