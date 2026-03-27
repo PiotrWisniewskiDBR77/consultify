@@ -1,0 +1,141 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback || _key,
+    i18n: { language: 'en' },
+  }),
+}));
+
+vi.mock('@/services/api', () => {
+  const api = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  };
+  return {
+    Api: api,
+    default: api,
+  };
+});
+
+vi.mock('@/services/api/v8/finance', () => ({
+  V8FinanceApi: {
+    getStatement: vi.fn(),
+  },
+  shouldFallbackToLegacyFinance: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
+  },
+}));
+
+vi.mock('../../../src/components/Finance/FinancialStatementMappingEditor', () => ({
+  FinancialStatementMappingEditor: () => <div>financial-statement-mapping-editor</div>,
+}));
+
+import { FinancialStatementWorkspace } from '../../../src/components/Finance/FinancialStatementWorkspace';
+import Api from '../../../src/services/api';
+import { V8FinanceApi } from '../../../src/services/api/v8/finance';
+
+describe('FinancialStatementWorkspace V8 read seam', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('prefers governed child statement detail before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-1',
+        statement_type: 'P&L',
+        period_label: 'Q1 2026',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        currency: 'PLN',
+        scaling: 'units',
+        source_file_name: 'acme-q1.csv',
+        validation_status: 'pending',
+        status: 'draft',
+        readinessStatus: 'recoverable',
+        validationMessages: [],
+        values: [],
+        qualityRuns: [],
+        ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements/statement-1/ratios') {
+        return { ratios: [], coverageSummary: { coveragePct: 0, computed: 0, total: 0 } } as any;
+      }
+      if (url === '/api/finance-statements/canonical-lines') {
+        return [] as any;
+      }
+      if (url === '/api/finance-statements') {
+        return [] as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Q1 2026').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/2026-01-01/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/2026-03-31/).length).toBeGreaterThan(0);
+    });
+
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/statement-1');
+  });
+
+  it('falls back to legacy child statement detail in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getStatement).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements/statement-1') {
+        return {
+          id: 'statement-1',
+          statement_type: 'P&L',
+          period_label: 'Q1 2026',
+          period_start: '2026-01-01',
+          period_end: '2026-03-31',
+          currency: 'PLN',
+          scaling: 'units',
+          source_file_name: 'acme-q1.csv',
+          validation_status: 'pending',
+          status: 'draft',
+          readinessStatus: 'recoverable',
+          validationMessages: [],
+          values: [],
+          qualityRuns: [],
+          ingestRuns: [],
+        } as any;
+      }
+      if (url === '/api/finance-statements/statement-1/ratios') {
+        return { ratios: [], coverageSummary: { coveragePct: 0, computed: 0, total: 0 } } as any;
+      }
+      if (url === '/api/finance-statements/canonical-lines') {
+        return [] as any;
+      }
+      if (url === '/api/finance-statements') {
+        return [] as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialStatementWorkspace statementId="statement-1" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Q1 2026').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/2026-01-01/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/2026-03-31/).length).toBeGreaterThan(0);
+    });
+
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledWith('statement-1');
+    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1');
+  });
+});

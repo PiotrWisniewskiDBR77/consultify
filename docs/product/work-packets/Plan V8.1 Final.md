@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `6`
+- landed packets in the active lane: `7`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `child statement detail read V8 seam` recorded in `evidence/392-v81-broader-finance-child-statement-detail-read-v8-seam.md`
-- reason: after statement-pack detail continuity landed, the next smallest honest packet was the shared child-statement detail read still used by active preview, pack drill-down, and import-continuation surfaces
+- latest evidence: `advanced statement detail read V8 seam` recorded in `evidence/393-v81-broader-finance-advanced-statement-detail-read-v8-seam.md`
+- reason: after lightweight child-statement continuity landed, the next smallest honest packet was the advanced statement workspace initial detail read still used by `FinancialStatementWorkspace`
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after child-statement detail read continuity`
-- last accepted packet: `child statement detail read V8 seam`
+- current packet: `assess the next bounded broader finance packet after advanced statement detail read continuity`
+- last accepted packet: `advanced statement detail read V8 seam`
 - blocker: `none`
-- next action: `assess whether FinancialStatementWorkspace initial child-statement detail continuity is the next smallest broader finance packet without broadening into ratios, canonical-lines, or analytics`
+- next action: `assess whether advanced statement workspace support reads (ratios, canonical-lines, related-list continuity) can be split into the next bounded broader finance packet without broadening into analytics or writes`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

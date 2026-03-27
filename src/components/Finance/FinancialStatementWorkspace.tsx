@@ -14,6 +14,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
 import {
   deriveStatementReadinessStatus,
   type FinanceStatementRow,
@@ -152,6 +153,18 @@ interface Props {
   onOpenStatement?: (statementId: string) => void;
 }
 
+async function getStatementDetailWithFallback(statementId: string) {
+  try {
+    const data = await V8FinanceApi.getStatement(statementId);
+    return data?.statement ?? null;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/finance-statements/${statementId}`);
+  }
+}
+
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
   const rawStatus = String(detail.status || 'draft');
   const readinessStatus = deriveStatementReadinessStatus(
@@ -254,7 +267,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     setError(null);
     try {
       const [statement, ratioData, canonicalLineData, statementList] = await Promise.all([
-        Api.get(`/api/finance-statements/${statementId}`),
+        getStatementDetailWithFallback(statementId),
         Api.get(`/api/finance-statements/${statementId}/ratios`).catch(() => null),
         Api.get('/api/finance-statements/canonical-lines').catch(() => []),
         Api.get('/api/finance-statements').catch(() => []),
