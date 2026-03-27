@@ -107,6 +107,17 @@ vi.mock('../../../services/v8/featureFlagService.js', () => ({
   isV8ShadowMode: vi.fn().mockResolvedValue(false),
 }));
 
+vi.mock('../../../config/Config.js', async () => {
+  const actual = await vi.importActual<any>('../../../config/Config.js');
+  return {
+    default: {
+      ...actual.default,
+      GOOGLE_CLIENT_ID: actual.default.GOOGLE_CLIENT_ID || 'test-google-client-id',
+      GOOGLE_CLIENT_SECRET: actual.default.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
+    },
+  };
+});
+
 vi.mock('../../../utils/v8MetricsStore.js', () => ({
   recordV8Request: vi.fn(),
   getV8MetricsSnapshot: vi.fn().mockReturnValue({}),
@@ -422,6 +433,42 @@ describe('V8 sync read-only routes', () => {
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
+      organizationId: ORG,
+      targetState: 'connecting',
+      transitionedBy: UID,
+      reason: 'external_auth_prepared',
+    });
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/configure prepares a real Gmail provider auth URL', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        id: 'int-gmail-1',
+        connector_id: 'gmail',
+        config: '{}',
+        status: 'pending',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-gmail-1/configure').send({
+      config: {
+        domain: 'acme.com',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.integration?.configuredFields).toEqual(['domain']);
+    expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.data?.externalAuth?.authUrl).toContain(
+      'https://accounts.google.com/o/oauth2/v2/auth?',
+    );
+    expect(res.body.data?.externalAuth?.authUrl).toContain('access_type=offline');
+    expect(res.body.data?.externalAuth?.callbackUrl).toContain(
+      '/api/sync-hub/external-auth/callback?state=',
+    );
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'gmail',
       organizationId: ORG,
       targetState: 'connecting',
       transitionedBy: UID,

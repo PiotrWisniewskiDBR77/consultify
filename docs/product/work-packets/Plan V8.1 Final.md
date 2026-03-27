@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `19`
+- landed packets in the current active lane: `20`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: post-org-level-Jira residual assessment recorded in `evidence/467-v81-broader-sync-post-org-level-jira-auth-initiation-residual-assessment.md`
-- reason: after Jira initiation continuity closed across V8 and org-level `/api/integrations`, no thinner Jira-specific authority seam remains before broader provider callback round-trip coverage
+- latest evidence: Gmail governed provider round-trip coverage landed in `evidence/468-v81-broader-sync-gmail-governed-provider-round-trip-coverage-seam.md`
+- reason: the shared governed provider round-trip seam now covers both Jira and Gmail, so the active V8 Gmail path no longer falls back to a callback placeholder instead of a real provider authorization round-trip
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/467-v81-broader-sync-post-org-level-jira-auth-initiation-residual-assessment.md`
+- current packet: `evidence/468-v81-broader-sync-gmail-governed-provider-round-trip-coverage-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote wider callback-driven provider round-trip coverage for additional governed oauth2 connectors as the next honest broader-sync implementation step`
+- next action: `assess whether another provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
