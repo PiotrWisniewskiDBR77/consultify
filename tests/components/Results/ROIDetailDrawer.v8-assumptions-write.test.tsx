@@ -32,6 +32,7 @@ vi.mock('../../../src/services/api/v8/results', () => ({
   V8ResultsApi: {
     getRoiInitiativeDetail: vi.fn(),
     updateRoiInitiativeAssumptions: vi.fn(),
+    createRoiInitiativeRealizedEntry: vi.fn(),
   },
   shouldFallbackToLegacyResults: (error: any) => {
     const status = Number(error?.status);
@@ -134,6 +135,75 @@ describe('ROIDetailDrawer V8 assumptions write seam', () => {
         confidence: 'medium',
         assumptionsOwner: 'owner-1',
         assumptionsText: 'Updated from drawer',
+      });
+    });
+  });
+
+  it('creates ROI realized entry through the governed V8 route before legacy write fallback', async () => {
+    vi.mocked(V8ResultsApi.createRoiInitiativeRealizedEntry).mockResolvedValue({ id: 'real-2' } as any);
+
+    const { container } = render(
+      <ROIDetailDrawer initiativeId="init-1" initiativeName="Initiative Alpha" onClose={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('save-roi-assumptions')).toBeInTheDocument();
+    });
+
+    const monthInput = container.querySelector('input[type="month"]') as HTMLInputElement | null;
+    const amountInput = container.querySelector('input[placeholder="0"]') as HTMLInputElement | null;
+    expect(monthInput).toBeTruthy();
+    expect(amountInput).toBeTruthy();
+
+    fireEvent.change(monthInput!, { target: { value: '2026-04' } });
+    fireEvent.change(amountInput!, { target: { value: '250' } });
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
+      target: { value: 'April realized' },
+    });
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => {
+      expect(V8ResultsApi.createRoiInitiativeRealizedEntry).toHaveBeenCalledWith('init-1', {
+        periodMonth: '2026-04-01',
+        realizedSavings: 250,
+        varianceNotes: 'April realized',
+        source: 'manual',
+      });
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/benefits/roi/init-1/realized', expect.anything());
+  });
+
+  it('falls back to the legacy realized-entry write only for bounded compatibility errors', async () => {
+    vi.mocked(V8ResultsApi.createRoiInitiativeRealizedEntry).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true, data: { id: 'real-2' } } as any);
+
+    const { container } = render(
+      <ROIDetailDrawer initiativeId="init-1" initiativeName="Initiative Alpha" onClose={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('save-roi-assumptions')).toBeInTheDocument();
+    });
+
+    const monthInput = container.querySelector('input[type="month"]') as HTMLInputElement | null;
+    const amountInput = container.querySelector('input[placeholder="0"]') as HTMLInputElement | null;
+    expect(monthInput).toBeTruthy();
+    expect(amountInput).toBeTruthy();
+
+    fireEvent.change(monthInput!, { target: { value: '2026-04' } });
+    fireEvent.change(amountInput!, { target: { value: '250' } });
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
+      target: { value: 'April realized' },
+    });
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/benefits/roi/init-1/realized', {
+        periodMonth: '2026-04-01',
+        realizedSavings: 250,
+        varianceNotes: 'April realized',
+        source: 'manual',
       });
     });
   });

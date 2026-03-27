@@ -172,12 +172,20 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
       if (isNaN(amount)) return;
       setSubmitting(true);
       try {
-        await Api.post(`/benefits/roi/${initiativeId}/realized`, {
+        const payload = {
           periodMonth: `${newPeriod}-01`,
           realizedSavings: amount,
           varianceNotes: newNotes.trim() || undefined,
           source: 'manual',
-        });
+        };
+        try {
+          await V8ResultsApi.createRoiInitiativeRealizedEntry(initiativeId, payload);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          await Api.post(`/benefits/roi/${initiativeId}/realized`, payload);
+        }
         setNewAmount('');
         setNewNotes('');
         fetchData();

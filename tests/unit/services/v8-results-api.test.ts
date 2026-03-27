@@ -194,4 +194,23 @@ describe('V8ResultsApi', () => {
     });
     expect(data.success).toBe(true);
   });
+
+  it('requests governed ROI realized entry create from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ id: 'real-1' });
+
+    const data = await V8ResultsApi.createRoiInitiativeRealizedEntry('init-1', {
+      periodMonth: '2026-03-01',
+      realizedSavings: 120,
+      varianceNotes: 'March realized benefit',
+      source: 'manual',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/results/roi/initiative/init-1/realized', {
+      periodMonth: '2026-03-01',
+      realizedSavings: 120,
+      varianceNotes: 'March realized benefit',
+      source: 'manual',
+    });
+    expect(data.id).toBe('real-1');
+  });
 });

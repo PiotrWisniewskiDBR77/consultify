@@ -289,6 +289,19 @@ export interface V8ResultsUpdateRoiAssumptionsResponse {
   success: boolean;
 }
 
+export interface V8ResultsCreateRoiRealizedPayload {
+  periodMonth: string;
+  realizedRevenueDelta?: number | null;
+  realizedCostDelta?: number | null;
+  realizedSavings?: number | null;
+  source?: string | null;
+  varianceNotes?: string | null;
+}
+
+export interface V8ResultsCreateRoiRealizedResponse {
+  id: string;
+}
+
 export const V8ResultsApi = {
   getDashboard: () => v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard'),
   getKpiCatalog: (params?: { kpiId?: string }) =>
@@ -314,6 +327,14 @@ export const V8ResultsApi = {
   ) =>
     v8Put<V8ResultsUpdateRoiAssumptionsResponse>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/assumptions`,
+      payload,
+    ),
+  createRoiInitiativeRealizedEntry: (
+    initiativeId: string,
+    payload: V8ResultsCreateRoiRealizedPayload,
+  ) =>
+    v8Post<V8ResultsCreateRoiRealizedResponse>(
+      `/results/roi/initiative/${encodeURIComponent(initiativeId)}/realized`,
       payload,
     ),
 };

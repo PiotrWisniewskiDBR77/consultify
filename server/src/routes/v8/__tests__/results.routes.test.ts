@@ -290,4 +290,31 @@ describe('V8 results read-only routes', () => {
       ]),
     );
   });
+
+  it('POST /api/v8/results/roi/initiative/:initiativeId/realized creates governed ROI realized entry', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/roi/initiative/init-1/realized').send({
+      periodMonth: '2026-03-01',
+      realizedSavings: 120,
+      varianceNotes: 'March realized benefit',
+      source: 'manual',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data?.id).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect(String(mockDbRun.mock.calls[0]?.[0] || '')).toContain('INSERT INTO roi_realized_values');
+    expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining([
+        'init-1',
+        ORG,
+        '2026-03-01',
+        120,
+        'manual',
+        'March realized benefit',
+        UID,
+      ]),
+    );
+  });
 });

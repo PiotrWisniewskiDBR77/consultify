@@ -340,4 +340,63 @@ router.put(
   }),
 );
 
+/**
+ * POST /api/v8/results/roi/initiative/:initiativeId/realized
+ * Bounded ROI realized-entry write seam for the active Results drawer surface.
+ */
+router.post(
+  '/roi/initiative/:initiativeId/realized',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const initiativeId =
+      typeof req.params.initiativeId === 'string' ? req.params.initiativeId.trim() : '';
+    if (!initiativeId) {
+      return res.status(400).json({
+        error: 'initiativeId is required',
+        code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
+      });
+    }
+
+    const {
+      periodMonth,
+      realizedRevenueDelta,
+      realizedCostDelta,
+      realizedSavings,
+      source,
+      varianceNotes,
+    } = req.body || {};
+
+    const safePeriodMonth = typeof periodMonth === 'string' ? periodMonth.trim() : '';
+    if (!safePeriodMonth) {
+      return res.status(400).json({
+        error: 'periodMonth is required',
+        code: 'RESULTS_ROI_PERIOD_MONTH_REQUIRED',
+      });
+    }
+
+    const id = uuidv4().replace(/-/g, '');
+    await dbRun(
+      `INSERT INTO roi_realized_values (id, initiative_id, organization_id, period_month, realized_revenue_delta, realized_cost_delta, realized_savings, source, variance_notes, recorded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        initiativeId,
+        organizationId,
+        safePeriodMonth,
+        realizedRevenueDelta || null,
+        realizedCostDelta || null,
+        realizedSavings || null,
+        source || 'manual',
+        varianceNotes || null,
+        userId || null,
+      ],
+    );
+
+    return res.json({
+      data: { id },
+      meta: resultsWriteMeta(),
+    });
+  }),
+);
+
 export default router;
