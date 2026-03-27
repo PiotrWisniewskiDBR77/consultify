@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: Teams governed provider round-trip coverage landed in `evidence/470-v81-broader-sync-teams-governed-provider-round-trip-coverage-seam.md`
-- reason: the shared governed provider round-trip seam now covers Jira, Gmail, and Teams, so the active Teams path no longer falls back to a callback placeholder instead of a real provider authorization round-trip
+- latest evidence: post-Teams provider-round-trip residual assessment recorded in `evidence/471-v81-broader-sync-post-teams-provider-round-trip-residual-assessment.md`
+- reason: after shared governed provider round-trip coverage reached Teams, one more provider seam still remains thinner than deeper authority alignment, with Slack now standing out as the next bounded extension
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/470-v81-broader-sync-teams-governed-provider-round-trip-coverage-seam.md`
+- current packet: `evidence/471-v81-broader-sync-post-teams-provider-round-trip-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether one more provider callback-driven coverage packet or deeper authority alignment is now the next smallest honest broader-sync step`
+- next action: `promote Slack governed provider round-trip coverage on the shared governed oauth2 seam as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
