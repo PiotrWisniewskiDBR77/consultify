@@ -93,6 +93,43 @@ router.get(
 );
 
 /**
+ * GET /api/v8/partner/commission-transactions
+ */
+router.get(
+  '/commission-transactions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    const transactions = await PartnerCommissionService.getCommissions(partnerOrgId, {
+      status: typeof req.query.status === 'string' ? req.query.status : undefined,
+      startDate: typeof req.query.startDate === 'string' ? req.query.startDate : undefined,
+      endDate: typeof req.query.endDate === 'string' ? req.query.endDate : undefined,
+      limit:
+        typeof req.query.limit === 'string' && /^\d+$/.test(req.query.limit)
+          ? parseInt(req.query.limit, 10)
+          : 50,
+      offset:
+        typeof req.query.offset === 'string' && /^\d+$/.test(req.query.offset)
+          ? parseInt(req.query.offset, 10)
+          : 0,
+    });
+    return res.json({
+      data: { transactions },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  }),
+);
+
+/**
  * GET /api/v8/partner/payouts
  */
 router.get(

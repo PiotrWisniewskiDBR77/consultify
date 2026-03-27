@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
+  type V8PartnerCommissionTransaction,
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerEarningsSummary,
@@ -105,6 +106,23 @@ const normalizeEarningsSummary = (payload: any): EarningsSummary | null => {
   };
 };
 
+const normalizeCommissionTransaction = (payload: any): CommissionTransaction => ({
+  id: String(payload?.id ?? ''),
+  partnerOrgId: String(payload?.partnerOrgId ?? ''),
+  organizationId: String(payload?.organizationId ?? ''),
+  organizationName: payload?.organizationName ? String(payload.organizationName) : undefined,
+  transactionType: String(payload?.transactionType ?? 'UNKNOWN'),
+  transactionDate: String(payload?.transactionDate ?? ''),
+  grossAmount: Number(payload?.grossAmount ?? 0),
+  commissionRate: Number(payload?.commissionRate ?? 0),
+  commissionAmount: Number(payload?.commissionAmount ?? 0),
+  currency: String(payload?.currency ?? 'EUR'),
+  status: String(payload?.status ?? 'PENDING'),
+  approvedAt: payload?.approvedAt ? String(payload.approvedAt) : undefined,
+  payoutId: payload?.payoutId ? String(payload.payoutId) : undefined,
+  createdAt: String(payload?.createdAt ?? ''),
+});
+
 const normalizePayout = (payload: any): Payout => ({
   id: String(payload?.id ?? ''),
   periodStart: String(payload?.periodStart ?? ''),
@@ -134,6 +152,28 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const [bankInfoComplete, setBankInfoComplete] = useState(true);
   const [nextPaymentDate, setNextPaymentDate] = useState<string | null>(null);
 
+  const getCommissionTransactionsWithFallback = useCallback(
+    async (): Promise<CommissionTransaction[]> => {
+      try {
+        const response = await V8PartnerApi.getCommissionTransactions();
+        return Array.isArray(response?.transactions)
+          ? response.transactions.map((tx: V8PartnerCommissionTransaction) =>
+              normalizeCommissionTransaction(tx)
+            )
+          : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyPartner(error)) {
+          throw error;
+        }
+        const response = await Api.get('/api/partners/commission-transactions');
+        return response?.success && Array.isArray(response?.data)
+          ? response.data.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
+          : [];
+      }
+    },
+    []
+  );
+
   const getPayoutsWithFallback = useCallback(async (): Promise<Payout[]> => {
     try {
       const response = await V8PartnerApi.getPayouts();
@@ -158,7 +198,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       setError(null);
       const [summaryResponse, txResponse, payoutsResponse] = await Promise.allSettled([
         Api.get('/api/partners/earnings'),
-        Api.get('/api/partners/commission-transactions'),
+        getCommissionTransactionsWithFallback(),
         getPayoutsWithFallback(),
       ]);
 
@@ -177,8 +217,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         }
       }
 
-      if (txResponse.status === 'fulfilled' && txResponse.value?.success) {
-        setTransactions(Array.isArray(txResponse.value.data) ? txResponse.value.data : []);
+      if (txResponse.status === 'fulfilled') {
+        setTransactions(Array.isArray(txResponse.value) ? txResponse.value : []);
       } else {
         setTransactions([]);
       }
@@ -205,7 +245,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     } finally {
       setLoading(false);
     }
-  }, [getPayoutsWithFallback, t]);
+  }, [getCommissionTransactionsWithFallback, getPayoutsWithFallback, t]);
 
   const fetchV8Summary = useCallback(async () => {
     try {

@@ -57,6 +57,24 @@ describe('V8PartnerApi', () => {
     expect(data.earnings.readyForPayout).toBe(120);
   });
 
+  it('requests partner commission transactions from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      transactions: [
+        {
+          id: 'tx-1',
+          organizationName: 'ACME GmbH',
+          transactionType: 'RECURRING',
+          status: 'APPROVED',
+        },
+      ],
+    });
+
+    const data = await V8PartnerApi.getCommissionTransactions();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/commission-transactions');
+    expect(data.transactions[0].id).toBe('tx-1');
+  });
+
   it('requests partner payout history from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       payouts: [

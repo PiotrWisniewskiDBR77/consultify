@@ -7,6 +7,7 @@ import request from 'supertest';
 
 const mockGetReferralAnalytics = vi.fn();
 const mockGetEarningsSummary = vi.fn();
+const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
 const mockCreateCampaignLink = vi.fn();
@@ -32,6 +33,7 @@ vi.mock('../../../services/partnerReferralService.js', () => ({
 vi.mock('../../../services/partnerCommissionService.js', () => ({
   default: {
     getEarningsSummary: (...args: unknown[]) => mockGetEarningsSummary(...args),
+    getCommissions: (...args: unknown[]) => mockGetCommissions(...args),
     getPayouts: (...args: unknown[]) => mockGetPayouts(...args),
     requestPayout: (...args: unknown[]) => mockRequestPayout(...args),
   },
@@ -153,6 +155,19 @@ describe('V8 partner read bridge', () => {
       netAmount: 148.5,
       currency: 'EUR',
     });
+    mockGetCommissions.mockResolvedValue([
+      {
+        id: 'tx-1',
+        organizationName: 'ACME GmbH',
+        transactionType: 'RECURRING',
+        transactionDate: '2026-03-31',
+        grossAmount: 1000,
+        commissionRate: 15,
+        commissionAmount: 150,
+        currency: 'EUR',
+        status: 'APPROVED',
+      },
+    ]);
     mockGetPayouts.mockResolvedValue([
       {
         id: 'payout-1',
@@ -204,6 +219,24 @@ describe('V8 partner read bridge', () => {
     expect(res.status).toBe(200);
     expect(mockGetEarningsSummary).toHaveBeenCalledWith('partner-org-resolved');
     expect(res.body.data.earnings.totalEarned).toBe(100);
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/commission-transactions returns transactions with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get(
+      '/api/v8/partner/commission-transactions?status=APPROVED&limit=10&offset=5'
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockGetCommissions).toHaveBeenCalledWith('partner-org-resolved', {
+      status: 'APPROVED',
+      startDate: undefined,
+      endDate: undefined,
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.body.data.transactions[0].id).toBe('tx-1');
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 

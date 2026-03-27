@@ -28,6 +28,7 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
+    getCommissionTransactions: vi.fn(),
     getEarningsSummary: vi.fn(),
     getPayouts: vi.fn(),
     requestPayout: vi.fn(),
@@ -84,9 +85,92 @@ describe('EarningsSection V8 payout request seam', () => {
         currency: 'EUR',
       },
     } as any);
+    vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({
+      transactions: [],
+    } as any);
     vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({
       payouts: [],
     } as any);
+  });
+
+  it('prefers governed commission statement history before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({
+      transactions: [
+        {
+          id: 'tx-v8-1',
+          organizationName: 'ACME GmbH',
+          transactionType: 'RECURRING',
+          transactionDate: '2026-03-31',
+          grossAmount: 1000,
+          commissionRate: 15,
+          commissionAmount: 150,
+          status: 'APPROVED',
+        },
+      ],
+    } as any);
+
+    render(<EarningsSection subsection="statements" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('ACME GmbH')).toBeInTheDocument();
+      expect(screen.getByText('approved')).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.getCommissionTransactions).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/commission-transactions');
+  });
+
+  it('falls back to legacy commission statement history on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.getCommissionTransactions).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/earnings') {
+        return {
+          success: true,
+          data: {
+            totalEarned: 1200,
+            totalPending: 200,
+            totalApproved: 700,
+            totalPaid: 500,
+            thisMonth: 120,
+            thisMonthCount: 2,
+            lastMonth: 90,
+            readyForPayout: 150,
+            currency: 'EUR',
+            bankInfoComplete: true,
+          },
+        } as any;
+      }
+      if (url === '/api/partners/commission-transactions') {
+        return {
+          success: true,
+          data: [
+            {
+              id: 'tx-legacy-1',
+              organizationName: 'Legacy Org',
+              transactionType: 'ONE_TIME',
+              transactionDate: '2026-02-28',
+              grossAmount: 500,
+              commissionRate: 12,
+              commissionAmount: 60,
+              status: 'PENDING',
+            },
+          ],
+        } as any;
+      }
+      if (url === '/api/partners/payouts') {
+        return { success: true, data: [] } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<EarningsSection subsection="statements" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Legacy Org')).toBeInTheDocument();
+      expect(screen.getByText('pending')).toBeInTheDocument();
+    });
+
+    expect(Api.get).toHaveBeenCalledWith('/api/partners/commission-transactions');
   });
 
   it('prefers governed payout history read before legacy fallback', async () => {
