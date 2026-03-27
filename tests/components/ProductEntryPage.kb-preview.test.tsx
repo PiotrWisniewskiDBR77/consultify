@@ -101,4 +101,39 @@ describe('ProductEntryPage knowledge preview continuity', () => {
       }),
     );
   });
+
+  it('keeps the trust strip after the explanatory landing sections on canonical slash', () => {
+    annaAssistantWidgetSpy.mockReset();
+
+    render(
+      <MemoryRouter>
+        <ProductEntryPage
+          onStartSession={vi.fn()}
+          onLoginClick={vi.fn()}
+          onRegisterClick={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    const hero = screen.getByText('epic-hero-section');
+    const whereItHappens = screen.getByText('where-it-happens-section');
+    const howItWorks = screen.getByText('how-it-works-section');
+    const forWhom = screen.getByText('for-whom-section');
+    const documentation = screen.getByText('documentation-section');
+    const knowledgePreview = screen.getByText('knowledge-preview-section');
+    const infoSections = screen.getByText('info-sections');
+    const trustStrip = screen.getByText('trust-strip');
+
+    expect(hero.compareDocumentPosition(whereItHappens)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(whereItHappens.compareDocumentPosition(howItWorks)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(howItWorks.compareDocumentPosition(forWhom)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(forWhom.compareDocumentPosition(documentation)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(documentation.compareDocumentPosition(knowledgePreview)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(knowledgePreview.compareDocumentPosition(infoSections)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(infoSections.compareDocumentPosition(trustStrip)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
 });

@@ -112,8 +112,6 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
           variant={landingVariant}
         />
 
-        <TrustStrip />
-
         <WhereItHappensSection />
 
         <HowItWorksSection />
@@ -125,6 +123,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <KnowledgePreviewSection onTrialClick={handleTrialClick} />
 
         <InfoSections />
+
+        <TrustStrip />
       </main>
 
       <EntryFooter onDemoClick={handleDemoClick} onTrialClick={handleTrialClick} />
