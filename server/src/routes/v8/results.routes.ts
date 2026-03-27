@@ -19,6 +19,8 @@ import {
   getROIPortfolioSummary,
   getROIInitiativeDetail,
 } from '../../services/v8/resultsROIService.js';
+import * as ReportBuilderService from '../../services/reportBuilderService.js';
+import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
 import { run as dbRun } from '../../utils/DbPromise.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
@@ -237,6 +239,90 @@ router.get(
     return res.json({
       data: portfolio,
       meta: resultsMeta(),
+    });
+  }),
+);
+
+/**
+ * POST /api/v8/results/kpi-reports
+ * Bounded KPI report create seam for the active Results report surface.
+ */
+router.post(
+  '/kpi-reports',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { periodStart, periodEnd, title, filters, kpiIds } = req.body || {};
+    const safeStart = String(periodStart || '').slice(0, 10);
+    if (!safeStart) {
+      return res.status(400).json({
+        error: 'periodStart is required',
+        code: 'RESULTS_KPI_REPORT_PERIOD_START_REQUIRED',
+      });
+    }
+
+    const selectedKpiIds: string[] | null = Array.isArray(kpiIds)
+      ? (kpiIds as unknown[])
+          .map((entry) => String(entry || '').trim())
+          .filter(Boolean)
+      : null;
+
+    const created = await createKpiReportSnapshot({
+      organizationId,
+      periodStart: safeStart,
+      periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
+      title: title ? String(title) : null,
+      createdBy: userId,
+      filters: filters && typeof filters === 'object' ? filters : null,
+      kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
+    });
+
+    const report = await ReportBuilderService.createReport({
+      organizationId,
+      sourceType: 'RESULTS_KPI_REPORT',
+      sourceId: created.snapshotId,
+      sourceName: created.snapshot.title,
+      title: created.snapshot.title,
+      description: `KPI review for ${created.snapshot.periodStart}${created.snapshot.periodEnd ? ` → ${created.snapshot.periodEnd}` : ''}`,
+      createdBy: userId,
+    });
+
+    await Promise.all([
+      ReportBuilderService.updateSectionContent(
+        report.report.id,
+        'executive_summary',
+        created.markdown.executive_summary,
+        userId,
+      ),
+      ReportBuilderService.updateSectionContent(
+        report.report.id,
+        'kpi_overview',
+        created.markdown.kpi_overview,
+        userId,
+      ),
+      ReportBuilderService.updateSectionContent(
+        report.report.id,
+        'deviation_cases',
+        created.markdown.deviation_cases,
+        userId,
+      ),
+      ReportBuilderService.updateSectionContent(
+        report.report.id,
+        'action_plan',
+        created.markdown.action_plan,
+        userId,
+      ),
+      ReportBuilderService.updateSectionContent(
+        report.report.id,
+        'appendix',
+        created.markdown.appendix,
+        userId,
+      ),
+    ]);
+    await ReportBuilderService.updateReportStatus(report.report.id, 'GENERATED', userId);
+
+    return res.json({
+      data: { snapshotId: created.snapshotId, reportId: report.report.id },
+      meta: resultsWriteMeta(),
     });
   }),
 );

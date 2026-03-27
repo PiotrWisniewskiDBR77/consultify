@@ -176,6 +176,29 @@ describe('V8ResultsApi', () => {
     expect(data.initiativeId).toBe('init-1');
   });
 
+  it('requests governed KPI report create from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      snapshotId: 'snap-1',
+      reportId: 'report-1',
+    });
+
+    const data = await V8ResultsApi.createKpiReport({
+      periodStart: '2026-02-01',
+      periodEnd: '2026-02-28',
+      title: 'Monthly KPI Review',
+      kpiIds: ['kpi-1'],
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/results/kpi-reports', {
+      periodStart: '2026-02-01',
+      periodEnd: '2026-02-28',
+      title: 'Monthly KPI Review',
+      kpiIds: ['kpi-1'],
+    });
+    expect(data.reportId).toBe('report-1');
+    expect(data.snapshotId).toBe('snap-1');
+  });
+
   it('requests governed ROI assumptions save from the V8 namespace', async () => {
     vi.mocked(v8Put).mockResolvedValue({ success: true });
 

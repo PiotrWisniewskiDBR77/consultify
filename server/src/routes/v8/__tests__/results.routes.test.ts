@@ -10,6 +10,10 @@ const mockGetROIInitiativeDetail = vi.fn();
 const mockGetResultsKpiCatalog = vi.fn();
 const mockGetResultsKpiDrawerDetail = vi.fn();
 const mockDbRun = vi.fn();
+const mockCreateKpiReportSnapshot = vi.fn();
+const mockCreateReport = vi.fn();
+const mockUpdateSectionContent = vi.fn();
+const mockUpdateReportStatus = vi.fn();
 
 vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsDashboard: (...args: unknown[]) => mockGetResultsDashboard(...args),
@@ -17,6 +21,16 @@ vi.mock('../../../services/v8/resultsROIService.js', () => ({
   getResultsKpiDrawerDetail: (...args: unknown[]) => mockGetResultsKpiDrawerDetail(...args),
   getROIPortfolioSummary: (...args: unknown[]) => mockGetROIPortfolioSummary(...args),
   getROIInitiativeDetail: (...args: unknown[]) => mockGetROIInitiativeDetail(...args),
+}));
+
+vi.mock('../../../services/results/kpiReportSnapshotService.js', () => ({
+  createKpiReportSnapshot: (...args: unknown[]) => mockCreateKpiReportSnapshot(...args),
+}));
+
+vi.mock('../../../services/reportBuilderService.js', () => ({
+  createReport: (...args: unknown[]) => mockCreateReport(...args),
+  updateSectionContent: (...args: unknown[]) => mockUpdateSectionContent(...args),
+  updateReportStatus: (...args: unknown[]) => mockUpdateReportStatus(...args),
 }));
 
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -157,6 +171,24 @@ describe('V8 results read-only routes', () => {
       measurements: [],
       openCase: null,
     });
+    mockCreateKpiReportSnapshot.mockResolvedValue({
+      snapshotId: 'snap-1',
+      snapshot: {
+        title: 'Monthly KPI Review',
+        periodStart: '2026-02-01',
+        periodEnd: '2026-02-28',
+      },
+      markdown: {
+        executive_summary: 'summary',
+        kpi_overview: 'overview',
+        deviation_cases: 'cases',
+        action_plan: 'plan',
+        appendix: 'appendix',
+      },
+    });
+    mockCreateReport.mockResolvedValue({ report: { id: 'report-1' } });
+    mockUpdateSectionContent.mockResolvedValue(undefined);
+    mockUpdateReportStatus.mockResolvedValue(undefined);
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
@@ -254,6 +286,43 @@ describe('V8 results read-only routes', () => {
     expect(mockDbRun.mock.calls[0]?.[1]).toEqual(
       expect.arrayContaining(['init-1', 'kpi-1', ORG, 'increase', 'medium', UID]),
     );
+  });
+
+  it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/kpi-reports').send({
+      periodStart: '2026-02-01',
+      periodEnd: '2026-02-28',
+      title: 'Monthly KPI Review',
+      kpiIds: ['kpi-1'],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
+    expect(res.body.data).toEqual({
+      snapshotId: 'snap-1',
+      reportId: 'report-1',
+    });
+    expect(mockCreateKpiReportSnapshot).toHaveBeenCalledWith({
+      organizationId: ORG,
+      periodStart: '2026-02-01',
+      periodEnd: '2026-02-28',
+      title: 'Monthly KPI Review',
+      createdBy: UID,
+      filters: null,
+      kpiIds: ['kpi-1'],
+    });
+    expect(mockCreateReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        sourceType: 'RESULTS_KPI_REPORT',
+        sourceId: 'snap-1',
+        title: 'Monthly KPI Review',
+        createdBy: UID,
+      }),
+    );
+    expect(mockUpdateSectionContent).toHaveBeenCalledTimes(5);
+    expect(mockUpdateReportStatus).toHaveBeenCalledWith('report-1', 'GENERATED', UID);
   });
 
   it('PUT /api/v8/results/roi/initiative/:initiativeId/assumptions saves governed ROI assumptions', async () => {

@@ -175,18 +175,28 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
       if (!periodStart) return;
       setCreating(true);
       try {
-        const res: any = await Api.post('/results/kpi-reports', {
+        const payload = {
           periodStart,
           periodEnd: periodEnd || null,
           title: title.trim() || undefined,
           kpiIds: selectedKpiIds.length ? selectedKpiIds : undefined,
-        });
+        };
+        let res: any;
+        try {
+          res = await V8ResultsApi.createKpiReport(payload);
+        } catch (error) {
+          if (!shouldFallbackToLegacyResults(error)) {
+            throw error;
+          }
+          res = await Api.post('/results/kpi-reports', payload);
+        }
         const reportId = res?.data?.reportId;
+        const resolvedReportId = reportId || res?.reportId;
         setCreateOpen(false);
         setTitle('');
         setKpiSearch('');
         await fetchReports();
-        if (reportId) navigate(`/reports/builder/${reportId}`);
+        if (resolvedReportId) navigate(`/reports/builder/${resolvedReportId}`);
       } finally {
         setCreating(false);
       }

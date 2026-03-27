@@ -268,6 +268,19 @@ export interface V8ResultsCreateKpiMappingResponse {
   kpiId: string;
 }
 
+export interface V8ResultsCreateKpiReportPayload {
+  periodStart: string;
+  periodEnd?: string | null;
+  title?: string;
+  filters?: Record<string, unknown> | null;
+  kpiIds?: string[];
+}
+
+export interface V8ResultsCreateKpiReportResponse {
+  snapshotId: string;
+  reportId: string;
+}
+
 export interface V8ResultsUpdateRoiAssumptionsPayload {
   capex?: number | null;
   opexAnnual?: number | null;
@@ -321,6 +334,8 @@ export const V8ResultsApi = {
     v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
   createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
     v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
+  createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
+    v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
   updateRoiInitiativeAssumptions: (
     initiativeId: string,
     payload: V8ResultsUpdateRoiAssumptionsPayload,
