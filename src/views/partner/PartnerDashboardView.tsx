@@ -8,19 +8,26 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
+  loadPartnerTrustSnapshot,
+  type PartnerTrustSnapshot,
+} from '../../components/Partner/partnerTrustRuntime';
+import {
   loadPartnerRuntimeSummary,
   PartnerRuntimeSummaryStrip,
   type PartnerRuntimeSummary,
 } from '../../components/Partner/PartnerRuntimeSummaryStrip';
 import { TrustProgressionIndicator } from '../../components/Partner/TrustProgressionIndicator';
-import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
+import { PARTNER_TRUST_PHASES } from './types';
 
 export const PartnerDashboardView: React.FC = () => {
   const { setCurrentView } = useAppStore();
-  const { trustProgression, currentTrustPhase } = usePartnerEcosystem();
   const [runtimeSummary, setRuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
+  const [trustSnapshot, setTrustSnapshot] = useState<PartnerTrustSnapshot>({
+    trustProgression: PARTNER_TRUST_PHASES,
+    currentTrustPhase: 'G1_DISCOVERY',
+  });
 
   const handleNavigate = useCallback(
     (view: AppView) => () => setCurrentView(view),
@@ -30,20 +37,24 @@ export const PartnerDashboardView: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
 
-    const loadSummary = async () => {
-      try {
-        const summary = await loadPartnerRuntimeSummary();
-        if (!cancelled) {
-          setRuntimeSummary(summary);
-        }
-      } catch {
-        if (!cancelled) {
-          setRuntimeSummary(null);
-        }
+    const loadDashboardData = async () => {
+      const [summary, trust] = await Promise.allSettled([
+        loadPartnerRuntimeSummary(),
+        loadPartnerTrustSnapshot(),
+      ]);
+
+      if (cancelled) {
+        return;
+      }
+
+      setRuntimeSummary(summary.status === 'fulfilled' ? summary.value : null);
+
+      if (trust.status === 'fulfilled') {
+        setTrustSnapshot(trust.value);
       }
     };
 
-    void loadSummary();
+    void loadDashboardData();
 
     return () => {
       cancelled = true;
@@ -67,8 +78,8 @@ export const PartnerDashboardView: React.FC = () => {
             </button>
           </div>
           <TrustProgressionIndicator
-            trustProgression={trustProgression}
-            currentPhase={currentTrustPhase}
+            trustProgression={trustSnapshot.trustProgression}
+            currentPhase={trustSnapshot.currentTrustPhase}
             compact
           />
         </div>

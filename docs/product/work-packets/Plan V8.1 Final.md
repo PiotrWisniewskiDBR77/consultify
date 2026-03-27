@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Partner Program` parity
-- latest evidence: seventeenth broader packet recorded in `evidence/436-v81-broader-partner-dashboard-runtime-summary-v8-seam.md`
-- reason: after the post-`CommissionView` assessment confirmed no thinner statement-source micro-packet remained, the smallest honest heavier cut was replacing the active `PartnerDashboardView` placeholder analytics block with the already-governed partner runtime summary seams
+- latest evidence: eighteenth broader packet recorded in `evidence/437-v81-broader-partner-dashboard-trust-progression-runtime-seam.md`
+- reason: after the shared dashboard runtime-summary seam landed, the smallest remaining honest placeholder cut on the active partner dashboard was replacing static trust progression hook state with a bounded milestone snapshot derived from existing partner runtime seams, while `CommissionIntelligence` remained heavier placeholder breadth
 
 ### Next three lanes
 
@@ -378,10 +378,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `PartnerDashboard runtime summary V8 seam`
-- last accepted packet: `PartnerDashboard runtime summary V8 seam`
+- current packet: `PartnerDashboard trust progression runtime seam`
+- last accepted packet: `PartnerDashboard trust progression runtime seam`
 - blocker: `none`
-- next action: `assess whether commission intelligence / trust progression placeholder breadth still contains one more honest governed runtime cut before returning to partner payout-settings save ownership`
+- next action: `assess whether broader partner execution should now return directly to explicit partner payout-settings save ownership because CommissionIntelligence still lacks a governed deal-pipeline runtime contract`
 - acceptance evidence: `none`
 
 #### broader `Sync` completion

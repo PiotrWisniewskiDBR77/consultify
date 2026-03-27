@@ -13,19 +13,6 @@ vi.mock('@/store/useAppStore', () => ({
   }),
 }));
 
-vi.mock('@/hooks/usePartnerEcosystem', () => ({
-  usePartnerEcosystem: () => ({
-    trustProgression: [
-      { phase: 'G1_DISCOVERY', label: 'Discovery', description: '', requirements: [] },
-      { phase: 'G2_QUALIFICATION', label: 'Qualification', description: '', requirements: [] },
-      { phase: 'G3_ONBOARDING', label: 'Onboarding', description: '', requirements: [] },
-      { phase: 'G4_ACTIVATION', label: 'Activation', description: '', requirements: [] },
-      { phase: 'G5_ECOSYSTEM', label: 'Ecosystem', description: '', requirements: [] },
-    ],
-    currentTrustPhase: 'G4_ACTIVATION',
-  }),
-}));
-
 vi.mock('@/components/Partner/PartnerRuntimeSummaryStrip', async () => {
   const actual = await vi.importActual<typeof import('@/components/Partner/PartnerRuntimeSummaryStrip')>(
     '@/components/Partner/PartnerRuntimeSummaryStrip'
@@ -37,10 +24,15 @@ vi.mock('@/components/Partner/PartnerRuntimeSummaryStrip', async () => {
   };
 });
 
+vi.mock('@/components/Partner/partnerTrustRuntime', () => ({
+  loadPartnerTrustSnapshot: vi.fn(),
+}));
+
 import {
   loadPartnerRuntimeSummary,
   PartnerRuntimeSummaryStrip,
 } from '@/components/Partner/PartnerRuntimeSummaryStrip';
+import { loadPartnerTrustSnapshot } from '@/components/Partner/partnerTrustRuntime';
 import { PartnerDashboardView } from '@/views/partner/PartnerDashboardView';
 
 describe('PartnerDashboardView runtime summary seam', () => {
@@ -72,11 +64,34 @@ describe('PartnerDashboardView runtime summary seam', () => {
         currency: 'EUR',
       },
     });
+    vi.mocked(loadPartnerTrustSnapshot).mockResolvedValue({
+      currentTrustPhase: 'G4_ACTIVATION',
+      trustProgression: [
+        {
+          phase: 'G1_DISCOVERY',
+          label: 'Discovery',
+          description: '',
+          requirements: [],
+          completed: true,
+        },
+        {
+          phase: 'G2_QUALIFICATION',
+          label: 'Qualification',
+          description: '',
+          requirements: [],
+          completed: true,
+        },
+        { phase: 'G3_ONBOARDING', label: 'Onboarding', description: '', requirements: [] },
+        { phase: 'G4_ACTIVATION', label: 'Activation', description: '', requirements: [] },
+        { phase: 'G5_ECOSYSTEM', label: 'Ecosystem', description: '', requirements: [] },
+      ],
+    });
 
     render(<PartnerDashboardView />);
 
     await waitFor(() => {
       expect(loadPartnerRuntimeSummary).toHaveBeenCalled();
+      expect(loadPartnerTrustSnapshot).toHaveBeenCalled();
     });
 
     expect(PartnerRuntimeSummaryStrip).toBeTypeOf('function');

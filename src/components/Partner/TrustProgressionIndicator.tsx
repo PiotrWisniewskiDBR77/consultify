@@ -30,12 +30,14 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
   compact = false,
 }) => {
   const currentIndex = trustProgression.findIndex((p) => p.phase === currentPhase);
+  const isPhaseCompleted = (phase: TrustProgressionIndicatorProps['trustProgression'][number]) =>
+    Boolean(phase.completed || phase.completedAt);
 
   if (compact) {
     return (
       <div className="flex items-center gap-2">
         {trustProgression.map((phase, index) => {
-          const isCompleted = phase.completedAt;
+          const isCompleted = isPhaseCompleted(phase);
           const isCurrent = phase.phase === currentPhase;
 
           return (
@@ -94,7 +96,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
       {/* Phase Steps */}
       <div className="space-y-4">
         {trustProgression.map((phase, index) => {
-          const isCompleted = phase.completedAt;
+          const isCompleted = isPhaseCompleted(phase);
           const isCurrent = phase.phase === currentPhase;
           const isFuture = index > currentIndex;
 

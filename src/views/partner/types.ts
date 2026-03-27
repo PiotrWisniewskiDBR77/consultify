@@ -80,6 +80,7 @@ export interface PartnerTrustProgression {
   label: string;
   description: string;
   requirements: string[];
+  completed?: boolean;
   completedAt?: string;
 }
 
