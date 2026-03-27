@@ -11,6 +11,7 @@ const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
+const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
@@ -78,6 +79,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 
 vi.mock('../../../services/financialModelingService.js', () => ({
   getModel: (...args: unknown[]) => mockGetModel(...args),
+  getValidations: (...args: unknown[]) => mockGetValidations(...args),
   listEvents: (...args: unknown[]) => mockListEvents(...args),
   listModels: (...args: unknown[]) => mockListModels(...args),
 }));
@@ -469,6 +471,38 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.model?.events).toHaveLength(1);
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
     expect(mockListEvents).toHaveBeenCalledWith('model-1');
+  });
+
+  it('GET /api/v8/finance/models/:id/validations returns envelope and delegates to getValidations', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+    });
+    mockGetValidations.mockResolvedValue([
+      {
+        id: 'validation-1',
+        check_code: 'BALANCE',
+        check_name: 'Balance sheet balances',
+        status: 'warning',
+      },
+      {
+        id: 'validation-2',
+        check_code: 'CASHFLOW',
+        check_name: 'Cash flow reconciles',
+        status: 'pass',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/models/model-1/validations');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.validations).toHaveLength(2);
+    expect(res.body.data?.summary).toEqual({ total: 2, pass: 1, fail: 0, warning: 1 });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockGetValidations).toHaveBeenCalledWith('model-1');
   });
 
   it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {

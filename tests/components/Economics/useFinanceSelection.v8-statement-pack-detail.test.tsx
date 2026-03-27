@@ -13,6 +13,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getModel: vi.fn(),
+    getModelValidations: vi.fn(),
     getStatementPack: vi.fn(),
     getStatement: vi.fn(),
   },
@@ -249,5 +250,63 @@ describe('useFinanceSelection V8 statement-pack detail seam', () => {
 
     expect(V8FinanceApi.getModel).toHaveBeenCalledWith('model-1');
     expect(Api.get).toHaveBeenCalledWith('/api/financial-modeling/models/model-1');
+  });
+
+  it('prefers governed model validations before legacy fallback for prediction preview', async () => {
+    vi.mocked(V8FinanceApi.getModelValidations).mockResolvedValue({
+      validations: [
+        {
+          id: 'validation-1',
+          check_code: 'BALANCE',
+          check_name: 'Balance sheet balances',
+          status: 'warning',
+        },
+      ],
+      summary: { total: 1, pass: 0, fail: 0, warning: 1 },
+    } as any);
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    const { result } = renderHook(() => useFinanceSelection('prediction'));
+
+    await act(async () => {
+      await result.current.loadPredictionPreview('model-1');
+    });
+
+    await waitFor(() => {
+      expect(result.current.predictionValidations?.warning).toBe(1);
+    });
+
+    expect(V8FinanceApi.getModelValidations).toHaveBeenCalledWith('model-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/validations');
+  });
+
+  it('falls back to legacy model validations on bounded compatibility statuses for prediction preview', async () => {
+    vi.mocked(V8FinanceApi.getModelValidations).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockResolvedValue({
+      validations: [
+        {
+          id: 'validation-1',
+          check_code: 'BALANCE',
+          check_name: 'Balance sheet balances',
+          status: 'warning',
+        },
+      ],
+      summary: { total: 1, pass: 0, fail: 0, warning: 1 },
+    } as any);
+
+    const { result } = renderHook(() => useFinanceSelection('prediction'));
+
+    await act(async () => {
+      await result.current.loadPredictionPreview('model-1');
+    });
+
+    await waitFor(() => {
+      expect(result.current.predictionValidations?.warning).toBe(1);
+    });
+
+    expect(V8FinanceApi.getModelValidations).toHaveBeenCalledWith('model-1');
+    expect(Api.get).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/validations');
   });
 });

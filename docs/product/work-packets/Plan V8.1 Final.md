@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `19`
+- landed packets in the active lane: `20`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `model detail V8 seam` recorded in `evidence/405-v81-broader-finance-model-detail-v8-seam.md`
-- reason: after wizard confirm continuity landed, the lane was still not ready for bounded acceptance because active finance model preview/workspace detail reads still defaulted to the legacy financial-modeling detail endpoint
+- latest evidence: `model validations V8 seam` recorded in `evidence/406-v81-broader-finance-model-validations-v8-seam.md`
+- reason: after model detail continuity landed, the next smallest honest residual was the validations read still defaulting to the legacy financial-modeling endpoint on active Finance preview/workspace surfaces
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `active finance model detail continuity`
-- last accepted packet: `model detail V8 seam`
+- current packet: `active finance model validations continuity`
+- last accepted packet: `model validations V8 seam`
 - blocker: `none`
-- next action: `assess whether active finance model validations continuity is the next smallest broader Finance packet after model detail closure`
+- next action: `assess whether active finance model outputs continuity is the next smallest broader Finance packet after model validations closure`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity

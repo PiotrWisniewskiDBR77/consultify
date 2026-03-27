@@ -68,7 +68,7 @@ import {
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
-import { getModel, listEvents, listModels } from '../../services/financialModelingService.js';
+import { getModel, getValidations, listEvents, listModels } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
   getStatementPackDetail,
@@ -215,6 +215,31 @@ router.get(
           source_statement_pack: sourceStatementPack || null,
         },
       },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/models/:modelId/validations',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const validations = await getValidations(modelId);
+    const summary = {
+      total: validations.length,
+      pass: validations.filter((item: any) => item.status === 'pass').length,
+      fail: validations.filter((item: any) => item.status === 'fail').length,
+      warning: validations.filter((item: any) => item.status === 'warning').length,
+    };
+
+    return res.json({
+      data: { validations, summary },
       meta: financeMeta(),
     });
   }),

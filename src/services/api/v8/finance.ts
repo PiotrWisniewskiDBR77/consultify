@@ -68,6 +68,29 @@ export interface V8FinanceModelDetail extends V8FinanceModelSummary {
   [key: string]: unknown;
 }
 
+export interface V8FinanceModelValidation {
+  id?: string;
+  model_id?: string;
+  period_date?: string | null;
+  check_code: string;
+  check_name: string;
+  status: string;
+  expected_value?: number | null;
+  actual_value?: number | null;
+  difference?: number | null;
+  message?: string | null;
+}
+
+export interface V8FinanceModelValidationResult {
+  validations: V8FinanceModelValidation[];
+  summary: {
+    total: number;
+    pass: number;
+    fail: number;
+    warning: number;
+  };
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -321,6 +344,8 @@ export const V8FinanceApi = {
   getModels: () =>
     v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
   getModel: (modelId: string) => v8Get<{ model: V8FinanceModelDetail }>(`/finance/models/${modelId}`),
+  getModelValidations: (modelId: string) =>
+    v8Get<V8FinanceModelValidationResult>(`/finance/models/${modelId}/validations`),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>

@@ -62,6 +62,17 @@ async function getModelDetailWithFallback(modelId: string) {
   }
 }
 
+async function getModelValidationsWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.getModelValidations(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/financial-modeling/models/${modelId}/validations`).catch(() => null);
+  }
+}
+
 const SCENARIO_PROFILES: Record<
   ScenarioVariant,
   {
@@ -419,7 +430,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
 
   const loadPredictionPreview = useCallback(async (modelId: string) => {
     try {
-      const val = await Api.get(`/api/financial-modeling/models/${modelId}/validations`);
+      const val = await getModelValidationsWithFallback(modelId);
       setPredictionValidations((val as any)?.summary || null);
     } catch {
       setPredictionValidations(null);

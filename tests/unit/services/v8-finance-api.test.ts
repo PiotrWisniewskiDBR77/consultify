@@ -115,6 +115,31 @@ describe('V8FinanceApi', () => {
     expect(data.model.events).toHaveLength(1);
   });
 
+  it('requests governed finance model validations from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      validations: [
+        {
+          id: 'validation-1',
+          check_code: 'BALANCE',
+          check_name: 'Balance sheet balances',
+          status: 'warning',
+        },
+      ],
+      summary: {
+        total: 1,
+        pass: 0,
+        fail: 0,
+        warning: 1,
+      },
+    });
+
+    const data = await V8FinanceApi.getModelValidations('model-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/models/model-1/validations');
+    expect(data.validations).toHaveLength(1);
+    expect(data.summary.warning).toBe(1);
+  });
+
   it('requests governed finance statement packs from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statementPacks: [
