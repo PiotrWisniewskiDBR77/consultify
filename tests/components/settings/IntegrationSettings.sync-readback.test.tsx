@@ -55,7 +55,7 @@ describe('IntegrationSettings governed sync readback', () => {
         sync_scope_label: 'Bidirectional sync',
         onboarding_status: 'pending_external_auth_or_configuration',
         configured_fields: ['site_url'],
-        required_fields: ['site_url', 'cloud_id'],
+        required_fields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
         created_at: '2026-03-27T20:00:00.000Z',
         last_synced_at: null,
         last_error: null,
@@ -80,7 +80,7 @@ describe('IntegrationSettings governed sync readback', () => {
     apiMock.connectIntegration.mockResolvedValue({
       success: true,
       onboardingStatus: 'pending_external_auth',
-      authUrl: 'https://example.test/oauth/start',
+      authUrl: 'https://auth.atlassian.com/authorize?state=state-1',
     });
     vi.stubGlobal('open', vi.fn());
   });
@@ -97,6 +97,8 @@ describe('IntegrationSettings governed sync readback', () => {
     });
 
     expect(screen.getByText(/Missing setup fields/i)).toHaveTextContent('cloud_id');
+    expect(screen.getByText(/Missing setup fields/i)).toHaveTextContent('client_id');
+    expect(screen.getByText(/Missing setup fields/i)).toHaveTextContent('client_secret');
     expect(screen.getByRole('button', { name: /Complete setup/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Sync now/i })).not.toBeInTheDocument();
   });
@@ -122,7 +124,12 @@ describe('IntegrationSettings governed sync readback', () => {
 
     fireEvent.change(screen.getByRole('textbox'), {
       target: {
-        value: JSON.stringify({ site_url: 'https://acme.atlassian.net', cloud_id: 'cloud-1' }),
+        value: JSON.stringify({
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        }),
       },
     });
     fireEvent.click(screen.getByRole('button', { name: /Save integration/i }));
@@ -131,11 +138,13 @@ describe('IntegrationSettings governed sync readback', () => {
       expect(apiMock.connectIntegration).toHaveBeenCalledWith('jira', {
         site_url: 'https://acme.atlassian.net',
         cloud_id: 'cloud-1',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
       });
     });
 
     expect(window.open).toHaveBeenCalledWith(
-      'https://example.test/oauth/start',
+      'https://auth.atlassian.com/authorize?state=state-1',
       '_blank',
       'width=600,height=700'
     );

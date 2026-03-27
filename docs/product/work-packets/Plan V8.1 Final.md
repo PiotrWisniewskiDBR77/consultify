@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `18`
+- landed packets in the current active lane: `19`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: post-Jira-callback residual assessment recorded in `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md`
-- reason: after Jira callback-driven governed materialization landed on the active V8 path, a thinner org-level authority seam still remains because canonical and alias `/api/integrations` connect routes still emit placeholder callback `authUrl` truth instead of the real governed provider round-trip
+- latest evidence: org-level Jira provider-auth initiation continuity landed in `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md`
+- reason: canonical and alias org-level `/api/integrations` Jira connect routes now reuse the same governed provider session builder as the active V8 path, so those settings surfaces no longer emit placeholder callback `authUrl` truth
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md`
+- current packet: `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote canonical org-level Jira provider-auth initiation continuity across canonical and alias /api/integrations connect routes as the next honest broader-sync implementation step`
+- next action: `assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next honest broader-sync step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

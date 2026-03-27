@@ -11,7 +11,10 @@ import { createIssueFromTask, parseJiraConfig } from '../../services/integration
 import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
 import { SlackServiceClass } from '../../services/slackService.js';
 import { CONNECTORS } from '../../services/integrationHubService.js';
-import { issueSyncExternalAuthSession } from '../../services/syncExternalAuthSessionService.js';
+import {
+  buildGovernedExternalAuthSession,
+  getGovernedExternalAuthConfigFields,
+} from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { setConnectorAuthState } from '../../services/v8/pmSyncTruthService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -122,16 +125,6 @@ function normalizeConnectorId(provider: string): string {
   return CONNECTOR_ALIAS_MAP[normalized] || normalized;
 }
 
-function buildExternalAuthCallbackUrl(req: Request, state: string): string {
-  const forwardedProto = req.get('x-forwarded-proto');
-  const forwardedHost = req.get('x-forwarded-host');
-  if (forwardedProto && forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
-  }
-
-  return `${req.protocol}://${req.get('host')}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
-}
-
 function getConfiguredFields(
   configFields: string[],
   config: Record<string, unknown>
@@ -161,6 +154,10 @@ function getPendingOnboardingStatus(
     : ('pending_configuration' as const);
 }
 
+function getConnectorConfigFields(connectorId: string, baseFields: string[]): string[] {
+  return getGovernedExternalAuthConfigFields(connectorId, baseFields);
+}
+
 async function connectGovernedConnectorIntegration(input: {
   req: Request;
   organizationId: string;
@@ -183,14 +180,15 @@ async function connectGovernedConnectorIntegration(input: {
   if (!connector) {
     throw new Error(`Unknown connector: ${input.provider}`);
   }
+  const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
 
   const integrationId = uuidv4();
   const integrationName = input.name?.trim() || connector.name;
   const config = input.config || {};
-  const configuredFields = getConfiguredFields(connector.configFields, config);
+  const configuredFields = getConfiguredFields(connectorConfigFields, config);
   const onboardingStatus = getPendingOnboardingStatus(
     connector.authType,
-    connector.configFields,
+    connectorConfigFields,
     configuredFields
   );
   const scopes = connector.capabilities.map((capability) => `read:${capability}`);
@@ -223,13 +221,14 @@ async function connectGovernedConnectorIntegration(input: {
       transitionedBy: input.actorId,
       reason: 'canonical_integrations_connect_initiated',
     });
-    const session = issueSyncExternalAuthSession({
+    const session = buildGovernedExternalAuthSession(input.req, {
       integrationId,
       organizationId: input.organizationId,
       connectorId: connector.id,
       mode: 'connect',
+      config,
     });
-    authUrl = buildExternalAuthCallbackUrl(input.req, session.state);
+    authUrl = session.authUrl;
   }
 
   return {

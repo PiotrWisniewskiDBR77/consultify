@@ -10,7 +10,7 @@ const {
   mockDbRun,
   mockGetTableColumns,
   mockListGovernedIntegrations,
-  mockIssueSyncExternalAuthSession,
+  mockBuildGovernedExternalAuthSession,
   mockSetConnectorAuthState,
 } = vi.hoisted(() => ({
   mockDbAll: vi.fn(),
@@ -18,7 +18,7 @@ const {
   mockDbRun: vi.fn(),
   mockGetTableColumns: vi.fn(),
   mockListGovernedIntegrations: vi.fn(),
-  mockIssueSyncExternalAuthSession: vi.fn(),
+  mockBuildGovernedExternalAuthSession: vi.fn(),
   mockSetConnectorAuthState: vi.fn(),
 }));
 
@@ -36,8 +36,11 @@ vi.mock('../../services/v8/pmSyncInventoryService.js', () => ({
   listGovernedIntegrations: (...args: unknown[]) => mockListGovernedIntegrations(...args),
 }));
 
-vi.mock('../../services/syncExternalAuthSessionService.js', () => ({
-  issueSyncExternalAuthSession: (...args: unknown[]) => mockIssueSyncExternalAuthSession(...args),
+vi.mock('../../services/v8/pmSyncExternalAuthMaterializationService.js', () => ({
+  buildGovernedExternalAuthSession: (...args: unknown[]) =>
+    mockBuildGovernedExternalAuthSession(...args),
+  getGovernedExternalAuthConfigFields: (connectorId: string, baseFields: string[]) =>
+    connectorId === 'jira' ? [...baseFields, 'client_id', 'client_secret'] : baseFields,
 }));
 
 vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
@@ -111,18 +114,15 @@ describe('canonical integrations readback continuity', () => {
           category: 'project_management',
           capabilities: ['issues'],
           authType: 'oauth2',
-          configFields: ['site_url', 'cloud_id'],
+          configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
         },
       },
     ]);
-    mockIssueSyncExternalAuthSession.mockReturnValue({
+    mockBuildGovernedExternalAuthSession.mockReturnValue({
+      authUrl: 'https://auth.atlassian.com/authorize?state=state-1',
+      callbackUrl: 'https://example.test/api/sync-hub/external-auth/callback?state=state-1',
       state: 'state-1',
-      integrationId: 'int-created',
-      organizationId: 'org-1',
-      connectorId: 'jira',
-      mode: 'connect',
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 60_000,
+      expiresAt: '2026-03-27T20:11:00.000Z',
     });
     mockSetConnectorAuthState.mockResolvedValue({
       recordId: 'auth-1',
@@ -151,7 +151,7 @@ describe('canonical integrations readback continuity', () => {
         status: 'pending',
         onboarding_status: 'pending_external_auth_or_configuration',
         configured_fields: ['site_url'],
-        required_fields: ['site_url', 'cloud_id'],
+        required_fields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
         config: { site_url: 'https://acme.atlassian.net' },
       }),
     ]);
@@ -166,13 +166,15 @@ describe('canonical integrations readback continuity', () => {
       config: {
         site_url: 'https://acme.atlassian.net',
         cloud_id: 'cloud-1',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
       },
     });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.onboardingStatus).toBe('pending_external_auth');
-    expect(res.body.authUrl).toContain('/api/sync-hub/external-auth/callback?state=');
+    expect(res.body.authUrl).toContain('https://auth.atlassian.com/authorize?state=');
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
       organizationId: 'org-1',
@@ -190,6 +192,20 @@ describe('canonical integrations readback continuity', () => {
         'pending',
       ])
     );
+    expect(mockBuildGovernedExternalAuthSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        connectorId: 'jira',
+        organizationId: 'org-1',
+        mode: 'connect',
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      })
+    );
   });
 
   it('POST /api/integrations/:provider/connect reuses governed connect authority on alias entrypoint', async () => {
@@ -201,13 +217,15 @@ describe('canonical integrations readback continuity', () => {
       config: {
         site_url: 'https://acme.atlassian.net',
         cloud_id: 'cloud-1',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
       },
     });
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.onboardingStatus).toBe('pending_external_auth');
-    expect(res.body.authUrl).toContain('/api/sync-hub/external-auth/callback?state=');
+    expect(res.body.authUrl).toContain('https://auth.atlassian.com/authorize?state=');
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
       organizationId: 'org-1',
