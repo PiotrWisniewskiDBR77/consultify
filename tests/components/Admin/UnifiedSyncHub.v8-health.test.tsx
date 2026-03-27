@@ -533,4 +533,67 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/connect', expect.anything());
   });
+
+  it('keeps pending integrations honest until onboarding completes', async () => {
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-pending-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'pending',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 25,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+          },
+        },
+      ],
+      count: 1,
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    const runNowIconButton = screen.getByTitle('Run now') as HTMLButtonElement;
+    const pauseIconButton = screen.getByTitle('Pause') as HTMLButtonElement;
+    expect(runNowIconButton).toBeDisabled();
+    expect(pauseIconButton).toBeDisabled();
+
+    fireEvent.click(screen.getByText('Jira'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Connection setup still pending')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText('Complete external auth or provider configuration before sync controls become available.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Finish auth/config to enable sync controls')).toBeInTheDocument();
+    screen.getAllByRole('button', { name: /Run now/i }).forEach((button) => {
+      expect(button).toBeDisabled();
+    });
+    expect(screen.queryByRole('button', { name: /Resume/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Disconnect/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.disconnectIntegration).toHaveBeenCalledWith('int-pending-1');
+    });
+
+    expect(V8SyncApi.runIntegrationSync).not.toHaveBeenCalled();
+    expect(V8SyncApi.pauseIntegration).not.toHaveBeenCalled();
+  });
 });

@@ -1043,6 +1043,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const renderIntegrationRow = (int: IntegrationItem) => {
     const isExpanded = expandedId === int.id;
     const isSyncing = syncing === int.id;
+    const isPendingOnboarding = int.status === 'pending';
+    const canRunSync = !isPendingOnboarding && int.status !== 'disconnected';
+    const canPause = !isPendingOnboarding && int.status !== 'disconnected';
+    const canResume = !isPendingOnboarding;
 
     return (
       <motion.div
@@ -1105,7 +1109,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 e.stopPropagation();
                 handleSync(int.id);
               }}
-              disabled={isSyncing || int.status === 'disconnected'}
+              disabled={isSyncing || !canRunSync}
               className="p-1.5 rounded-md text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
               title={t('integrations.syncHub.runNow', 'Run now')}
             >
@@ -1116,6 +1120,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 e.stopPropagation();
                 handlePause(int.id);
               }}
+              disabled={!canPause}
               className="p-1.5 rounded-md text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
               title={t('integrations.syncHub.pause', 'Pause')}
             >
@@ -1162,6 +1167,22 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         {t(
                           'integrations.syncHub.reauthDesc',
                           'Your access token has expired. Re-authorize to resume syncing.'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {isPendingOnboarding && (
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 text-amber-300 text-xs">
+                    <Clock size={14} className="shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-medium">
+                        {t('integrations.syncHub.setupPending', 'Connection setup still pending')}
+                      </div>
+                      <div className="text-amber-200/80 mt-0.5">
+                        {t(
+                          'integrations.syncHub.setupPendingDesc',
+                          'Complete external auth or provider configuration before sync controls become available.',
                         )}
                       </div>
                     </div>
@@ -1228,19 +1249,29 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   <button
                     onClick={() => handleSync(int.id)}
-                    disabled={syncing === int.id || int.status === 'disconnected'}
+                    disabled={syncing === int.id || !canRunSync}
                     className="px-3 py-1.5 text-xs bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-30"
                   >
                     <RefreshCw size={13} />
                     {t('integrations.syncHub.runNow', 'Run now')}
                   </button>
-                  <button
-                    onClick={() => handleResume(int.id)}
-                    className="px-3 py-1.5 text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <Play size={13} />
-                    {t('integrations.syncHub.resume', 'Resume')}
-                  </button>
+                  {canResume && (
+                    <button
+                      onClick={() => handleResume(int.id)}
+                      className="px-3 py-1.5 text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors flex items-center gap-1.5"
+                    >
+                      <Play size={13} />
+                      {t('integrations.syncHub.resume', 'Resume')}
+                    </button>
+                  )}
+                  {isPendingOnboarding && (
+                    <span className="px-3 py-1.5 text-xs rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                      {t(
+                        'integrations.syncHub.setupPendingControls',
+                        'Finish auth/config to enable sync controls',
+                      )}
+                    </span>
+                  )}
                   <button
                     onClick={() => handleDisconnect(int.id)}
                     className="px-3 py-1.5 text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"

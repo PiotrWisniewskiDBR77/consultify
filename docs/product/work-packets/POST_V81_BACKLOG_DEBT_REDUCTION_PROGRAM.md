@@ -292,6 +292,7 @@ Current result:
 - the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`,
 - the active lane now uses the split-brain map in `evidence/442-v81-broader-sync-completion-split-brain-map.md`,
 - the first real bounded broader sync packet landed in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md` by moving visible sync-hub connect authority onto a governed V8-first seam while keeping new integrations in honest `pending` onboarding state,
+- the second real bounded broader sync packet landed in `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md` by aligning the active sync hub controls with the already-recorded `pending` onboarding truth instead of offering ready-state sync actions too early,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -455,6 +456,7 @@ It is to process the remaining themes one by one until this section contains no 
 ## 12. Change log
 
 - 2026-03-27: landed the first real bounded packet inside broader `Sync` completion by moving visible sync-hub connect initiation authority onto a governed V8 seam in `evidence/443-v81-broader-sync-connect-initiation-v8-seam.md`, so the active `UnifiedSyncHub` connect CTA no longer defaults to legacy `sync-hub` connect truth or fake immediate `connected` state during normal operation
+- 2026-03-27: landed the second real bounded packet inside broader `Sync` completion by aligning visible pending-onboarding sync hub controls with honest `pending` truth in `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md`, so the active `UnifiedSyncHub` no longer offers ready-state sync controls before external auth or provider configuration is complete
 - 2026-03-27: promoted broader `Sync` completion with charter `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`, recorded the split-brain map in `evidence/442-v81-broader-sync-completion-split-brain-map.md`, and selected visible connect initiation continuity as the first bounded packet candidate
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Partner Program` parity by moving visible `CommissionView` statement continuity onto the existing governed partner payout and commission seams in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md`, so the active commission workspace no longer renders placeholder-only statement cards during normal operation
 - 2026-03-27: landed the fifteenth real bounded packet inside broader `Partner Program` parity by moving visible client-access employee roster continuity onto a governed partner V8-first read seam in `evidence/433-v81-broader-partner-client-access-employees-read-v8-seam.md`, so the active employee tab no longer defaults to a placeholder-only legacy employees route during normal operation while unknown client assignment counts stay explicitly unclaimed
