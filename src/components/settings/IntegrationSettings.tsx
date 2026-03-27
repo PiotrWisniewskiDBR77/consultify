@@ -93,6 +93,106 @@ interface Integration {
   last_synced_at?: string | null;
   last_error?: string | null;
   error_count?: number | null;
+  onboarding_status?:
+    | 'pending_external_auth_or_configuration'
+    | 'pending_external_auth'
+    | 'authorization_callback_received_pending_verification'
+    | 'pending_configuration'
+    | 'configuration_submitted_pending_validation'
+    | null;
+  configured_fields?: string[];
+  required_fields?: string[];
+}
+
+const READY_INTEGRATION_STATUSES = new Set(['active', 'connected']);
+
+function getIntegrationReadinessMeta(
+  integration: Integration | undefined,
+  t: (key: string, fallback: string) => string
+) {
+  if (!integration) {
+    return {
+      isReady: false,
+      isPending: false,
+      badgeLabel: null as string | null,
+      badgeClassName: '',
+      guidance: null as string | null,
+    };
+  }
+
+  if (READY_INTEGRATION_STATUSES.has(integration.status)) {
+    return {
+      isReady: true,
+      isPending: false,
+      badgeLabel: t('settings.integrations.readiness.connected', 'Connected'),
+      badgeClassName:
+        'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+      guidance: null,
+    };
+  }
+
+  if (integration.status === 'pending') {
+    const onboardingStatus = integration.onboarding_status;
+    if (onboardingStatus === 'authorization_callback_received_pending_verification') {
+      return {
+        isReady: false,
+        isPending: true,
+        badgeLabel: t('settings.integrations.readiness.verificationPending', 'Verification pending'),
+        badgeClassName:
+          'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+        guidance: t(
+          'settings.integrations.readiness.verificationPendingGuidance',
+          'Authorization callback reached governed sync, but verification still completes in Sync Hub.'
+        ),
+      };
+    }
+    if (onboardingStatus === 'pending_external_auth') {
+      return {
+        isReady: false,
+        isPending: true,
+        badgeLabel: t('settings.integrations.readiness.authorizationPending', 'Authorization pending'),
+        badgeClassName:
+          'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+        guidance: t(
+          'settings.integrations.readiness.authorizationPendingGuidance',
+          'Governed setup is waiting for external authorization in Sync Hub.'
+        ),
+      };
+    }
+    if (onboardingStatus === 'configuration_submitted_pending_validation') {
+      return {
+        isReady: false,
+        isPending: true,
+        badgeLabel: t('settings.integrations.readiness.validationPending', 'Validation pending'),
+        badgeClassName:
+          'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+        guidance: t(
+          'settings.integrations.readiness.validationPendingGuidance',
+          'Configuration was submitted, but governed validation has not finished yet.'
+        ),
+      };
+    }
+
+    return {
+      isReady: false,
+      isPending: true,
+      badgeLabel: t('settings.integrations.readiness.pendingSetup', 'Pending setup'),
+      badgeClassName:
+        'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+      guidance: t(
+        'settings.integrations.readiness.pendingSetupGuidance',
+        'This integration exists on the governed sync path, but setup is not complete yet.'
+      ),
+    };
+  }
+
+  return {
+    isReady: false,
+    isPending: false,
+    badgeLabel: integration.status,
+    badgeClassName: 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300',
+    guidance: null,
+  };
 }
 
 interface ProjectOption {
@@ -443,7 +543,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     selectedProvider === 'microsoft_teams' ||
     selectedProvider === 'teams';
 
-  const parseEditorConfig = useCallback(() => {
+  const parseEditorConfig = () => {
     const raw = String(configInput || '').trim();
     if (!raw) return {};
     try {
@@ -451,11 +551,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     } catch {
       return { webhookUrl: raw };
     }
-  }, [configInput]);
+  };
 
-  const setEditorConfig = useCallback((next: any) => {
+  const setEditorConfig = (next: any) => {
     setConfigInput(JSON.stringify(next || {}, null, 2));
-  }, []);
+  };
 
   const communicationConfig = isCommunicationProvider ? parseEditorConfig() : {};
   const communicationMappings = Array.isArray((communicationConfig as any)?.projectChannelMappings)
@@ -813,6 +913,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               const connected = integrations.find(
                 (i) => i.provider === p.name || i.provider === p.id
               );
+              const readiness = getIntegrationReadinessMeta(connected, t);
+              const missingFields =
+                connected?.required_fields?.filter(
+                  (field) => !(connected.configured_fields || []).includes(field)
+                ) || [];
               const Icon = PROVIDER_ICON[p.name] || PROVIDER_ICON[p.id] || Puzzle;
 
               return (
@@ -823,7 +928,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   <div>
                     <div className="flex items-center gap-3 mb-4">
                       <div
-                        className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}
+                        className={`p-2 rounded-lg ${
+                          !connected
+                            ? 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'
+                            : readiness.isReady
+                              ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        }`}
                       >
                         <Icon size={24} />
                       </div>
@@ -838,16 +949,23 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     </div>
                     {connected && (
                       <div className="mb-4 space-y-2">
-                        <div className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
-                          <CheckCircle size={12} /> Connected
-                        </div>
-                        <div
-                          className={`text-xs px-2 py-1 rounded inline-flex items-center gap-1 ${getSyncScopeMeta(connected.sync_scope).className}`}
-                        >
-                          <Info size={12} />
-                          {connected.sync_scope_label ||
-                            getSyncScopeMeta(connected.sync_scope).label}
-                        </div>
+                        {readiness.badgeLabel ? (
+                          <div
+                            className={`text-xs px-2 py-1 rounded inline-flex items-center gap-1 ${readiness.badgeClassName}`}
+                          >
+                            {readiness.isReady ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                            {readiness.badgeLabel}
+                          </div>
+                        ) : null}
+                        {readiness.isReady ? (
+                          <div
+                            className={`text-xs px-2 py-1 rounded inline-flex items-center gap-1 ${getSyncScopeMeta(connected.sync_scope).className}`}
+                          >
+                            <Info size={12} />
+                            {connected.sync_scope_label ||
+                              getSyncScopeMeta(connected.sync_scope).label}
+                          </div>
+                        ) : null}
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           <div>
                             Status:{' '}
@@ -868,46 +986,78 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               Last error: {String(connected.last_error).slice(0, 120)}
                             </div>
                           ) : null}
+                          {readiness.guidance ? (
+                            <div className="mt-2 text-amber-700 dark:text-amber-300">
+                              {readiness.guidance}
+                            </div>
+                          ) : null}
+                          {missingFields.length > 0 ? (
+                            <div className="mt-1">
+                              {t('settings.integrations.missingSetupFields', 'Missing setup fields')}:{' '}
+                              {missingFields.join(', ')}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     )}
                   </div>
 
                   {connected ? (
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => handleSyncNow(connected.id)}
-                        disabled={syncingIntegrationId === connected.id}
-                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
-                      >
-                        {syncingIntegrationId === connected.id ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <RefreshCw size={16} />
+                    readiness.isReady ? (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => handleSyncNow(connected.id)}
+                          disabled={syncingIntegrationId === connected.id}
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
+                        >
+                          {syncingIntegrationId === connected.id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <RefreshCw size={16} />
+                          )}
+                          Sync now
+                        </button>
+                        <button
+                          onClick={() => handleOpenLogs(connected.id, p.displayName)}
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                        >
+                          <Eye size={16} />
+                          View logs
+                        </button>
+                        <button
+                          onClick={() => handleEditConfig(connected)}
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
+                        >
+                          <Settings size={16} />
+                          Edit config
+                        </button>
+                        <button
+                          onClick={() => handleDelete(connected.id)}
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {(connected.onboarding_status === 'pending_configuration' ||
+                          connected.onboarding_status === 'pending_external_auth_or_configuration') && (
+                          <button
+                            onClick={() => handleEditConfig(connected)}
+                            className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-amber-500 text-white hover:bg-amber-600 flex items-center justify-center gap-2"
+                          >
+                            <Settings size={16} />
+                            {t('settings.integrations.completeSetup', 'Complete setup')}
+                          </button>
                         )}
-                        Sync now
-                      </button>
-                      <button
-                        onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
-                      >
-                        <Eye size={16} />
-                        View logs
-                      </button>
-                      <button
-                        onClick={() => handleEditConfig(connected)}
-                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
-                      >
-                        <Settings size={16} />
-                        Edit config
-                      </button>
-                      <button
-                        onClick={() => handleDelete(connected.id)}
-                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                      >
-                        Disconnect
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => handleDelete(connected.id)}
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    )
                   ) : (
                     <button
                       onClick={() => handleConnect(p.name)}

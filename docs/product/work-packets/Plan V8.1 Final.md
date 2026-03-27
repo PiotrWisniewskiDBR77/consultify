@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `13`
+- landed packets in the current active lane: `14`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: thirteenth broader sync packet recorded in `evidence/457-v81-broader-sync-auth-break-recovery-resolution-continuity-seam.md`
-- reason: after recovery initiation continuity landed, the governed path could start re-authorization but still left stale unresolved auth escalations behind after recovery truth returned to `healthy`
+- latest evidence: fourteenth broader sync packet recorded in `evidence/458-v81-broader-sync-canonical-integrations-readback-continuity-seam.md`
+- reason: after governed recovery resolution landed, the canonical org-level integrations surface still could not read governed connector-schema pending truth back and therefore kept older settings surfaces blind or misleading
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/457-v81-broader-sync-auth-break-recovery-resolution-continuity-seam.md`
+- current packet: `evidence/458-v81-broader-sync-canonical-integrations-readback-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether real governed refresh execution continuity or deeper authority alignment is now the next smallest honest broader-sync packet`
+- next action: `assess whether canonical org-level connect initiation authority continuity or real governed refresh execution continuity is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

@@ -10,6 +10,7 @@ import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.j
 import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
 import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
 import { SlackServiceClass } from '../../services/slackService.js';
+import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
@@ -20,6 +21,13 @@ const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
+
+type ConnectorSchemaIntegrationRow = {
+  id: string;
+  config: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 
 type IntegrationProviderRow = {
   id: string;
@@ -353,6 +361,44 @@ router.get(
     if (!orgId) return res.json([]);
 
     const cols = await getTableColumns('integrations');
+
+    if (cols.has('connector_id') && cols.has('config')) {
+      const governedIntegrations = await listGovernedIntegrations(orgId);
+      const rawRows = await dbAll<ConnectorSchemaIntegrationRow>(
+        `SELECT id, config, created_at, updated_at
+         FROM integrations
+         WHERE organization_id = ?
+         ORDER BY created_at DESC`,
+        [orgId]
+      );
+      const rawById = new Map(rawRows.map((row) => [row.id, row]));
+
+      return res.json(
+        governedIntegrations.map((integration) => {
+          const raw = rawById.get(integration.id);
+          const config = parseJsonObject(raw?.config || null);
+          const syncScope = resolveSyncScope(integration.connectorId, config);
+
+          return {
+            id: integration.id,
+            name: integration.name,
+            provider: integration.connectorId,
+            type: integration.connector?.authType || 'standard',
+            status: integration.status,
+            config,
+            sync_scope: syncScope,
+            sync_scope_label: syncScopeLabel(syncScope),
+            last_synced_at: integration.lastSyncAt,
+            last_error: integration.lastError,
+            error_count: integration.unresolvedErrors,
+            created_at: raw?.created_at || raw?.updated_at || null,
+            onboarding_status: integration.onboardingStatus,
+            configured_fields: integration.configuredFields,
+            required_fields: integration.connector?.configFields || [],
+          };
+        })
+      );
+    }
 
     // New integrations system schema (FLOW-INTEGRATION-001): provider_id/settings/status/etc.
     if (cols.has('provider_id') && cols.has('settings')) {
