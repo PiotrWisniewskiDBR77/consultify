@@ -37,6 +37,11 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/app/pricing')).toBe(AppView.APP_PRICING);
   });
 
+  it('keeps partner onboarding authority separate from the global onboarding wizard route', () => {
+    expect(ROUTES.PARTNER.ONBOARDING).toBe('/partner/onboarding');
+    expect(ROUTES.ONBOARDING).toBe('/setup/onboarding');
+  });
+
   it('getAppViewFromPath: resolves both /finance and /economics to ECONOMICS', () => {
     expect(getAppViewFromPath('/finance')).toBe(AppView.ECONOMICS);
     expect(getAppViewFromPath('/finance/models')).toBe(AppView.ECONOMICS);

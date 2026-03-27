@@ -58,6 +58,7 @@ import {
   V8PartnerApi,
   type V8PartnerOnboardingStatus,
 } from '../../services/api/v8';
+import { ROUTES } from '../../routes/routeConfig';
 import { cn } from '../../utils/cn';
 
 // ============================================================================
@@ -440,7 +441,7 @@ const OnboardingChecklistSection: React.FC = () => {
   }, [normalizeOnboardingStatus]);
 
   const goToOnboarding = useCallback(() => {
-    navigate('/setup/onboarding');
+    navigate(ROUTES.PARTNER.ONBOARDING);
   }, [navigate]);
 
   const steps = [0, 1, 2, 3].map((i) => ({

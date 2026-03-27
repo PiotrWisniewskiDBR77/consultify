@@ -243,6 +243,11 @@ const OrgSetupWizard = React.lazy(() =>
 const OnboardingWizard = React.lazy(() =>
   import('@/views/OnboardingWizard').then((m) => ({ default: m.OnboardingWizard }))
 );
+const EnterpriseOnboardingWizard = React.lazy(() =>
+  import('@/components/Onboarding/EnterpriseOnboardingWizard').then((m) => ({
+    default: m.EnterpriseOnboardingWizard,
+  }))
+);
 const TrialEntryView = React.lazy(() =>
   import('@/views/TrialEntryView').then((m) => ({ default: m.TrialEntryView }))
 );
@@ -1607,6 +1612,16 @@ export const AppRoutes: React.FC = () => {
             <AnimationWrapper variant="slideUp">
               <OnboardingWizard />
             </AnimationWrapper>
+          }
+        />
+        <Route
+          path={ROUTES.PARTNER.ONBOARDING}
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <AnimationWrapper variant="slideUp">
+                <EnterpriseOnboardingWizard />
+              </AnimationWrapper>
+            </ProtectedRoute>
           }
         />
         <Route

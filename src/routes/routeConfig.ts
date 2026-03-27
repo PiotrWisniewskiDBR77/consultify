@@ -154,6 +154,7 @@ export const ROUTES = {
   // Partner Portal
   PARTNER: {
     LANDING: '/partner',
+    ONBOARDING: '/partner/onboarding',
     PRICING: '/partner/pricing',
     DASHBOARD: '/partner/dashboard',
     CLIENTS: '/partner/clients',
