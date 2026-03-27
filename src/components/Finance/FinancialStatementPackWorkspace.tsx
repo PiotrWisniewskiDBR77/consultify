@@ -258,6 +258,23 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   const statementRequestSeq = useRef(0);
   const explainRequestSeq = useRef(0);
 
+  const getStatementAnalyticsWithFallback = useCallback(
+    async (statementId: string, level: 1 | 2 | 3) => {
+      try {
+        return await V8FinanceApi.getStatementAnalytics(statementId, { level });
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        return (await Api.get(`/api/finance-statements/${statementId}/analytics?level=${level}`)) as {
+          periods?: Array<{ label: string; index: number }>;
+          rows?: Array<any>;
+        };
+      }
+    },
+    []
+  );
+
   const loadPack = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -344,12 +361,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     const requestSeq = ++explainRequestSeq.current;
     setDetailLoading(true);
     try {
-      const response = (await Api.get(
-        `/api/finance-statements/${statementId}/analytics?level=${level}`
-      )) as {
-        periods?: Array<{ label: string; index: number }>;
-        rows?: Array<any>;
-      };
+      const response = await getStatementAnalyticsWithFallback(statementId, level);
       if (requestSeq !== explainRequestSeq.current) return;
       const nextRows = Array.isArray(response?.rows)
         ? response.rows.map((row: any) => ({
@@ -373,7 +385,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         setDetailLoading(false);
       }
     }
-  }, []);
+  }, [getStatementAnalyticsWithFallback]);
 
   useEffect(() => {
     if (!selectedStatement?.id) {

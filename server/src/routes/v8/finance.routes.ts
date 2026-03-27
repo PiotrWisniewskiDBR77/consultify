@@ -88,6 +88,7 @@ import {
   listStatementPacks,
   syncStatementToPack,
 } from '../../services/financialStatementPackService.js';
+import { buildStatementAnalytics } from '../../services/financeStatementAnalyticsService.js';
 import { getStatementDetail, listStatements } from '../../services/financialStatementReadService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
 import { listValuations } from '../../services/valuationService.js';
@@ -599,6 +600,31 @@ router.get(
     }
     return res.json({
       data: { statement },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/statements/:statementId/analytics',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const statementId = String(req.params.statementId || '');
+    const statement = await getStatementDetail(organizationId, statementId);
+    if (!statement) {
+      return res.status(404).json({ error: 'Statement not found' });
+    }
+
+    const requestedLevel = Math.min(3, Math.max(1, Number(req.query.level || 2) || 2)) as 1 | 2 | 3;
+    const analytics = await buildStatementAnalytics({
+      statementId,
+      statementType: String(statement.statement_type || '').toUpperCase() as 'P&L' | 'BS' | 'CF',
+      requestedLevel,
+      defaultPeriodLabel: statement.period_label || null,
+    });
+
+    return res.json({
+      data: analytics,
       meta: financeMeta(),
     });
   }),

@@ -342,6 +342,21 @@ describe('V8FinanceApi', () => {
     expect(data.statement.statement_type).toBe('P&L');
   });
 
+  it('requests governed finance statement analytics from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      periods: [{ label: 'Q1 2026', index: 0 }],
+      rows: [{ id: 'row-1', label: 'Revenue', value: 100 }],
+    });
+
+    const data = await V8FinanceApi.getStatementAnalytics('statement-1', { level: 3 });
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1/analytics', {
+      level: 3,
+    });
+    expect(data.periods?.[0]?.label).toBe('Q1 2026');
+    expect(data.rows?.[0]?.id).toBe('row-1');
+  });
+
   it('requests governed finance statements list from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statements: [

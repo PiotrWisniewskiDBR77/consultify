@@ -362,6 +362,11 @@ export interface V8FinanceStatementValuesSaveResult {
   validation?: Record<string, unknown>;
 }
 
+export interface V8FinanceStatementAnalyticsResult {
+  periods?: Array<{ label: string; index: number }>;
+  rows?: Array<Record<string, unknown>>;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -441,6 +446,10 @@ export const V8FinanceApi = {
     }),
   getStatement: (statementId: string) =>
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),
+  getStatementAnalytics: (statementId: string, params?: { level?: 1 | 2 | 3 }) =>
+    v8Get<V8FinanceStatementAnalyticsResult>(`/finance/statements/${statementId}/analytics`, {
+      ...(typeof params?.level === 'number' ? { level: params.level } : {}),
+    }),
   getStatementRatios: (statementId: string) =>
     v8Get<{ ratios: V8FinanceStatementRatioResult }>(`/finance/statements/${statementId}/ratios`),
   searchStatementDocumentIntelligence: (

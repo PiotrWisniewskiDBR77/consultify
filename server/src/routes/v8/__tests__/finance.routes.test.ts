@@ -28,6 +28,7 @@ const mockGetAnalysisInsights = vi.fn();
 const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
+const mockBuildStatementAnalytics = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
 const mockClassifyStatementDocument = vi.fn();
 const mockConfirmStatement = vi.fn();
@@ -109,6 +110,10 @@ vi.mock('../../../services/financialStatementPackService.js', () => ({
 vi.mock('../../../services/financialStatementReadService.js', () => ({
   getStatementDetail: (...args: unknown[]) => mockGetStatementDetail(...args),
   listStatements: (...args: unknown[]) => mockListStatements(...args),
+}));
+
+vi.mock('../../../services/financeStatementAnalyticsService.js', () => ({
+  buildStatementAnalytics: (...args: unknown[]) => mockBuildStatementAnalytics(...args),
 }));
 
 vi.mock('../../../services/financialStatementService.js', () => ({
@@ -822,6 +827,35 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.statement?.id).toBe('statement-1');
     expect(res.body.data?.statement?.statement_type).toBe('P&L');
     expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
+  });
+
+  it('GET /api/v8/finance/statements/:id/analytics returns envelope and delegates to buildStatementAnalytics', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'P&L',
+      period_label: 'Q1 2026',
+      values: [],
+      validationLedger: [],
+    });
+    mockBuildStatementAnalytics.mockResolvedValue({
+      periods: [{ label: 'Q1 2026', index: 0 }],
+      rows: [{ id: 'row-1', label: 'Revenue', value: 100 }],
+    });
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/statements/statement-1/analytics').query({ level: 3 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.periods?.[0]?.label).toBe('Q1 2026');
+    expect(res.body.data?.rows?.[0]?.id).toBe('row-1');
+    expect(mockGetStatementDetail).toHaveBeenCalledWith(ORG, 'statement-1');
+    expect(mockBuildStatementAnalytics).toHaveBeenCalledWith({
+      statementId: 'statement-1',
+      statementType: 'P&L',
+      requestedLevel: 3,
+      defaultPeriodLabel: 'Q1 2026',
+    });
   });
 
   it('GET /api/v8/finance/statements returns envelope and delegates to listStatements', async () => {
