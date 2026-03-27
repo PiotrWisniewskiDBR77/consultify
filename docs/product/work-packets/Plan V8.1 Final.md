@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `5 / 13`
 - active lane: broader `Mobile` redesign
-- landed packets in the active lane: `1`
+- landed packets in the active lane: `2`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Mobile` redesign
-- latest evidence: `table preview mobile overlay seam` recorded in `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`
-- reason: the shared `TableWithPreviewLayout` had a live narrow-viewport failure after shell continuity was accepted, so the first honest broader-mobile packet is now closed at the shared module surface
+- latest evidence: `bulk action bar mobile nav offset seam` recorded in `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`
+- reason: the next honest broader-mobile seam was a shared fixed-bottom collision between `BulkActionBar` and `BottomNavigation`, which is now closed without reopening mobile shell authority
 
 ### Next three lanes
 
@@ -334,10 +334,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`
 - split-brain map: `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
-- current packet: `assess the next bounded broader-mobile packet after shared table preview overlay continuity`
-- last accepted packet: `table preview mobile overlay seam`
+- current packet: `assess the next bounded broader-mobile packet after shared bulk action bar mobile-nav offset continuity`
+- last accepted packet: `bulk action bar mobile nav offset seam`
 - blocker: `none`
-- next action: `choose the next shared or module-level narrow-viewport packet without silently broadening into a full responsive rewrite`
+- next action: `choose the next shared or module-level narrow-viewport packet, likely around compact app-header chrome or another fixed-control mobile collision, without silently broadening into a full responsive rewrite`
 - acceptance evidence: `none`
 
 #### broader `Chat / AI core` parity expansion

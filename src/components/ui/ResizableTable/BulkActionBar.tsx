@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Archive, Calendar, CheckCircle, Flag, MoreHorizontal, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { useDeviceType } from '@/hooks/useDeviceType';
+
 export interface BulkAction {
   id: string;
   label: string;
@@ -30,6 +32,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   className = '',
 }) => {
   const [showMoreActions, setShowMoreActions] = useState(false);
+  const { isMobile, safeAreaInsets } = useDeviceType();
+
+  const mobileBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
 
   // Split actions into visible and overflow
   const visibleActions = actions.slice(0, 4);
@@ -43,6 +48,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.2 }}
+          data-testid="bulk-action-bar"
           className={`
             fixed bottom-6 left-1/2 -translate-x-1/2 z-50
             flex items-center gap-3 px-4 py-2.5
@@ -51,6 +57,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
             rounded-xl shadow-xl
             ${className}
           `}
+          style={mobileBottomOffset ? { bottom: `${mobileBottomOffset}px` } : undefined}
         >
           {/* Selection Count */}
           <div className="flex items-center gap-2 pr-3 border-r border-slate-200 dark:border-navy-600">
