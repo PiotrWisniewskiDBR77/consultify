@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: seventh broader sync packet recorded in `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md`
-- reason: after callback landing continuity landed, the live sync hub still stranded operators in pending onboarding because verification completion and ready-state promotion were not continuous on the active surface
+- latest evidence: post-verification residual assessment recorded in `evidence/451-v81-broader-sync-post-verification-residual-assessment.md`
+- reason: after the active sync hub reached connected truth, no thinner honest packet remained before broader post-auth credential / refresh continuity
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/450-v81-broader-sync-post-callback-verification-continuity-seam.md`
+- current packet: `evidence/451-v81-broader-sync-post-verification-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether post-auth refresh / recovery continuity or deeper authority alignment is now the next smallest honest broader-sync packet`
+- next action: `promote broader post-auth credential / refresh continuity as the next honest broader sync packet because no thinner post-verification residual remains`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
