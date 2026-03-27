@@ -474,6 +474,8 @@ Current status: `active`
 - [x] assessed whether any thinner provider or canonical org-level seam still remains after final active-ready provider coverage
 - [x] recorded post-Asana residual assessment confirming that deeper authority alignment is now the next honest broader-sync step
 - [x] promoted deeper authority alignment between governed sync surfaces and user-level settings integrations as the next honest broader-sync implementation step
+- [x] twenty-fourth real bounded packet landed around settings integrations connect/readback authority continuity on the user-level settings surface
+- [x] focused regression added for settings integrations connect/readback authority continuity across settings and canonical integrations routes
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1293,6 +1295,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: landed the twenty-fourth real bounded packet inside broader `Sync` completion by aligning user-level settings integrations readback and connect initiation with the governed sync seam in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md`, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path
 - 2026-03-27: recorded the broader `Sync` post-Asana provider-round-trip residual assessment in `evidence/475-v81-broader-sync-post-asana-provider-round-trip-residual-assessment.md`, confirming that deeper authority alignment is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-third real bounded packet inside broader `Sync` completion by extending the shared governed provider round-trip seam to Asana in `evidence/474-v81-broader-sync-asana-governed-provider-round-trip-coverage-seam.md`, so the active Asana path now produces a real Asana authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder
 - 2026-03-27: recorded the broader `Sync` post-Slack provider-round-trip residual assessment in `evidence/473-v81-broader-sync-post-slack-provider-round-trip-residual-assessment.md`, confirming that Asana is now the next honest provider-coverage packet before deeper authority alignment

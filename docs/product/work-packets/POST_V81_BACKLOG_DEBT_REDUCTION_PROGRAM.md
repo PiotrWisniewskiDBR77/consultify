@@ -324,6 +324,7 @@ Current result:
 - the post-Slack provider-round-trip residual assessment recorded in `evidence/473-v81-broader-sync-post-slack-provider-round-trip-residual-assessment.md` confirmed that one final provider packet still remains thinner than deeper authority alignment, with Asana now emerging as the next bounded shared-seam extension,
 - the twenty-third real bounded broader sync packet landed in `evidence/474-v81-broader-sync-asana-governed-provider-round-trip-coverage-seam.md` by extending the shared governed provider round-trip seam to Asana, so the active Asana path now produces a real Asana authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder,
 - the post-Asana provider-round-trip residual assessment recorded in `evidence/475-v81-broader-sync-post-asana-provider-round-trip-residual-assessment.md` confirmed that no thinner provider or canonical org-level seam remains, so deeper authority alignment is now the next honest broader-sync step,
+- the twenty-fourth real bounded broader sync packet landed in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md` by aligning user-level settings integrations readback and connect initiation with the governed sync seam, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -486,6 +487,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the twenty-fourth real bounded packet inside broader `Sync` completion by aligning user-level settings integrations readback and connect initiation with the governed sync seam in `evidence/476-v81-broader-sync-settings-connect-readback-authority-continuity-seam.md`, so that surface no longer claims fake immediate connected truth or `authUrl: null` on the active connect path
 - 2026-03-27: recorded the broader `Sync` post-Asana provider-round-trip residual assessment in `evidence/475-v81-broader-sync-post-asana-provider-round-trip-residual-assessment.md`, confirming that deeper authority alignment is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-third real bounded packet inside broader `Sync` completion by extending the shared governed provider round-trip seam to Asana in `evidence/474-v81-broader-sync-asana-governed-provider-round-trip-coverage-seam.md`, so the active Asana path now produces a real Asana authorization URL and callback-driven governed credential / refresh-secret materialization instead of stopping at a callback placeholder
 - 2026-03-27: recorded the broader `Sync` post-Slack provider-round-trip residual assessment in `evidence/473-v81-broader-sync-post-slack-provider-round-trip-residual-assessment.md`, confirming that Asana is now the next honest provider-coverage packet before deeper authority alignment

@@ -7,8 +7,16 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
+import { CONNECTORS } from '../services/integrationHubService.js';
+import {
+  buildGovernedExternalAuthSession,
+  getGovernedExternalAuthConfigFields,
+} from '../services/v8/pmSyncExternalAuthMaterializationService.js';
+import { listGovernedIntegrations } from '../services/v8/pmSyncInventoryService.js';
+import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -709,8 +717,30 @@ type IntegrationEntry = {
   status: 'active' | 'expired' | 'revoked' | 'error' | 'pending';
   config: Record<string, any>;
   capabilities: string[];
+  externalUserId?: string;
+  externalWorkspaceId?: string;
+  externalWorkspaceName?: string;
+  lastSyncAt?: string | null;
+  lastError?: string | null;
+  onboardingStatus?: string | null;
+  configuredFields?: string[];
+  requiredFields?: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+type ConnectorSchemaIntegrationRow = {
+  id: string;
+  connector_id: string;
+  config: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+const CONNECTOR_ALIAS_MAP: Record<string, string> = {
+  microsoft_teams: 'teams',
+  google_workspace: 'gmail',
+  google: 'gmail',
 };
 
 const loadIntegrations = async (userId: string): Promise<IntegrationEntry[]> => {
@@ -742,6 +772,111 @@ const saveIntegrations = async (userId: string, data: IntegrationEntry[]) => {
   if (!result.success) throw new Error(result.error || 'Failed to save integrations');
 };
 
+function parseJsonObject(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function normalizeConnectorId(provider: string): string {
+  const normalized = String(provider || '')
+    .trim()
+    .toLowerCase();
+  return CONNECTOR_ALIAS_MAP[normalized] || normalized;
+}
+
+function getConfiguredFields(configFields: string[], config: Record<string, unknown>): string[] {
+  return configFields.filter((field) => {
+    const value = config[field];
+    return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+  });
+}
+
+function getPendingOnboardingStatus(
+  authType: string,
+  configFields: string[],
+  configuredFields: string[]
+) {
+  const hasAllRequiredFields =
+    configFields.length === 0 || configuredFields.length >= configFields.length;
+
+  if (authType === 'oauth2') {
+    return hasAllRequiredFields
+      ? ('pending_external_auth' as const)
+      : ('pending_external_auth_or_configuration' as const);
+  }
+
+  return hasAllRequiredFields
+    ? ('configuration_submitted_pending_validation' as const)
+    : ('pending_configuration' as const);
+}
+
+function getConnectorConfigFields(connectorId: string, baseFields: string[]): string[] {
+  return getGovernedExternalAuthConfigFields(connectorId, baseFields);
+}
+
+function mapGovernedStatusToSettingsStatus(status: string): IntegrationEntry['status'] {
+  if (status === 'connected' || status === 'active') return 'active';
+  if (status === 'requires_reauth') return 'expired';
+  if (status === 'error' || status === 'dead_letter' || status === 'conflict') return 'error';
+  if (status === 'disconnected') return 'revoked';
+  return 'pending';
+}
+
+async function loadGovernedSettingsIntegrations(
+  organizationId: string,
+): Promise<IntegrationEntry[]> {
+  const cols = await getTableColumns('integrations');
+  if (!cols.has('connector_id') || !cols.has('config')) {
+    return [];
+  }
+
+  const governedIntegrations = await listGovernedIntegrations(organizationId);
+  const rawRows = await dbAll<ConnectorSchemaIntegrationRow>(
+    `SELECT id, connector_id, config, created_at, updated_at
+     FROM integrations
+     WHERE organization_id = ?
+     ORDER BY created_at DESC`,
+    [organizationId]
+  );
+  const rawById = new Map(rawRows.map((row) => [row.id, row]));
+
+  return governedIntegrations.map((integration) => {
+    const raw = rawById.get(integration.id);
+    const config = parseJsonObject(raw?.config || null);
+
+    return {
+      id: integration.id,
+      userId: organizationId,
+      provider: integration.connectorId,
+      providerName: integration.connector?.name || integration.name,
+      status: mapGovernedStatusToSettingsStatus(integration.status),
+      config,
+      capabilities: integration.connector?.capabilities || [],
+      externalUserId: integration.credential?.providerAccountId,
+      externalWorkspaceId: integration.credential?.workspaceOrTenantId,
+      externalWorkspaceName: integration.credential?.workspaceOrTenantId,
+      lastSyncAt: integration.lastSyncAt,
+      lastError: integration.lastError,
+      onboardingStatus: integration.onboardingStatus,
+      configuredFields: integration.configuredFields,
+      requiredFields: integration.connector?.configFields || [],
+      createdAt: raw?.created_at || raw?.updated_at || new Date().toISOString(),
+      updatedAt: raw?.updated_at || raw?.created_at || new Date().toISOString(),
+    };
+  });
+}
+
 /**
  * GET /api/settings/integrations
  */
@@ -750,14 +885,31 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    const integrations = await loadIntegrations(userId);
+    const legacyIntegrations = await loadIntegrations(userId);
+    const governedIntegrations = organizationId
+      ? await loadGovernedSettingsIntegrations(organizationId).catch(() => [])
+      : [];
+    const governedProviders = new Set(governedIntegrations.map((integration) => integration.provider));
+    const integrations = [
+      ...governedIntegrations,
+      ...legacyIntegrations.filter((integration) => !governedProviders.has(integration.provider)),
+    ];
     const connectedCount = integrations.filter((i) => i.status === 'active').length;
+    const providers = defaultIntegrationProviders.map((provider) => {
+      const connection = integrations.find((integration) => integration.provider === provider.id) || null;
+      return {
+        ...provider,
+        isConnected: connection?.status === 'active',
+        connection,
+      };
+    });
 
     return res.json({
       integrations,
-      providers: defaultIntegrationProviders,
+      providers,
       connectedCount,
     });
   })
@@ -771,12 +923,79 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const organizationId = req.organizationId || req.user?.organizationId;
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const providers = defaultIntegrationProviders;
     const providerMeta = providers.find((p) => p.id === provider);
     if (!providerMeta) return res.status(404).json({ error: 'Provider not found' });
+
+    const connectorId = normalizeConnectorId(provider);
+    const connector = organizationId ? CONNECTORS[connectorId] : undefined;
+
+    if (organizationId && connector) {
+      const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
+      const config = parseJsonObject(req.body?.config);
+      const configuredFields = getConfiguredFields(connectorConfigFields, config);
+      const onboardingStatus = getPendingOnboardingStatus(
+        connector.authType,
+        connectorConfigFields,
+        configuredFields
+      );
+      const scopes = connector.capabilities.map((capability) => `read:${capability}`);
+      const integrationId = `${connector.id}-${organizationId}-${Date.now()}`;
+
+      await dbRun(
+        `INSERT INTO integrations (
+          id, organization_id, connector_id, name, category,
+          status, config, capabilities, auth_type, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          integrationId,
+          organizationId,
+          connector.id,
+          providerMeta.name,
+          connector.category,
+          'pending',
+          JSON.stringify(config),
+          JSON.stringify(scopes),
+          connector.authType,
+        ]
+      );
+
+      const integrations = await loadIntegrations(userId);
+      await saveIntegrations(
+        userId,
+        integrations.filter((integration) => integration.provider !== provider)
+      );
+
+      let authUrl: string | null = null;
+      if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+        await setConnectorAuthState({
+          connectorId: connector.id,
+          organizationId,
+          targetState: 'connecting',
+          transitionedBy: userId,
+          reason: 'settings_integrations_connect_initiated',
+        });
+        const session = buildGovernedExternalAuthSession(req, {
+          integrationId,
+          organizationId,
+          connectorId: connector.id,
+          mode: 'connect',
+          config,
+        });
+        authUrl = session.authUrl;
+      }
+
+      return res.json({
+        success: true,
+        id: integrationId,
+        onboardingStatus,
+        authUrl,
+      });
+    }
 
     const integrations = await loadIntegrations(userId);
     const now = new Date().toISOString();
