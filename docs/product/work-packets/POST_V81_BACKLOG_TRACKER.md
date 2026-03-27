@@ -451,7 +451,9 @@ Current status: `active`
 - [x] promoted canonical org-level Jira provider-auth initiation continuity across canonical and alias `/api/integrations` connect routes as the next honest broader-sync implementation step
 - [x] nineteenth real bounded packet landed around org-level Jira provider-auth initiation continuity across canonical and alias `/api/integrations` connect routes
 - [x] focused regression added for org-level Jira provider-auth initiation continuity across route and `IntegrationSettings`
-- [ ] assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next smallest honest broader-sync packet
+- [x] assessed whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next smallest honest broader-sync packet
+- [x] recorded post-org-level-Jira residual assessment confirming that no thinner Jira-specific authority packet remains before wider provider callback round-trip coverage
+- [ ] promote wider callback-driven provider round-trip coverage for additional governed oauth2 connectors as the next honest broader-sync implementation step
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1271,6 +1273,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: recorded the broader `Sync` post-org-level-Jira residual assessment in `evidence/467-v81-broader-sync-post-org-level-jira-auth-initiation-residual-assessment.md`, confirming that wider callback-driven provider round-trip coverage is now the next honest residual before deeper authority alignment
 - 2026-03-27: landed the nineteenth real bounded packet inside broader `Sync` completion by moving canonical and alias org-level Jira connect initiation onto the same governed provider session builder as V8 in `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md`, so those settings surfaces no longer emit placeholder callback `authUrl` truth
 - 2026-03-27: recorded the broader `Sync` post-Jira-callback residual assessment in `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md`, confirming that canonical and alias `/api/integrations` Jira connect routes still form the next thinner authority seam before wider provider coverage
 - 2026-03-27: landed the eighteenth real bounded packet inside broader `Sync` completion by giving governed Jira a real provider authorization round-trip plus callback-driven governed credential and refresh-secret materialization in `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`, so the active Jira path no longer depends on a manual post-callback secret write before governed refresh continuity can operate

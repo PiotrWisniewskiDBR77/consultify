@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: org-level Jira provider-auth initiation continuity landed in `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md`
-- reason: canonical and alias org-level `/api/integrations` Jira connect routes now reuse the same governed provider session builder as the active V8 path, so those settings surfaces no longer emit placeholder callback `authUrl` truth
+- latest evidence: post-org-level-Jira residual assessment recorded in `evidence/467-v81-broader-sync-post-org-level-jira-auth-initiation-residual-assessment.md`
+- reason: after Jira initiation continuity closed across V8 and org-level `/api/integrations`, no thinner Jira-specific authority seam remains before broader provider callback round-trip coverage
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/466-v81-broader-sync-org-level-jira-provider-auth-initiation-continuity-seam.md`
+- current packet: `evidence/467-v81-broader-sync-post-org-level-jira-auth-initiation-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next honest broader-sync step`
+- next action: `promote wider callback-driven provider round-trip coverage for additional governed oauth2 connectors as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
