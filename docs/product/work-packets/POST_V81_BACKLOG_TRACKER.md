@@ -310,7 +310,7 @@ Current status: `done`
 
 ### broader `Partner Program` parity
 
-Current status: `active`
+Current status: `done`
 
 - [x] broader `Partner Program` parity charter written
 - [x] existing partner split-brain map adopted as the broader-lane starting map
@@ -372,7 +372,10 @@ Current status: `active`
 - [x] assess whether broader partner execution should now return directly to explicit partner `payout-settings` save ownership because `CommissionIntelligence` still lacks a governed deal-pipeline runtime contract
 - [x] nineteenth real bounded packet landed around visible partner `payout-settings` ownership continuity on partner-authenticated V8-first read/write seams with bounded compatibility fallback
 - [x] focused regression added for governed partner payout-settings route, client, and active `EarningsSection` surface continuity
-- [ ] assess whether broader partner parity is now ready for bounded acceptance with `CommissionIntelligence` left explicitly out of scope until a real partner deal-pipeline contract exists
+- [x] twentieth real bounded packet landed around truthful retirement of placeholder commission intelligence and commission inquiry submit behavior on the active partner commission surfaces
+- [x] focused regression added for governed commission readback plus explicit unavailable states on the active commission surfaces
+- [x] assess whether broader partner parity is now ready for bounded acceptance with `CommissionIntelligence` left explicitly out of scope until a real partner deal-pipeline contract exists
+- [x] broader `Partner Program` parity accepted as a bounded `T4` lane after no smaller honest active partner packet remained
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1192,6 +1195,9 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: accepted broader `Partner Program` parity in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md` after no smaller honest active partner packet remained beyond the final commission placeholder retirement cut
+- 2026-03-27: returned the post-backlog program to held state in `evidence/441-v81-post-backlog-program-held-state-after-broader-partner-parity.md` after broader partner acceptance without promoting the next lane in the same turn
+- 2026-03-27: landed the twentieth real bounded packet inside broader `Partner Program` parity by removing fake deal intelligence and fake inquiry submit behavior from the active commission surfaces in `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`, so the live partner commission UI no longer mixes governed statement truth with placeholder partner pipeline/support semantics
 - 2026-03-27: landed the sixteenth real bounded packet inside broader `Partner Program` parity by moving visible `CommissionView` statement continuity onto the existing governed partner payout and commission seams in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md`, so the active commission workspace no longer renders placeholder-only statement cards during normal operation
 - 2026-03-27: landed the fifteenth real bounded packet inside broader `Partner Program` parity by moving visible client-access employee roster continuity onto a governed partner V8-first read seam in `evidence/433-v81-broader-partner-client-access-employees-read-v8-seam.md`, so the active employee tab no longer defaults to a placeholder-only legacy employees route during normal operation while unknown client assignment counts stay explicitly unclaimed
 - 2026-03-27: landed the fourteenth real bounded packet inside broader `Partner Program` parity by moving visible client-access access-link authority onto the governed partner referral-tools seam in `evidence/432-v81-broader-partner-client-access-access-link-read-v8-seam.md`, so the active client-access link action no longer defaults to the placeholder-only legacy `access-links` route during normal operation

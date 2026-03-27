@@ -546,16 +546,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   )}
                 </p>
                 <div className="flex items-center gap-4 mt-2">
-                  <a
-                    href="#"
-                    className="text-sm text-amber-400 hover:text-amber-300 flex items-center gap-1"
-                  >
-                    {t('partner.earnings.learnMore', 'Learn more about commission requirements')}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                  <button className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium">
-                    {t('partner.earnings.updateDocuments', 'Update documents')}
-                  </button>
+                  <div className="text-sm text-amber-300">
+                    {t(
+                      'partner.earnings.bankInfoRuntimeNotice',
+                      'Use the governed payout settings surface to keep payout details up to date.'
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -611,16 +607,26 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <a
-              href="#"
-              className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1"
+            <div
+              className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1"
+              title={t(
+                'partner.earnings.commissionDocsUnavailable',
+                'Commission help links return only when a governed partner help contract lands.'
+              )}
             >
               <HelpCircle className="w-4 h-4" />
-              {t('partner.earnings.howItWorks', 'How commissions work')}
-            </a>
-            <button className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+              {t('partner.earnings.howItWorksUnavailable', 'Commission help routing unavailable')}
+            </div>
+            <button
+              disabled
+              title={t(
+                'partner.earnings.ticketUnavailable',
+                'Commission inquiry routing is intentionally disabled until a governed partner-user contract exists.'
+              )}
+              className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-sm font-medium flex items-center gap-2 cursor-not-allowed"
+            >
               <FileText className="w-4 h-4" />
-              {t('partner.earnings.submitTicket', 'Submit a commission ticket')}
+              {t('partner.earnings.submitTicketUnavailable', 'Commission inquiry routing unavailable')}
             </button>
           </div>
         </div>

@@ -5,12 +5,10 @@
  * Aligned with BENEFITS_REALIZATION PMO domain
  */
 
-import { ChartBar, FileText, HelpCircle, Send } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { AlertTriangle, FileText, HelpCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CommissionIntelligence } from '../../components/Partner/CommissionIntelligence';
 import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
-import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
 import { Api } from '../../services/api';
 import {
   shouldFallbackToLegacyPartner,
@@ -21,8 +19,6 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 import { type CommissionStatement, PARTNER_PMO_MAPPING } from './types';
-
-const inquiryTypes = ['Commission inquiry', 'Payment update', 'Statement question', 'Other'];
 
 function formatStatementPeriod(start?: string, end?: string): string {
   const startLabel = typeof start === 'string' ? start.slice(0, 10) : '';
@@ -110,10 +106,6 @@ function buildLiveStatements(
 
 export const CommissionView: React.FC = () => {
   const { setCurrentView } = useAppStore();
-  const { deals, loading, submitCommissionInquiry } = usePartnerEcosystem();
-  const [selectedType, setSelectedType] = useState(inquiryTypes[0]);
-  const [inquiryMessage, setInquiryMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [statements, setStatements] = useState<CommissionStatement[]>([]);
   const [statementsLoading, setStatementsLoading] = useState(true);
 
@@ -173,38 +165,103 @@ export const CommissionView: React.FC = () => {
     };
   }, []);
 
-  const handleSubmitInquiry = useCallback(async () => {
-    if (!inquiryMessage.trim()) return;
+  const statementSummary = useMemo(() => {
+    return statements.reduce(
+      (summary, statement) => {
+        if (statement.status === 'PAID') {
+          summary.paidAmount += statement.totalAmount;
+          summary.paidCount += 1;
+        } else if (statement.status === 'APPROVED') {
+          summary.approvedAmount += statement.totalAmount;
+          summary.approvedCount += 1;
+        } else {
+          summary.pendingAmount += statement.totalAmount;
+          summary.pendingCount += 1;
+        }
 
-    setIsSubmitting(true);
-    try {
-      await submitCommissionInquiry(selectedType, inquiryMessage);
-      setInquiryMessage('');
-      // Show success toast
-    } catch (err) {
-      // Show error toast
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [selectedType, inquiryMessage, submitCommissionInquiry]);
-
-  const handleViewDeal = useCallback((dealId: string) => {
-    console.log('[Partner] View deal:', dealId);
-    // Open deal detail modal or navigate
-  }, []);
+        return summary;
+      },
+      {
+        paidAmount: 0,
+        paidCount: 0,
+        approvedAmount: 0,
+        approvedCount: 0,
+        pendingAmount: 0,
+        pendingCount: 0,
+      },
+    );
+  }, [statements]);
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
       <div className="space-y-6 px-6 py-4">
-        {/* Commission Intelligence */}
-        <CommissionIntelligence
-          deals={deals}
-          statements={statements}
-          onViewDeal={handleViewDeal}
-          onSubmitInquiry={() =>
-            document.getElementById('inquiry-form')?.scrollIntoView({ behavior: 'smooth' })
-          }
-        />
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Commission Runtime Summary
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Governed statement and payout readback for the active commission surface.
+              </p>
+            </div>
+            <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/60 dark:bg-emerald-950/20 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Paid statements
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                ${statementSummary.paidAmount.toLocaleString()}
+              </div>
+              <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {statementSummary.paidCount} settled statement{statementSummary.paidCount === 1 ? '' : 's'}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/20 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Approved statements
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                ${statementSummary.approvedAmount.toLocaleString()}
+              </div>
+              <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {statementSummary.approvedCount} awaiting payout
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-950/20 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Pending statements
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                ${statementSummary.pendingAmount.toLocaleString()}
+              </div>
+              <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {statementSummary.pendingCount} still under review
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} className="mt-0.5 text-amber-500" />
+              <div>
+                <div className="font-semibold text-slate-900 dark:text-white">
+                  Deal intelligence unavailable on governed runtime
+                </div>
+                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  This surface no longer shows placeholder deal pipeline projections. Commission
+                  intelligence will return only after a real partner-authenticated deal-pipeline
+                  contract lands.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Statements Section */}
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-6">
@@ -281,59 +338,37 @@ export const CommissionView: React.FC = () => {
           </div>
         </div>
 
-        {/* Inquiry Form */}
+        {/* Inquiry Routing */}
         <div
           id="inquiry-form"
           className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-6"
         >
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10">
-              <ChartBar size={20} className="text-brand" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+              <AlertTriangle size={20} className="text-amber-500" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">Commission Inquiry</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-white">
+                Commission inquiry routing unavailable
+              </h3>
               <p className="text-xs text-slate-400">
-                Submit questions about statements or payments
+                This partner surface no longer pretends to submit inquiries without a governed
+                partner-user support contract.
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Inquiry Type
-              </label>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-              >
-                {inquiryTypes.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Message
-              </label>
-              <textarea
-                rows={4}
-                value={inquiryMessage}
-                onChange={(e) => setInquiryMessage(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                placeholder="Describe your inquiry about commission, payments, or statements..."
-              />
+            <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 p-4 text-sm text-slate-600 dark:text-slate-300">
+              Review the governed statement history above and use partner resources for current
+              commission guidance while inquiry routing remains outside the bounded partner runtime.
             </div>
 
             <button
-              onClick={handleSubmitInquiry}
-              disabled={isSubmitting || !inquiryMessage.trim()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={navigate(AppView.PARTNER_RESOURCES)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
             >
-              <Send size={16} />
-              {isSubmitting ? 'Submitting...' : 'Submit Inquiry'}
+              Open Partner Resources
             </button>
           </div>
         </div>

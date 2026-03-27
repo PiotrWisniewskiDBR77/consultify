@@ -267,6 +267,9 @@ describe('EarningsSection V8 payout request seam', () => {
     });
 
     expect(Api.post).not.toHaveBeenCalledWith('/api/partners/payouts/request', expect.anything());
+    expect(
+      screen.getByRole('button', { name: 'Commission inquiry routing unavailable' })
+    ).toBeDisabled();
   });
 
   it('falls back to legacy payout request on bounded compatibility statuses', async () => {

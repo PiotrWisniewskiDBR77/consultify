@@ -68,9 +68,9 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 ### Current success metric
 
-- completed remaining themes: `8 / 13`
-- active lane: broader `Partner Program` parity
-- landed packets in the active lane: `16`
+- completed remaining themes: `9 / 13`
+- active lane: `none (program held)`
+- landed packets in the last accepted lane: `20`
 
 ---
 
@@ -87,7 +87,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `7` | broader `Chat / AI core` parity expansion | `Phase C` | `done` | four bounded packets now close the smallest honest live-surface and operator readback residuals, so what remains is broader product/runtime breadth rather than one more micro-seam | broader chat and AI operator parity is accepted |
 | `8` | broader `Results / KPI / ROI` parity | `Phase C` | `done` | the sixteen bounded broader write packets now close the smallest honest visible results residuals without forcing a larger redesign | results breadth is accepted beyond bounded reads/runtime truth |
 | `9` | broader `Finance` parity | `Phase C` | `done` | accepted bounded finance work did not cover statements, models, budgets, valuations, or wider writes, so the broader residual was explicitly promoted and then accepted after thirty-one bounded packets | finance breadth is accepted beyond bounded analysis seams |
-| `10` | broader `Partner Program` parity | `Phase C` | `active` | accepted partner payout/campaign/profile seams are already closed, and sixteen broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, and `CommissionView` statement continuity while deeper statement-source migration and payout-settings breadth still remain | broader partner breadth is accepted |
+| `10` | broader `Partner Program` parity | `Phase C` | `done` | accepted partner payout/campaign/profile seams plus twenty broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, dashboard runtime/trust, payout-settings ownership, and final commission placeholder retirement | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `queued` | bounded hub/lifecycle work does not close full OAuth/provider breadth | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `queued` | presence + lock indicators landed, deeper realtime behavior did not | broader collaboration breadth is accepted |
 | `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `queued` | upload/attachment/output breadth remains outside accepted adjunct scope | broader notes/output breadth is accepted |
@@ -163,16 +163,16 @@ No lane should jump directly from `queued` to `done`.
 
 ### Current lane
 
-- status: `active`
-- lane: broader `Partner Program` parity
-- latest evidence: nineteenth broader packet recorded in `evidence/438-v81-broader-partner-payout-settings-ownership-seam.md`
-- reason: after the dashboard placeholder cuts landed, the next honest active partner residual was returning `payout-settings` ownership to a real partner-authenticated contract instead of leaving the active surface on hard-coded bank and preference placeholders
+- status: `held`
+- lane: `none`
+- latest evidence: broader partner acceptance recorded in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`
+- reason: broader `Partner Program` parity is now accepted after the last active commission placeholder surface was retired instead of being left on fake deal intelligence and fake inquiry submit behavior
 
 ### Next three lanes
 
-1. broader `Partner Program` parity
-2. broader `Sync` completion
-3. broader `Multiplayer / collaboration` breadth
+1. broader `Sync` completion
+2. broader `Multiplayer / collaboration` breadth
+3. broader `Notes` adjunct / object-linked outputs breadth
 
 ### Active blockers
 
@@ -375,14 +375,14 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Partner Program` parity
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`
 - split-brain map: `evidence/155-v81-partner-program-split-brain-map.md`
-- current packet: `Partner payout-settings ownership seam`
-- last accepted packet: `Partner payout-settings ownership seam`
+- current packet: `none`
+- last accepted packet: `CommissionView placeholder retirement seam`
 - blocker: `none`
-- next action: `assess whether broader partner parity is now ready for bounded acceptance with CommissionIntelligence left explicitly out of scope until a real partner deal-pipeline contract exists`
-- acceptance evidence: `none`
+- next action: `hold the accepted broader partner lane unless a new broader partner pipeline/support lane is explicitly promoted later`
+- acceptance evidence: `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md`
 
 #### broader `Sync` completion
 

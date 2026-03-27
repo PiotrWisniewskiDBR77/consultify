@@ -22,14 +22,6 @@ vi.mock('@/services/api/v8', () => ({
   },
 }));
 
-vi.mock('@/hooks/usePartnerEcosystem', () => ({
-  usePartnerEcosystem: () => ({
-    deals: [],
-    loading: false,
-    submitCommissionInquiry: vi.fn(),
-  }),
-}));
-
 const setCurrentView = vi.fn();
 
 vi.mock('@/store/useAppStore', () => ({
@@ -77,7 +69,11 @@ describe('CommissionView statement continuity seam', () => {
     expect(V8PartnerApi.getCommissionTransactions).toHaveBeenCalled();
     expect(Api.get).not.toHaveBeenCalledWith('/api/partners/payouts');
     expect(Api.get).not.toHaveBeenCalledWith('/api/partners/commission-transactions');
-    expect(screen.getByText(/\$1,?200/)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$1,?200/).length).toBeGreaterThan(0);
+    expect(screen.getByText('Commission Runtime Summary')).toBeInTheDocument();
+    expect(screen.getByText('Deal intelligence unavailable on governed runtime')).toBeInTheDocument();
+    expect(screen.getByText('Commission inquiry routing unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Submit Inquiry')).not.toBeInTheDocument();
   });
 
   it('falls back to legacy partner statement reads on bounded compatibility statuses', async () => {
