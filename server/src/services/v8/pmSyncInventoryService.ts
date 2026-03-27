@@ -47,6 +47,7 @@ export interface V8SyncIntegrationInventoryRow {
     category: string;
     capabilities: string[];
     authType: string;
+    configFields: string[];
   } | null;
 }
 
@@ -126,6 +127,7 @@ export async function listGovernedIntegrations(
               category: connector.category,
               capabilities,
               authType: connector.authType,
+              configFields: connector.configFields,
             }
           : null,
       };

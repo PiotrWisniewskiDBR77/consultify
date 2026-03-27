@@ -139,6 +139,7 @@ router.get(
       const isV2Ready = ['slack', 'jira', 'gmail', 'asana', 'teams'].includes(c.id);
       return {
         ...c,
+        configFields: c.configFields,
         isAvailable: true,
         isV2Ready,
         comingSoon: !isV2Ready,
@@ -222,6 +223,7 @@ router.post(
           status: 'pending' as const,
           capabilities: connector.capabilities,
           authType: connector.authType,
+          configFields: connector.configFields,
           scopes,
         },
         onboardingStatus: 'pending_external_auth_or_configuration' as const,

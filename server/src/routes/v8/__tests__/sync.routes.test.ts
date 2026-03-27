@@ -302,6 +302,7 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
     expect(res.body.data?.count).toBeGreaterThan(0);
     expect(res.body.data?.connectors?.[0]?.category).toBe('project_management');
+    expect(res.body.data?.connectors?.[0]?.configFields).toEqual(['site_url', 'cloud_id']);
   });
 
   it('POST /api/v8/sync/connectors/:connectorId/connect creates a governed pending integration', async () => {
@@ -313,6 +314,7 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.data?.integration?.connectorId).toBe('jira');
     expect(res.body.data?.integration?.status).toBe('pending');
     expect(res.body.data?.onboardingStatus).toBe('pending_external_auth_or_configuration');
+    expect(res.body.data?.integration?.configFields).toEqual(['site_url', 'cloud_id']);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integrations'),
       expect.arrayContaining([ORG, 'jira', 'Jira', 'project_management', 'pending', 'oauth2']),

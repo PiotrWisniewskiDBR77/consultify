@@ -74,6 +74,7 @@ describe('V8SyncApi', () => {
           category: 'project_management',
           capabilities: ['issues'],
           authType: 'oauth2',
+          configFields: ['site_url', 'cloud_id'],
           isAvailable: true,
           isV2Ready: true,
           comingSoon: false,
@@ -87,6 +88,7 @@ describe('V8SyncApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/sync/connectors', { category: 'project_management' });
     expect(data.count).toBe(1);
     expect(data.connectors[0].id).toBe('jira');
+    expect(data.connectors[0].configFields).toEqual(['site_url', 'cloud_id']);
   });
 
   it('posts connect initiation to the governed V8 namespace', async () => {
@@ -99,6 +101,7 @@ describe('V8SyncApi', () => {
         status: 'pending',
         capabilities: ['issues'],
         authType: 'oauth2',
+        configFields: ['site_url', 'cloud_id'],
         scopes: ['read:issues'],
       },
       onboardingStatus: 'pending_external_auth_or_configuration',
@@ -109,6 +112,7 @@ describe('V8SyncApi', () => {
     expect(v8Post).toHaveBeenCalledWith('/sync/connectors/jira/connect', {});
     expect(data.integration.status).toBe('pending');
     expect(data.onboardingStatus).toBe('pending_external_auth_or_configuration');
+    expect(data.integration.configFields).toEqual(['site_url', 'cloud_id']);
   });
 
   it('requests governed hub health summary from the V8 namespace', async () => {

@@ -491,6 +491,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
           category: 'project_management',
           capabilities: ['issues'],
           authType: 'oauth2',
+          configFields: ['site_url', 'cloud_id'],
           isAvailable: true,
           isV2Ready: true,
           comingSoon: false,
@@ -507,6 +508,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
         status: 'pending',
         capabilities: ['issues'],
         authType: 'oauth2',
+        configFields: ['site_url', 'cloud_id'],
         scopes: ['read:issues'],
       },
       onboardingStatus: 'pending_external_auth_or_configuration',
@@ -523,6 +525,9 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     await waitFor(() => {
       expect(screen.getAllByRole('button', { name: /^Connect$/i }).length).toBeGreaterThan(0);
     });
+
+    expect(screen.getByText('site url')).toBeInTheDocument();
+    expect(screen.getByText('cloud id')).toBeInTheDocument();
 
     const connectButtons = screen.getAllByRole('button', { name: /^Connect$/i });
     fireEvent.click(connectButtons[connectButtons.length - 1]);
@@ -555,6 +560,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
           },
         },
       ],
@@ -581,6 +587,8 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(
       screen.getByText('Complete external auth or provider configuration before sync controls become available.'),
     ).toBeInTheDocument();
+    expect(screen.getByText('site url')).toBeInTheDocument();
+    expect(screen.getByText('cloud id')).toBeInTheDocument();
     expect(screen.getByText('Finish auth/config to enable sync controls')).toBeInTheDocument();
     screen.getAllByRole('button', { name: /Run now/i }).forEach((button) => {
       expect(button).toBeDisabled();

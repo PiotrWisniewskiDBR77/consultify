@@ -88,6 +88,7 @@ interface ConnectorInfo {
   category: string;
   capabilities: string[];
   authType: string;
+  configFields: string[];
 }
 
 interface IntegrationItem {
@@ -277,6 +278,10 @@ function formatDuration(ms: number | null): string {
   if (!ms) return '-';
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function formatConfigFieldLabel(field: string): string {
+  return field.replace(/_/g, ' ');
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -1185,6 +1190,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           'Complete external auth or provider configuration before sync controls become available.',
                         )}
                       </div>
+                      {!!int.connector?.configFields?.length && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {int.connector.configFields.map((field) => (
+                            <span
+                              key={field}
+                              className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-100"
+                            >
+                              {formatConfigFieldLabel(field)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2131,6 +2148,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             <div className="text-xs text-slate-500">
                               {conn.capabilities.slice(0, 3).join(', ')}
                             </div>
+                            {!!conn.configFields?.length && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {conn.configFields.slice(0, 3).map((field) => (
+                                  <span
+                                    key={field}
+                                    className="px-1.5 py-0.5 rounded-full bg-navy-700/60 text-[10px] text-slate-300 border border-navy-600"
+                                  >
+                                    {formatConfigFieldLabel(field)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                         {isConnected ? (

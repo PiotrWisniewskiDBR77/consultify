@@ -115,6 +115,7 @@ export interface V8SyncIntegrationInventoryRow {
     category: string;
     capabilities: string[];
     authType: string;
+    configFields: string[];
   } | null;
 }
 
@@ -124,6 +125,7 @@ export interface V8SyncCatalogConnector {
   category: string;
   capabilities: string[];
   authType: string;
+  configFields: string[];
   isAvailable: boolean;
   isV2Ready: boolean;
   comingSoon: boolean;
@@ -137,6 +139,7 @@ export interface V8SyncInitiatedIntegration {
   status: 'pending';
   capabilities: string[];
   authType: string;
+  configFields: string[];
   scopes: string[];
 }
 

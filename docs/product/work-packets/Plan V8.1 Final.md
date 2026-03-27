@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `2`
+- landed packets in the current active lane: `3`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: second broader sync packet recorded in `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md`
-- reason: after governed connect initiation landed, the live sync hub still offered ready-state sync controls to integrations that were truthfully still in pending onboarding
+- latest evidence: third broader sync packet recorded in `evidence/445-v81-broader-sync-provider-setup-requirements-continuity-seam.md`
+- reason: after pending-state surface honesty landed, the live sync hub still hid the concrete provider setup requirements that operators needed to finish onboarding
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/444-v81-broader-sync-pending-onboarding-surface-continuity-seam.md`
+- current packet: `evidence/445-v81-broader-sync-provider-setup-requirements-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether OAuth callback/refresh continuity or provider-specific onboarding follow-up is the next smallest honest broader sync completion packet after pending-state surface continuity`
+- next action: `assess whether provider-specific config submission continuity or OAuth callback/refresh continuity is now the next smallest honest broader sync completion packet after setup-requirements readback`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth
