@@ -114,6 +114,9 @@ vi.mock('../../../config/Config.js', async () => {
       ...actual.default,
       GOOGLE_CLIENT_ID: actual.default.GOOGLE_CLIENT_ID || 'test-google-client-id',
       GOOGLE_CLIENT_SECRET: actual.default.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
+      MICROSOFT_CLIENT_ID: actual.default.MICROSOFT_CLIENT_ID || 'test-microsoft-client-id',
+      MICROSOFT_CLIENT_SECRET:
+        actual.default.MICROSOFT_CLIENT_SECRET || 'test-microsoft-client-secret',
     },
   };
 });
@@ -469,6 +472,42 @@ describe('V8 sync read-only routes', () => {
     );
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'gmail',
+      organizationId: ORG,
+      targetState: 'connecting',
+      transitionedBy: UID,
+      reason: 'external_auth_prepared',
+    });
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/configure prepares a real Teams provider auth URL', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      {
+        id: 'int-teams-1',
+        connector_id: 'teams',
+        config: '{}',
+        status: 'pending',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-teams-1/configure').send({
+      config: {
+        tenant_id: 'tenant-123',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.integration?.configuredFields).toEqual(['tenant_id']);
+    expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.data?.externalAuth?.authUrl).toContain(
+      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/authorize?',
+    );
+    expect(res.body.data?.externalAuth?.authUrl).toContain('response_mode=query');
+    expect(res.body.data?.externalAuth?.callbackUrl).toContain(
+      '/api/sync-hub/external-auth/callback?state=',
+    );
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'teams',
       organizationId: ORG,
       targetState: 'connecting',
       transitionedBy: UID,

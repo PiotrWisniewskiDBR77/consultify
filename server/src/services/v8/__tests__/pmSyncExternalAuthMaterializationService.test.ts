@@ -8,8 +8,8 @@ vi.mock('../../../config/Config.js', () => ({
   default: {
     GOOGLE_CLIENT_ID: 'google-client-id',
     GOOGLE_CLIENT_SECRET: 'google-client-secret',
-    MICROSOFT_CLIENT_ID: undefined,
-    MICROSOFT_CLIENT_SECRET: undefined,
+    MICROSOFT_CLIENT_ID: 'microsoft-client-id',
+    MICROSOFT_CLIENT_SECRET: 'microsoft-client-secret',
   },
 }));
 
@@ -161,5 +161,118 @@ describe('pmSyncExternalAuthMaterializationService', () => {
 
   it('marks gmail as eligible for callback-driven materialization', () => {
     expect(shouldMaterializeCallbackDrivenAuth('gmail')).toBe(true);
+  });
+
+  it('builds a real Teams provider authorization URL on the governed path', () => {
+    const session = buildGovernedExternalAuthSession(
+      {
+        protocol: 'https',
+        get: (header: string) => {
+          if (header === 'host') return 'consultify.test';
+          return undefined;
+        },
+      },
+      {
+        integrationId: 'int-2',
+        organizationId: '00000000-0000-4000-8000-000000000099',
+        connectorId: 'teams',
+        mode: 'connect',
+        config: { tenant_id: 'tenant-123' },
+      },
+    );
+
+    expect(session.authUrl).toContain(
+      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/authorize?',
+    );
+    expect(session.authUrl).toContain('client_id=microsoft-client-id');
+    expect(session.authUrl).toContain('response_mode=query');
+    expect(session.authUrl).toContain('offline_access');
+  });
+
+  it('materializes Teams governed callback auth truth and stores refresh material', async () => {
+    mockStoreRefreshExecutionSecret.mockResolvedValueOnce({
+      connectorId: 'teams',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      clientId: 'microsoft-client-id',
+      tokenEndpoint: 'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/token',
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: 'microsoft-access-1',
+          refresh_token: 'microsoft-refresh-1',
+          expires_in: 3600,
+          scope: 'offline_access openid profile email User.Read',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 'microsoft-user-1',
+          userPrincipalName: 'alice@acme.onmicrosoft.com',
+          mail: 'alice@acme.com',
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await materializeGovernedExternalAuthCallback({
+      req: {
+        protocol: 'https',
+        get: (header: string) => {
+          if (header === 'host') return 'consultify.test';
+          return undefined;
+        },
+      },
+      session: {
+        state: 'state-1',
+        connectorId: 'teams',
+        organizationId: '00000000-0000-4000-8000-000000000099',
+      },
+      config: {
+        tenant_id: 'tenant-123',
+      },
+      code: 'microsoft-code-1',
+    });
+
+    expect(result.credentialStored).toBe(true);
+    expect(result.refreshSecretStored).toBe(true);
+    expect(result.scopesGranted).toContain('User.Read');
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/token',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://graph.microsoft.com/v1.0/me?$select=id,userPrincipalName,mail',
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer microsoft-access-1' },
+      }),
+    );
+    expect(mockStoreCredential).toHaveBeenCalledWith({
+      connectorId: 'teams',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      providerAccountId: 'alice@acme.onmicrosoft.com',
+      workspaceOrTenantId: 'tenant-123',
+      scopesGranted: ['offline_access', 'openid', 'profile', 'email', 'User.Read'],
+      tokenExpiresAt: expect.any(String),
+    });
+    expect(mockStoreRefreshExecutionSecret).toHaveBeenCalledWith({
+      connectorId: 'teams',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      clientId: 'microsoft-client-id',
+      clientSecret: 'microsoft-client-secret',
+      refreshToken: 'microsoft-refresh-1',
+      tokenEndpoint: 'https://login.microsoftonline.com/tenant-123/oauth2/v2.0/token',
+    });
+  });
+
+  it('marks teams as eligible for callback-driven materialization', () => {
+    expect(shouldMaterializeCallbackDrivenAuth('teams')).toBe(true);
   });
 });

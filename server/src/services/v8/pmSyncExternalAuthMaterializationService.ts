@@ -40,6 +40,12 @@ const DEFAULT_GMAIL_SCOPES = [
   'profile',
   'https://www.googleapis.com/auth/gmail.readonly',
 ];
+const TeamsMaterializationConfigSchema = z.object({
+  tenant_id: z.string().trim().min(1),
+});
+const DEFAULT_TEAMS_SCOPES = ['offline_access', 'openid', 'profile', 'email', 'User.Read'];
+const MICROSOFT_GRAPH_ME_ENDPOINT =
+  'https://graph.microsoft.com/v1.0/me?$select=id,userPrincipalName,mail';
 
 function buildExternalAuthCallbackUrl(req: Pick<Request, 'protocol' | 'get'>, state: string): string {
   const forwardedProto = req.get('x-forwarded-proto');
@@ -77,6 +83,28 @@ function getGoogleAuthConfig(): { clientId: string; clientSecret: string } {
     clientId,
     clientSecret: config.GOOGLE_CLIENT_SECRET,
   };
+}
+
+function getMicrosoftAuthConfig(): { clientId: string; clientSecret: string } {
+  if (!config.MICROSOFT_CLIENT_ID) {
+    throw new Error('Governed Microsoft external auth client id is unavailable');
+  }
+  if (!config.MICROSOFT_CLIENT_SECRET) {
+    throw new Error('Governed Microsoft external auth client secret is unavailable');
+  }
+
+  return {
+    clientId: config.MICROSOFT_CLIENT_ID,
+    clientSecret: config.MICROSOFT_CLIENT_SECRET,
+  };
+}
+
+function getMicrosoftAuthorizeEndpoint(tenantId: string): string {
+  return `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
+}
+
+function getMicrosoftTokenEndpoint(tenantId: string): string {
+  return `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`;
 }
 
 function parseGrantedScopes(rawScope: string | undefined, fallback: string[]): string[] {
@@ -151,6 +179,27 @@ export function buildGovernedExternalAuthSession(
     };
   }
 
+  if (normalizeConnectorId(context.connectorId) === 'teams') {
+    const parsed = TeamsMaterializationConfigSchema.parse(context.config);
+    const microsoftConfig = getMicrosoftAuthConfig();
+    const params = new URLSearchParams({
+      client_id: microsoftConfig.clientId,
+      redirect_uri: callbackUrl,
+      response_type: 'code',
+      scope: DEFAULT_TEAMS_SCOPES.join(' '),
+      state: session.state,
+      response_mode: 'query',
+      prompt: 'consent',
+    });
+
+    return {
+      authUrl: `${getMicrosoftAuthorizeEndpoint(parsed.tenant_id)}?${params.toString()}`,
+      callbackUrl,
+      state: session.state,
+      expiresAt: new Date(session.expiresAt).toISOString(),
+    };
+  }
+
   return {
     authUrl: callbackUrl,
     callbackUrl,
@@ -160,7 +209,7 @@ export function buildGovernedExternalAuthSession(
 }
 
 export function shouldMaterializeCallbackDrivenAuth(connectorId: string): boolean {
-  return ['jira', 'gmail'].includes(normalizeConnectorId(connectorId));
+  return ['jira', 'gmail', 'teams'].includes(normalizeConnectorId(connectorId));
 }
 
 export async function materializeGovernedExternalAuthCallback(params: {
@@ -321,6 +370,93 @@ export async function materializeGovernedExternalAuthCallback(params: {
         clientSecret: googleConfig.clientSecret,
         refreshToken: payload.refresh_token,
         tokenEndpoint: GOOGLE_TOKEN_ENDPOINT,
+      });
+      refreshSecretStored = true;
+    }
+
+    return {
+      credentialStored: true,
+      refreshSecretStored,
+      tokenExpiresAt,
+      scopesGranted,
+    };
+  }
+
+  if (normalizedConnectorId === 'teams') {
+    const microsoftConfig = getMicrosoftAuthConfig();
+    const parsed = TeamsMaterializationConfigSchema.parse(params.config);
+    const tokenEndpoint = getMicrosoftTokenEndpoint(parsed.tenant_id);
+    const response = await fetch(tokenEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: microsoftConfig.clientId,
+        client_secret: microsoftConfig.clientSecret,
+        code: params.code,
+        redirect_uri: callbackUrl,
+      }).toString(),
+    });
+
+    const payload = (await response.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      scope?: string;
+      error?: string;
+      error_description?: string;
+    };
+
+    if (!response.ok || typeof payload.access_token !== 'string' || payload.access_token.length === 0) {
+      throw new Error(payload.error_description || payload.error || 'Failed to exchange external auth code');
+    }
+
+    const meResponse = await fetch(MICROSOFT_GRAPH_ME_ENDPOINT, {
+      headers: {
+        Authorization: `Bearer ${payload.access_token}`,
+      },
+    });
+    const me = (await meResponse.json()) as {
+      id?: string;
+      userPrincipalName?: string;
+      mail?: string;
+    };
+
+    if (!meResponse.ok || typeof me.id !== 'string' || me.id.length === 0) {
+      throw new Error('Failed to resolve Microsoft user info for governed external auth');
+    }
+
+    const tokenExpiresAt =
+      typeof payload.expires_in === 'number' && payload.expires_in > 0
+        ? new Date(Date.now() + payload.expires_in * 1000).toISOString()
+        : null;
+    const scopesGranted = parseGrantedScopes(payload.scope, DEFAULT_TEAMS_SCOPES);
+
+    await storeCredential({
+      connectorId: params.session.connectorId,
+      organizationId: params.session.organizationId,
+      providerAccountId:
+        typeof me.userPrincipalName === 'string' && me.userPrincipalName.trim().length > 0
+          ? me.userPrincipalName.trim()
+          : typeof me.mail === 'string' && me.mail.trim().length > 0
+            ? me.mail.trim()
+            : me.id,
+      workspaceOrTenantId: parsed.tenant_id,
+      scopesGranted,
+      tokenExpiresAt,
+    });
+
+    let refreshSecretStored = false;
+    if (typeof payload.refresh_token === 'string' && payload.refresh_token.trim().length > 0) {
+      await storeRefreshExecutionSecret({
+        connectorId: params.session.connectorId,
+        organizationId: params.session.organizationId,
+        clientId: microsoftConfig.clientId,
+        clientSecret: microsoftConfig.clientSecret,
+        refreshToken: payload.refresh_token,
+        tokenEndpoint,
       });
       refreshSecretStored = true;
     }
