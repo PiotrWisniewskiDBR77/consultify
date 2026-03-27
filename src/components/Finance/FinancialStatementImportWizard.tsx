@@ -24,6 +24,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
+import { V8FinanceApi, shouldFallbackToLegacyFinance } from '../../services/api/v8/finance';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import {
   FinancialStatementMappingEditor,
@@ -108,6 +109,52 @@ type WizardStep = 'upload' | 'detect' | 'map' | 'confirm';
 interface Props {
   onClose?: () => void;
   onComplete?: (statementId: string) => void;
+}
+
+async function detectStatementWithFallback(statementId: string, body: Record<string, unknown>) {
+  try {
+    return await V8FinanceApi.detectStatement(statementId, body);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/detect`, body);
+  }
+}
+
+async function extractStatementWithFallback(statementId: string, body: Record<string, unknown>) {
+  try {
+    return await V8FinanceApi.extractStatement(statementId, body);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/extract`, body);
+  }
+}
+
+async function mapStatementWithFallback(statementId: string) {
+  try {
+    return await V8FinanceApi.mapStatement(statementId, {});
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/finance-statements/${statementId}/map`, {});
+  }
+}
+
+async function getCanonicalLinesWithFallback() {
+  try {
+    const data = await V8FinanceApi.getCanonicalLines();
+    return Array.isArray(data?.canonicalLines) ? data.canonicalLines : [];
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    const response = await Api.get('/api/finance-statements/canonical-lines');
+    return Array.isArray(response) ? response : [];
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -274,12 +321,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setLoading(true);
     setError(null);
     try {
-      await Api.post(`/api/finance-statements/${statementId}/detect`, {
+      await detectStatementWithFallback(statementId, {
         statementType: overrideType,
         periodLabel: overridePeriod,
         currency: overrideCurrency,
       });
-      const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {
+      const extractData = await extractStatementWithFallback(statementId, {
         statementType: overrideType,
         periodLabel: overridePeriod,
         currency: overrideCurrency,
@@ -304,12 +351,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       });
 
       // Auto-map
-      const mapData = await Api.post(`/api/finance-statements/${statementId}/map`, {});
+      const mapData = await mapStatementWithFallback(statementId);
       const { mappedLines } = mapData as { mappedLines: ExtractedLine[] };
 
       // Load canonical lines for dropdown
-      const canonData = await Api.get('/api/finance-statements/canonical-lines');
-      setCanonicalLines((canonData as any) || []);
+      const canonData = await getCanonicalLinesWithFallback();
+      setCanonicalLines(canonData as CanonicalLine[]);
 
       // Build mapped values
       const mv: MappedValue[] = (mappedLines as ExtractedLine[]).map((l) => ({
