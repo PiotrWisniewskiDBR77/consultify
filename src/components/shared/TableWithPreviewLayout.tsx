@@ -19,6 +19,7 @@ import { ChevronLeft, ChevronRight, Pin, PinOff } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDeviceType } from '@/hooks/useDeviceType';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 
 export interface PreviewableItem {
@@ -77,6 +78,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   getItemById,
 }: TableWithPreviewLayoutProps<T>) {
   const { t } = useTranslation();
+  const { isMobile, safeAreaInsets } = useDeviceType();
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -228,13 +230,62 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     return () => container.removeEventListener('keydown', handleKeyDown);
   }, [itemIds, selectedId, handleSelect, handleClose, onOpenFull, isPreviewOpen, actionShortcuts, goBack, goForward]);
 
+  const previewActions =
+    !isBatchMode && selectedItem ? (
+      <>
+        {historyBack.length > 0 || historyForward.length > 0 ? (
+          <div className="flex items-center gap-0.5 mr-1">
+            <button
+              onClick={goBack}
+              disabled={!historyBack.length}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
+              title="Alt+←"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={goForward}
+              disabled={!historyForward.length}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
+              title="Alt+→"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        ) : null}
+        {getItemById && !isMobile ? (
+          <button
+            onClick={handlePin}
+            className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+              pinnedId === selectedItem.id
+                ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+            }`}
+            title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
+          >
+            {pinnedId === selectedItem.id ? <PinOff size={13} /> : <Pin size={13} />}
+          </button>
+        ) : null}
+        {renderPreviewActions?.(selectedItem)}
+        {onOpenFull && (
+          <button
+            onClick={() => onOpenFull(selectedItem.id)}
+            className="inline-flex items-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
+            title={t('common.open', 'Open')}
+          >
+            <span>{t('common.open', 'Open')}</span>
+          </button>
+        )}
+      </>
+    ) : null;
+
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden gap-1.5" tabIndex={0}>
       {/* Table area */}
       <div className="flex-1 min-w-0 overflow-auto">{children}</div>
 
       {/* Pinned preview pane (comparison mode) */}
-      {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode ? (
+      {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode && !isMobile ? (
         <motion.div
           key={`pinned-${pinnedId}`}
           initial={{ opacity: 0, x: 12 }}
@@ -264,7 +315,75 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
 
       {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
       <AnimatePresence mode="wait">
-        {isBatchMode && renderBatchPreview ? (
+        {isMobile && isBatchMode && renderBatchPreview ? (
+          <motion.div
+            key="mobile-batch"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="fixed inset-0 z-[70]"
+            data-testid="mobile-preview-overlay"
+          >
+            <button
+              type="button"
+              onClick={handleClose}
+              className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
+              aria-label={t('common.close', 'Close')}
+              data-testid="mobile-preview-backdrop"
+            />
+            <div
+              className="relative h-full p-3"
+              style={{
+                paddingTop: Math.max(12, safeAreaInsets.top || 0),
+                paddingBottom: Math.max(12, safeAreaInsets.bottom || 0),
+              }}
+            >
+              <PreviewPaneShell
+                title={t('common.batchOperations', 'Batch Operations')}
+                onClose={handleClose}
+                className="h-full rounded-2xl shadow-2xl"
+              >
+                {renderBatchPreview(selectedIds!)}
+              </PreviewPaneShell>
+            </div>
+          </motion.div>
+        ) : isMobile && isPreviewOpen && selectedItem ? (
+          <motion.div
+            key={`mobile-${selectedItem.id}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="fixed inset-0 z-[70]"
+            data-testid="mobile-preview-overlay"
+          >
+            <button
+              type="button"
+              onClick={handleClose}
+              className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
+              aria-label={t('common.close', 'Close')}
+              data-testid="mobile-preview-backdrop"
+            />
+            <div
+              className="relative h-full p-3"
+              style={{
+                paddingTop: Math.max(12, safeAreaInsets.top || 0),
+                paddingBottom: Math.max(12, safeAreaInsets.bottom || 0),
+              }}
+            >
+              <PreviewPaneShell
+                title={selectedItem.title}
+                onClose={handleClose}
+                actions={previewActions}
+                footer={renderPreviewFooter?.(selectedItem)}
+                className="h-full rounded-2xl shadow-2xl"
+              >
+                {renderPreview(selectedItem)}
+              </PreviewPaneShell>
+            </div>
+          </motion.div>
+        ) : isBatchMode && renderBatchPreview ? (
           <motion.div
             key="batch"
             initial={{ opacity: 0, x: 12 }}
@@ -294,53 +413,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             <PreviewPaneShell
               title={selectedItem.title}
               onClose={handleClose}
-              actions={
-                <>
-                  {historyBack.length > 0 || historyForward.length > 0 ? (
-                    <div className="flex items-center gap-0.5 mr-1">
-                      <button
-                        onClick={goBack}
-                        disabled={!historyBack.length}
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
-                        title="Alt+←"
-                      >
-                        <ChevronLeft size={14} />
-                      </button>
-                      <button
-                        onClick={goForward}
-                        disabled={!historyForward.length}
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
-                        title="Alt+→"
-                      >
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  ) : null}
-                  {getItemById ? (
-                    <button
-                      onClick={handlePin}
-                      className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
-                        pinnedId === selectedItem.id
-                          ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                      }`}
-                      title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
-                    >
-                      {pinnedId === selectedItem.id ? <PinOff size={13} /> : <Pin size={13} />}
-                    </button>
-                  ) : null}
-                  {renderPreviewActions?.(selectedItem)}
-                  {onOpenFull && (
-                    <button
-                      onClick={() => onOpenFull(selectedItem.id)}
-                      className="inline-flex items-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
-                      title={t('common.open', 'Open')}
-                    >
-                      <span>{t('common.open', 'Open')}</span>
-                    </button>
-                  )}
-                </>
-              }
+              actions={previewActions}
               footer={renderPreviewFooter?.(selectedItem)}
             >
               {renderPreview(selectedItem)}

@@ -91,7 +91,6 @@ Visible backlog that remains outside execution until separately approved.
 
 Current items:
 
-- broader `Mobile` redesign outside the active bounded lane
 - broad `Landing page` redesign
 - broader canonical `/` copy / section-order / visual-system work beyond the accepted homepage IA cut
 - `Landing Anna prompt-quality / retrieval-quality`
@@ -273,8 +272,8 @@ The next broader mobile lane is now explicitly promoted from visible backlog int
 ### Three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Mobile` redesign scope honest and prepare the first real bounded broader-mobile packet
-- `Agent B`: own runtime/surface closure for the active broader-mobile lane once the first bounded packet is chosen
+- `Agent A`: keep broader `Mobile` redesign scope honest and assess the next bounded broader-mobile packet after the first shared surface closure
+- `Agent B`: own runtime/surface closure for the active broader-mobile lane packet-by-packet, starting from shared table-preview mobile continuity
 
 ### Exit criteria
 
@@ -284,20 +283,19 @@ The next broader mobile lane is now explicitly promoted from visible backlog int
 
 ### Current lane status
 
-The active lane is documented in `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`.
+The active lane is documented in `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`.
 
 Current result:
 
-- `Landing Anna` broader voice UX / architecture is now accepted in `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md`,
-- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`,
-- the active lane split-brain map is recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`,
-- the lane is active in evidence-first mode while the first real broader public-marketing packet is being chosen,
-- Anna voice productization beyond bounded continuity remains accepted/capped rather than silently folded into this public-marketing lane.
+- broader canonical `/` and public marketing breadth is now accepted in `evidence/354-v81-broader-canonical-public-marketing-t4-acceptance.md`,
+- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`,
+- the active lane split-brain map is recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`,
+- the first real bounded broader-mobile packet landed in `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md` by moving shared `TableWithPreviewLayout` preview content onto a phone-width overlay seam,
+- broader module-level responsive and interaction breadth still remains, but accepted shell/mobile-nav continuity stays capped rather than silently reopened.
 
 ### Explicitly out of scope
 
-- `Landing Anna` broader voice UX / architecture
-- broader `Mobile` redesign
+- broader canonical `/` and public marketing breadth
 - `Chat` / `AI core` expansion
 - `Results`, `Finance`, `Partner` write parity
 - `Sync` OAuth completion
@@ -336,7 +334,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | `Landing Anna backend analytics / dashboard breadth` | done | current Anna telemetry has been closed into bounded backend ingest plus operator readback continuity without broadening into full dashboard productization | `3` | agreed Anna analytics surface and data contract exist, are used, and are evidenced, or the need is explicitly retired |
 | `Landing Anna` broader voice UX / architecture | done | the bounded same-session continuity, channel truth, and public voice-config authority cuts are complete; remaining productization is broader architecture work that should not be smuggled into one more pseudo-small packet | `4` | live voice UX/architecture is either deliberately productized as a broader redesign or formally capped at the accepted bounded state |
 | broader canonical `/` and public marketing breadth | done | accepted landing shell/IA work plus five bounded canonical `/` narrative packets now close the smallest honest public-marketing seams; what remains is broader redesign work rather than another micro-packet | `5` | canonical `/` and public marketing breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
-| broader `Mobile` redesign | active | bounded mobile entry and overlay continuity are done, but full mobile product breadth was never promoted and is now explicitly active | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
+| broader `Mobile` redesign | active | bounded mobile entry and overlay continuity are done and the first shared table-preview mobile overlay packet has landed, but broader module-level responsive/product breadth still remains | `6` | agreed mobile breadth is either shipped as explicit lanes or retired from this program |
 | broader `Chat` / `AI core` parity expansion | visible, not promoted | current bounded work closed the active seam, not the full product/runtime breadth | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | visible, not promoted | accepted lane closed bounded read/runtime truth seams; broader write/operator breadth still remains | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | visible, not promoted | accepted lane closed active analysis seams; ingest, models, budgets, valuations, and wider write breadth remain | `9` | remaining finance breadth is closed or explicitly retired |
@@ -455,6 +453,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the first real bounded packet inside broader `Mobile` redesign by moving shared `TableWithPreviewLayout` preview content onto a mobile overlay seam in `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`, so the active lane now has a code-backed shared-surface closure after the split-brain map
 - 2026-03-27: landed the fifth bounded packet inside broader canonical `/` and public marketing breadth by adding the missing canonical `/` extended-scope narrative layer in `evidence/353-v81-broader-canonical-public-marketing-extended-scope-seam.md`, then accepted the lane in `evidence/354-v81-broader-canonical-public-marketing-t4-acceptance.md` because no smaller honest public-marketing packet remains before broader redesign work
 - 2026-03-27: promoted broader `Mobile` redesign into active execution through `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md` and recorded the initial broader mobile split-brain map in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
 - 2026-03-27: assessed the next smallest broader public-marketing packet in `evidence/352-v81-broader-canonical-public-marketing-next-packet-assessment-after-value-journey.md` and selected the missing canonical `/` extended-scope narrative seam as the next honest packet after the value-layers / consulting-journey closure

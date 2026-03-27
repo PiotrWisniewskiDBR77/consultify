@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `5 / 13`
 - active lane: broader `Mobile` redesign
-- landed packets in the active lane: `0`
+- landed packets in the active lane: `1`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Mobile` redesign
-- latest evidence: `broader Mobile redesign split-brain map` recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
-- reason: the broader canonical public-marketing lane is now boundedly accepted, and the next honest residual is broader mobile redesign rather than more hidden public-marketing micro-packets
+- latest evidence: `table preview mobile overlay seam` recorded in `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`
+- reason: the shared `TableWithPreviewLayout` had a live narrow-viewport failure after shell continuity was accepted, so the first honest broader-mobile packet is now closed at the shared module surface
 
 ### Next three lanes
 
@@ -334,10 +334,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`
 - split-brain map: `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`
-- current packet: `assess the first real bounded broader-mobile packet after the split-brain map`
-- last accepted packet: `none`
+- current packet: `assess the next bounded broader-mobile packet after shared table preview overlay continuity`
+- last accepted packet: `table preview mobile overlay seam`
 - blocker: `none`
-- next action: `choose the smallest honest broader-mobile packet without silently broadening into a whole responsive rewrite`
+- next action: `choose the next shared or module-level narrow-viewport packet without silently broadening into a full responsive rewrite`
 - acceptance evidence: `none`
 
 #### broader `Chat / AI core` parity expansion
