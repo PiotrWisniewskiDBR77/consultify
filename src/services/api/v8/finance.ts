@@ -87,6 +87,29 @@ export interface V8FinanceBudgetSummary {
   updated_at?: string | null;
 }
 
+export interface V8FinanceStatementPackSummary {
+  id: string;
+  entity_name?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  period_label?: string | null;
+  currency?: string | null;
+  scaling?: string | null;
+  pack_status?: string | null;
+  pack_readiness_status?: string | null;
+  pack_readiness_score?: number | null;
+  pack_quality_summary?: string | null;
+  pack_quality_reason_codes?: string[] | string | null;
+  source_statement_count?: number | null;
+  missing_statement_types?: string[] | string | null;
+  pl_count?: number | null;
+  bs_count?: number | null;
+  cf_count?: number | null;
+  latest_statement_updated_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface V8FinanceAnalysisRatio {
   category: string | null;
   ratio_code: string;
@@ -130,6 +153,13 @@ export const V8FinanceApi = {
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>
     v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
+  getStatementPacks: (params?: { readiness?: string }) =>
+    v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
+      '/finance/statement-packs',
+      {
+        ...(params?.readiness ? { readiness: params.readiness } : {}),
+      },
+    ),
   getAnalyses: (params?: { status?: string; projectId?: string }) =>
     v8Get<{ analyses: V8FinanceAnalysisSummary[]; count: number }>('/finance/analyses', {
       ...(params?.status ? { status: params.status } : {}),

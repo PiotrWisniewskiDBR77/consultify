@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockGetFinanceDashboard = vi.fn();
+const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
@@ -33,6 +34,10 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 
 vi.mock('../../../services/financialModelingService.js', () => ({
   listModels: (...args: unknown[]) => mockListModels(...args),
+}));
+
+vi.mock('../../../services/financialStatementPackService.js', () => ({
+  listStatementPacks: (...args: unknown[]) => mockListStatementPacks(...args),
 }));
 
 vi.mock('../../../services/valuationService.js', () => ({
@@ -142,6 +147,7 @@ describe('V8 finance read-only routes', () => {
       staleSourceRefreshesCount: 0,
       promotionGatePassRate: null,
     });
+    mockListStatementPacks.mockResolvedValue([]);
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
     mockListBudgets.mockResolvedValue([]);
@@ -228,6 +234,34 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.models?.[0]?.name).toBe('Revenue forecast');
     expect(mockListModels).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {
+    mockListStatementPacks.mockResolvedValue([
+      {
+        id: 'pack-1',
+        entity_name: 'Acme Sp. z o.o.',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        period_label: 'Q1 2026',
+        currency: 'PLN',
+        pack_status: 'pending',
+        pack_readiness_status: 'recoverable',
+        source_statement_count: 2,
+        updated_at: '2026-03-27T12:00:00.000Z',
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/finance/statement-packs')
+      .query({ readiness: 'recoverable' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.count).toBe(1);
+    expect(res.body.data?.statementPacks?.[0]?.entity_name).toBe('Acme Sp. z o.o.');
+    expect(mockListStatementPacks).toHaveBeenCalledWith(ORG, 'recoverable');
   });
 
   it('GET /api/v8/finance/valuations returns envelope and delegates to listValuations', async () => {

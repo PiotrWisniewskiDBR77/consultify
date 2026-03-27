@@ -81,8 +81,17 @@ export function useFinanceData(
 
   const loadStatements = useCallback(async () => {
     try {
-      const data = await Api.get('/api/finance-statements/packs');
-      const arr = Array.isArray(data) ? data : [];
+      let arr: any[] = [];
+      try {
+        const data = await V8FinanceApi.getStatementPacks();
+        arr = Array.isArray(data?.statementPacks) ? data.statementPacks : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/finance-statements/packs');
+        arr = Array.isArray(data) ? data : [];
+      }
       setLoadError(null);
       setIsUsingDemoData(false);
       setStatements(arr);

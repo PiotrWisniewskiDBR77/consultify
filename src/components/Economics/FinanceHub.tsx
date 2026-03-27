@@ -36,7 +36,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
-import { V8FinanceApi, type V8FinanceDashboard } from '@/services/api/v8/finance';
+import {
+  shouldFallbackToLegacyFinance,
+  V8FinanceApi,
+  type V8FinanceDashboard,
+} from '@/services/api/v8/finance';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
@@ -1791,7 +1795,17 @@ export const FinanceHub: React.FC = () => {
               const statementPackId = String(
                 statementDetail.statement_pack_id || statementDetail.statementPackId || ''
               );
-              const packs = (await Api.get('/api/finance-statements/packs')) as any[];
+              let packs: any[] = [];
+              try {
+                const data = await V8FinanceApi.getStatementPacks();
+                packs = Array.isArray(data?.statementPacks) ? data.statementPacks : [];
+              } catch (error) {
+                if (!shouldFallbackToLegacyFinance(error)) {
+                  throw error;
+                }
+                const data = await Api.get('/api/finance-statements/packs');
+                packs = Array.isArray(data) ? data : [];
+              }
               await loadStatements();
               const pack = Array.isArray(packs)
                 ? packs.find((item: any) => String(item.id) === statementPackId)

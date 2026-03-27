@@ -29,6 +29,7 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    getStatementPacks: vi.fn(),
     getModels: vi.fn(),
     getValuations: vi.fn(),
     getBudgets: vi.fn(),
@@ -78,6 +79,68 @@ describe('useFinanceData V8 analyses seam', () => {
     expect(V8FinanceApi.getAnalyses).toHaveBeenCalled();
     expect(Api.get).not.toHaveBeenCalledWith('/api/economics/financial-analyses');
     expect(result.current.rowsForActiveTab[0]?.title).toBe('Working capital analysis');
+  });
+
+  it('prefers governed finance statement packs before legacy finance-statements fallback', async () => {
+    vi.mocked(V8FinanceApi.getStatementPacks).mockResolvedValue({
+      statementPacks: [
+        {
+          id: 'pack-1',
+          entity_name: 'Acme Sp. z o.o.',
+          period_start: '2026-01-01',
+          period_end: '2026-03-31',
+          period_label: 'Q1 2026',
+          currency: 'PLN',
+          scaling: 'units',
+          pack_status: 'pending',
+          pack_readiness_status: 'recoverable',
+          source_statement_count: 2,
+          updated_at: '2026-03-27T12:00:00.000Z',
+        },
+      ],
+      count: 1,
+    } as any);
+
+    const { result } = renderHook(() => useFinanceData('statements', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.statements).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getStatementPacks).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('Acme Sp. z o.o.');
+  });
+
+  it('falls back to legacy statement packs when V8 seam returns a bounded compatibility status', async () => {
+    vi.mocked(V8FinanceApi.getStatementPacks).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockResolvedValue([
+      {
+        id: 'pack-legacy-1',
+        entity_name: 'Legacy Co.',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        period_label: 'Q1 2026',
+        currency: 'PLN',
+        scaling: 'units',
+        pack_status: 'pending',
+        pack_readiness_status: 'recoverable',
+        source_statement_count: 2,
+        updated_at: '2026-03-27T12:05:00.000Z',
+      },
+    ] as any);
+
+    const { result } = renderHook(() => useFinanceData('statements', '', []));
+
+    await waitFor(() => {
+      expect(result.current.loadingTab).toBeNull();
+      expect(result.current.statements).toHaveLength(1);
+    });
+
+    expect(V8FinanceApi.getStatementPacks).toHaveBeenCalled();
+    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/packs');
+    expect(result.current.rowsForActiveTab[0]?.title).toBe('Legacy Co.');
   });
 
   it('falls back to legacy analyses when V8 seam returns a bounded compatibility status', async () => {

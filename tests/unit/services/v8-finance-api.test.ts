@@ -94,6 +94,34 @@ describe('V8FinanceApi', () => {
     expect(data.models[0].name).toBe('Revenue forecast');
   });
 
+  it('requests governed finance statement packs from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      statementPacks: [
+        {
+          id: 'pack-1',
+          entity_name: 'Acme Sp. z o.o.',
+          period_start: '2026-01-01',
+          period_end: '2026-03-31',
+          period_label: 'Q1 2026',
+          currency: 'PLN',
+          pack_status: 'pending',
+          pack_readiness_status: 'recoverable',
+          source_statement_count: 2,
+          updated_at: '2026-03-27T12:00:00.000Z',
+        },
+      ],
+      count: 1,
+    });
+
+    const data = await V8FinanceApi.getStatementPacks({ readiness: 'recoverable' });
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/statement-packs', {
+      readiness: 'recoverable',
+    });
+    expect(data.count).toBe(1);
+    expect(data.statementPacks[0].entity_name).toBe('Acme Sp. z o.o.');
+  });
+
   it('requests governed finance valuations from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       valuations: [

@@ -6,6 +6,22 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const financeDataState = vi.hoisted(() => ({
+  statements: [] as any[],
+  models: [] as any[],
+  analyses: [] as any[],
+  valuations: [] as any[],
+  budgets: [] as any[],
+  loadStatements: vi.fn().mockResolvedValue(undefined),
+  loadModels: vi.fn().mockResolvedValue(undefined),
+  loadAnalyses: vi.fn().mockResolvedValue(undefined),
+  loadValuations: vi.fn().mockResolvedValue(undefined),
+  loadBudgets: vi.fn().mockResolvedValue(undefined),
+  rowsForActiveTab: [] as any[],
+  filteredRows: [] as any[],
+  statusCounts: { all: 0, draft: 0, review: 0, approved: 0 },
+}));
+
 vi.mock('react-hot-toast', () => ({
   default: {
     success: vi.fn(),
@@ -25,7 +41,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, onTabChange, commandRowContent, children }: any) => (
+  ModuleHub: ({ tabs, activeTab, onTabChange, primaryCta, commandRowContent, children }: any) => (
     <div>
       <div data-testid="active-tab">{activeTab}</div>
       <div>
@@ -35,6 +51,7 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
           </button>
         ))}
       </div>
+      <div data-testid="primary-cta">{primaryCta}</div>
       <div data-testid="command-row">{commandRowContent}</div>
       <div>{children}</div>
     </div>
@@ -49,21 +66,21 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
 
 vi.mock('../../../src/components/Economics/hooks/useFinanceData', () => ({
   useFinanceData: () => ({
-    statements: [],
-    models: [],
-    analyses: [],
-    valuations: [],
-    budgets: [],
+    statements: financeDataState.statements,
+    models: financeDataState.models,
+    analyses: financeDataState.analyses,
+    valuations: financeDataState.valuations,
+    budgets: financeDataState.budgets,
     loadingTab: false,
     loadError: null,
-    loadStatements: vi.fn().mockResolvedValue(undefined),
-    loadModels: vi.fn().mockResolvedValue(undefined),
-    loadAnalyses: vi.fn().mockResolvedValue(undefined),
-    loadValuations: vi.fn().mockResolvedValue(undefined),
-    loadBudgets: vi.fn().mockResolvedValue(undefined),
-    rowsForActiveTab: [],
-    filteredRows: [],
-    statusCounts: { all: 0, draft: 0, review: 0, approved: 0 },
+    loadStatements: financeDataState.loadStatements,
+    loadModels: financeDataState.loadModels,
+    loadAnalyses: financeDataState.loadAnalyses,
+    loadValuations: financeDataState.loadValuations,
+    loadBudgets: financeDataState.loadBudgets,
+    rowsForActiveTab: financeDataState.rowsForActiveTab,
+    filteredRows: financeDataState.filteredRows,
+    statusCounts: financeDataState.statusCounts,
   }),
 }));
 
@@ -116,7 +133,11 @@ vi.mock('../../../src/components/Finance/ExportToOutputDialog', () => ({
   ExportToOutputDialog: () => null,
 }));
 vi.mock('../../../src/components/Finance/FinancialStatementImportWizard', () => ({
-  FinancialStatementImportWizard: () => null,
+  FinancialStatementImportWizard: ({ onComplete }: any) => (
+    <button type="button" onClick={() => onComplete?.('statement-1')}>
+      complete-import
+    </button>
+  ),
 }));
 vi.mock('../../../src/components/Economics/FinanceModelDocumentView', () => ({
   FinanceModelDocumentView: () => <div>finance-model-document-view</div>,
@@ -137,6 +158,11 @@ vi.mock('../../../src/components/Economics/modals/CreateValuationModal', () => (
 vi.mock('../../../src/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getDashboard: vi.fn(),
+    getStatementPacks: vi.fn(),
+  },
+  shouldFallbackToLegacyFinance: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
   },
 }));
 
@@ -150,11 +176,25 @@ vi.mock('../../../src/services/api', () => ({
 }));
 
 import { FinanceHub } from '../../../src/components/Economics/FinanceHub';
+import { Api } from '../../../src/services/api';
 import { V8FinanceApi } from '../../../src/services/api/v8/finance';
 
 describe('FinanceHub V8 runtime strip', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    financeDataState.statements = [];
+    financeDataState.models = [];
+    financeDataState.analyses = [];
+    financeDataState.valuations = [];
+    financeDataState.budgets = [];
+    financeDataState.rowsForActiveTab = [];
+    financeDataState.filteredRows = [];
+    financeDataState.statusCounts = { all: 0, draft: 0, review: 0, approved: 0 };
+    financeDataState.loadStatements.mockResolvedValue(undefined);
+    financeDataState.loadModels.mockResolvedValue(undefined);
+    financeDataState.loadAnalyses.mockResolvedValue(undefined);
+    financeDataState.loadValuations.mockResolvedValue(undefined);
+    financeDataState.loadBudgets.mockResolvedValue(undefined);
 
     vi.mocked(V8FinanceApi.getDashboard).mockResolvedValue({
       dashboard: {
@@ -173,6 +213,10 @@ describe('FinanceHub V8 runtime strip', () => {
         staleSourceRefreshesCount: 1,
         promotionGatePassRate: 0.75,
       },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementPacks).mockResolvedValue({
+      statementPacks: [],
+      count: 0,
     } as any);
   });
 
@@ -210,5 +254,51 @@ describe('FinanceHub V8 runtime strip', () => {
 
     expect(screen.getByText('Escalations')).toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
+  });
+
+  it('routes import-complete statement-pack lookup through the governed V8 seam first', async () => {
+    financeDataState.statements = [
+      {
+        id: 'pack-1',
+        entity_name: 'Acme Sp. z o.o.',
+        period_start: '2026-01-01',
+        period_end: '2026-03-31',
+        period_label: 'Q1 2026',
+        currency: 'PLN',
+        scaling: 'units',
+        pack_status: 'pending',
+        pack_readiness_status: 'recoverable',
+        source_statement_count: 2,
+        updated_at: '2026-03-27T12:00:00.000Z',
+      },
+    ];
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/finance-statements/statement-1') {
+        return { statement_pack_id: 'pack-1' } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+    vi.mocked(V8FinanceApi.getStatementPacks).mockResolvedValue({
+      statementPacks: financeDataState.statements,
+      count: 1,
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <FinanceHub />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Importuj statement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.getStatementPacks).toHaveBeenCalled();
+    });
+
+    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/statement-1');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/packs');
+    expect(financeDataState.loadStatements).toHaveBeenCalled();
   });
 });

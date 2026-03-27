@@ -22,6 +22,7 @@ import {
 } from '../../services/financialAnalysisService.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { listModels } from '../../services/financialModelingService.js';
+import { listStatementPacks } from '../../services/financialStatementPackService.js';
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -84,6 +85,20 @@ router.get(
     const budgets = await listBudgets(organizationId);
     return res.json({
       data: { budgets, count: budgets.length },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/statement-packs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const readiness =
+      typeof req.query.readiness === 'string' ? String(req.query.readiness).trim().toLowerCase() : '';
+    const statementPacks = await listStatementPacks(organizationId, readiness);
+    return res.json({
+      data: { statementPacks, count: statementPacks.length },
       meta: financeMeta(),
     });
   }),

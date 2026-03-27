@@ -70,7 +70,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `8 / 13`
 - active lane: broader `Finance` parity
-- landed packets in the active lane: `3`
+- landed packets in the active lane: `4`
 
 ---
 
@@ -165,8 +165,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Finance` parity
-- latest evidence: `budgets list/read V8 seam` recorded in `evidence/389-v81-broader-finance-budgets-list-read-v8-seam.md`
-- reason: after valuations continuity landed, the next smallest honest packet was the dedicated budgets list/read seam used by the `prediction` tab in `useFinanceData`, which still defaulted to legacy economics reads
+- latest evidence: `statement packs list/read V8 seam` recorded in `evidence/390-v81-broader-finance-statement-packs-list-read-v8-seam.md`
+- reason: after budgets continuity landed, the next smallest honest packet was the shared statement-pack list/read seam still used by the `statements` tab and import-complete pack lookup on the active Finance hub surfaces
 
 ### Next three lanes
 
@@ -367,10 +367,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `assess the next bounded broader finance packet after budgets list/read continuity`
-- last accepted packet: `budgets list/read V8 seam`
+- current packet: `assess the next bounded broader finance packet after statement packs list/read continuity`
+- last accepted packet: `statement packs list/read V8 seam`
 - blocker: `none`
-- next action: `assess whether statement packs list/read continuity is the next smallest broader finance packet without broadening into budget detail or wider finance mutations`
+- next action: `assess whether statement-pack detail read continuity is the next smallest broader finance packet without broadening into confirm/delete/import writes`
 - acceptance evidence: `none`
 
 #### broader `Partner Program` parity
