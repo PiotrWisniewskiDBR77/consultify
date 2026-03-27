@@ -124,6 +124,7 @@ interface IntegrationItem {
 }
 
 interface ExternalAuthSessionInfo {
+  authUrl: string;
   callbackUrl: string;
   state: string;
   expiresAt: string;
@@ -318,6 +319,11 @@ function formatConfigFieldLabel(field: string): string {
 
 function isSecretConfigField(field: string): boolean {
   return field.includes('secret') || field.includes('token');
+}
+
+function openExternalAuthSession(session: ExternalAuthSessionInfo | null | undefined): void {
+  if (!session?.authUrl) return;
+  window.open(session.authUrl, '_blank', 'noopener,noreferrer,width=900,height=780');
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -729,7 +735,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             connectorId,
             name: connectorId,
             category: 'collaboration',
-            status: (data.integration.status === 'pending' ? 'pending' : 'pending') as const,
+            status: 'pending',
             capabilities: [],
             authType: 'oauth2',
             configFields: [],
@@ -745,7 +751,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             'Connection started. The integration is pending external auth or configuration.',
           ),
         );
-        trackFunnelEvent('integration_connect_initiated', {
+        trackFunnelEvent('integration_connected', {
           connectorId,
           status: initiatedIntegration.status,
         });
@@ -791,7 +797,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         const data = await V8SyncApi.configureIntegration(integration.id, { config });
         onboardingStatus = data.integration.onboardingStatus;
         if (data.externalAuth) {
-          setExternalAuthSessions((current) => ({ ...current, [integration.id]: data.externalAuth }));
+          const externalAuthSession: ExternalAuthSessionInfo = data.externalAuth;
+          setExternalAuthSessions((current) => ({
+            ...current,
+            [integration.id]: externalAuthSession,
+          }));
+          openExternalAuthSession(externalAuthSession);
         }
       } catch (error) {
         if (!shouldFallbackToLegacySync(error)) {
@@ -819,10 +830,6 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               'Configuration saved. Finish the remaining onboarding steps before sync controls become available.',
             ),
       );
-      trackFunnelEvent('integration_config_saved', {
-        integrationId: integration.id,
-        connectorId: integration.connectorId,
-      });
       setEditingPendingConfigId(null);
       setPendingConfigDrafts((current) => ({ ...current, [integration.id]: {} }));
       await loadAll();
@@ -864,7 +871,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       try {
         const data = await V8SyncApi.reauthIntegration(integrationId);
         if (data.externalAuth) {
-          setExternalAuthSessions((current) => ({ ...current, [integrationId]: data.externalAuth }));
+          const externalAuthSession: ExternalAuthSessionInfo = data.externalAuth;
+          setExternalAuthSessions((current) => ({
+            ...current,
+            [integrationId]: externalAuthSession,
+          }));
+          openExternalAuthSession(externalAuthSession);
         }
         toast.success(
           data.onboardingStatus === 'pending_external_auth'
@@ -874,7 +886,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               )
             : t('integrations.syncHub.reauthStarted', 'Re-authorization started'),
         );
-        trackFunnelEvent('integration_reauth_started', { integrationId, onboardingStatus: data.onboardingStatus });
+        trackFunnelEvent('integration_reauth_required', {
+          integrationId,
+          onboardingStatus: data.onboardingStatus,
+        });
         await loadAll();
         return;
       } catch (error) {
@@ -889,7 +904,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       });
       if (res.ok) {
         toast.success(t('integrations.syncHub.reauthStarted', 'Re-authorization started'));
-        trackFunnelEvent('integration_reauth_started', { integrationId });
+        trackFunnelEvent('integration_reauth_required', { integrationId });
         await loadAll();
       }
     } catch {
@@ -1595,17 +1610,39 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           <div className="font-medium text-sky-200">
                             {t(
                               'integrations.syncHub.externalAuthPrepared',
-                              'Governed external auth return is prepared',
+                              'Governed external authorization is ready',
                             )}
                           </div>
+                          <div className="mt-2">
+                            <a
+                              href={externalAuthSession.authUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-md border border-sky-400/30 bg-sky-500/10 px-2.5 py-1.5 font-medium text-sky-100 hover:bg-sky-500/15 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink size={12} />
+                              {t(
+                                'integrations.syncHub.openExternalAuth',
+                                'Open provider authorization',
+                              )}
+                            </a>
+                          </div>
                           <div className="mt-1 text-sky-100/80 break-all">
-                            {externalAuthSession.callbackUrl}
+                            {externalAuthSession.authUrl}
                           </div>
                           <div className="mt-1 text-sky-100/60">
                             {t(
                               'integrations.syncHub.externalAuthPreparedDesc',
-                              'Use this callback URL in the provider authorization flow. It expires automatically if left unused.',
+                              'Use this governed authorization URL to finish the provider round-trip. It expires automatically if left unused.',
                             )}
+                          </div>
+                          <div className="mt-2 text-sky-100/60 break-all">
+                            {t(
+                              'integrations.syncHub.externalAuthCallbackUrl',
+                              'Registered callback URL:',
+                            )}{' '}
+                            {externalAuthSession.callbackUrl}
                           </div>
                         </div>
                       )}

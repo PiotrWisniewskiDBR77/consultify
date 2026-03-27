@@ -341,7 +341,12 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_READ_CONTRACT);
     expect(res.body.data?.count).toBeGreaterThan(0);
     expect(res.body.data?.connectors?.[0]?.category).toBe('project_management');
-    expect(res.body.data?.connectors?.[0]?.configFields).toEqual(['site_url', 'cloud_id']);
+    expect(res.body.data?.connectors?.[0]?.configFields).toEqual([
+      'site_url',
+      'cloud_id',
+      'client_id',
+      'client_secret',
+    ]);
   });
 
   it('POST /api/v8/sync/connectors/:connectorId/connect creates a governed pending integration', async () => {
@@ -353,7 +358,12 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.data?.integration?.connectorId).toBe('jira');
     expect(res.body.data?.integration?.status).toBe('pending');
     expect(res.body.data?.onboardingStatus).toBe('pending_external_auth_or_configuration');
-    expect(res.body.data?.integration?.configFields).toEqual(['site_url', 'cloud_id']);
+    expect(res.body.data?.integration?.configFields).toEqual([
+      'site_url',
+      'cloud_id',
+      'client_id',
+      'client_secret',
+    ]);
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integrations'),
       expect.arrayContaining([ORG, 'jira', 'Jira', 'project_management', 'pending', 'oauth2']),
@@ -377,17 +387,34 @@ describe('V8 sync read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/sync/integrations/int-pending-1/configure')
-      .send({ config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' } });
+      .send({
+        config: {
+          site_url: 'https://example.atlassian.net',
+          cloud_id: 'cloud-123',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
-    expect(res.body.data?.integration?.configuredFields).toEqual(['site_url', 'cloud_id']);
+    expect(res.body.data?.integration?.configuredFields).toEqual([
+      'site_url',
+      'cloud_id',
+      'client_id',
+      'client_secret',
+    ]);
     expect(res.body.data?.integration?.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.data?.externalAuth?.authUrl).toContain('https://auth.atlassian.com/authorize?');
     expect(res.body.data?.externalAuth?.callbackUrl).toContain('/api/sync-hub/external-auth/callback?state=');
     expect(res.body.data?.externalAuth?.state).toBeTruthy();
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE integrations'),
-      ['{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123"}', 'int-pending-1', ORG],
+      [
+        '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123","client_id":"jira-client-id","client_secret":"jira-client-secret"}',
+        'int-pending-1',
+        ORG,
+      ],
     );
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO integration_audit_log'),
@@ -469,7 +496,8 @@ describe('V8 sync read-only routes', () => {
     mockDbAll.mockResolvedValueOnce([
       {
         connector_id: 'jira',
-        config: '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123"}',
+        config:
+          '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123","client_id":"jira-client-id","client_secret":"jira-client-secret"}',
       },
     ]);
     const app = createApp();
@@ -479,6 +507,7 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_SYNC_RUNTIME_MUTATION_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(res.body.data?.onboardingStatus).toBe('pending_external_auth');
+    expect(res.body.data?.externalAuth?.authUrl).toContain('https://auth.atlassian.com/authorize?');
     expect(res.body.data?.externalAuth?.callbackUrl).toContain('/api/sync-hub/external-auth/callback?state=');
     expect(mockUpdateIntegrationStatus).toHaveBeenCalledWith('int-1', 'pending');
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({

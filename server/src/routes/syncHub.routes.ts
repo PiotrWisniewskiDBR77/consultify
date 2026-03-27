@@ -32,6 +32,10 @@ import {
 } from '../services/syncGuardrailsService.js';
 import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
 import { consumeSyncExternalAuthSession } from '../services/syncExternalAuthSessionService.js';
+import {
+  materializeGovernedExternalAuthCallback,
+  shouldMaterializeCallbackDrivenAuth,
+} from '../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
@@ -79,6 +83,15 @@ function renderExternalAuthCallbackHtml(title: string, message: string): string 
     </div>
   </body>
 </html>`;
+}
+
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 // ================================================================
@@ -175,6 +188,7 @@ router.get(
   '/external-auth/callback',
   asyncHandler(async (req: Request, res: Response) => {
     const state = typeof req.query.state === 'string' ? req.query.state.trim() : '';
+    const code = typeof req.query.code === 'string' ? req.query.code.trim() : '';
     if (!state) {
       return res
         .status(400)
@@ -198,6 +212,76 @@ router.get(
         );
     }
 
+    let callbackMaterialization:
+      | {
+          credentialStored: true;
+          refreshSecretStored: boolean;
+          tokenExpiresAt: string | null;
+          scopesGranted: string[];
+        }
+      | null = null;
+    if (shouldMaterializeCallbackDrivenAuth(session.connectorId)) {
+      if (!code) {
+        return res
+          .status(400)
+          .send(
+            renderExternalAuthCallbackHtml(
+              'Authorization callback failed',
+              'The provider callback did not include an authorization code. Start the governed authorization flow again from Consultify.',
+            ),
+          );
+      }
+
+      const integrationRows = await dbAll<{ config: string | null }>(
+        `SELECT config
+         FROM integrations
+         WHERE id = ? AND organization_id = ?
+         LIMIT 1`,
+        [session.integrationId, session.organizationId],
+      );
+      const integration = integrationRows[0];
+      if (!integration) {
+        return res
+          .status(404)
+          .send(
+            renderExternalAuthCallbackHtml(
+              'Authorization callback failed',
+              'The governed integration no longer exists. Start the sync authorization flow again from Consultify.',
+            ),
+          );
+      }
+
+      try {
+        callbackMaterialization = await materializeGovernedExternalAuthCallback({
+          req,
+          session,
+          config: safeJsonParse<Record<string, unknown>>(integration.config, {}),
+          code,
+        });
+      } catch (error) {
+        await logAudit(
+          session.organizationId,
+          session.integrationId,
+          'external_auth_callback_materialization_failed',
+          'external_auth_callback',
+          'external_auth_callback',
+          {
+            connectorId: session.connectorId,
+            mode: session.mode,
+            error: error instanceof Error ? error.message : 'Unknown callback materialization error',
+          },
+        );
+        return res
+          .status(502)
+          .send(
+            renderExternalAuthCallbackHtml(
+              'Authorization callback failed',
+              'Consultify could not exchange the provider authorization code into governed sync credentials. Start the authorization flow again after checking the connector OAuth app configuration.',
+            ),
+          );
+      }
+    }
+
     await setConnectorAuthState({
       connectorId: session.connectorId,
       organizationId: session.organizationId,
@@ -214,6 +298,10 @@ router.get(
       {
         connectorId: session.connectorId,
         mode: session.mode,
+        callbackMaterialized: Boolean(callbackMaterialization),
+        refreshSecretStored: callbackMaterialization?.refreshSecretStored ?? false,
+        tokenExpiresAt: callbackMaterialization?.tokenExpiresAt ?? null,
+        scopesGranted: callbackMaterialization?.scopesGranted ?? [],
       },
     );
 
@@ -222,7 +310,9 @@ router.get(
       .send(
         renderExternalAuthCallbackHtml(
           'Authorization callback received',
-          'Consultify recorded the external authorization return. Verification is still pending before sync controls become available.',
+          callbackMaterialization
+            ? 'Consultify exchanged the provider authorization into governed sync credential truth and stored the governed refresh material. Verification is still pending before sync controls become available.'
+            : 'Consultify recorded the external authorization return. Verification is still pending before sync controls become available.',
         ),
       );
   }),

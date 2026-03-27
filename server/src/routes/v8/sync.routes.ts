@@ -34,7 +34,6 @@ import {
   syncIntegration,
   updateIntegrationStatus,
 } from '../../services/integrationHubService.js';
-import { issueSyncExternalAuthSession } from '../../services/syncExternalAuthSessionService.js';
 import {
   checkRateLimit,
   getIntegrationHealth,
@@ -50,6 +49,10 @@ import {
   executeRefreshExecution,
   storeRefreshExecutionSecret,
 } from '../../services/v8/pmSyncRefreshExecutionService.js';
+import {
+  buildGovernedExternalAuthSession,
+  getGovernedExternalAuthConfigFields,
+} from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -65,10 +68,6 @@ function syncReadMeta() {
 
 function syncMutationMeta() {
   return { version: 'v8' as const, contract: V8_SYNC_RUNTIME_MUTATION_CONTRACT };
-}
-
-function buildExternalAuthCallbackUrl(req: AuthRequest, state: string): string {
-  return `${req.protocol}://${req.get('host')}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
 }
 
 const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<
@@ -206,6 +205,10 @@ function getConfiguredFields(
     const value = config[field];
     return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
   });
+}
+
+function getConnectorConfigFields(connectorId: string, baseFields: string[]): string[] {
+  return getGovernedExternalAuthConfigFields(connectorId, baseFields);
 }
 
 function getPendingOnboardingStatus(
@@ -465,7 +468,7 @@ router.get(
       const isV2Ready = ['slack', 'jira', 'gmail', 'asana', 'teams'].includes(c.id);
       return {
         ...c,
-        configFields: c.configFields,
+        configFields: getConnectorConfigFields(c.id, c.configFields),
         isAvailable: true,
         isV2Ready,
         comingSoon: !isV2Ready,
@@ -511,6 +514,7 @@ router.post(
     if (!connector) {
       return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
     }
+    const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
 
     const integrationId = `int-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const integrationName = parsedBody.data.displayName?.trim() || connector.name;
@@ -549,7 +553,7 @@ router.post(
           status: 'pending' as const,
           capabilities: connector.capabilities,
           authType: connector.authType,
-          configFields: connector.configFields,
+          configFields: connectorConfigFields,
           scopes,
         },
         onboardingStatus: 'pending_external_auth_or_configuration' as const,
@@ -608,19 +612,20 @@ router.post(
     if (!connector) {
       return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
     }
+    const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
 
     const currentConfig = safeJsonParse<Record<string, unknown>>(integration.config, {});
     const nextConfig = { ...currentConfig };
-    for (const field of connector.configFields) {
+    for (const field of connectorConfigFields) {
       if (Object.prototype.hasOwnProperty.call(parsedBody.data.config, field)) {
         nextConfig[field] = parsedBody.data.config[field];
       }
     }
 
-    const configuredFields = getConfiguredFields(connector.configFields, nextConfig);
+    const configuredFields = getConfiguredFields(connectorConfigFields, nextConfig);
     const onboardingStatus = getPendingOnboardingStatus(
       connector.authType,
-      connector.configFields,
+      connectorConfigFields,
       configuredFields,
     );
 
@@ -638,6 +643,7 @@ router.post(
 
     let externalAuth:
       | {
+          authUrl: string;
           callbackUrl: string;
           state: string;
           expiresAt: string;
@@ -652,17 +658,13 @@ router.post(
         transitionedBy: actorId,
         reason: 'external_auth_prepared',
       });
-      const session = issueSyncExternalAuthSession({
+      externalAuth = buildGovernedExternalAuthSession(req, {
         integrationId,
         organizationId,
         connectorId: connector.id,
         mode: 'connect',
+        config: nextConfig,
       });
-      externalAuth = {
-        callbackUrl: buildExternalAuthCallbackUrl(req, session.state),
-        state: session.state,
-        expiresAt: new Date(session.expiresAt).toISOString(),
-      };
     }
 
     return res.json({
@@ -745,46 +747,52 @@ router.post(
     if (!connector) {
       return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
     }
+    const connectorConfigFields = getConnectorConfigFields(connector.id, connector.configFields);
 
     const config = safeJsonParse<Record<string, unknown>>(integration.config, {});
-    const configuredFields = getConfiguredFields(connector.configFields, config);
+    const configuredFields = getConfiguredFields(connectorConfigFields, config);
     const onboardingStatus = getPendingOnboardingStatus(
       connector.authType,
-      connector.configFields,
+      connectorConfigFields,
       configuredFields,
     );
-
-    await updateIntegrationStatus(integrationId, 'pending');
-    await setConnectorAuthState({
-      connectorId: connector.id,
-      organizationId,
-      targetState: 'connecting',
-      transitionedBy: actorId,
-      reason: 'reauth_started',
-    });
 
     await logIntegrationAudit(organizationId, integrationId, 'reauth_started', actorId, actorId, {
       connectorId: connector.id,
       onboardingStatus,
     });
-
-    const session = issueSyncExternalAuthSession({
-      integrationId,
-      organizationId,
-      connectorId: connector.id,
-      mode: 'reauth',
-    });
+    let externalAuth:
+      | {
+          authUrl: string;
+          callbackUrl: string;
+          state: string;
+          expiresAt: string;
+        }
+      | undefined;
+    if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+      await updateIntegrationStatus(integrationId, 'pending');
+      await setConnectorAuthState({
+        connectorId: connector.id,
+        organizationId,
+        targetState: 'connecting',
+        transitionedBy: actorId,
+        reason: 'reauth_started',
+      });
+      externalAuth = buildGovernedExternalAuthSession(req, {
+        integrationId,
+        organizationId,
+        connectorId: connector.id,
+        mode: 'reauth',
+        config,
+      });
+    }
 
     return res.json({
       data: {
         success: true as const,
         message: 'Re-authorization initiated',
         onboardingStatus,
-        externalAuth: {
-          callbackUrl: buildExternalAuthCallbackUrl(req, session.state),
-          state: session.state,
-          expiresAt: new Date(session.expiresAt).toISOString(),
-        },
+        externalAuth,
       },
       meta: syncMutationMeta(),
     });

@@ -1,6 +1,7 @@
 import { all as dbAll } from '../../utils/DbPromise.js';
 import { CONNECTORS } from '../integrationHubService.js';
 import { getCredential } from './pmSyncAuthService.js';
+import { getGovernedExternalAuthConfigFields } from './pmSyncExternalAuthMaterializationService.js';
 import { getConnectorHealth } from './pmSyncTruthService.js';
 
 interface IntegrationRow {
@@ -83,6 +84,10 @@ function getConfiguredFields(configFields: string[], config: Record<string, unkn
     const value = config[field];
     return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
   });
+}
+
+function getConnectorConfigFields(connectorId: string, baseFields: string[]): string[] {
+  return getGovernedExternalAuthConfigFields(connectorId, baseFields);
 }
 
 function mapOnboardingStatus(
@@ -191,15 +196,18 @@ export async function listGovernedIntegrations(
       const credential = await getCredential(row.connector_id, organizationId);
       const capabilities = safeJsonParse<string[]>(row.capabilities, connector?.capabilities ?? []);
       const parsedConfig = safeJsonParse<Record<string, unknown>>(row.config, {});
+      const connectorConfigFields = connector
+        ? getConnectorConfigFields(connector.id, connector.configFields)
+        : [];
       const derivedStatus = mapIntegrationStatus(row.status, health.authState);
       const derivedHealth = mapInventoryHealth(health.syncStatus, health.healthy);
-      const configuredFields = connector ? getConfiguredFields(connector.configFields, parsedConfig) : [];
+      const configuredFields = connector ? getConfiguredFields(connectorConfigFields, parsedConfig) : [];
       const onboardingStatus = connector
         ? mapPendingOnboardingStatusFromAuth(
             derivedStatus,
             health.authState,
             connector.authType,
-            connector.configFields,
+            connectorConfigFields,
             configuredFields,
           )
         : null;
@@ -238,7 +246,7 @@ export async function listGovernedIntegrations(
               category: connector.category,
               capabilities,
               authType: connector.authType,
-              configFields: connector.configFields,
+              configFields: connectorConfigFields,
             }
           : null,
       };

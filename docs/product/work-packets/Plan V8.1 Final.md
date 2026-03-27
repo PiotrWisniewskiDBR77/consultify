@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `17`
+- landed packets in the current active lane: `18`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: residual assessment recorded in `evidence/463-v81-broader-sync-post-refresh-execution-residual-assessment.md`
-- reason: after real refresh execution landed, no thinner honest packet remained before callback-driven governed refresh secret or token materialization continuity
+- latest evidence: Jira callback-driven governed materialization continuity landed in `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`
+- reason: the active governed Jira path now returns a real provider authorization URL and materializes governed credential plus refresh-secret truth directly from callback completion instead of stopping at callback-arrived placeholder truth
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/463-v81-broader-sync-post-refresh-execution-residual-assessment.md`
+- current packet: `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `promote callback-driven governed refresh secret or token materialization continuity as the next honest broader-sync implementation step`
+- next action: `assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next honest broader-sync step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

@@ -95,6 +95,7 @@ import { V8SyncApi } from '../../../src/services/api/v8/sync';
 describe('UnifiedSyncHub V8 health continuity', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('open', vi.fn());
 
     vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
       integrations: [],
@@ -286,7 +287,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
           errorRate: 25,
           unresolvedErrors: 0,
           lastRun: null,
-          configuredFields: ['site_url', 'cloud_id'],
+          configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           onboardingStatus: null,
           credential: null,
           connector: {
@@ -295,7 +296,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
-            configFields: ['site_url', 'cloud_id'],
+            configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           },
         },
       ],
@@ -448,7 +449,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
-            configFields: ['site_url', 'cloud_id'],
+            configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           },
         },
       ],
@@ -468,7 +469,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
           errorRate: 0,
           unresolvedErrors: 0,
           lastRun: null,
-          configuredFields: ['site_url', 'cloud_id'],
+          configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           onboardingStatus: 'pending_external_auth',
           connector: {
             id: 'jira',
@@ -476,7 +477,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
-            configFields: ['site_url', 'cloud_id'],
+            configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           },
         },
       ],
@@ -728,7 +729,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
-            configFields: ['site_url', 'cloud_id'],
+            configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           },
         },
       ],
@@ -796,7 +797,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
-            configFields: ['site_url', 'cloud_id'],
+            configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           },
         },
       ],
@@ -816,7 +817,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
           errorRate: 25,
           unresolvedErrors: 0,
           lastRun: null,
-          configuredFields: ['site_url', 'cloud_id'],
+          configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           onboardingStatus: 'pending_external_auth',
           connector: {
             id: 'jira',
@@ -824,7 +825,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
             category: 'project_management',
             capabilities: ['issues'],
             authType: 'oauth2',
-            configFields: ['site_url', 'cloud_id'],
+            configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           },
         },
       ],
@@ -836,10 +837,11 @@ describe('UnifiedSyncHub V8 health continuity', () => {
         id: 'int-pending-2',
         connectorId: 'jira',
         status: 'pending',
-        configuredFields: ['site_url', 'cloud_id'],
+        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
         onboardingStatus: 'pending_external_auth',
       },
       externalAuth: {
+        authUrl: 'https://auth.atlassian.com/authorize?state=prepared',
         callbackUrl: 'https://example.com/api/sync-hub/external-auth/callback?state=prepared',
         state: 'prepared',
         expiresAt: '2026-03-27T19:00:00.000Z',
@@ -865,12 +867,23 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     fireEvent.change(screen.getByPlaceholderText('cloud id'), {
       target: { value: 'cloud-123' },
     });
+    fireEvent.change(screen.getByPlaceholderText('client id'), {
+      target: { value: 'jira-client-id' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('client secret'), {
+      target: { value: 'jira-client-secret' },
+    });
     vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(updatedIntegrations as any);
     fireEvent.click(screen.getByRole('button', { name: /Save provider config/i }));
 
     await waitFor(() => {
       expect(V8SyncApi.configureIntegration).toHaveBeenCalledWith('int-pending-2', {
-        config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' },
+        config: {
+          site_url: 'https://example.atlassian.net',
+          cloud_id: 'cloud-123',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
       });
     });
 
@@ -884,12 +897,28 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     expect(screen.getByText('site url saved')).toBeInTheDocument();
     expect(screen.getByText('cloud id saved')).toBeInTheDocument();
+    expect(screen.getByText('client id saved')).toBeInTheDocument();
+    expect(screen.getByText('client secret saved')).toBeInTheDocument();
     expect(screen.getByText('{{configured}} of {{total}} required setup fields saved.')).toBeInTheDocument();
     expect(screen.getByText('Finish external auth to enable sync controls')).toBeInTheDocument();
-    expect(screen.getByText('Governed external auth return is prepared')).toBeInTheDocument();
+    expect(screen.getByText('Governed external authorization is ready')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open provider authorization' })).toHaveAttribute(
+      'href',
+      'https://auth.atlassian.com/authorize?state=prepared',
+    );
     expect(
-      screen.getByText('https://example.com/api/sync-hub/external-auth/callback?state=prepared'),
+      screen.getByText('https://auth.atlassian.com/authorize?state=prepared'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText((content) =>
+        content.includes('https://example.com/api/sync-hub/external-auth/callback?state=prepared'),
+      ),
+    ).toBeInTheDocument();
+    expect(window.open).toHaveBeenCalledWith(
+      'https://auth.atlassian.com/authorize?state=prepared',
+      '_blank',
+      'noopener,noreferrer,width=900,height=780',
+    );
   });
 
   it('shows callback-received pending verification honesty on the governed hub', async () => {

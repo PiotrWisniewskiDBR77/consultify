@@ -181,6 +181,7 @@ export interface V8SyncConfiguredIntegration {
 }
 
 export interface V8SyncExternalAuthSession {
+  authUrl: string;
   callbackUrl: string;
   state: string;
   expiresAt: string;

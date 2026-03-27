@@ -74,7 +74,7 @@ describe('V8SyncApi', () => {
           category: 'project_management',
           capabilities: ['issues'],
           authType: 'oauth2',
-          configFields: ['site_url', 'cloud_id'],
+          configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
           isAvailable: true,
           isV2Ready: true,
           comingSoon: false,
@@ -88,7 +88,12 @@ describe('V8SyncApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/sync/connectors', { category: 'project_management' });
     expect(data.count).toBe(1);
     expect(data.connectors[0].id).toBe('jira');
-    expect(data.connectors[0].configFields).toEqual(['site_url', 'cloud_id']);
+    expect(data.connectors[0].configFields).toEqual([
+      'site_url',
+      'cloud_id',
+      'client_id',
+      'client_secret',
+    ]);
   });
 
   it('posts connect initiation to the governed V8 namespace', async () => {
@@ -101,7 +106,7 @@ describe('V8SyncApi', () => {
         status: 'pending',
         capabilities: ['issues'],
         authType: 'oauth2',
-        configFields: ['site_url', 'cloud_id'],
+        configFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
         scopes: ['read:issues'],
       },
       onboardingStatus: 'pending_external_auth_or_configuration',
@@ -112,7 +117,12 @@ describe('V8SyncApi', () => {
     expect(v8Post).toHaveBeenCalledWith('/sync/connectors/jira/connect', {});
     expect(data.integration.status).toBe('pending');
     expect(data.onboardingStatus).toBe('pending_external_auth_or_configuration');
-    expect(data.integration.configFields).toEqual(['site_url', 'cloud_id']);
+    expect(data.integration.configFields).toEqual([
+      'site_url',
+      'cloud_id',
+      'client_id',
+      'client_secret',
+    ]);
   });
 
   it('posts pending configuration updates to the governed V8 namespace', async () => {
@@ -121,10 +131,11 @@ describe('V8SyncApi', () => {
         id: 'int-1',
         connectorId: 'jira',
         status: 'pending',
-        configuredFields: ['site_url', 'cloud_id'],
+        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
         onboardingStatus: 'pending_external_auth',
       },
       externalAuth: {
+        authUrl: 'https://auth.atlassian.com/authorize?state=abc',
         callbackUrl: 'https://example.com/api/sync-hub/external-auth/callback?state=abc',
         state: 'abc',
         expiresAt: '2026-03-27T19:00:00.000Z',
@@ -132,14 +143,30 @@ describe('V8SyncApi', () => {
     });
 
     const data = await V8SyncApi.configureIntegration('int-1', {
-      config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' },
+      config: {
+        site_url: 'https://example.atlassian.net',
+        cloud_id: 'cloud-123',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
+      },
     });
 
     expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/configure', {
-      config: { site_url: 'https://example.atlassian.net', cloud_id: 'cloud-123' },
+      config: {
+        site_url: 'https://example.atlassian.net',
+        cloud_id: 'cloud-123',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
+      },
     });
-    expect(data.integration.configuredFields).toEqual(['site_url', 'cloud_id']);
+    expect(data.integration.configuredFields).toEqual([
+      'site_url',
+      'cloud_id',
+      'client_id',
+      'client_secret',
+    ]);
     expect(data.integration.onboardingStatus).toBe('pending_external_auth');
+    expect(data.externalAuth?.authUrl).toContain('https://auth.atlassian.com/authorize?');
     expect(data.externalAuth?.state).toBe('abc');
   });
 
@@ -149,6 +176,7 @@ describe('V8SyncApi', () => {
       message: 'Re-authorization initiated',
       onboardingStatus: 'pending_external_auth',
       externalAuth: {
+        authUrl: 'https://auth.atlassian.com/authorize?state=reauth',
         callbackUrl: 'https://example.com/api/sync-hub/external-auth/callback?state=reauth',
         state: 'reauth',
         expiresAt: '2026-03-27T19:00:00.000Z',
@@ -160,6 +188,7 @@ describe('V8SyncApi', () => {
     expect(v8Post).toHaveBeenCalledWith('/sync/integrations/int-1/reauth', {});
     expect(data.success).toBe(true);
     expect(data.onboardingStatus).toBe('pending_external_auth');
+    expect(data.externalAuth?.authUrl).toContain('https://auth.atlassian.com/authorize?');
     expect(data.externalAuth?.state).toBe('reauth');
   });
 
