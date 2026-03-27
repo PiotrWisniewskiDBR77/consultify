@@ -129,6 +129,8 @@ const AppConfigSchema = JWTConfigSchema.merge(ServerConfigSchema)
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     GOOGLE_CALLBACK_URL: z.string().url().optional(),
+    ASANA_CLIENT_ID: z.string().optional(),
+    ASANA_CLIENT_SECRET: z.string().optional(),
     LINKEDIN_CLIENT_ID: z.string().optional(),
     LINKEDIN_CLIENT_SECRET: z.string().optional(),
     LINKEDIN_CALLBACK_URL: z.string().url().optional(),
@@ -146,6 +148,10 @@ const AppConfigSchema = JWTConfigSchema.merge(ServerConfigSchema)
       const googleHasAll =
         data.GOOGLE_CLIENT_ID && data.GOOGLE_CLIENT_SECRET && data.GOOGLE_CALLBACK_URL;
       if (googleHasAny && !googleHasAll) return false;
+
+      const asanaHasAny = data.ASANA_CLIENT_ID || data.ASANA_CLIENT_SECRET;
+      const asanaHasAll = data.ASANA_CLIENT_ID && data.ASANA_CLIENT_SECRET;
+      if (asanaHasAny && !asanaHasAll) return false;
 
       // LinkedIn OAuth validation
       const linkedinHasAny =
@@ -200,6 +206,8 @@ export function validateConfig(): ValidatedConfig {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+    ASANA_CLIENT_ID: process.env.ASANA_CLIENT_ID,
+    ASANA_CLIENT_SECRET: process.env.ASANA_CLIENT_SECRET,
     LINKEDIN_CLIENT_ID: process.env.LINKEDIN_CLIENT_ID,
     LINKEDIN_CLIENT_SECRET: process.env.LINKEDIN_CLIENT_SECRET,
     LINKEDIN_CALLBACK_URL: process.env.LINKEDIN_CALLBACK_URL,

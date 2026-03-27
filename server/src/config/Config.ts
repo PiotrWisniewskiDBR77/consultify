@@ -36,6 +36,10 @@ const AppConfigSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALLBACK_URL: z.string().url().optional(),
 
+  // OAuth: Asana
+  ASANA_CLIENT_ID: z.string().optional(),
+  ASANA_CLIENT_SECRET: z.string().optional(),
+
   // OAuth: LinkedIn
   LINKEDIN_CLIENT_ID: z.string().optional(),
   LINKEDIN_CLIENT_SECRET: z.string().optional(),
@@ -114,6 +118,8 @@ function loadConfig(): AppConfig {
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_CALLBACK_URL:
       process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3005/api/auth/google/callback',
+    ASANA_CLIENT_ID: process.env.ASANA_CLIENT_ID,
+    ASANA_CLIENT_SECRET: process.env.ASANA_CLIENT_SECRET,
     LINKEDIN_CLIENT_ID: process.env.LINKEDIN_CLIENT_ID,
     LINKEDIN_CLIENT_SECRET: process.env.LINKEDIN_CLIENT_SECRET,
     LINKEDIN_CALLBACK_URL:

@@ -8,6 +8,8 @@ vi.mock('../../../config/Config.js', () => ({
   default: {
     GOOGLE_CLIENT_ID: 'google-client-id',
     GOOGLE_CLIENT_SECRET: 'google-client-secret',
+    ASANA_CLIENT_ID: 'asana-client-id',
+    ASANA_CLIENT_SECRET: 'asana-client-secret',
     MICROSOFT_CLIENT_ID: 'microsoft-client-id',
     MICROSOFT_CLIENT_SECRET: 'microsoft-client-secret',
     SLACK_CLIENT_ID: 'slack-client-id',
@@ -163,6 +165,117 @@ describe('pmSyncExternalAuthMaterializationService', () => {
 
   it('marks gmail as eligible for callback-driven materialization', () => {
     expect(shouldMaterializeCallbackDrivenAuth('gmail')).toBe(true);
+  });
+
+  it('builds a real Asana provider authorization URL on the governed path', () => {
+    const session = buildGovernedExternalAuthSession(
+      {
+        protocol: 'https',
+        get: (header: string) => {
+          if (header === 'host') return 'consultify.test';
+          return undefined;
+        },
+      },
+      {
+        integrationId: 'int-asana-1',
+        organizationId: '00000000-0000-4000-8000-000000000099',
+        connectorId: 'asana',
+        mode: 'connect',
+        config: { workspace_gid: 'workspace-123' },
+      },
+    );
+
+    expect(session.authUrl).toContain('https://app.asana.com/-/oauth_authorize?');
+    expect(session.authUrl).toContain('client_id=asana-client-id');
+    expect(session.authUrl).toContain('response_type=code');
+  });
+
+  it('materializes Asana governed callback auth truth and stores refresh material', async () => {
+    mockStoreRefreshExecutionSecret.mockResolvedValueOnce({
+      connectorId: 'asana',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      clientId: 'asana-client-id',
+      tokenEndpoint: 'https://app.asana.com/-/oauth_token',
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: 'asana-access-1',
+          refresh_token: 'asana-refresh-1',
+          expires_in: 3600,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            gid: 'user-123',
+            email: 'alice@acme.com',
+            name: 'Alice',
+          },
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await materializeGovernedExternalAuthCallback({
+      req: {
+        protocol: 'https',
+        get: (header: string) => {
+          if (header === 'host') return 'consultify.test';
+          return undefined;
+        },
+      },
+      session: {
+        state: 'state-1',
+        connectorId: 'asana',
+        organizationId: '00000000-0000-4000-8000-000000000099',
+      },
+      config: {
+        workspace_gid: 'workspace-123',
+      },
+      code: 'asana-code-1',
+    });
+
+    expect(result.credentialStored).toBe(true);
+    expect(result.refreshSecretStored).toBe(true);
+    expect(result.scopesGranted).toEqual(['default']);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://app.asana.com/-/oauth_token',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://app.asana.com/api/1.0/users/me',
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer asana-access-1' },
+      }),
+    );
+    expect(mockStoreCredential).toHaveBeenCalledWith({
+      connectorId: 'asana',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      providerAccountId: 'alice@acme.com',
+      workspaceOrTenantId: 'workspace-123',
+      scopesGranted: ['default'],
+      tokenExpiresAt: expect.any(String),
+    });
+    expect(mockStoreRefreshExecutionSecret).toHaveBeenCalledWith({
+      connectorId: 'asana',
+      organizationId: '00000000-0000-4000-8000-000000000099',
+      clientId: 'asana-client-id',
+      clientSecret: 'asana-client-secret',
+      refreshToken: 'asana-refresh-1',
+      tokenEndpoint: 'https://app.asana.com/-/oauth_token',
+    });
+  });
+
+  it('marks asana as eligible for callback-driven materialization', () => {
+    expect(shouldMaterializeCallbackDrivenAuth('asana')).toBe(true);
   });
 
   it('builds a real Teams provider authorization URL on the governed path', () => {

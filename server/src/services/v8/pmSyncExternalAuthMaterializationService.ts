@@ -34,6 +34,10 @@ const JIRA_AUTHORIZE_ENDPOINT = 'https://auth.atlassian.com/authorize';
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 const GOOGLE_AUTHORIZE_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_USERINFO_ENDPOINT = 'https://www.googleapis.com/oauth2/v3/userinfo';
+const ASANA_TOKEN_ENDPOINT = 'https://app.asana.com/-/oauth_token';
+const ASANA_AUTHORIZE_ENDPOINT = 'https://app.asana.com/-/oauth_authorize';
+const ASANA_USER_ENDPOINT = 'https://app.asana.com/api/1.0/users/me';
+const DEFAULT_ASANA_SCOPES = ['default'];
 const DEFAULT_GMAIL_SCOPES = [
   'openid',
   'email',
@@ -88,6 +92,20 @@ function getGoogleAuthConfig(): { clientId: string; clientSecret: string } {
   return {
     clientId,
     clientSecret: config.GOOGLE_CLIENT_SECRET,
+  };
+}
+
+function getAsanaAuthConfig(): { clientId: string; clientSecret: string } {
+  if (!config.ASANA_CLIENT_ID) {
+    throw new Error('Governed Asana external auth client id is unavailable');
+  }
+  if (!config.ASANA_CLIENT_SECRET) {
+    throw new Error('Governed Asana external auth client secret is unavailable');
+  }
+
+  return {
+    clientId: config.ASANA_CLIENT_ID,
+    clientSecret: config.ASANA_CLIENT_SECRET,
   };
 }
 
@@ -199,6 +217,23 @@ export function buildGovernedExternalAuthSession(
     };
   }
 
+  if (normalizeConnectorId(context.connectorId) === 'asana') {
+    const asanaConfig = getAsanaAuthConfig();
+    const params = new URLSearchParams({
+      client_id: asanaConfig.clientId,
+      redirect_uri: callbackUrl,
+      response_type: 'code',
+      state: session.state,
+    });
+
+    return {
+      authUrl: `${ASANA_AUTHORIZE_ENDPOINT}?${params.toString()}`,
+      callbackUrl,
+      state: session.state,
+      expiresAt: new Date(session.expiresAt).toISOString(),
+    };
+  }
+
   if (normalizeConnectorId(context.connectorId) === 'teams') {
     const parsed = TeamsMaterializationConfigSchema.parse(context.config);
     const microsoftConfig = getMicrosoftAuthConfig();
@@ -248,7 +283,7 @@ export function buildGovernedExternalAuthSession(
 }
 
 export function shouldMaterializeCallbackDrivenAuth(connectorId: string): boolean {
-  return ['jira', 'gmail', 'teams', 'slack'].includes(normalizeConnectorId(connectorId));
+  return ['jira', 'gmail', 'asana', 'teams', 'slack'].includes(normalizeConnectorId(connectorId));
 }
 
 export async function materializeGovernedExternalAuthCallback(params: {
@@ -409,6 +444,95 @@ export async function materializeGovernedExternalAuthCallback(params: {
         clientSecret: googleConfig.clientSecret,
         refreshToken: payload.refresh_token,
         tokenEndpoint: GOOGLE_TOKEN_ENDPOINT,
+      });
+      refreshSecretStored = true;
+    }
+
+    return {
+      credentialStored: true,
+      refreshSecretStored,
+      tokenExpiresAt,
+      scopesGranted,
+    };
+  }
+
+  if (normalizedConnectorId === 'asana') {
+    const asanaConfig = getAsanaAuthConfig();
+    const parsed = z.object({ workspace_gid: z.string().trim().min(1) }).parse(params.config);
+    const response = await fetch(ASANA_TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: asanaConfig.clientId,
+        client_secret: asanaConfig.clientSecret,
+        code: params.code,
+        redirect_uri: callbackUrl,
+      }).toString(),
+    });
+
+    const payload = (await response.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      scope?: string;
+      error?: string;
+      error_description?: string;
+    };
+
+    if (!response.ok || typeof payload.access_token !== 'string' || payload.access_token.length === 0) {
+      throw new Error(payload.error_description || payload.error || 'Failed to exchange external auth code');
+    }
+
+    const userResponse = await fetch(ASANA_USER_ENDPOINT, {
+      headers: {
+        Authorization: `Bearer ${payload.access_token}`,
+      },
+    });
+    const userPayload = (await userResponse.json()) as {
+      data?: {
+        gid?: string;
+        email?: string;
+        name?: string;
+      };
+      errors?: Array<{ message?: string }>;
+    };
+
+    if (!userResponse.ok || typeof userPayload.data?.gid !== 'string' || userPayload.data.gid.length === 0) {
+      throw new Error(
+        userPayload.errors?.[0]?.message || 'Failed to resolve Asana user info for governed external auth',
+      );
+    }
+
+    const tokenExpiresAt =
+      typeof payload.expires_in === 'number' && payload.expires_in > 0
+        ? new Date(Date.now() + payload.expires_in * 1000).toISOString()
+        : null;
+    const scopesGranted = parseGrantedScopes(payload.scope, DEFAULT_ASANA_SCOPES);
+
+    await storeCredential({
+      connectorId: params.session.connectorId,
+      organizationId: params.session.organizationId,
+      providerAccountId:
+        typeof userPayload.data.email === 'string' && userPayload.data.email.trim().length > 0
+          ? userPayload.data.email.trim()
+          : userPayload.data.gid,
+      workspaceOrTenantId: parsed.workspace_gid,
+      scopesGranted,
+      tokenExpiresAt,
+    });
+
+    let refreshSecretStored = false;
+    if (typeof payload.refresh_token === 'string' && payload.refresh_token.trim().length > 0) {
+      await storeRefreshExecutionSecret({
+        connectorId: params.session.connectorId,
+        organizationId: params.session.organizationId,
+        clientId: asanaConfig.clientId,
+        clientSecret: asanaConfig.clientSecret,
+        refreshToken: payload.refresh_token,
+        tokenEndpoint: ASANA_TOKEN_ENDPOINT,
       });
       refreshSecretStored = true;
     }
@@ -593,6 +717,9 @@ export async function materializeGovernedExternalAuthCallback(params: {
 
 export function hasGovernedExternalAuthEnvConfig(connectorId: string): boolean {
   const normalized = normalizeConnectorId(connectorId);
+  if (normalized === 'asana') {
+    return Boolean(config.ASANA_CLIENT_ID && config.ASANA_CLIENT_SECRET);
+  }
   if (normalized === 'gmail') {
     return Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
   }
