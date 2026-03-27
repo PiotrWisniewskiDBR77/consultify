@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: Jira callback-driven governed materialization continuity landed in `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`
-- reason: the active governed Jira path now returns a real provider authorization URL and materializes governed credential plus refresh-secret truth directly from callback completion instead of stopping at callback-arrived placeholder truth
+- latest evidence: post-Jira-callback residual assessment recorded in `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md`
+- reason: after Jira callback-driven governed materialization landed on the active V8 path, a thinner org-level authority seam still remains because canonical and alias `/api/integrations` connect routes still emit placeholder callback `authUrl` truth instead of the real governed provider round-trip
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`
+- current packet: `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next honest broader-sync step`
+- next action: `promote canonical org-level Jira provider-auth initiation continuity across canonical and alias /api/integrations connect routes as the next honest broader-sync implementation step`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

@@ -446,7 +446,9 @@ Current status: `active`
 - [x] promoted callback-driven governed refresh secret or token materialization continuity as the next honest broader-sync implementation step
 - [x] eighteenth real bounded packet landed around Jira callback-driven governed credential and refresh-secret materialization continuity on the active governed path
 - [x] focused regression added for Jira callback-driven governed materialization continuity across route, client, callback, and active `UnifiedSyncHub` surfaces
-- [ ] assess whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next smallest honest broader-sync packet
+- [x] assessed whether wider callback-driven provider round-trip coverage or deeper authority alignment is now the next smallest honest broader-sync packet
+- [x] recorded post-Jira-callback residual assessment confirming that canonical and alias org-level Jira connect routes still form a thinner authority seam before wider provider coverage
+- [ ] promote canonical org-level Jira provider-auth initiation continuity across canonical and alias `/api/integrations` connect routes as the next honest broader-sync implementation step
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1266,6 +1268,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: recorded the broader `Sync` post-Jira-callback residual assessment in `evidence/465-v81-broader-sync-post-jira-callback-materialization-residual-assessment.md`, confirming that canonical and alias `/api/integrations` Jira connect routes still form the next thinner authority seam before wider provider coverage
 - 2026-03-27: landed the eighteenth real bounded packet inside broader `Sync` completion by giving governed Jira a real provider authorization round-trip plus callback-driven governed credential and refresh-secret materialization in `evidence/464-v81-broader-sync-jira-callback-driven-governed-materialization-continuity-seam.md`, so the active Jira path no longer depends on a manual post-callback secret write before governed refresh continuity can operate
 - 2026-03-27: recorded the broader `Sync` post-refresh-execution residual assessment in `evidence/463-v81-broader-sync-post-refresh-execution-residual-assessment.md`, confirming that no thinner honest packet remains before callback-driven governed refresh secret or token materialization continuity
 - 2026-03-27: landed the seventeenth real bounded packet inside broader `Sync` completion by adding governed refresh-secret materialization plus real refresh execution on the active runtime path in `evidence/462-v81-broader-sync-governed-refresh-execution-continuity-seam.md`, so stale oauth credentials no longer stop at a fake `not wired yet` boundary before sync
