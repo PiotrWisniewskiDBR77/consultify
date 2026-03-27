@@ -69,11 +69,13 @@ import {
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
 import {
+  computeModel,
   getModel,
   getOutputs,
   getValidations,
   listEvents,
   listModels,
+  persistComputeResult,
 } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
@@ -284,6 +286,37 @@ router.get(
 
     return res.json({
       data: { raw: outputs, grouped },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.post(
+  '/models/:modelId/compute',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const result = await computeModel(modelId);
+    await persistComputeResult(modelId, result, model.scenario || 'base');
+    const validationSummary = {
+      total: result.validations.length,
+      pass: result.validations.filter((item: any) => item.status === 'pass').length,
+      fail: result.validations.filter((item: any) => item.status === 'fail').length,
+      warning: result.validations.filter((item: any) => item.status === 'warning').length,
+    };
+
+    return res.json({
+      data: {
+        success: true,
+        overallStatus: result.overallStatus,
+        periodCount: result.periods.length,
+        validationSummary,
+      },
       meta: financeMeta(),
     });
   }),

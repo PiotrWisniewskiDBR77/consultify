@@ -45,6 +45,7 @@ vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     runAnalysis: vi.fn(),
     approveAnalysis: vi.fn(),
+    computeModel: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -90,9 +91,23 @@ const analysisRow = {
   updatedAt: '2026-03-26T10:00:00.000Z',
 } as any;
 
+const predictionRow = {
+  id: 'model-1',
+  kind: 'prediction',
+  title: 'Revenue forecast',
+  status: 'DRAFT',
+  predictionType: 'model',
+  updatedAt: '2026-03-26T10:00:00.000Z',
+} as any;
+
 function FooterHarness() {
   const { renderPreviewFooter } = useFinancePreview(previewParams as any);
   return <>{renderPreviewFooter(analysisRow)}</>;
+}
+
+function PredictionFooterHarness() {
+  const { renderPreviewFooter } = useFinancePreview(previewParams as any);
+  return <>{renderPreviewFooter(predictionRow)}</>;
 }
 
 describe('FinancePreviewPanel V8 analysis mutations', () => {
@@ -139,6 +154,39 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
       expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
+    });
+  });
+
+  it('prefers governed preview compute action before legacy fallback', async () => {
+    vi.mocked(V8FinanceApi.computeModel).mockResolvedValue({ success: true } as any);
+
+    render(<PredictionFooterHarness />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Przelicz' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.computeModel).toHaveBeenCalledWith('model-1');
+      expect(previewParams.loadPredictionPreview).toHaveBeenCalledWith('model-1');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+  });
+
+  it('falls back to legacy preview compute action on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.computeModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    render(<PredictionFooterHarness />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Przelicz' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+      expect(previewParams.loadPredictionPreview).toHaveBeenCalledWith('model-1');
     });
   });
 });

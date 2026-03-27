@@ -11,6 +11,7 @@ const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
+const mockComputeModel = vi.fn();
 const mockGetOutputs = vi.fn();
 const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
@@ -64,6 +65,7 @@ const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 const mockSyncStatementToPack = vi.fn();
 const mockAutoMapLines = vi.fn();
+const mockPersistComputeResult = vi.fn();
 
 vi.mock('../../../services/v8/financeIntegrationService.js', () => ({
   getFinanceDashboard: (...args: unknown[]) => mockGetFinanceDashboard(...args),
@@ -79,11 +81,13 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
+  computeModel: (...args: unknown[]) => mockComputeModel(...args),
   getModel: (...args: unknown[]) => mockGetModel(...args),
   getOutputs: (...args: unknown[]) => mockGetOutputs(...args),
   getValidations: (...args: unknown[]) => mockGetValidations(...args),
   listEvents: (...args: unknown[]) => mockListEvents(...args),
   listModels: (...args: unknown[]) => mockListModels(...args),
+  persistComputeResult: (...args: unknown[]) => mockPersistComputeResult(...args),
 }));
 
 vi.mock('../../../services/financialStatementPackService.js', () => ({
@@ -544,6 +548,43 @@ describe('V8 finance read-only routes', () => {
     ]);
     expect(mockGetModel).toHaveBeenCalledWith('model-1');
     expect(mockGetOutputs).toHaveBeenCalledWith('model-1', 'base');
+  });
+
+  it('POST /api/v8/finance/models/:id/compute returns envelope and delegates to computeModel', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+      scenario: 'base',
+    });
+    mockComputeModel.mockResolvedValue({
+      overallStatus: 'warning',
+      periods: ['2026-01', '2026-02'],
+      validations: [
+        { status: 'pass' },
+        { status: 'warning' },
+      ],
+    });
+    mockPersistComputeResult.mockResolvedValue(undefined);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models/model-1/compute').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({
+      success: true,
+      overallStatus: 'warning',
+      periodCount: 2,
+      validationSummary: { total: 2, pass: 1, fail: 0, warning: 1 },
+    });
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockComputeModel).toHaveBeenCalledWith('model-1');
+    expect(mockPersistComputeResult).toHaveBeenCalledWith(
+      'model-1',
+      expect.objectContaining({ overallStatus: 'warning' }),
+      'base',
+    );
   });
 
   it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {

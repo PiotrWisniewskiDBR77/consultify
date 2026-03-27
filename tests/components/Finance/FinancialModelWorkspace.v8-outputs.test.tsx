@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -35,6 +35,7 @@ vi.mock('@/services/api', () => {
 
 vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
+    computeModel: vi.fn(),
     getModel: vi.fn(),
     getModelOutputs: vi.fn(),
     getModelValidations: vi.fn(),
@@ -128,5 +129,46 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
     });
 
     expect(V8FinanceApi.getModelOutputs).toHaveBeenCalledWith('model-1');
+  });
+
+  it('prefers governed model compute before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.computeModel).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Compute' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Compute' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.computeModel).toHaveBeenCalledWith('model-1');
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+  });
+
+  it('falls back to legacy model compute in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
+    vi.mocked(V8FinanceApi.computeModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Compute' })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Compute' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+    });
   });
 });

@@ -143,6 +143,17 @@ async function getModelOutputsWithFallback(modelId: string) {
   }
 }
 
+async function computeModelWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.computeModel(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/financial-modeling/models/${modelId}/compute`, {});
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -421,7 +432,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     setComputing(true);
     setError(null);
     try {
-      await Api.post(`/api/financial-modeling/models/${selectedModel.id}/compute`, {});
+      await computeModelWithFallback(selectedModel.id);
 
       // Load outputs
       const outData = await getModelOutputsWithFallback(selectedModel.id);

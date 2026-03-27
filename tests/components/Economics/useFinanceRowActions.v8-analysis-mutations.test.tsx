@@ -28,6 +28,7 @@ vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     runAnalysis: vi.fn(),
     approveAnalysis: vi.fn(),
+    computeModel: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -61,6 +62,14 @@ const analysisRow = {
   title: 'Working capital analysis',
   status: 'DRAFT',
   analysisType: 'financial',
+} as any;
+
+const predictionRow = {
+  id: 'model-1',
+  kind: 'prediction',
+  title: 'Revenue forecast',
+  status: 'DRAFT',
+  predictionType: 'model',
 } as any;
 
 describe('useFinanceRowActions V8 analysis mutations', () => {
@@ -105,5 +114,37 @@ describe('useFinanceRowActions V8 analysis mutations', () => {
 
     expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
     expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
+  });
+
+  it('prefers governed model compute action before legacy fallback', async () => {
+    vi.mocked(V8FinanceApi.computeModel).mockResolvedValue({ success: true } as any);
+
+    const { result } = renderHook(() => useFinanceRowActions(baseParams));
+    const actions = result.current.getRowActions(predictionRow);
+    const computeAction = actions.find((action) => action.id === 'compute');
+
+    await act(async () => {
+      await computeAction?.onClick();
+    });
+
+    expect(V8FinanceApi.computeModel).toHaveBeenCalledWith('model-1');
+    expect(baseParams.loadPredictionPreview).toHaveBeenCalledWith('model-1');
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+  });
+
+  it('falls back to legacy model compute action on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.computeModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+
+    const { result } = renderHook(() => useFinanceRowActions(baseParams));
+    const actions = result.current.getRowActions(predictionRow);
+    const computeAction = actions.find((action) => action.id === 'compute');
+
+    await act(async () => {
+      await computeAction?.onClick();
+    });
+
+    expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/compute', {});
+    expect(baseParams.loadPredictionPreview).toHaveBeenCalledWith('model-1');
   });
 });

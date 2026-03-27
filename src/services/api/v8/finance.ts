@@ -102,6 +102,18 @@ export interface V8FinanceModelOutputsResult {
   grouped: Record<string, Record<string, V8FinanceModelOutputLine[]>>;
 }
 
+export interface V8FinanceModelComputeResult {
+  success: boolean;
+  overallStatus: string;
+  periodCount: number;
+  validationSummary: {
+    total: number;
+    pass: number;
+    fail: number;
+    warning: number;
+  };
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -361,6 +373,8 @@ export const V8FinanceApi = {
     v8Get<V8FinanceModelOutputsResult>(`/finance/models/${modelId}/outputs`, {
       ...(params?.scenario ? { scenario: params.scenario } : {}),
     }),
+  computeModel: (modelId: string) =>
+    v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>

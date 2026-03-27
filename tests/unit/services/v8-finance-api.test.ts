@@ -157,6 +157,22 @@ describe('V8FinanceApi', () => {
     expect(data.grouped['2026-01']['P&L'][0].lineName).toBe('Revenue');
   });
 
+  it('posts governed finance model compute through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      success: true,
+      overallStatus: 'warning',
+      periodCount: 2,
+      validationSummary: { total: 2, pass: 1, fail: 0, warning: 1 },
+    });
+
+    const data = await V8FinanceApi.computeModel('model-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/models/model-1/compute', {});
+    expect(data.success).toBe(true);
+    expect(data.periodCount).toBe(2);
+    expect(data.validationSummary.warning).toBe(1);
+  });
+
   it('requests governed finance statement packs from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statementPacks: [

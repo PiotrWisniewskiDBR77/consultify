@@ -37,6 +37,17 @@ const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   valuation: Target,
 };
 
+async function computeModelWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.computeModel(modelId);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post(`/api/financial-modeling/models/${modelId}/compute`, {});
+  }
+}
+
 interface FinancePreviewPanelProps {
   statementPreviewDetail: PreviewDataState['statementPreviewDetail'];
   statementPreviewRatios: PreviewDataState['statementPreviewRatios'];
@@ -1044,7 +1055,7 @@ export function useFinancePreview({
             label: t('finance.actions.compute', 'Przelicz'),
             onClick: async () => {
               try {
-                await Api.post(`/api/financial-modeling/models/${row.id}/compute`, {});
+                await computeModelWithFallback(row.id);
                 await loadPredictionPreview(row.id);
                 toast.success(t('finance.toast.computed', 'Prognoza przeliczona'));
               } catch (e: any) {
