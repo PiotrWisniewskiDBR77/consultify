@@ -77,7 +77,8 @@ Status vocabulary:
 | `Landing Anna backend analytics / dashboard breadth` | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_LANDING_ANNA_BACKEND_ANALYTICS_DASHBOARD_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/333-v81-landing-anna-backend-analytics-dashboard-breadth-split-brain-map.md`; landed packets: `evidence/334-v81-landing-anna-public-funnel-ingest-continuity-seam.md`, `evidence/335-v81-landing-anna-operator-readback-continuity-seam.md`; accepted in `evidence/336-v81-landing-anna-backend-analytics-dashboard-breadth-t4-acceptance.md` |
 | `Landing Anna` broader voice UX / architecture | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_LANDING_ANNA_BROADER_VOICE_UX_ARCHITECTURE_CHARTER.md`; split-brain map recorded in `evidence/337-v81-landing-anna-broader-voice-ux-architecture-split-brain-map.md`; landed packets: `evidence/338-v81-landing-anna-voice-transcript-continuity-seam.md`, `evidence/339-v81-landing-anna-voice-history-bootstrap-continuity-seam.md`, `evidence/340-v81-landing-anna-voice-channel-truth-continuity-seam.md`, `evidence/341-v81-landing-anna-voice-config-authority-continuity-seam.md`, `evidence/342-v81-landing-anna-voice-enabled-authority-continuity-seam.md`, `evidence/343-v81-landing-anna-voice-surface-status-authority-continuity-seam.md`; accepted in `evidence/344-v81-landing-anna-broader-voice-ux-architecture-t4-acceptance.md` |
 | broader canonical `/` and public marketing breadth | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CANONICAL_PUBLIC_MARKETING_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/345-v81-broader-canonical-public-marketing-breadth-split-brain-map.md`; landed packets: `evidence/346-v81-broader-canonical-public-marketing-hero-messaging-authority-seam.md`, `evidence/347-v81-broader-canonical-public-marketing-trust-strip-order-authority-seam.md`, `evidence/349-v81-broader-canonical-public-marketing-problem-platform-pattern-seam.md`, `evidence/351-v81-broader-canonical-public-marketing-value-journey-seam.md`, `evidence/353-v81-broader-canonical-public-marketing-extended-scope-seam.md`; accepted in `evidence/354-v81-broader-canonical-public-marketing-t4-acceptance.md` |
-| broader `Mobile` redesign | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`; split-brain map recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`; landed packets: `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`, `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`, `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`, `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`; next move is to assess the next honest broader-mobile packet |
+| broader `Mobile` redesign | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_MOBILE_REDESIGN_CHARTER.md`; split-brain map recorded in `evidence/355-v81-broader-mobile-redesign-split-brain-map.md`; landed packets: `evidence/356-v81-broader-mobile-redesign-table-preview-mobile-overlay-seam.md`, `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`, `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`, `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`; accepted in `evidence/360-v81-broader-mobile-redesign-t4-acceptance.md` |
+| broader `Chat / AI core` parity expansion | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`; split-brain map recorded in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`; next move is to assess the first real bounded broader chat/ai-core packet |
 
 ---
 
@@ -127,7 +128,7 @@ Current status: `done`
 
 ### broader `Mobile` redesign
 
-Current status: `active`
+Current status: `done`
 
 - [x] broader `Mobile` redesign charter written
 - [x] split-brain map captured for the broader mobile residual after accepted `Mobile / Landing` and `Mobile breadth` cuts
@@ -141,6 +142,18 @@ Current status: `active`
 - [x] focused regression added for shared mobile header compact `LLMSelector` continuity
 - [x] fourth bounded packet landed around shared `MainLayout` global rail mobile anchoring continuity
 - [x] focused regression added for shared global rail mobile anchoring continuity
+- [x] assessed whether any smaller honest broader-mobile packet remains after the four shared mobile-shell closures
+- [x] lane accepted and moved to `done`
+
+### broader `Chat / AI core` parity expansion
+
+Current status: `active`
+
+- [x] explicit follow-on promotion granted after broader `Mobile` redesign acceptance
+- [x] broader `Chat / AI core` parity expansion charter written
+- [x] split-brain map captured for the broader chat/ai-core residual after accepted bounded `Chat` and `AI core` cuts
+- [x] first evidence-first packet defined around the broader chat/ai-core parity split-brain map
+- [ ] assess the first real bounded broader chat/ai-core packet after the split-brain map
 - [ ] lane accepted and moved to `done`
 
 ### `Landing Anna backend analytics / dashboard breadth`
@@ -961,6 +974,7 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-27: accepted broader `Mobile` redesign in `evidence/360-v81-broader-mobile-redesign-t4-acceptance.md` after four shared mobile-shell packets landed, then promoted broader `Chat / AI core` parity expansion into `active`, added charter `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`, and recorded the initial split-brain map in `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`
 - 2026-03-27: landed the fourth bounded packet inside broader `Mobile` redesign by anchoring the shared right-edge global action rail above the mobile bottom-nav strip in `evidence/359-v81-broader-mobile-redesign-main-layout-global-rail-mobile-anchor-seam.md`, so the global FAB stack no longer relies on desktop percentage positioning on phone widths
 - 2026-03-27: landed the third bounded packet inside broader `Mobile` redesign by switching shared `LLMSelector` into its existing compact mode from `MainLayout` on mobile in `evidence/358-v81-broader-mobile-redesign-main-layout-mobile-llm-compact-seam.md`, so the app header no longer carries the full selector footprint on narrow viewports
 - 2026-03-27: landed the second bounded packet inside broader `Mobile` redesign by lifting shared `BulkActionBar` above the `BottomNavigation` strip on phone widths in `evidence/357-v81-broader-mobile-redesign-bulk-action-bar-mobile-nav-offset-seam.md`, so bulk-selected actions no longer collide with the fixed mobile nav
