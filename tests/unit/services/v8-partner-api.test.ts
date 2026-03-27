@@ -57,6 +57,24 @@ describe('V8PartnerApi', () => {
     expect(data.earnings.readyForPayout).toBe(120);
   });
 
+  it('requests partner payout history from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      payouts: [
+        {
+          id: 'payout-1',
+          status: 'COMPLETED',
+          netAmount: 148.5,
+          transactionCount: 3,
+        },
+      ],
+    });
+
+    const data = await V8PartnerApi.getPayouts();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/payouts');
+    expect(data.payouts[0].id).toBe('payout-1');
+  });
+
   it('requests partner payout from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       payout: {

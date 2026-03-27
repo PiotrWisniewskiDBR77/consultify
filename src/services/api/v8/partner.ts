@@ -37,6 +37,18 @@ export interface V8PartnerPayoutRequestResult {
   currency?: string;
 }
 
+export interface V8PartnerPayoutHistoryItem {
+  id: string;
+  status: string;
+  netAmount?: number;
+  grossAmount?: number;
+  transactionCount?: number;
+  periodStart?: string;
+  periodEnd?: string;
+  completedAt?: string | null;
+  currency?: string;
+}
+
 export interface V8PartnerCampaignCreatePayload {
   name: string;
   description?: string;
@@ -118,6 +130,7 @@ export const V8PartnerApi = {
       days: String(days),
     }),
   getEarningsSummary: () => v8Get<{ earnings: V8PartnerEarningsSummary }>('/partner/earnings-summary'),
+  getPayouts: () => v8Get<{ payouts: V8PartnerPayoutHistoryItem[] }>('/partner/payouts'),
   requestPayout: (body: V8PartnerPayoutRequestPayload = {}) =>
     v8Post<{ payout: V8PartnerPayoutRequestResult }>('/partner/payouts/request', body),
   createCampaignLink: (body: V8PartnerCampaignCreatePayload) =>

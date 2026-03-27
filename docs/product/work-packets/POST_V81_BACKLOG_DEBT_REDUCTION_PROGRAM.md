@@ -7,7 +7,7 @@
 > Last updated: 2026-03-27
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: held - broader `Finance` parity accepted in bounded form; no active non-deferred lane remains
+> Current state: active - broader `Partner Program` parity promoted after broader `Finance` parity acceptance
 
 ---
 
@@ -257,64 +257,42 @@ The following do **not** qualify as done:
 
 Current state:
 
-- no non-deferred lane is currently promoted
+- broader `Partner Program` parity is currently promoted
 - broader `Finance` parity is accepted in bounded form and moved to `done`
 
 ### Slice name
 
-held state after broader `Finance` parity acceptance
+broader `Partner Program` parity
 
 ### Scope
 
-The accepted bounded `Finance` lane now closes its scoped analysis/runtime-truth seams plus the active broader parity surfaces that were still defaulting to legacy routes during normal operation.
+The accepted bounded `Partner Program` lane already closed payout request, campaign create/delete, and visible profile settings continuity, but active payout-history, statement-history, and wider onboarding/client-access breadth still remain.
 
-No further finance breadth is active inside this program unless a new broader lane is explicitly promoted later.
+This promoted broader lane starts with the smallest active real residual: payout-history continuity on the live partner portal.
 
 ### Three-agent assignment
 
-- `Manager`: maintain this program, tranche rules, and held-state discipline until a new lane is explicitly promoted
-- `Agent A`: keep residual broader finance breadth explicitly parked unless a new charter is created
-- `Agent B`: do not resume finance breadth work without an explicit new promotion
+- `Manager`: maintain this program, tranche rules, and broader-partner packet discipline
+- `Agent A`: close active broader-partner seams one honest packet at a time
+- `Agent B`: keep broader finance done and other non-partner lanes parked while this lane is active
 
 ### Exit criteria
 
-- the active broader finance lane keeps bounded packet discipline,
+- the active broader partner lane keeps bounded packet discipline,
 - accepted bounded evidence remains the authority for previously closed lanes,
-- and the earlier accepted bounded `Finance` cut does not get silently reopened as a whole-finance rewrite.
+- and the earlier accepted bounded `Partner Program` cut does not get silently reopened as a whole-partner rewrite.
 
 ### Current lane status
 
-The active lane is documented in `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`.
+The active lane is documented in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`.
 
 Current result:
 
-- broader `Results / KPI / ROI` parity is now accepted in `evidence/384-v81-broader-results-kpi-roi-parity-t4-acceptance.md`,
-- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`,
-- the active lane split-brain map is recorded in `evidence/386-v81-broader-finance-parity-split-brain-map.md`,
-- the first real bounded broader finance packet landed in `evidence/387-v81-broader-finance-models-list-read-v8-seam.md` by moving visible finance models list/read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the second real bounded broader finance packet landed in `evidence/388-v81-broader-finance-valuations-list-read-v8-seam.md` by moving visible finance valuations list/read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the third real bounded broader finance packet landed in `evidence/389-v81-broader-finance-budgets-list-read-v8-seam.md` by moving visible finance budgets list/read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the fourth real bounded broader finance packet landed in `evidence/390-v81-broader-finance-statement-packs-list-read-v8-seam.md` by moving visible finance statement-pack list/read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the fifth real bounded broader finance packet landed in `evidence/391-v81-broader-finance-statement-pack-detail-read-v8-seam.md` by moving visible finance statement-pack detail read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the sixth real bounded broader finance packet landed in `evidence/392-v81-broader-finance-child-statement-detail-read-v8-seam.md` by moving visible finance child-statement detail read continuity onto the governed V8 seam with bounded compatibility fallback,
-- the seventh real bounded broader finance packet landed in `evidence/393-v81-broader-finance-advanced-statement-detail-read-v8-seam.md` by moving advanced statement workspace initial detail continuity onto the governed V8 seam with bounded compatibility fallback,
-- the eighth real bounded broader finance packet landed in `evidence/394-v81-broader-finance-canonical-lines-v8-seam.md` by moving advanced statement workspace canonical-line catalog continuity onto the governed V8 seam with bounded compatibility fallback,
-- the ninth real bounded broader finance packet landed in `evidence/395-v81-broader-finance-statement-ratios-v8-seam.md` by moving advanced statement workspace statement-ratios continuity onto the governed V8 seam with bounded compatibility fallback,
-- the tenth real bounded broader finance packet landed in `evidence/396-v81-broader-finance-related-list-v8-seam.md` by moving advanced statement workspace related-list continuity onto the governed V8 seam with bounded compatibility fallback,
-- the eleventh real bounded broader finance packet landed in `evidence/397-v81-broader-finance-document-intelligence-search-v8-seam.md` by moving advanced statement workspace document-intelligence search continuity onto the governed V8 seam with bounded compatibility fallback,
-- the twelfth real bounded broader finance packet landed in `evidence/398-v81-broader-finance-statement-confirm-v8-seam.md` by moving advanced statement workspace confirm continuity onto the governed V8 seam with bounded compatibility fallback,
-- the thirteenth real bounded broader finance packet landed in `evidence/399-v81-broader-finance-statement-values-save-v8-seam.md` by moving advanced statement workspace values-save continuity onto the governed V8 seam with bounded compatibility fallback,
-- the fourteenth real bounded broader finance packet landed in `evidence/400-v81-broader-finance-statement-detect-v8-seam.md` by moving advanced statement workspace detect continuity onto the governed V8 seam with bounded compatibility fallback,
-- the fifteenth real bounded broader finance packet landed in `evidence/401-v81-broader-finance-statement-extract-map-v8-seam.md` by moving advanced statement workspace extract/map continuity onto the governed V8 seam with bounded compatibility fallback,
-- the sixteenth real bounded broader finance packet landed in `evidence/402-v81-broader-finance-import-wizard-manual-detect-extract-map-v8-seam.md` by moving the manual `FinancialStatementImportWizard` detect/extract/map/canonical-lines stage onto governed V8 seams with bounded compatibility fallback,
-- the seventeenth real bounded broader finance packet landed in `evidence/403-v81-broader-finance-import-wizard-values-save-v8-seam.md` by moving `FinancialStatementImportWizard` values-save continuity onto the governed V8 seam with bounded compatibility fallback,
-- the eighteenth real bounded broader finance packet landed in `evidence/404-v81-broader-finance-import-wizard-confirm-v8-seam.md` by moving `FinancialStatementImportWizard` confirm continuity onto the governed V8 seam with bounded compatibility fallback,
-- the nineteenth real bounded broader finance packet landed in `evidence/405-v81-broader-finance-model-detail-v8-seam.md` by moving active finance model detail continuity onto the governed V8 seam with bounded compatibility fallback,
-- the twentieth real bounded broader finance packet landed in `evidence/406-v81-broader-finance-model-validations-v8-seam.md` by moving active finance model validations continuity onto the governed V8 seam with bounded compatibility fallback,
-- the twenty-first real bounded broader finance packet landed in `evidence/407-v81-broader-finance-model-outputs-v8-seam.md` by moving active finance model outputs continuity onto the governed V8 seam with bounded compatibility fallback,
-- the twenty-second real bounded broader finance packet landed in `evidence/408-v81-broader-finance-model-compute-v8-seam.md` by moving active finance model compute continuity onto the governed V8 seam with bounded compatibility fallback,
-- the twenty-third real bounded broader finance packet landed in `evidence/409-v81-broader-finance-model-approve-v8-seam.md` by moving active finance model approve continuity onto the governed V8 seam with bounded compatibility fallback,
-- the previously accepted bounded `Finance` lane stays capped rather than silently reopened into one unbounded finance rewrite.
+- broader `Finance` parity is now accepted in `evidence/418-v81-broader-finance-parity-t4-acceptance.md`,
+- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`,
+- the active lane continues to use the existing split-brain map in `evidence/155-v81-partner-program-split-brain-map.md`,
+- the first real bounded broader partner packet landed in `evidence/419-v81-broader-partner-payout-history-read-v8-seam.md` by moving visible payout-history continuity onto the governed V8 seam with bounded compatibility fallback,
+- the previously accepted bounded `Partner Program` lane stays capped rather than silently reopening its narrower payout, campaign, and profile packets.
 
 ### Explicitly out of scope
 
@@ -345,6 +323,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the currently promoted scopes
 - the bounded `T4` unlock series is complete through the Anna broader voice UX / architecture acceptance
 - broader `Finance` parity is accepted in bounded form
+- broader `Partner Program` parity is now the active broader lane
 - what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
 
 ### Remaining work to reach 100%
@@ -360,7 +339,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | done | accepted lane closed bounded read/runtime truth seams, and the sixteen broader write seams now close the smallest honest visible write residuals without broadening into a larger results redesign | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
 | broader `Finance` parity | done | accepted lane closed active analysis seams, and the first thirty-one broader packets now close visible models, valuations, budgets, statement-pack list/read, statement-pack detail read, child-statement detail read, advanced statement workspace initial detail continuity, canonical-line catalog continuity, statement-ratios continuity, related-list continuity, document-intelligence search continuity, statement confirm continuity, values-save continuity, statement detect continuity, statement extract/map continuity, `FinancialStatementImportWizard` manual detect/extract/map/canonical-lines continuity, `FinancialStatementImportWizard` values-save continuity, `FinancialStatementImportWizard` confirm continuity, active finance model detail continuity, active finance model validations continuity, active finance model outputs continuity, active finance model compute continuity, active finance model approve continuity, active finance model delete continuity, active finance model create continuity, active finance model event-add continuity, active finance model event-delete continuity, active finance model assumptions-save continuity, active statement-pack workspace analytics continuity, active finance import upload continuity, and active finance model workspace list continuity without needing another honest micro-packet | `9` | remaining finance breadth is closed or explicitly retired |
-| broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
+| broader `Partner Program` parity | active | accepted lane closed visible payout / campaign / profile seams; payout-history continuity is now governed by V8-first reads, while onboarding, client access, payout-settings, and statement breadth still remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | visible, not promoted | accepted lane closed presence + lock indicators only; deeper realtime collaboration was never promoted | `12` | remaining collaboration breadth is closed or explicitly retired |
 | broader `Notes` adjunct / object-linked outputs breadth | visible, not promoted | accepted lane closed AI proposals + convert continuity only; attachment/upload/output breadth remains outside current package acceptance | `13` | remaining notes/output breadth is closed or explicitly retired |
@@ -475,6 +454,8 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: landed the first real bounded packet inside broader `Partner Program` parity by moving visible payout-history read continuity onto the governed V8 seam in `evidence/419-v81-broader-partner-payout-history-read-v8-seam.md`, so the active partner portal no longer defaults to legacy payout-history reads during normal operation
+- 2026-03-27: promoted broader `Partner Program` parity with charter `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`, reused the existing split-brain map in `evidence/155-v81-partner-program-split-brain-map.md`, and selected visible payout-history continuity as the first bounded packet candidate
 - 2026-03-27: accepted broader `Finance` parity in bounded `T4` form in `evidence/418-v81-broader-finance-parity-t4-acceptance.md` after the remaining active finance surfaces were governed by V8-first seams and only bounded fallback branches or dormant non-imported finance breadth remained
 - 2026-03-27: landed the thirty-first real bounded packet inside broader `Finance` parity by moving active finance model workspace list continuity onto the governed V8 seam in `evidence/417-v81-broader-finance-workspace-model-list-v8-seam.md`, so active finance model workspace list hydration no longer defaults to the legacy financial-modeling models route during normal operation
 - 2026-03-27: landed the thirtieth real bounded packet inside broader `Finance` parity by moving active import upload continuity onto the governed V8 seam in `evidence/416-v81-broader-finance-import-upload-v8-seam.md`, so active finance import upload no longer defaults to the legacy finance-statements upload route during normal operation

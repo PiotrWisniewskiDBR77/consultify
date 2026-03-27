@@ -1,9 +1,13 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
 
 const mockGetReferralAnalytics = vi.fn();
 const mockGetEarningsSummary = vi.fn();
+const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
 const mockCreateCampaignLink = vi.fn();
 const mockDeleteCampaignLink = vi.fn();
@@ -28,6 +32,7 @@ vi.mock('../../../services/partnerReferralService.js', () => ({
 vi.mock('../../../services/partnerCommissionService.js', () => ({
   default: {
     getEarningsSummary: (...args: unknown[]) => mockGetEarningsSummary(...args),
+    getPayouts: (...args: unknown[]) => mockGetPayouts(...args),
     requestPayout: (...args: unknown[]) => mockRequestPayout(...args),
   },
 }));
@@ -148,6 +153,17 @@ describe('V8 partner read bridge', () => {
       netAmount: 148.5,
       currency: 'EUR',
     });
+    mockGetPayouts.mockResolvedValue([
+      {
+        id: 'payout-1',
+        status: 'COMPLETED',
+        netAmount: 148.5,
+        transactionCount: 3,
+        periodStart: '2026-03-01',
+        periodEnd: '2026-03-31',
+        completedAt: '2026-04-15',
+      },
+    ]);
     mockCreateCampaignLink.mockResolvedValue({
       id: 'campaign-1',
       name: 'Spring launch',
@@ -188,6 +204,20 @@ describe('V8 partner read bridge', () => {
     expect(res.status).toBe(200);
     expect(mockGetEarningsSummary).toHaveBeenCalledWith('partner-org-resolved');
     expect(res.body.data.earnings.totalEarned).toBe(100);
+    expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
+  });
+
+  it('GET /api/v8/partner/payouts returns payout history with partner meta', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/payouts?status=COMPLETED&limit=10&offset=5');
+
+    expect(res.status).toBe(200);
+    expect(mockGetPayouts).toHaveBeenCalledWith('partner-org-resolved', {
+      status: 'COMPLETED',
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.body.data.payouts[0].id).toBe('payout-1');
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 

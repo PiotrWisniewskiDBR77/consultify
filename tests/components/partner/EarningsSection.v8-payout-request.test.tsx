@@ -29,6 +29,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getEarningsSummary: vi.fn(),
+    getPayouts: vi.fn(),
     requestPayout: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
@@ -83,6 +84,85 @@ describe('EarningsSection V8 payout request seam', () => {
         currency: 'EUR',
       },
     } as any);
+    vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({
+      payouts: [],
+    } as any);
+  });
+
+  it('prefers governed payout history read before legacy fallback', async () => {
+    vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({
+      payouts: [
+        {
+          id: 'payout-v8-1',
+          status: 'COMPLETED',
+          netAmount: 148.5,
+          transactionCount: 2,
+          periodStart: '2026-03-01',
+          periodEnd: '2026-03-31',
+        },
+      ],
+    } as any);
+
+    render(<EarningsSection subsection="payouts" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('completed')).toBeInTheDocument();
+      expect(screen.getByText(/2026-03-31/)).toBeInTheDocument();
+    });
+
+    expect(V8PartnerApi.getPayouts).toHaveBeenCalled();
+    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/payouts');
+  });
+
+  it('falls back to legacy payout history read on bounded compatibility statuses', async () => {
+    vi.mocked(V8PartnerApi.getPayouts).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/earnings') {
+        return {
+          success: true,
+          data: {
+            totalEarned: 1200,
+            totalPending: 200,
+            totalApproved: 700,
+            totalPaid: 500,
+            thisMonth: 120,
+            thisMonthCount: 2,
+            lastMonth: 90,
+            readyForPayout: 150,
+            currency: 'EUR',
+            bankInfoComplete: true,
+          },
+        } as any;
+      }
+      if (url === '/api/partners/commission-transactions') {
+        return { success: true, data: [] } as any;
+      }
+      if (url === '/api/partners/payouts') {
+        return {
+          success: true,
+          data: [
+            {
+              id: 'payout-legacy-1',
+              status: 'PENDING',
+              netAmount: 99,
+              transactionCount: 1,
+              periodStart: '2026-02-01',
+              periodEnd: '2026-02-29',
+            },
+          ],
+        } as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<EarningsSection subsection="payouts" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('pending')).toBeInTheDocument();
+      expect(screen.getByText(/2026-02-29/)).toBeInTheDocument();
+    });
+
+    expect(Api.get).toHaveBeenCalledWith('/api/partners/payouts');
   });
 
   it('prefers governed payout request before legacy fallback', async () => {
