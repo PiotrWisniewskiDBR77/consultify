@@ -329,6 +329,7 @@ Current result:
 - the twenty-fifth real bounded broader sync packet landed in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md` by aligning settings disconnect with the governed sync path, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow,
 - the post-settings disconnect authority residual assessment recorded in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md` confirmed that one thinner readback seam still remains before wider cleanup, with settings status now emerging as the next honest step,
 - the twenty-sixth real bounded broader sync packet landed in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md` by aligning the dedicated settings status route with the governed sync readback, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth,
+- the post-settings status readback residual assessment recorded in `evidence/481-v81-broader-sync-post-settings-status-readback-residual-assessment.md` confirmed that one thinner live seam still remains before wider cleanup, with settings test connection now emerging as the next honest step,
 - the previously accepted bounded `Sync / connectors / interoperability` lane stays capped rather than silently reopening its narrower observability and lifecycle-control packets.
 
 ### Explicitly out of scope
@@ -491,6 +492,7 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: recorded the broader `Sync` post-settings status readback residual assessment in `evidence/481-v81-broader-sync-post-settings-status-readback-residual-assessment.md`, confirming that settings test connection continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-sixth real bounded packet inside broader `Sync` completion by aligning the dedicated settings status route with the governed sync readback in `evidence/480-v81-broader-sync-settings-status-readback-continuity-seam.md`, so that route no longer disagrees with the now-governed settings list/connect/disconnect truth
 - 2026-03-27: recorded the broader `Sync` post-settings disconnect authority residual assessment in `evidence/479-v81-broader-sync-post-settings-disconnect-authority-residual-assessment.md`, confirming that settings status readback continuity is now the next honest broader-sync step
 - 2026-03-27: landed the twenty-fifth real bounded packet inside broader `Sync` completion by aligning settings disconnect with the governed sync path in `evidence/478-v81-broader-sync-settings-disconnect-authority-continuity-seam.md`, so the settings UI no longer claims to disconnect an integration by deleting only its local preferences shadow
