@@ -94,6 +94,27 @@ describe('V8FinanceApi', () => {
     expect(data.models[0].name).toBe('Revenue forecast');
   });
 
+  it('requests governed finance model detail from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      model: {
+        id: 'model-1',
+        name: 'Revenue forecast',
+        status: 'draft',
+        currency: 'PLN',
+        assumptions_json: { initialCash: 100 },
+        source_statement_pack: { id: 'pack-1', entity_name: 'Acme Sp. z o.o.' },
+        events: [{ id: 'event-1', name: 'Revenue uplift' }],
+      },
+    });
+
+    const data = await V8FinanceApi.getModel('model-1');
+
+    expect(v8Get).toHaveBeenCalledWith('/finance/models/model-1');
+    expect(data.model.id).toBe('model-1');
+    expect((data.model.source_statement_pack as any)?.entity_name).toBe('Acme Sp. z o.o.');
+    expect(data.model.events).toHaveLength(1);
+  });
+
   it('requests governed finance statement packs from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       statementPacks: [

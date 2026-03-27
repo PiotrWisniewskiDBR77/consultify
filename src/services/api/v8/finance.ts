@@ -60,6 +60,14 @@ export interface V8FinanceModelSummary {
   updated_at?: string | null;
 }
 
+export interface V8FinanceModelDetail extends V8FinanceModelSummary {
+  assumptions_json?: Record<string, unknown>;
+  source_statement?: Record<string, unknown> | null;
+  source_statement_pack?: Record<string, unknown> | null;
+  events?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -312,6 +320,7 @@ export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
   getModels: () =>
     v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
+  getModel: (modelId: string) => v8Get<{ model: V8FinanceModelDetail }>(`/finance/models/${modelId}`),
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () =>

@@ -10,6 +10,8 @@ const mockGetStatementDetail = vi.fn();
 const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
 const mockListModels = vi.fn();
+const mockGetModel = vi.fn();
+const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
 const mockListAnalyses = vi.fn();
@@ -75,6 +77,8 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
+  getModel: (...args: unknown[]) => mockGetModel(...args),
+  listEvents: (...args: unknown[]) => mockListEvents(...args),
   listModels: (...args: unknown[]) => mockListModels(...args),
 }));
 
@@ -435,6 +439,36 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.models?.[0]?.name).toBe('Revenue forecast');
     expect(mockListModels).toHaveBeenCalledWith(ORG);
+  });
+
+  it('GET /api/v8/finance/models/:id returns envelope and delegates to getModel', async () => {
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Revenue forecast',
+      status: 'draft',
+      assumptions_json: { initialCash: 100 },
+      source_statement_pack_id: 'pack-1',
+    });
+    mockDbGet.mockResolvedValue({
+      id: 'pack-1',
+      entity_name: 'Acme Sp. z o.o.',
+      period_label: 'Q1 2026',
+      pack_status: 'pending',
+      pack_readiness_status: 'recoverable',
+    });
+    mockListEvents.mockResolvedValue([{ id: 'event-1', name: 'Revenue uplift' }]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/v8/finance/models/model-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.model?.id).toBe('model-1');
+    expect(res.body.data?.model?.source_statement_pack?.entity_name).toBe('Acme Sp. z o.o.');
+    expect(res.body.data?.model?.events).toHaveLength(1);
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
+    expect(mockListEvents).toHaveBeenCalledWith('model-1');
   });
 
   it('GET /api/v8/finance/statement-packs returns envelope and delegates to listStatementPacks', async () => {

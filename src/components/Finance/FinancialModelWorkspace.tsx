@@ -34,6 +34,7 @@ import { useNavigate } from 'react-router-dom';
 
 import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
 import { ExportButton } from './ExportButton';
 
 // ---------------------------------------------------------------------------
@@ -106,6 +107,18 @@ interface Props {
   initialModelId?: string;
   hideSidebar?: boolean;
   onModelChanged?: (modelId: string) => void;
+}
+
+async function getModelDetailWithFallback(modelId: string) {
+  try {
+    const data = await V8FinanceApi.getModel(modelId);
+    return data?.model ?? null;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/financial-modeling/models/${modelId}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -266,7 +279,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const selectModel = useCallback(async (modelId: string) => {
     setLoading(true);
     try {
-      const model = await Api.get(`/api/financial-modeling/models/${modelId}`);
+      const model = await getModelDetailWithFallback(modelId);
       setSelectedModel(model);
       setEvents((model as any)?.events || []);
       setAssumptions((model as any)?.assumptions_json || {});

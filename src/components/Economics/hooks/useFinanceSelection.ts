@@ -50,6 +50,18 @@ async function getStatementDetailWithFallback(statementId: string) {
   }
 }
 
+async function getModelDetailWithFallback(modelId: string) {
+  try {
+    const data = await V8FinanceApi.getModel(modelId);
+    return data?.model ?? null;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/financial-modeling/models/${modelId}`).catch(() => null);
+  }
+}
+
 const SCENARIO_PROFILES: Record<
   ScenarioVariant,
   {
@@ -416,7 +428,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
 
   const loadModelPreview = useCallback(async (row: FinanceModelRow) => {
     try {
-      const model = (await Api.get(`/api/financial-modeling/models/${row.id}`)) as any;
+      const model = (await getModelDetailWithFallback(row.id)) as any;
       const packId =
         model?.source_statement_pack_id || model?.source_statement_pack?.id || row.sourceStatementPackId || null;
       const packDetail = packId ? await getStatementPackDetailWithFallback(String(packId)) : null;

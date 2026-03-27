@@ -68,7 +68,7 @@ import {
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../../services/openAIFinancialExtractionService.js';
-import { listModels } from '../../services/financialModelingService.js';
+import { getModel, listEvents, listModels } from '../../services/financialModelingService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import {
   getStatementPackDetail,
@@ -159,6 +159,62 @@ router.get(
     const models = await listModels(organizationId);
     return res.json({
       data: { models, count: models.length },
+      meta: financeMeta(),
+    });
+  }),
+);
+
+router.get(
+  '/models/:modelId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const modelId = String(req.params.modelId || '');
+    const model = await getModel(modelId);
+    if (!model || String(model.organization_id || '') !== organizationId) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+
+    const sourceStatement =
+      model.source_statement_id != null
+        ? await (async () => {
+            try {
+              return await dbGet(
+                `SELECT id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, status, readiness_status
+                 FROM financial_statements
+                 WHERE id = ?`,
+                [model.source_statement_id]
+              );
+            } catch {
+              return dbGet(
+                `SELECT id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, status
+                 FROM financial_statements
+                 WHERE id = ?`,
+                [model.source_statement_id]
+              );
+            }
+          })()
+        : null;
+    const sourceStatementPack =
+      model.source_statement_pack_id != null
+        ? await dbGet(
+            `SELECT id, entity_name, period_start, period_end, period_label, currency, scaling,
+                    pack_status, pack_readiness_status, pack_readiness_score
+             FROM financial_statement_packs
+             WHERE id = ?`,
+            [model.source_statement_pack_id]
+          )
+        : null;
+    const events = await listEvents(modelId);
+
+    return res.json({
+      data: {
+        model: {
+          ...model,
+          events,
+          source_statement: sourceStatement || null,
+          source_statement_pack: sourceStatementPack || null,
+        },
+      },
       meta: financeMeta(),
     });
   }),
