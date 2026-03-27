@@ -163,10 +163,10 @@ No lane should jump directly from `queued` to `done`.
 
 ### Current lane
 
-- status: `active`
+- status: `done`
 - lane: broader `Finance` parity
-- latest evidence: `import upload V8 seam` recorded in `evidence/416-v81-broader-finance-import-upload-v8-seam.md`
-- reason: after statement analytics continuity landed, the next smallest honest residual was the `Upload & Analyze` entrypoint in `FinancialStatementImportWizard` still defaulting to the legacy finance-statements upload route
+- latest evidence: bounded acceptance recorded in `evidence/418-v81-broader-finance-parity-t4-acceptance.md`
+- reason: after the workspace model-list seam landed, no smaller active broader-finance packet remained beyond bounded fallback branches and a dormant non-imported ratio panel
 
 ### Next three lanes
 
@@ -364,14 +364,14 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Finance` parity
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_FINANCE_PARITY_CHARTER.md`
 - split-brain map: `evidence/386-v81-broader-finance-parity-split-brain-map.md`
-- current packet: `active finance import upload continuity`
-- last accepted packet: `import upload V8 seam`
+- current packet: `none`
+- last accepted packet: `workspace model list V8 seam`
 - blocker: `none`
-- next action: `assess whether broader Finance parity is now ready for bounded acceptance after import upload continuity closure`
-- acceptance evidence: `none`
+- next action: `hold bounded acceptance unless a new broader Finance lane is explicitly promoted later`
+- acceptance evidence: `evidence/418-v81-broader-finance-parity-t4-acceptance.md`
 
 #### broader `Partner Program` parity
 

@@ -121,6 +121,18 @@ async function getModelDetailWithFallback(modelId: string) {
   }
 }
 
+async function getModelsListWithFallback() {
+  try {
+    const data = await V8FinanceApi.getModels();
+    return Array.isArray(data?.models) ? data.models : [];
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get('/api/financial-modeling/models');
+  }
+}
+
 async function getModelValidationsWithFallback(modelId: string) {
   try {
     return await V8FinanceApi.getModelValidations(modelId);
@@ -353,7 +365,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   // ── Load models ──
   const loadModels = useCallback(async () => {
     try {
-      const data = await Api.get('/api/financial-modeling/models');
+      const data = await getModelsListWithFallback();
       setModels((data as any) || []);
     } catch {
       /* noop */

@@ -7,7 +7,7 @@
 > Last updated: 2026-03-27
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: active - broader `Finance` parity
+> Current state: held - broader `Finance` parity accepted in bounded form; no active non-deferred lane remains
 
 ---
 
@@ -257,23 +257,24 @@ The following do **not** qualify as done:
 
 Current state:
 
-- broader `Finance` parity is the active promoted lane
+- no non-deferred lane is currently promoted
+- broader `Finance` parity is accepted in bounded form and moved to `done`
 
 ### Slice name
 
-broader `Finance` parity
+held state after broader `Finance` parity acceptance
 
 ### Scope
 
-The accepted bounded `Finance` lane now closes its scoped analysis/runtime-truth seams.
+The accepted bounded `Finance` lane now closes its scoped analysis/runtime-truth seams plus the active broader parity surfaces that were still defaulting to legacy routes during normal operation.
 
-The next broader finance parity lane is now explicitly promoted from visible backlog into active execution.
+No further finance breadth is active inside this program unless a new broader lane is explicitly promoted later.
 
 ### Three-agent assignment
 
-- `Manager`: maintain this program, tranche rules, and final execution board discipline
-- `Agent A`: keep broader `Finance` parity scope honest and assess the next bounded broader finance packet after the latest landed model seam
-- `Agent B`: own runtime/surface closure for the active broader finance lane packet-by-packet after the broader residual is made explicit
+- `Manager`: maintain this program, tranche rules, and held-state discipline until a new lane is explicitly promoted
+- `Agent A`: keep residual broader finance breadth explicitly parked unless a new charter is created
+- `Agent B`: do not resume finance breadth work without an explicit new promotion
 
 ### Exit criteria
 
@@ -343,7 +344,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the currently promoted scopes
 - the bounded `T4` unlock series is complete through the Anna broader voice UX / architecture acceptance
-- broader `Finance` parity is the one active non-deferred lane
+- broader `Finance` parity is accepted in bounded form
 - what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
 
 ### Remaining work to reach 100%
@@ -358,7 +359,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Mobile` redesign | done | accepted mobile work plus four shared mobile-shell packets now close the smallest honest mobile responsive residuals without forcing a whole-app rewrite | `6` | broader mobile responsive/product breadth is accepted in bounded form unless deliberately reopened as a larger redesign program |
 | broader `Chat` / `AI core` parity expansion | done | accepted bounded work plus four broader packets now close the smallest honest live-surface and operator readback residuals; what remains is broader product/runtime breadth rather than one more micro-seam | `7` | remaining live chat / AI operator parity gaps are closed or explicitly retired |
 | broader `Results / KPI / ROI` parity | done | accepted lane closed bounded read/runtime truth seams, and the sixteen broader write seams now close the smallest honest visible write residuals without broadening into a larger results redesign | `8` | remaining results writes and operator surfaces are closed or explicitly retired |
-| broader `Finance` parity | active | accepted lane closed active analysis seams, and the first thirty broader packets now close visible models, valuations, budgets, statement-pack list/read, statement-pack detail read, child-statement detail read, advanced statement workspace initial detail continuity, canonical-line catalog continuity, statement-ratios continuity, related-list continuity, document-intelligence search continuity, statement confirm continuity, values-save continuity, statement detect continuity, statement extract/map continuity, `FinancialStatementImportWizard` manual detect/extract/map/canonical-lines continuity, `FinancialStatementImportWizard` values-save continuity, `FinancialStatementImportWizard` confirm continuity, active finance model detail continuity, active finance model validations continuity, active finance model outputs continuity, active finance model compute continuity, active finance model approve continuity, active finance model delete continuity, active finance model create continuity, active finance model event-add continuity, active finance model event-delete continuity, active finance model assumptions-save continuity, active statement-pack workspace analytics continuity, and active finance import upload continuity while bounded lane acceptance remains the next honest decision | `9` | remaining finance breadth is closed or explicitly retired |
+| broader `Finance` parity | done | accepted lane closed active analysis seams, and the first thirty-one broader packets now close visible models, valuations, budgets, statement-pack list/read, statement-pack detail read, child-statement detail read, advanced statement workspace initial detail continuity, canonical-line catalog continuity, statement-ratios continuity, related-list continuity, document-intelligence search continuity, statement confirm continuity, values-save continuity, statement detect continuity, statement extract/map continuity, `FinancialStatementImportWizard` manual detect/extract/map/canonical-lines continuity, `FinancialStatementImportWizard` values-save continuity, `FinancialStatementImportWizard` confirm continuity, active finance model detail continuity, active finance model validations continuity, active finance model outputs continuity, active finance model compute continuity, active finance model approve continuity, active finance model delete continuity, active finance model create continuity, active finance model event-add continuity, active finance model event-delete continuity, active finance model assumptions-save continuity, active statement-pack workspace analytics continuity, active finance import upload continuity, and active finance model workspace list continuity without needing another honest micro-packet | `9` | remaining finance breadth is closed or explicitly retired |
 | broader `Partner Program` parity | visible, not promoted | accepted lane closed visible payout / campaign / profile seams; onboarding, client access, payout-settings, and statement breadth remain | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | visible, not promoted | accepted sync lane closed bounded observability and lifecycle controls; wider OAuth/completion breadth remains | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | visible, not promoted | accepted lane closed presence + lock indicators only; deeper realtime collaboration was never promoted | `12` | remaining collaboration breadth is closed or explicitly retired |
@@ -474,6 +475,8 @@ It is to process the remaining themes one by one until this section contains no 
 
 ## 12. Change log
 
+- 2026-03-27: accepted broader `Finance` parity in bounded `T4` form in `evidence/418-v81-broader-finance-parity-t4-acceptance.md` after the remaining active finance surfaces were governed by V8-first seams and only bounded fallback branches or dormant non-imported finance breadth remained
+- 2026-03-27: landed the thirty-first real bounded packet inside broader `Finance` parity by moving active finance model workspace list continuity onto the governed V8 seam in `evidence/417-v81-broader-finance-workspace-model-list-v8-seam.md`, so active finance model workspace list hydration no longer defaults to the legacy financial-modeling models route during normal operation
 - 2026-03-27: landed the thirtieth real bounded packet inside broader `Finance` parity by moving active import upload continuity onto the governed V8 seam in `evidence/416-v81-broader-finance-import-upload-v8-seam.md`, so active finance import upload no longer defaults to the legacy finance-statements upload route during normal operation
 - 2026-03-27: landed the twenty-ninth real bounded packet inside broader `Finance` parity by moving active statement-pack workspace analytics continuity onto the governed V8 seam in `evidence/415-v81-broader-finance-statement-analytics-v8-seam.md`, so active statement-pack workspace analytics reads no longer default to legacy finance-statements analytics routes during normal operation
 - 2026-03-27: landed the twenty-eighth real bounded packet inside broader `Finance` parity by moving active finance model assumptions-save continuity onto the governed V8 seam in `evidence/414-v81-broader-finance-model-assumptions-save-v8-seam.md`, so active finance model assumptions-save actions no longer default to legacy financial-modeling model-update routes during normal operation

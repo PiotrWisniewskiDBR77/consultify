@@ -40,6 +40,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     computeModel: vi.fn(),
     createModel: vi.fn(),
     deleteModelEvent: vi.fn(),
+    getModels: vi.fn(),
     getModel: vi.fn(),
     getModelOutputs: vi.fn(),
     getModelValidations: vi.fn(),
@@ -99,11 +100,44 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
       }
       throw new Error(`Unexpected GET ${url}`);
     });
+    vi.mocked(V8FinanceApi.getModels).mockResolvedValue({ models: [] } as any);
     vi.mocked(V8FinanceApi.getModel).mockResolvedValue({ model: baseModel } as any);
     vi.mocked(V8FinanceApi.getModelValidations).mockResolvedValue({
       validations: [],
       summary: { total: 0, pass: 0, fail: 0, warning: 0 },
     } as any);
+  });
+
+  it('prefers governed model list before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.getModels).mockResolvedValue({
+      models: [{ ...baseModel, id: 'model-2', name: 'Board model' }],
+    } as any);
+
+    render(<FinancialModelWorkspace hideSidebar />);
+
+    await waitFor(() => {
+      expect(V8FinanceApi.getModels).toHaveBeenCalled();
+    });
+
+    expect(Api.get).not.toHaveBeenCalledWith('/api/financial-modeling/models');
+  });
+
+  it('falls back to legacy model list in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.getModels).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/financial-modeling/models') {
+        return [{ ...baseModel, id: 'model-2', name: 'Legacy board model' }] as any;
+      }
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(<FinancialModelWorkspace hideSidebar />);
+
+    await waitFor(() => {
+      expect(Api.get).toHaveBeenCalledWith('/api/financial-modeling/models');
+    });
+
+    expect(V8FinanceApi.getModels).toHaveBeenCalled();
   });
 
   it('prefers governed model outputs before legacy fallback in the workspace', async () => {
