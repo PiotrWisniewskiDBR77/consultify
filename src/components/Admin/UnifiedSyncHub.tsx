@@ -1297,7 +1297,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const isExpanded = expandedId === int.id;
     const isSyncing = syncing === int.id;
     const isPendingOnboarding = int.status === 'pending';
-    const canRunSync = !isPendingOnboarding && int.status !== 'disconnected';
+    const canRunSync =
+      !isPendingOnboarding && int.status !== 'disconnected' && int.status !== 'requires_reauth';
     const canPause = !isPendingOnboarding && int.status !== 'disconnected';
     const canResume = !isPendingOnboarding;
     const configuredFieldSet = new Set(int.configuredFields || []);

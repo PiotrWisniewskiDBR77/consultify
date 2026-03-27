@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { toast } from 'react-hot-toast';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('framer-motion', () => ({
@@ -523,6 +524,74 @@ describe('UnifiedSyncHub V8 health continuity', () => {
 
     await waitFor(() => {
       expect(V8SyncApi.runIntegrationSync).toHaveBeenCalledWith('int-1');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/sync/int-1', expect.anything());
+  });
+
+  it('keeps run-now on the governed path when refresh preflight blocks stale auth', async () => {
+    vi.mocked(V8SyncApi.getIntegrations)
+      .mockResolvedValueOnce({
+        integrations: [
+          {
+            id: 'int-1',
+            connectorId: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            status: 'connected',
+            lastSyncAt: null,
+            lastError: null,
+            health: 'healthy',
+            errorRate: 0,
+            unresolvedErrors: 0,
+            lastRun: null,
+            connector: null,
+          },
+        ],
+        count: 1,
+      } as any)
+      .mockResolvedValueOnce({
+        integrations: [
+          {
+            id: 'int-1',
+            connectorId: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            status: 'requires_reauth',
+            lastSyncAt: null,
+            lastError: null,
+            health: 'degraded',
+            errorRate: 25,
+            unresolvedErrors: 0,
+            lastRun: null,
+            connector: null,
+          },
+        ],
+        count: 1,
+      } as any);
+    vi.mocked(V8SyncApi.runIntegrationSync).mockRejectedValue({
+      status: 409,
+      code: 'REFRESH_REAUTH_REQUIRED',
+      error:
+        'Governed credential expired before sync could start. Re-authorize the integration to resume syncing.',
+    });
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle('Run now'));
+
+    await waitFor(() => {
+      expect(V8SyncApi.runIntegrationSync).toHaveBeenCalledWith('int-1');
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Governed credential expired before sync could start. Re-authorize the integration to resume syncing.',
+      );
     });
 
     expect(global.fetch).not.toHaveBeenCalledWith('/api/sync-hub/sync/int-1', expect.anything());

@@ -65,6 +65,34 @@ function buildExternalAuthCallbackUrl(req: AuthRequest, state: string): string {
   return `${req.protocol}://${req.get('host')}/api/sync-hub/external-auth/callback?state=${encodeURIComponent(state)}`;
 }
 
+const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<
+  Record<string, (typeof ProviderFamilyValues)[number]>
+> = {
+  jira: 'atlassian',
+  gmail: 'google_workspace',
+  slack: 'google_workspace',
+  teams: 'microsoft_365',
+  dynamics_365: 'microsoft_365',
+  powerbi: 'microsoft_365',
+  azure_devops: 'microsoft_365',
+  asana: 'asana',
+  monday: 'monday',
+};
+
+const DEFAULT_REFRESH_WINDOW_MINUTES: Partial<Record<(typeof ProviderFamilyValues)[number], number>> = {
+  google_workspace: 10,
+  microsoft_365: 10,
+  atlassian: 15,
+  asana: 15,
+  monday: 15,
+  clickup: 15,
+  linear: 15,
+};
+
+function getProviderFamilyForConnector(connectorId: string): (typeof ProviderFamilyValues)[number] | null {
+  return CONNECTOR_PROVIDER_FAMILY_MAP[connectorId.trim().toLowerCase()] ?? null;
+}
+
 async function logIntegrationAudit(
   organizationId: string,
   integrationId: string | null,
@@ -820,6 +848,93 @@ router.post(
       return res
         .status(400)
         .json({ error: 'Integration is disconnected', code: 'INTEGRATION_DISCONNECTED' });
+    }
+
+    const connector = CONNECTORS[integration[0].connector_id];
+    if (!connector) {
+      return res.status(404).json({ error: 'Unknown connector', code: 'CONNECTOR_NOT_FOUND' });
+    }
+
+    if (connector.authType === 'oauth2') {
+      const credential = await getCredential(connector.id, organizationId);
+      const tokenExpiresAtMs = credential?.tokenExpiresAt ? Date.parse(credential.tokenExpiresAt) : NaN;
+
+      if (Number.isFinite(tokenExpiresAtMs)) {
+        const now = Date.now();
+
+        if (tokenExpiresAtMs <= now) {
+          const refreshedCredential = await recordRefreshResult({
+            connectorId: connector.id,
+            organizationId,
+            result: 'credential_expired',
+          });
+          const connectorHealth = await getConnectorHealth(connector.id, organizationId);
+
+          if (connectorHealth.authState !== 'degraded_reauth_needed') {
+            await setConnectorAuthState({
+              connectorId: connector.id,
+              organizationId,
+              targetState: 'degraded_reauth_needed',
+              transitionedBy: actorId,
+              reason: 'sync_preflight_credential_expired',
+            });
+          }
+
+          await logIntegrationAudit(
+            organizationId,
+            integrationId,
+            'sync_preflight_blocked_credential_expired',
+            actorId,
+            actorId,
+            {
+              connectorId: connector.id,
+              credentialId: refreshedCredential.credentialId,
+              tokenExpiresAt: refreshedCredential.tokenExpiresAt,
+            },
+          );
+
+          return res.status(409).json({
+            error:
+              'Governed credential expired before sync could start. Re-authorize the integration to resume syncing.',
+            code: 'REFRESH_REAUTH_REQUIRED',
+            authTransition: 'degraded_reauth_needed',
+          });
+        }
+
+        const providerFamily = getProviderFamilyForConnector(connector.id);
+        const policy = providerFamily ? await getRefreshTimingPolicy(providerFamily, organizationId) : null;
+        const refreshWindowMinutes =
+          policy?.refreshWindowMinutes ??
+          (providerFamily ? DEFAULT_REFRESH_WINDOW_MINUTES[providerFamily] ?? null : null);
+
+        if (
+          typeof refreshWindowMinutes === 'number' &&
+          tokenExpiresAtMs - refreshWindowMinutes * 60 * 1000 <= now
+        ) {
+          await logIntegrationAudit(
+            organizationId,
+            integrationId,
+            'sync_preflight_blocked_refresh_window',
+            actorId,
+            actorId,
+            {
+              connectorId: connector.id,
+              providerFamily,
+              tokenExpiresAt: credential?.tokenExpiresAt ?? null,
+              refreshWindowMinutes,
+            },
+          );
+
+          return res.status(409).json({
+            error:
+              'Governed token refresh execution is not wired on the active runtime path yet. This credential is already inside the refresh window, so sync is blocked before stale auth is used.',
+            code: 'REFRESH_EXECUTION_REQUIRED',
+            providerFamily,
+            refreshWindowMinutes,
+            tokenExpiresAt: credential?.tokenExpiresAt ?? null,
+          });
+        }
+      }
     }
 
     const rateCheck = await checkRateLimit(organizationId, integrationId, integration[0].connector_id);

@@ -166,6 +166,8 @@ describe('V8 sync read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
+    mockGetCredential.mockResolvedValue(null);
+    mockRecordRefreshResult.mockResolvedValue(null);
     mockGetCredentialHealth.mockResolvedValue({
       total: 2,
       healthy: 1,
@@ -607,6 +609,104 @@ describe('V8 sync read-only routes', () => {
     expect(mockCheckRateLimit).toHaveBeenCalledWith(ORG, 'int-1', 'jira');
     expect(mockRecordRequest).toHaveBeenCalledWith(ORG, 'int-1', 'jira');
     expect(mockSyncIntegration).toHaveBeenCalledWith('int-1', {});
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync blocks expired governed credentials before sync starts', async () => {
+    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockGetCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2020-03-27T19:00:00.000Z',
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+    mockRecordRefreshResult.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: '2020-03-27T19:00:00.000Z',
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: '2026-03-27T19:00:00.000Z',
+      lastRefreshResult: 'credential_expired',
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T19:00:00.000Z',
+    });
+    mockGetConnectorHealth.mockResolvedValue({
+      healthy: true,
+      syncStatus: 'unknown',
+      conflictCount: 0,
+      lastSyncAt: null,
+      authState: 'healthy',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('REFRESH_REAUTH_REQUIRED');
+    expect(mockRecordRefreshResult).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      result: 'credential_expired',
+    });
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
+      connectorId: 'jira',
+      organizationId: ORG,
+      targetState: 'degraded_reauth_needed',
+      transitionedBy: UID,
+      reason: 'sync_preflight_credential_expired',
+    });
+    expect(mockRecordRequest).not.toHaveBeenCalled();
+    expect(mockSyncIntegration).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/sync/integrations/:integrationId/sync blocks refresh-window credentials before fake runtime sync', async () => {
+    mockDbAll.mockResolvedValueOnce([{ connector_id: 'jira', is_paused: false, status: 'connected' }]);
+    mockGetCredential.mockResolvedValue({
+      credentialId: 'cred-1',
+      connectorId: 'jira',
+      organizationId: ORG,
+      providerAccountId: 'acct-123',
+      workspaceOrTenantId: 'tenant-456',
+      scopesGranted: ['read:jira-work'],
+      tokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      lastVerificationAt: '2026-03-27T18:00:00.000Z',
+      lastRefreshAt: null,
+      lastRefreshResult: null,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+    mockGetRefreshTimingPolicy.mockResolvedValue({
+      policyId: 'policy-1',
+      providerFamily: 'atlassian',
+      organizationId: ORG,
+      typicalTokenLifetimeMinutes: 120,
+      refreshWindowMinutes: 15,
+      maxRetryAttempts: 5,
+      createdAt: '2026-03-27T18:00:00.000Z',
+      updatedAt: '2026-03-27T18:00:00.000Z',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/integrations/int-1/sync').send({});
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('REFRESH_EXECUTION_REQUIRED');
+    expect(res.body.refreshWindowMinutes).toBe(15);
+    expect(mockGetRefreshTimingPolicy).toHaveBeenCalledWith('atlassian', ORG);
+    expect(mockRecordRefreshResult).not.toHaveBeenCalled();
+    expect(mockRecordRequest).not.toHaveBeenCalled();
+    expect(mockSyncIntegration).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/sync preserves rate-limit guardrails', async () => {
