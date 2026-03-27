@@ -350,6 +350,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   >({});
   const [mutatingConnectorAuthId, setMutatingConnectorAuthId] = useState<string | null>(null);
   const [resolvingAuthEscalationId, setResolvingAuthEscalationId] = useState<string | null>(null);
+  const [recoveringAuthEscalationConnectorId, setRecoveringAuthEscalationConnectorId] = useState<string | null>(null);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const [mutatingRefreshPolicyFamily, setMutatingRefreshPolicyFamily] =
     useState<V8SyncProviderFamily | null>(null);
@@ -1188,6 +1189,32 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       );
     } finally {
       setResolvingAuthEscalationId(null);
+    }
+  };
+
+  const handleRecoverV8AuthEscalation = async (connectorId: string) => {
+    const recoveryTarget = integrations.find(
+      (integration) =>
+        integration.connectorId === connectorId &&
+        integration.connector?.authType === 'oauth2' &&
+        integration.status === 'requires_reauth',
+    );
+
+    if (!recoveryTarget) {
+      toast.error(
+        t(
+          'integrations.syncHub.v8AuthEscalationRecoveryUnavailable',
+          'No governed re-authorization target is available for this escalation yet',
+        ),
+      );
+      return;
+    }
+
+    setRecoveringAuthEscalationConnectorId(connectorId);
+    try {
+      await handleReauth(recoveryTarget.id);
+    } finally {
+      setRecoveringAuthEscalationConnectorId(null);
     }
   };
 
@@ -2091,39 +2118,80 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
         ) : (
           <div className="space-y-2">
-            {v8AuthEscalations.slice(0, 5).map((escalation) => (
-              <div
-                key={escalation.escalationId}
-                className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20"
-              >
-                <ShieldAlert size={14} className="text-orange-400 shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-200">{escalation.connectorId}</span>
-                    <span className="px-1.5 py-0.5 text-[11px] bg-orange-500/10 text-orange-300 rounded">
-                      {t('integrations.syncHub.v8Escalated', 'escalated')}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
-                    {escalation.reason || t('integrations.syncHub.v8NoEscalationReason', 'Auth health degraded')}
-                  </div>
-                  <div className="text-xs text-slate-600 mt-1">{timeAgo(escalation.escalatedAt)}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void handleResolveV8AuthEscalation(escalation.escalationId)}
-                  disabled={resolvingAuthEscalationId === escalation.escalationId}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+            {v8AuthEscalations.slice(0, 5).map((escalation) => {
+              const recoveryTarget = integrations.find(
+                (integration) =>
+                  integration.connectorId === escalation.connectorId &&
+                  integration.connector?.authType === 'oauth2' &&
+                  integration.status === 'requires_reauth',
+              );
+
+              return (
+                <div
+                  key={escalation.escalationId}
+                  className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20"
                 >
-                  {resolvingAuthEscalationId === escalation.escalationId ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <CheckCircle2 size={12} />
-                  )}
-                  {t('integrations.syncHub.v8ResolveEscalation', 'Resolve')}
-                </button>
-              </div>
-            ))}
+                  <ShieldAlert size={14} className="text-orange-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-slate-200">{escalation.connectorId}</span>
+                      <span className="px-1.5 py-0.5 text-[11px] bg-orange-500/10 text-orange-300 rounded">
+                        {t('integrations.syncHub.v8Escalated', 'escalated')}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {escalation.reason || t('integrations.syncHub.v8NoEscalationReason', 'Auth health degraded')}
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1">{timeAgo(escalation.escalatedAt)}</div>
+                    {recoveryTarget ? (
+                      <div className="mt-2 text-[11px] text-orange-200/70">
+                        {t(
+                          'integrations.syncHub.v8RecoveryTargetReady',
+                          'Governed re-authorization can start directly from this recovery panel.',
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-[11px] text-orange-200/60">
+                        {t(
+                          'integrations.syncHub.v8RecoveryTargetMissing',
+                          'No governed re-authorization target is currently available for this escalation.',
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="shrink-0 flex flex-col gap-2">
+                    {recoveryTarget && (
+                      <button
+                        type="button"
+                        onClick={() => void handleRecoverV8AuthEscalation(escalation.connectorId)}
+                        disabled={recoveringAuthEscalationConnectorId === escalation.connectorId}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-orange-500/20 bg-orange-500/10 text-[11px] font-medium text-orange-200 hover:bg-orange-500/15 disabled:opacity-60 transition-colors"
+                      >
+                        {recoveringAuthEscalationConnectorId === escalation.connectorId ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <ArrowUpRight size={12} />
+                        )}
+                        {t('integrations.syncHub.v8StartRecovery', 'Start re-authorization')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void handleResolveV8AuthEscalation(escalation.escalationId)}
+                      disabled={resolvingAuthEscalationId === escalation.escalationId}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-60 transition-colors"
+                    >
+                      {resolvingAuthEscalationId === escalation.escalationId ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={12} />
+                      )}
+                      {t('integrations.syncHub.v8ResolveEscalation', 'Resolve')}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

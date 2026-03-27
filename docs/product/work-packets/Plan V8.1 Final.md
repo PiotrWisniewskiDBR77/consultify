@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `11`
+- landed packets in the current active lane: `12`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: eleventh broader sync packet recorded in `evidence/455-v81-broader-sync-auth-break-escalation-continuity-seam.md`
-- reason: after run-now refresh preflight honesty landed, the active runtime path could detect auth-breaks but still could not materialize real governed auth escalations onto the existing operator recovery panel
+- latest evidence: twelfth broader sync packet recorded in `evidence/456-v81-broader-sync-auth-break-recovery-initiation-continuity-seam.md`
+- reason: after auth-break escalation continuity landed, the active recovery panel could show governed recovery work but still could not start the bounded governed re-authorization step already available on a separate surface
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/455-v81-broader-sync-auth-break-escalation-continuity-seam.md`
+- current packet: `evidence/456-v81-broader-sync-auth-break-recovery-initiation-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether real governed refresh execution continuity or broader auth-break recovery continuity is now the next smallest honest broader-sync packet`
+- next action: `assess whether real governed refresh execution continuity or auth-break recovery resolution continuity is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

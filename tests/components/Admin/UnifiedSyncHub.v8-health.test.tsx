@@ -271,6 +271,75 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(screen.getByText('document')).toBeInTheDocument();
   });
 
+  it('starts governed reauthorization from the auth escalation panel', async () => {
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-reauth-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'requires_reauth',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'degraded',
+          errorRate: 25,
+          unresolvedErrors: 0,
+          lastRun: null,
+          configuredFields: ['site_url', 'cloud_id'],
+          onboardingStatus: null,
+          credential: null,
+          connector: {
+            id: 'jira',
+            name: 'Jira',
+            category: 'project_management',
+            capabilities: ['issues'],
+            authType: 'oauth2',
+            configFields: ['site_url', 'cloud_id'],
+          },
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.getAuthEscalations).mockResolvedValue({
+      escalations: [
+        {
+          escalationId: 'esc-1',
+          organizationId: 'org-sync-1',
+          connectorId: 'jira',
+          reason: 'credential_expired',
+          escalatedAt: '2026-03-27T19:00:00.000Z',
+          resolvedAt: null,
+          resolvedBy: null,
+        },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8SyncApi.reauthIntegration).mockResolvedValue({
+      success: true,
+      message: 'Re-authorization initiated',
+      onboardingStatus: 'pending_external_auth',
+    } as any);
+
+    render(<UnifiedSyncHub />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jira')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Start re-authorization/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Start re-authorization/i }));
+
+    await waitFor(() => {
+      expect(V8SyncApi.reauthIntegration).toHaveBeenCalledWith('int-reauth-1');
+    });
+  });
+
   it('resolves sync errors through the governed V8 mutation before legacy fallback', async () => {
     vi.mocked(V8SyncApi.getErrors).mockResolvedValue({
       errors: [
