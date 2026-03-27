@@ -165,6 +165,17 @@ async function approveModelWithFallback(modelId: string) {
   }
 }
 
+async function createModelWithFallback(body: Record<string, unknown>) {
+  try {
+    return await V8FinanceApi.createModel(body);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post('/api/financial-modeling/models', body);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -365,7 +376,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     if (!newName || !newStartDate) return;
     setLoading(true);
     try {
-      const data = await Api.post('/api/financial-modeling/models', {
+      const data = await createModelWithFallback({
         name: newName,
         startDate: newStartDate,
         horizonMonths: newHorizon,
@@ -374,12 +385,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
         projectId,
         assumptions: { initialCash: 0, initialEquity: 0, initialDebt: 0, initialPPE: 0 },
       });
-      trackFunnelEvent('financial_model_created', { modelId: (data as any)?.id });
+      const createdModel = (data as any)?.model || data;
+      const createdModelId = String(createdModel?.id || (data as any)?.id || '');
+      trackFunnelEvent('financial_model_created', { modelId: createdModelId || undefined });
       setShowCreate(false);
       setNewName('');
       await loadModels();
-      if ((data as any)?.id) {
-        const createdModelId = (data as any).id as string;
+      if (createdModelId) {
         await selectModel(createdModelId);
         onModelChanged?.(createdModelId);
       }

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type FinanceModelRow, type FinanceStatementRow, normalizeModelStatus } from '../financeTypes';
 
@@ -71,12 +72,35 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
     }
   }, [initialSourceStatementPackId, updateFromStatement]);
 
+  const createModelWithFallback = useCallback(async (payload: Record<string, unknown>) => {
+    try {
+      return await V8FinanceApi.createModel(payload);
+    } catch (error) {
+      if (!shouldFallbackToLegacyFinance(error)) {
+        throw error;
+      }
+      return await Api.post('/api/financial-modeling/models', payload);
+    }
+  }, []);
+
+  const getModelDetailWithFallback = useCallback(async (modelId: string) => {
+    try {
+      const data = await V8FinanceApi.getModel(modelId);
+      return data?.model ?? null;
+    } catch (error) {
+      if (!shouldFallbackToLegacyFinance(error)) {
+        throw error;
+      }
+      return await Api.get(`/api/financial-modeling/models/${modelId}`).catch(() => null);
+    }
+  }, []);
+
   const handleCreate = useCallback(async () => {
     if (!form.name || !form.startDate) return;
     if (mode === 'statement' && !sourceStatementPackId) return;
     setCreating(true);
     try {
-      const created = await Api.post('/api/financial-modeling/models', {
+      const payload = {
         name: form.name,
         startDate: form.startDate,
         horizonMonths: form.horizonMonths,
@@ -87,12 +111,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
           mode === 'statement'
             ? undefined
             : { initialCash: 0, initialEquity: 0, initialDebt: 0, initialPPE: 0 },
-      });
-      const createdId = String((created as any)?.id || '');
-      let model = created as any;
-      if (createdId) {
+      };
+      const created = (await createModelWithFallback(payload)) as any;
+      const createdModel = created?.model || created;
+      const createdId = String(createdModel?.id || created?.id || '');
+      let model = createdModel;
+      if (createdId && !created?.model) {
         try {
-          model = await Api.get(`/api/financial-modeling/models/${createdId}`);
+          model = await getModelDetailWithFallback(createdId);
         } catch {
           /* use created */
         }
@@ -109,7 +135,9 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
         horizonMonths: Number(model?.horizon_months || form.horizonMonths),
         startDate: String(model?.start_date || form.startDate),
         sourceStatementPackId:
-          model?.source_statement_pack_id || (mode === 'statement' ? sourceStatementPackId : undefined),
+          model?.source_statement_pack_id ||
+          model?.sourceStatementPackId ||
+          (mode === 'statement' ? sourceStatementPackId : undefined),
         updatedAt: String(model?.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
@@ -119,7 +147,15 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [form, mode, onCreated, sourceStatementPackId, t]);
+  }, [
+    createModelWithFallback,
+    form,
+    getModelDetailWithFallback,
+    mode,
+    onCreated,
+    sourceStatementPackId,
+    t,
+  ]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">

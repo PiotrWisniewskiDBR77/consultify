@@ -9,6 +9,7 @@ const mockGetStatementPackDetail = vi.fn();
 const mockGetStatementDetail = vi.fn();
 const mockListStatements = vi.fn();
 const mockListStatementPacks = vi.fn();
+const mockCreateModel = vi.fn();
 const mockListModels = vi.fn();
 const mockGetModel = vi.fn();
 const mockApproveModel = vi.fn();
@@ -84,6 +85,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
 vi.mock('../../../services/financialModelingService.js', () => ({
   approveModel: (...args: unknown[]) => mockApproveModel(...args),
   computeModel: (...args: unknown[]) => mockComputeModel(...args),
+  createModel: (...args: unknown[]) => mockCreateModel(...args),
   getModel: (...args: unknown[]) => mockGetModel(...args),
   getOutputs: (...args: unknown[]) => mockGetOutputs(...args),
   getValidations: (...args: unknown[]) => mockGetValidations(...args),
@@ -449,6 +451,38 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.data?.count).toBe(1);
     expect(res.body.data?.models?.[0]?.name).toBe('Revenue forecast');
     expect(mockListModels).toHaveBeenCalledWith(ORG);
+  });
+
+  it('POST /api/v8/finance/models returns envelope and delegates to createModel', async () => {
+    mockCreateModel.mockResolvedValue('model-1');
+    mockGetModel.mockResolvedValue({
+      id: 'model-1',
+      organization_id: ORG,
+      name: 'Created model',
+      status: 'draft',
+      start_date: '2026-01-01',
+    });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/finance/models').send({
+      name: 'Created model',
+      startDate: '2026-01-01',
+      currency: 'PLN',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data?.model?.name).toBe('Created model');
+    expect(mockCreateModel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        createdBy: UID,
+        name: 'Created model',
+        startDate: '2026-01-01',
+        currency: 'PLN',
+      }),
+    );
+    expect(mockGetModel).toHaveBeenCalledWith('model-1');
   });
 
   it('GET /api/v8/finance/models/:id returns envelope and delegates to getModel', async () => {

@@ -119,6 +119,21 @@ export interface V8FinanceModelApproveResult {
   status: string;
 }
 
+export interface V8FinanceModelCreatePayload {
+  name: string;
+  description?: string;
+  currency?: string;
+  horizonMonths?: number;
+  startDate: string;
+  granularity?: string;
+  scenario?: string;
+  assumptions?: Record<string, unknown>;
+  projectId?: string;
+  initiativeId?: string;
+  sourceStatementId?: string;
+  sourceStatementPackId?: string;
+}
+
 export interface V8FinanceValuationSummary {
   id: string;
   title: string;
@@ -371,6 +386,8 @@ export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
   getModels: () =>
     v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
+  createModel: (body: V8FinanceModelCreatePayload) =>
+    v8Post<{ model: V8FinanceModelDetail }>('/finance/models', body),
   getModel: (modelId: string) => v8Get<{ model: V8FinanceModelDetail }>(`/finance/models/${modelId}`),
   getModelValidations: (modelId: string) =>
     v8Get<V8FinanceModelValidationResult>(`/finance/models/${modelId}/validations`),

@@ -94,6 +94,30 @@ describe('V8FinanceApi', () => {
     expect(data.models[0].name).toBe('Revenue forecast');
   });
 
+  it('creates governed finance models through the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      model: {
+        id: 'model-1',
+        name: 'Created model',
+        status: 'draft',
+        start_date: '2026-01-01',
+      },
+    } as any);
+
+    const data = await V8FinanceApi.createModel({
+      name: 'Created model',
+      startDate: '2026-01-01',
+      currency: 'PLN',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/finance/models', {
+      name: 'Created model',
+      startDate: '2026-01-01',
+      currency: 'PLN',
+    });
+    expect(data.model.id).toBe('model-1');
+  });
+
   it('requests governed finance model detail from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       model: {

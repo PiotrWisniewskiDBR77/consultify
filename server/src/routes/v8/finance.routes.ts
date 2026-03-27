@@ -71,6 +71,7 @@ import {
 import {
   approveModel,
   computeModel,
+  createModel,
   getModel,
   getOutputs,
   getValidations,
@@ -170,6 +171,58 @@ router.get(
       data: { models, count: models.length },
       meta: financeMeta(),
     });
+  }),
+);
+
+router.post(
+  '/models',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = req.body ?? {};
+    const name = String(body.name || '').trim();
+    const startDate = String(body.startDate || '').trim();
+    if (!name || !startDate) {
+      return res.status(400).json({ error: 'name and startDate required' });
+    }
+
+    try {
+      const modelId = await createModel({
+        organizationId,
+        projectId: body.projectId,
+        initiativeId: body.initiativeId,
+        name,
+        description: body.description,
+        currency: body.currency,
+        horizonMonths: body.horizonMonths,
+        startDate,
+        granularity: body.granularity,
+        scenario: body.scenario,
+        assumptions: body.assumptions,
+        createdBy: userId,
+        sourceStatementId: body.sourceStatementId,
+        sourceStatementPackId: body.sourceStatementPackId,
+      });
+      const model = await getModel(modelId);
+      return res.status(201).json({
+        data: { model: model ?? { id: modelId, name, start_date: startDate } },
+        meta: financeMeta(),
+      });
+    } catch (e: any) {
+      const message = String(e?.message || 'Model creation failed');
+      if (
+        message.includes('Statement') ||
+        message.includes('critical lines') ||
+        message.includes('seed')
+      ) {
+        return res.status(400).json({ error: message });
+      }
+      throw e;
+    }
   }),
 );
 

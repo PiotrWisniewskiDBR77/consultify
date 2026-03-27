@@ -37,6 +37,7 @@ vi.mock('@/services/api/v8/finance', () => ({
   V8FinanceApi: {
     approveModel: vi.fn(),
     computeModel: vi.fn(),
+    createModel: vi.fn(),
     getModel: vi.fn(),
     getModelOutputs: vi.fn(),
     getModelValidations: vi.fn(),
@@ -211,6 +212,62 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
 
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+    });
+  });
+
+  it('prefers governed model create before legacy fallback in the workspace', async () => {
+    vi.mocked(V8FinanceApi.createModel).mockResolvedValue({
+      model: { id: 'model-created-1', name: 'Created model' },
+    } as any);
+
+    const { container } = render(<FinancialModelWorkspace />);
+    const createLauncher = container.querySelector('button[class*="p-1.5"]');
+    expect(createLauncher).not.toBeNull();
+
+    fireEvent.click(createLauncher as HTMLButtonElement);
+    fireEvent.change(screen.getByPlaceholderText('e.g. Initiative Alpha — 5yr projection'), {
+      target: { value: 'Created model' },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    });
+
+    await waitFor(() => {
+      expect(V8FinanceApi.createModel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Created model',
+        }),
+      );
+    });
+
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models', expect.anything());
+  });
+
+  it('falls back to legacy model create in the workspace on bounded compatibility statuses', async () => {
+    vi.mocked(V8FinanceApi.createModel).mockRejectedValue({ status: 404 });
+    vi.mocked(Api.post).mockResolvedValue({ id: 'model-created-legacy-1' } as any);
+
+    const { container } = render(<FinancialModelWorkspace />);
+    const createLauncher = container.querySelector('button[class*="p-1.5"]');
+    expect(createLauncher).not.toBeNull();
+
+    fireEvent.click(createLauncher as HTMLButtonElement);
+    fireEvent.change(screen.getByPlaceholderText('e.g. Initiative Alpha — 5yr projection'), {
+      target: { value: 'Legacy model' },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    });
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith(
+        '/api/financial-modeling/models',
+        expect.objectContaining({
+          name: 'Legacy model',
+        }),
+      );
     });
   });
 });

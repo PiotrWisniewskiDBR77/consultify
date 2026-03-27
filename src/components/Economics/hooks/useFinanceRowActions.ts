@@ -31,6 +31,29 @@ async function approveModelWithFallback(modelId: string) {
   }
 }
 
+async function createModelWithFallback(body: Record<string, unknown>) {
+  try {
+    return await V8FinanceApi.createModel(body);
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.post('/api/financial-modeling/models', body);
+  }
+}
+
+async function getModelDetailWithFallback(modelId: string) {
+  try {
+    const data = await V8FinanceApi.getModel(modelId);
+    return data?.model ?? null;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) {
+      throw error;
+    }
+    return await Api.get(`/api/financial-modeling/models/${modelId}`);
+  }
+}
+
 interface UseFinanceRowActionsParams {
   handleOpenFull: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
@@ -147,14 +170,14 @@ export function useFinanceRowActions({
           row.kind === 'models' ||
           (row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'model')
         ) {
-          const detail = (await Api.get(`/api/financial-modeling/models/${row.id}`)) as any;
-          await Api.post('/api/financial-modeling/models', {
+          const detail = (await getModelDetailWithFallback(row.id)) as any;
+          await createModelWithFallback({
             name: copyTitle,
             startDate: detail.start_date,
             horizonMonths: detail.horizon_months,
             granularity: detail.granularity,
             currency: detail.currency,
-            assumptions: detail.assumptions || {},
+            assumptions: detail.assumptions || detail.assumptions_json || {},
           });
           await loadModels();
         } else if (
