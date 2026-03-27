@@ -363,7 +363,10 @@ Current status: `active`
 - [x] sixteenth real bounded packet landed around visible `CommissionView` statement continuity on existing governed partner payout and commission seams
 - [x] focused regression added for governed `CommissionView` statement continuity with bounded legacy fallback
 - [x] assess whether any thinner honest statement-source residual remains after CommissionView continuity before revisiting payout-settings ownership
-- [ ] choose the next honest heavier broader partner packet between commission/dashboard truth migration away from `usePartnerEcosystem` placeholders and explicit partner `payout-settings` save ownership
+- [x] choose the next honest heavier broader partner packet between commission/dashboard truth migration away from `usePartnerEcosystem` placeholders and explicit partner `payout-settings` save ownership
+- [x] seventeenth real bounded packet landed around visible `PartnerDashboardView` runtime-summary continuity on shared governed partner seams with bounded legacy fallback
+- [x] focused regression added for the shared partner runtime-summary seam across `PartnerDashboardView`, `PartnerPortalView`, and unit fallback coverage
+- [ ] assess whether commission intelligence / trust progression placeholder breadth still contains one more honest governed runtime cut before returning to partner `payout-settings` save ownership
 
 ### `Landing Anna backend analytics / dashboard breadth`
 

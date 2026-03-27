@@ -5,9 +5,13 @@
  * Aligned with ISO 21500 / PMBOK 7 / PRINCE2
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { EcosystemAnalytics } from '../../components/Partner/EcosystemAnalytics';
+import {
+  loadPartnerRuntimeSummary,
+  PartnerRuntimeSummaryStrip,
+  type PartnerRuntimeSummary,
+} from '../../components/Partner/PartnerRuntimeSummaryStrip';
 import { TrustProgressionIndicator } from '../../components/Partner/TrustProgressionIndicator';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
 import { useAppStore } from '../../store/useAppStore';
@@ -15,15 +19,36 @@ import { AppView } from '../../types';
 
 export const PartnerDashboardView: React.FC = () => {
   const { setCurrentView } = useAppStore();
-  const { metrics, trustProgression, currentTrustPhase, loading, getComplianceScore } =
-    usePartnerEcosystem();
+  const { trustProgression, currentTrustPhase } = usePartnerEcosystem();
+  const [runtimeSummary, setRuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
 
   const handleNavigate = useCallback(
     (view: AppView) => () => setCurrentView(view),
     [setCurrentView]
   );
 
-  const complianceScore = getComplianceScore();
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSummary = async () => {
+      try {
+        const summary = await loadPartnerRuntimeSummary();
+        if (!cancelled) {
+          setRuntimeSummary(summary);
+        }
+      } catch {
+        if (!cancelled) {
+          setRuntimeSummary(null);
+        }
+      }
+    };
+
+    void loadSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
@@ -48,8 +73,8 @@ export const PartnerDashboardView: React.FC = () => {
           />
         </div>
 
-        {/* Ecosystem Analytics */}
-        <EcosystemAnalytics metrics={metrics} complianceScore={complianceScore} loading={loading} />
+        {/* Runtime Summary */}
+        {runtimeSummary && <PartnerRuntimeSummaryStrip summary={runtimeSummary} />}
 
         {/* Quick Navigation */}
         <div className="grid gap-4 md:grid-cols-3">

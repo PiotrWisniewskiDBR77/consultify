@@ -145,7 +145,7 @@ describe('PartnerPortalView', () => {
       });
     });
 
-    it('renders governed V8 runtime summary on the default dashboard', async () => {
+    it('renders governed partner runtime summary on the default dashboard', async () => {
       vi.mocked(Api.get).mockImplementation(async (url: string) => {
         if (url === '/api/partners/connection') {
           return {
@@ -182,7 +182,7 @@ describe('PartnerPortalView', () => {
         expect(V8PartnerApi.getEarningsSummary).toHaveBeenCalled();
       });
 
-      expect(screen.getByText('V8 Runtime Summary')).toBeInTheDocument();
+      expect(screen.getByText('Partner Runtime Summary')).toBeInTheDocument();
       expect(screen.getByText('Referral clicks')).toBeInTheDocument();
       expect(screen.getByText('Ready for payout')).toBeInTheDocument();
       expect(screen.getByText('30 unique')).toBeInTheDocument();

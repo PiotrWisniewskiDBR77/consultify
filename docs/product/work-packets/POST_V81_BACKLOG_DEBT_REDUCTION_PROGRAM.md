@@ -308,6 +308,7 @@ Current result:
 - the fifteenth real bounded broader partner packet landed in `evidence/433-v81-broader-partner-client-access-employees-read-v8-seam.md` by moving the active employee roster onto a governed partner V8-first read seam backed by `partner_users` plus user/session activity while leaving unknown client assignment counts explicitly unclaimed,
 - the sixteenth real bounded broader partner packet landed in `evidence/434-v81-broader-partner-commission-view-statement-continuity-seam.md` by moving the active `CommissionView` statement cards off placeholder hook data and onto the existing governed partner payout and commission seams with bounded compatibility fallback,
 - the post-`CommissionView` residual assessment recorded in `evidence/435-v81-broader-partner-post-commissionview-residual-assessment.md` confirmed there is no thinner honest statement-source micro-packet left before the heavier commission/dashboard truth migration or partner `payout-settings` ownership work,
+- the seventeenth real bounded broader partner packet landed in `evidence/436-v81-broader-partner-dashboard-runtime-summary-v8-seam.md` by extracting a shared partner runtime-summary seam and moving the active `PartnerDashboardView` analytics block off placeholder hook data onto existing governed partner runtime reads with bounded compatibility fallback,
 - the previously accepted bounded `Partner Program` lane stays capped rather than silently reopening its narrower payout, campaign, and profile packets.
 
 ### Explicitly out of scope
