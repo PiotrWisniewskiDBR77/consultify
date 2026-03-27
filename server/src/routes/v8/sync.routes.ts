@@ -14,6 +14,7 @@ import {
   getCredential,
   getCredentialHealth,
   getRefreshTimingPolicy,
+  recordAuthEscalation,
   recordRefreshResult,
   resolveAuthEscalation,
   setRefreshTimingPolicy,
@@ -730,10 +731,17 @@ router.post(
       });
     }
 
+    let escalationId: string | null = null;
+    if (['credential_expired', 'scope_revoked'].includes(parsedBody.data.result)) {
+      const escalation = await recordAuthEscalation(connector.id, organizationId, parsedBody.data.result);
+      escalationId = escalation.escalationId;
+    }
+
     await logIntegrationAudit(organizationId, integrationId, 'refresh_result_recorded', actorId, actorId, {
       connectorId: connector.id,
       result: parsedBody.data.result,
       authTransition: authTransition?.targetState ?? null,
+      escalationId,
     });
 
     return res.json({
@@ -868,6 +876,11 @@ router.post(
             organizationId,
             result: 'credential_expired',
           });
+          const escalation = await recordAuthEscalation(
+            connector.id,
+            organizationId,
+            'credential_expired',
+          );
           const connectorHealth = await getConnectorHealth(connector.id, organizationId);
 
           if (connectorHealth.authState !== 'degraded_reauth_needed') {
@@ -889,6 +902,7 @@ router.post(
             {
               connectorId: connector.id,
               credentialId: refreshedCredential.credentialId,
+              escalationId: escalation.escalationId,
               tokenExpiresAt: refreshedCredential.tokenExpiresAt,
             },
           );

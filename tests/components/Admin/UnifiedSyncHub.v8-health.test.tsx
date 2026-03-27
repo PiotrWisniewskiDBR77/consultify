@@ -530,45 +530,25 @@ describe('UnifiedSyncHub V8 health continuity', () => {
   });
 
   it('keeps run-now on the governed path when refresh preflight blocks stale auth', async () => {
-    vi.mocked(V8SyncApi.getIntegrations)
-      .mockResolvedValueOnce({
-        integrations: [
-          {
-            id: 'int-1',
-            connectorId: 'jira',
-            name: 'Jira',
-            category: 'project_management',
-            status: 'connected',
-            lastSyncAt: null,
-            lastError: null,
-            health: 'healthy',
-            errorRate: 0,
-            unresolvedErrors: 0,
-            lastRun: null,
-            connector: null,
-          },
-        ],
-        count: 1,
-      } as any)
-      .mockResolvedValueOnce({
-        integrations: [
-          {
-            id: 'int-1',
-            connectorId: 'jira',
-            name: 'Jira',
-            category: 'project_management',
-            status: 'requires_reauth',
-            lastSyncAt: null,
-            lastError: null,
-            health: 'degraded',
-            errorRate: 25,
-            unresolvedErrors: 0,
-            lastRun: null,
-            connector: null,
-          },
-        ],
-        count: 1,
-      } as any);
+    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue({
+      integrations: [
+        {
+          id: 'int-1',
+          connectorId: 'jira',
+          name: 'Jira',
+          category: 'project_management',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          health: 'healthy',
+          errorRate: 0,
+          unresolvedErrors: 0,
+          lastRun: null,
+          connector: null,
+        },
+      ],
+      count: 1,
+    } as any);
     vi.mocked(V8SyncApi.runIntegrationSync).mockRejectedValue({
       status: 409,
       code: 'REFRESH_REAUTH_REQUIRED',
@@ -697,7 +677,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(runNowIconButton).toBeDisabled();
     expect(pauseIconButton).toBeDisabled();
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByText('Connection setup still pending')).toBeInTheDocument();
@@ -879,7 +859,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Jira')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
 
     await waitFor(() => {
       expect(
@@ -1116,7 +1096,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     expect(screen.getByText('read:jira-work')).toBeInTheDocument();
   });
 
-  it('records auth-break refresh result and shifts the active hub to requires reauth', async () => {
+  it('records auth-break refresh result and surfaces governed escalation on the active hub', async () => {
     const connectedWithCredential = {
       integrations: [
         {
@@ -1191,8 +1171,25 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       ],
       count: 1,
     };
+    const escalationsAfterAuthBreak = {
+      escalations: [
+        {
+          escalationId: 'esc-auth-1',
+          organizationId: 'org-sync-1',
+          connectorId: 'jira',
+          reason: 'credential_expired',
+          escalatedAt: '2026-03-27T19:00:00.000Z',
+          resolvedAt: null,
+          resolvedBy: null,
+        },
+      ],
+      count: 1,
+    };
 
     vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(connectedWithCredential as any);
+    vi.mocked(V8SyncApi.getAuthEscalations)
+      .mockResolvedValueOnce({ escalations: [], count: 0 } as any)
+      .mockResolvedValue(escalationsAfterAuthBreak as any);
     vi.mocked(V8SyncApi.recordRefreshResult).mockResolvedValue({
       credential: {
         credentialId: 'cred-1',
@@ -1217,7 +1214,7 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(screen.getByText('Jira')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Jira'));
+    fireEvent.click(screen.getByText('Jira').closest('div[class*="cursor-pointer"]') as HTMLElement);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Record refresh result/i })).toBeInTheDocument();
@@ -1228,7 +1225,6 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       target: { value: 'credential_expired' },
     });
 
-    vi.mocked(V8SyncApi.getIntegrations).mockResolvedValue(requiresReauth as any);
     fireEvent.click(screen.getByRole('button', { name: /Save refresh result/i }));
 
     await waitFor(() => {
@@ -1237,8 +1233,10 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       });
     });
 
+    fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
+
     await waitFor(() => {
-      expect(screen.getByText('Re-authorization required')).toBeInTheDocument();
+      expect(screen.getByText('credential_expired')).toBeInTheDocument();
     });
   });
 });

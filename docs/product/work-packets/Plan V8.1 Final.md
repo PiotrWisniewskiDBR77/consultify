@@ -71,7 +71,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `9 / 13`
 - active lane: broader `Sync` completion
-- landed packets in the current active lane: `10`
+- landed packets in the current active lane: `11`
 
 ---
 
@@ -166,8 +166,8 @@ No lane should jump directly from `queued` to `done`.
 
 - status: `active`
 - lane: broader `Sync` completion
-- latest evidence: tenth broader sync packet recorded in `evidence/454-v81-broader-sync-run-now-refresh-preflight-honesty-seam.md`
-- reason: after refresh-result continuity landed, the active governed runtime path still let operators start sync runs even when governed credential truth already said refresh execution or reauthorization was required
+- latest evidence: eleventh broader sync packet recorded in `evidence/455-v81-broader-sync-auth-break-escalation-continuity-seam.md`
+- reason: after run-now refresh preflight honesty landed, the active runtime path could detect auth-breaks but still could not materialize real governed auth escalations onto the existing operator recovery panel
 
 ### Next three lanes
 
@@ -389,10 +389,10 @@ Use the following structure for each lane as it becomes active:
 - status: `active`
 - charter: `docs/product/work-packets/T4_BROADER_SYNC_COMPLETION_CHARTER.md`
 - split-brain map: `evidence/442-v81-broader-sync-completion-split-brain-map.md`
-- current packet: `evidence/454-v81-broader-sync-run-now-refresh-preflight-honesty-seam.md`
+- current packet: `evidence/455-v81-broader-sync-auth-break-escalation-continuity-seam.md`
 - last accepted packet: `none`
 - blocker: `none`
-- next action: `assess whether real governed refresh execution continuity or auth-break escalation / recovery continuity is now the next smallest honest broader-sync packet`
+- next action: `assess whether real governed refresh execution continuity or broader auth-break recovery continuity is now the next smallest honest broader-sync packet`
 - acceptance evidence: `none`
 
 #### broader `Multiplayer / collaboration` breadth

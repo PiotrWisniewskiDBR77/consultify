@@ -53,6 +53,7 @@ import {
   storeCredential,
   getCredential,
   recordRefreshResult,
+  recordAuthEscalation,
   classifyFailure,
   checkEscalationLevel,
   setRefreshTimingPolicy,
@@ -797,6 +798,30 @@ describe('credential and auth escalation health', () => {
     expect(result).toHaveLength(2);
     expect(result[0].escalationId).toBe('00000000-0000-4000-8000-eeeeeeeeeeee');
     expect(result[1].connectorId).toBe(CONNECTOR_ID_2);
+  });
+
+  it('recordAuthEscalation inserts a new unresolved auth escalation', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+
+    const result = await recordAuthEscalation(CONNECTOR_ID, ORG_ID, 'credential_expired');
+
+    expect(result.connectorId).toBe(CONNECTOR_ID);
+    expect(result.organizationId).toBe(ORG_ID);
+    expect(result.reason).toBe('credential_expired');
+    expect(result.resolvedAt).toBeNull();
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO v8_auth_escalations'),
+      expect.arrayContaining([ORG_ID, CONNECTOR_ID, 'credential_expired']),
+    );
+  });
+
+  it('recordAuthEscalation reuses an unresolved escalation for the same connector and org', async () => {
+    mockDbGet.mockResolvedValueOnce(makeEscalationRow({ reason: 'credential_expired' }));
+
+    const result = await recordAuthEscalation(CONNECTOR_ID, ORG_ID, 'scope_revoked');
+
+    expect(result.escalationId).toBe('00000000-0000-4000-8000-eeeeeeeeeeee');
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('resolveAuthEscalation resolves an active auth escalation', async () => {

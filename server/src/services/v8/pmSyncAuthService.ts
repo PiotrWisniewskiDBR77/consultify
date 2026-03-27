@@ -623,6 +623,62 @@ export async function getCredentialHealth(organizationId: string): Promise<Crede
 }
 
 /**
+ * Record an active auth escalation for operator recovery.
+ * Keeps at most one unresolved escalation per connector within an org.
+ */
+export async function recordAuthEscalation(
+  connectorId: string,
+  organizationId: string,
+  reason: string | null,
+): Promise<AuthEscalationRecord> {
+  const trimmedConnectorId = connectorId.trim();
+  const trimmedOrganizationId = organizationId.trim();
+  const normalizedReason = typeof reason === 'string' && reason.trim() ? reason.trim() : null;
+
+  if (!trimmedConnectorId) {
+    throw new Error('Connector id is required');
+  }
+  if (!trimmedOrganizationId) {
+    throw new Error('Organization id is required');
+  }
+
+  const existing = await dbGet<EscalationRow>(
+    `SELECT * FROM v8_auth_escalations
+     WHERE connector_id = ? AND organization_id = ? AND resolved_at IS NULL
+     ORDER BY escalated_at DESC
+     LIMIT 1`,
+    [trimmedConnectorId, trimmedOrganizationId],
+    { fallback: true },
+  );
+
+  if (existing) {
+    return rowToAuthEscalation(existing);
+  }
+
+  const escalationId = uuidv4();
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `INSERT INTO v8_auth_escalations (
+      escalation_id, organization_id, connector_id, reason, escalated_at, resolved_at, resolved_by
+    ) VALUES (?, ?, ?, ?, ?, NULL, NULL)`,
+    [escalationId, trimmedOrganizationId, trimmedConnectorId, normalizedReason, now],
+  );
+
+  logger.info(`${LOG_PREFIX} Recorded auth escalation ${escalationId} for connector ${trimmedConnectorId}`);
+
+  return {
+    escalationId,
+    organizationId: trimmedOrganizationId,
+    connectorId: trimmedConnectorId,
+    reason: normalizedReason,
+    escalatedAt: now,
+    resolvedAt: null,
+    resolvedBy: null,
+  };
+}
+
+/**
  * Active (unresolved) auth escalations for operator recovery.
  */
 export async function getActiveEscalations(organizationId: string): Promise<AuthEscalationRecord[]> {

@@ -13,6 +13,7 @@ const mockResolveAuthEscalation = vi.fn();
 const mockGetRefreshTimingPolicy = vi.fn();
 const mockSetRefreshTimingPolicy = vi.fn();
 const mockGetCredential = vi.fn();
+const mockRecordAuthEscalation = vi.fn();
 const mockRecordRefreshResult = vi.fn();
 const mockStoreCredential = vi.fn();
 const mockGetConnectorHealth = vi.fn();
@@ -40,6 +41,7 @@ vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getRefreshTimingPolicy: (...args: unknown[]) => mockGetRefreshTimingPolicy(...args),
   setRefreshTimingPolicy: (...args: unknown[]) => mockSetRefreshTimingPolicy(...args),
   getCredential: (...args: unknown[]) => mockGetCredential(...args),
+  recordAuthEscalation: (...args: unknown[]) => mockRecordAuthEscalation(...args),
   recordRefreshResult: (...args: unknown[]) => mockRecordRefreshResult(...args),
   storeCredential: (...args: unknown[]) => mockStoreCredential(...args),
 }));
@@ -167,6 +169,15 @@ describe('V8 sync read-only routes', () => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockGetCredential.mockResolvedValue(null);
+    mockRecordAuthEscalation.mockResolvedValue({
+      escalationId: 'esc-auth-1',
+      organizationId: ORG,
+      connectorId: 'jira',
+      reason: 'credential_expired',
+      escalatedAt: '2026-03-27T19:00:00.000Z',
+      resolvedAt: null,
+      resolvedBy: null,
+    });
     mockRecordRefreshResult.mockResolvedValue(null);
     mockGetCredentialHealth.mockResolvedValue({
       total: 2,
@@ -571,6 +582,7 @@ describe('V8 sync read-only routes', () => {
       transitionedBy: UID,
       reason: 'refresh_auth_break',
     });
+    expect(mockRecordAuthEscalation).toHaveBeenCalledWith('jira', ORG, 'credential_expired');
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/disconnect disconnects through the governed mutation seam', async () => {
@@ -659,6 +671,7 @@ describe('V8 sync read-only routes', () => {
       organizationId: ORG,
       result: 'credential_expired',
     });
+    expect(mockRecordAuthEscalation).toHaveBeenCalledWith('jira', ORG, 'credential_expired');
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
       organizationId: ORG,
