@@ -118,6 +118,7 @@ import {
   type WarningThresholds,
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
+import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
@@ -258,7 +259,16 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // T011: Suggested notebook pages (private/project) while editing task
   const [suggestedNotes, setSuggestedNotes] = useState<
-    { id: string; title: string; contentText?: string; tags?: string[]; updatedAt?: string }[]
+    {
+      id: string;
+      title: string;
+      contentText?: string;
+      tags?: string[];
+      updatedAt?: string;
+      captureSource?: string | null;
+      captureMetadata?: { fileOriginalname?: string | null; fileMimetype?: string | null } | null;
+      convertedTo?: Array<{ type?: string | null; id?: string | null }> | null;
+    }[]
   >([]);
   const [suggestedNotesLoading, setSuggestedNotesLoading] = useState(false);
 
@@ -315,7 +325,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // Related Notes (notebook pages mentioning task title)
   const [relatedNotes, setRelatedNotes] = useState<
-    { id: string; title: string; maturity?: string }[]
+    {
+      id: string;
+      title: string;
+      maturity?: string;
+      captureSource?: string | null;
+      captureMetadata?: { fileOriginalname?: string | null; fileMimetype?: string | null } | null;
+      convertedTo?: Array<{ type?: string | null; id?: string | null }> | null;
+    }[]
   >([]);
 
   // New sections state
@@ -2303,6 +2320,13 @@ Return ONLY the final comment text.`;
                                   {note.contentText}
                                 </div>
                               ) : null}
+                              <NotebookMetadataBadges
+                                captureSource={note.captureSource}
+                                captureMetadata={note.captureMetadata}
+                                convertedTo={note.convertedTo}
+                                isPolish={isPolish}
+                                className="mt-1.5"
+                              />
                             </div>
                             <div className="flex flex-col gap-2 shrink-0">
                               <button
@@ -6499,9 +6523,18 @@ Return ONLY the final comment text.`;
                               className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-800/50 hover:bg-slate-100/80 dark:hover:bg-navy-700/50 transition-colors"
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate flex-1 min-w-0">
-                                  {note.title}
-                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate block">
+                                    {note.title}
+                                  </span>
+                                  <NotebookMetadataBadges
+                                    captureSource={note.captureSource}
+                                    captureMetadata={note.captureMetadata}
+                                    convertedTo={note.convertedTo}
+                                    isPolish={isPolish}
+                                    className="mt-1"
+                                  />
+                                </div>
                                 <span
                                   className={`inline-flex items-center gap-1 rounded-md border ${cfg.border} ${cfg.bg} ${cfg.text} px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px] shrink-0`}
                                 >

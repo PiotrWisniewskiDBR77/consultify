@@ -86,7 +86,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - completed remaining themes: `12 / 13`
 - active lane: broader `Notes` adjunct / object-linked outputs breadth
-- landed packets in the current active lane: `7`
+- landed packets in the current active lane: `8`
 - last accepted lane: broader `Multiplayer / collaboration` breadth
 
 ---
@@ -428,9 +428,9 @@ Use the following structure for each lane as it becomes active:
 - charter: `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`
 - split-brain map: `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`
 - current packet: `none`
-- last accepted packet: `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`
+- last accepted packet: `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md`
 - blocker: `none`
-- next action: `choose the next broader-notes packet from wider notebook attachment management or broader output propagation now that upload-origin source attachment continuity is closed`
+- next action: `choose the next broader-notes packet from wider notebook attachment management or materially wider output propagation now that nearby related-note surfaces carry notebook truth`
 - acceptance evidence: `none`
 
 ---

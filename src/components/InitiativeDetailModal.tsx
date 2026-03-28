@@ -50,6 +50,7 @@ import {
 import { InitiativeFinancialIntegration } from './Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from './InitiativeTasksTab';
+import { NotebookMetadataBadges } from './MyWork/notebook/NotebookMetadataBadges';
 import { Button } from './ui/primitives/Button';
 import { Select } from './ui/select';
 
@@ -73,7 +74,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
     currentUser,
     strategicGoals = [],
   }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isPolish = i18n.language === 'pl';
     // Ensure users is always an array to prevent .map() errors
     const users = Array.isArray(rawUsers) ? rawUsers : [];
     const [initiative, setInitiative] = useState<FullInitiative>({ ...initialInitiative });
@@ -97,7 +99,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
     const [suggestedIdeasLoading, setSuggestedIdeasLoading] = useState(false);
     // T011: Suggested notebook pages
     const [suggestedNotes, setSuggestedNotes] = useState<
-      { id: string; title: string; contentText?: string; tags?: string[]; updatedAt?: string }[]
+      {
+        id: string;
+        title: string;
+        contentText?: string;
+        tags?: string[];
+        updatedAt?: string;
+        captureSource?: string | null;
+        captureMetadata?: { fileOriginalname?: string | null; fileMimetype?: string | null } | null;
+        convertedTo?: Array<{ type?: string | null; id?: string | null }> | null;
+      }[]
     >([]);
     const [suggestedNotesLoading, setSuggestedNotesLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -713,6 +724,13 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   {note.contentText}
                                 </div>
                               ) : null}
+                              <NotebookMetadataBadges
+                                captureSource={note.captureSource}
+                                captureMetadata={note.captureMetadata}
+                                convertedTo={note.convertedTo}
+                                isPolish={isPolish}
+                                className="mt-1.5"
+                              />
                             </div>
                             <Button
                               variant="secondary"

@@ -121,6 +121,7 @@ import {
   StakeholdersSection,
   type WarningThresholds,
 } from './shared';
+import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
@@ -784,7 +785,15 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [newTag, setNewTag] = useState('');
 
   // Related Notes (notebook pages mentioning decision title)
-  const [relatedNotes, setRelatedNotes] = useState<{ id: string; title: string }[]>([]);
+  const [relatedNotes, setRelatedNotes] = useState<
+    {
+      id: string;
+      title: string;
+      captureSource?: string | null;
+      captureMetadata?: { fileOriginalname?: string | null; fileMimetype?: string | null } | null;
+      convertedTo?: Array<{ type?: string | null; id?: string | null }> | null;
+    }[]
+  >([]);
   const [relatedNotesExpanded, setRelatedNotesExpanded] = useState(true);
 
   // Activity Log
@@ -1183,7 +1192,15 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         const pages = await Api.getNotebookPages({ q, limit: 5 });
         const arr = Array.isArray(pages) ? pages : [];
         if (!cancelled) {
-          setRelatedNotes(arr.map((p: any) => ({ id: p.id, title: p.title || '' })));
+          setRelatedNotes(
+            arr.map((p: any) => ({
+              id: p.id,
+              title: p.title || '',
+              captureSource: p.captureSource ?? null,
+              captureMetadata: p.captureMetadata ?? null,
+              convertedTo: Array.isArray(p.convertedTo) ? p.convertedTo : null,
+            }))
+          );
         }
       } catch {
         if (!cancelled) setRelatedNotes([]);
@@ -7699,7 +7716,14 @@ Context: ${JSON.stringify(projectContext)}`;
                                   }}
                                   className="w-full text-left p-2.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/50 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
                                 >
-                                  {note.title}
+                                  <span className="block truncate">{note.title}</span>
+                                  <NotebookMetadataBadges
+                                    captureSource={note.captureSource}
+                                    captureMetadata={note.captureMetadata}
+                                    convertedTo={note.convertedTo}
+                                    isPolish={isPolish}
+                                    className="mt-1"
+                                  />
                                 </button>
                               ))}
                             </div>

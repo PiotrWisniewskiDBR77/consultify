@@ -93,7 +93,7 @@ Status vocabulary:
 | broader `Partner Program` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`; split-brain map recorded in `evidence/155-v81-partner-program-split-brain-map.md`; landed packets through `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`; accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md` |
 | broader `Sync` completion | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/492-v81-broader-sync-completion-t4-acceptance.md`; residual assessment recorded in `evidence/489-v81-broader-sync-post-settings-lifecycle-residual-assessment.md`; no further packet inside the accepted bounded lane |
 | broader `Multiplayer / collaboration` breadth | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`; no further packet inside the accepted bounded lane |
-| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; landed packets: `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md` |
+| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; landed packets: `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md` |
 
 ---
 
@@ -566,7 +566,11 @@ Current status: `active`
 - [x] seventh real bounded packet landed around upload-origin source attachment continuity on the active notebook surface
 - [x] focused regression added for upload-origin source attachment continuity
 - [x] assessed the post-source-attachment residual before selecting the next broader-notes packet
-- [ ] choose the next broader-notes packet from wider notebook attachment management or broader output propagation
+- [x] chose the next broader-notes packet from wider notebook attachment management or broader output propagation
+- [x] eighth real bounded packet landed around related-surface metadata propagation on nearby note readback surfaces
+- [x] focused regression added for related-surface metadata propagation
+- [x] assessed the post-related-surface-propagation residual before selecting the next broader-notes packet
+- [ ] choose the next broader-notes packet from wider notebook attachment management or materially wider output propagation
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1386,6 +1390,8 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-28: landed the eighth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md`, so nearby `Task`, `Decision`, and `Initiative` note readback/suggestion surfaces now carry notebook upload/output truth instead of flattening notes back to title-only cards
+- 2026-03-28: recorded `evidence/513-v81-broader-notes-post-related-surface-propagation-residual-assessment.md`, concluding that one more tiny metadata badge patch on a nearby note card is no longer the honest next step and the lane should now move to wider notebook attachment management or materially wider output propagation
 - 2026-03-28: landed the seventh bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, so upload-origin notebook pages now retain the original source file as a governed authenticated attachment instead of collapsing continuity to filename-only provenance
 - 2026-03-28: recorded `evidence/511-v81-broader-notes-post-source-attachment-residual-assessment.md`, concluding that one more tiny upload-origin note affordance is no longer the honest next step and the lane should now move to wider notebook attachment management or broader output propagation
 - 2026-03-28: landed the sixth bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, so the notebook linked outputs surface now resolves direct assessment outputs created from the same note instead of ignoring them while only reading direct reports/presentations
