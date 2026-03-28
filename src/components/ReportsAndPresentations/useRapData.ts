@@ -29,9 +29,7 @@ export type PresentationActionTarget =
   | Pick<PresentationItem, 'id' | 'artifactId' | 'title'>
   | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
 
-type ArtifactOriginActionTarget =
-  | ReportActionTarget
-  | PresentationActionTarget;
+type ArtifactOriginActionTarget = ReportActionTarget | PresentationActionTarget;
 
 type ArtifactActionTargetPayload = {
   artifactId: string;
@@ -88,7 +86,7 @@ export function normalizePresentationActionTarget(target: PresentationActionTarg
 }
 
 async function fetchArtifactActionTarget(
-  artifactId: string | undefined,
+  artifactId: string | undefined
 ): Promise<ArtifactActionTargetPayload | null> {
   if (!artifactId) return null;
   try {
@@ -104,27 +102,201 @@ async function fetchArtifactActionTarget(
 }
 
 const DEMO_REPORTS: ReportItem[] = [
-  { id: 'demo-r1', title: 'Weekly Execution Report – Sprint 14', reportType: 'R1', status: 'ready', owner: 'Anna Kowalska', goal: 'Stakeholder update', periodFrom: '2026-03-04', periodTo: '2026-03-10', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-10T14:30:00Z', exportFormats: ['pdf', 'pptx'], sourceRefs: [] },
-  { id: 'demo-r2', title: 'Steering Committee – Q1 2026', reportType: 'R2', status: 'ready', owner: 'Marek Nowak', goal: 'Board review', periodFrom: '2026-01-01', periodTo: '2026-03-31', createdAt: '2026-03-08T10:00:00Z', updatedAt: '2026-03-12T11:00:00Z', exportFormats: ['pdf'], sourceRefs: [] },
-  { id: 'demo-r3', title: 'Benefits Tracking – Digital Transformation', reportType: 'R3', status: 'draft', owner: 'Katarzyna Wiśniewska', createdAt: '2026-03-14T08:00:00Z', updatedAt: '2026-03-15T16:00:00Z', exportFormats: [], sourceRefs: [] },
-  { id: 'demo-r4', title: 'Portfolio Overview – All Initiatives', reportType: 'R4', status: 'exported', owner: 'Piotr Zieliński', periodFrom: '2025-07-01', periodTo: '2026-03-31', createdAt: '2026-02-20T12:00:00Z', updatedAt: '2026-03-01T09:00:00Z', exportFormats: ['pdf', 'xlsx'], sourceRefs: [] },
-  { id: 'demo-r5', title: 'Monthly Operations Review – Feb 2026', reportType: 'R1', status: 'ready', owner: 'Anna Kowalska', periodFrom: '2026-02-01', periodTo: '2026-02-28', createdAt: '2026-03-01T08:00:00Z', updatedAt: '2026-03-02T10:00:00Z', exportFormats: ['pdf'], sourceRefs: [] },
+  {
+    id: 'demo-r1',
+    title: 'Weekly Execution Report – Sprint 14',
+    reportType: 'R1',
+    status: 'ready',
+    owner: 'Anna Kowalska',
+    goal: 'Stakeholder update',
+    periodFrom: '2026-03-04',
+    periodTo: '2026-03-10',
+    createdAt: '2026-03-10T09:00:00Z',
+    updatedAt: '2026-03-10T14:30:00Z',
+    exportFormats: ['pdf', 'pptx'],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-r2',
+    title: 'Steering Committee – Q1 2026',
+    reportType: 'R2',
+    status: 'ready',
+    owner: 'Marek Nowak',
+    goal: 'Board review',
+    periodFrom: '2026-01-01',
+    periodTo: '2026-03-31',
+    createdAt: '2026-03-08T10:00:00Z',
+    updatedAt: '2026-03-12T11:00:00Z',
+    exportFormats: ['pdf'],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-r3',
+    title: 'Benefits Tracking – Digital Transformation',
+    reportType: 'R3',
+    status: 'draft',
+    owner: 'Katarzyna Wiśniewska',
+    createdAt: '2026-03-14T08:00:00Z',
+    updatedAt: '2026-03-15T16:00:00Z',
+    exportFormats: [],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-r4',
+    title: 'Portfolio Overview – All Initiatives',
+    reportType: 'R4',
+    status: 'exported',
+    owner: 'Piotr Zieliński',
+    periodFrom: '2025-07-01',
+    periodTo: '2026-03-31',
+    createdAt: '2026-02-20T12:00:00Z',
+    updatedAt: '2026-03-01T09:00:00Z',
+    exportFormats: ['pdf', 'xlsx'],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-r5',
+    title: 'Monthly Operations Review – Feb 2026',
+    reportType: 'R1',
+    status: 'ready',
+    owner: 'Anna Kowalska',
+    periodFrom: '2026-02-01',
+    periodTo: '2026-02-28',
+    createdAt: '2026-03-01T08:00:00Z',
+    updatedAt: '2026-03-02T10:00:00Z',
+    exportFormats: ['pdf'],
+    sourceRefs: [],
+  },
 ];
 
 const DEMO_PRESENTATIONS: PresentationItem[] = [
-  { id: 'demo-p1', title: 'Digital Transformation Roadmap 2026', sourceType: 'tool', owner: 'Anna Kowalska', status: 'ready', presentationMode: 'briefing', createdAt: '2026-03-05T10:00:00Z', updatedAt: '2026-03-12T15:00:00Z', slideCount: 18, exportFormats: ['pptx'], sourceRefs: [] },
-  { id: 'demo-p2', title: 'Q1 Financial Results – Board Deck', sourceType: 'finance', owner: 'Marek Nowak', status: 'shared', presentationMode: 'formal', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-14T11:00:00Z', slideCount: 24, exportFormats: ['pptx', 'pdf'], sourceRefs: [] },
-  { id: 'demo-p3', title: 'SWOT Analysis – Market Entry Strategy', sourceType: 'tool', owner: 'Katarzyna Wiśniewska', status: 'editing', presentationMode: 'workshop', createdAt: '2026-03-13T14:00:00Z', updatedAt: '2026-03-15T09:00:00Z', slideCount: 12, exportFormats: [], sourceRefs: [] },
-  { id: 'demo-p4', title: 'Investment Case – Cloud Migration', sourceType: 'finance', owner: 'Piotr Zieliński', status: 'draft', presentationMode: 'briefing', createdAt: '2026-03-16T08:00:00Z', updatedAt: '2026-03-16T16:00:00Z', slideCount: 8, exportFormats: [], sourceRefs: [] },
+  {
+    id: 'demo-p1',
+    title: 'Digital Transformation Roadmap 2026',
+    sourceType: 'tool',
+    owner: 'Anna Kowalska',
+    status: 'ready',
+    presentationMode: 'briefing',
+    createdAt: '2026-03-05T10:00:00Z',
+    updatedAt: '2026-03-12T15:00:00Z',
+    slideCount: 18,
+    exportFormats: ['pptx'],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-p2',
+    title: 'Q1 Financial Results – Board Deck',
+    sourceType: 'finance',
+    owner: 'Marek Nowak',
+    status: 'shared',
+    presentationMode: 'formal',
+    createdAt: '2026-03-10T09:00:00Z',
+    updatedAt: '2026-03-14T11:00:00Z',
+    slideCount: 24,
+    exportFormats: ['pptx', 'pdf'],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-p3',
+    title: 'SWOT Analysis – Market Entry Strategy',
+    sourceType: 'tool',
+    owner: 'Katarzyna Wiśniewska',
+    status: 'editing',
+    presentationMode: 'workshop',
+    createdAt: '2026-03-13T14:00:00Z',
+    updatedAt: '2026-03-15T09:00:00Z',
+    slideCount: 12,
+    exportFormats: [],
+    sourceRefs: [],
+  },
+  {
+    id: 'demo-p4',
+    title: 'Investment Case – Cloud Migration',
+    sourceType: 'finance',
+    owner: 'Piotr Zieliński',
+    status: 'draft',
+    presentationMode: 'briefing',
+    createdAt: '2026-03-16T08:00:00Z',
+    updatedAt: '2026-03-16T16:00:00Z',
+    slideCount: 8,
+    exportFormats: [],
+    sourceRefs: [],
+  },
 ];
 
 const DEMO_TEMPLATES: TemplateItem[] = [
-  { id: 'demo-t1', title: 'Weekly Execution Report', description: 'Standard weekly sprint/execution report template with KPI tracking', type: 'report', category: 'R1', scope: 'application', status: 'active', updatedAt: '2026-02-01T10:00:00Z', createdBy: 'System', sectionCount: 6 },
-  { id: 'demo-t2', title: 'Steering Committee Deck', description: 'Formal board-level steering committee presentation', type: 'presentation', category: 'R2', scope: 'application', status: 'active', updatedAt: '2026-02-01T10:00:00Z', createdBy: 'System', slideCount: 15 },
-  { id: 'demo-t3', title: 'Benefits Tracking Report', description: 'KPI and benefits realization tracking template', type: 'report', category: 'R3', scope: 'application', status: 'active', updatedAt: '2026-01-15T10:00:00Z', createdBy: 'System', sectionCount: 5 },
-  { id: 'demo-t4', title: 'Portfolio Overview', description: 'Cross-initiative portfolio health and progress overview', type: 'report', category: 'R4', scope: 'application', status: 'active', updatedAt: '2026-01-15T10:00:00Z', createdBy: 'System', sectionCount: 8 },
-  { id: 'demo-t5', title: 'Workshop Facilitation Deck', description: 'Interactive workshop presentation with exercises', type: 'presentation', category: 'initiative_review', scope: 'application', status: 'active', updatedAt: '2026-02-10T10:00:00Z', createdBy: 'System', slideCount: 20 },
-  { id: 'demo-t6', title: 'Investment Case Template', description: 'NPV/IRR/ROI investment decision support template', type: 'report', category: 'financial_review', scope: 'application', status: 'active', updatedAt: '2026-02-20T10:00:00Z', createdBy: 'System', sectionCount: 7 },
+  {
+    id: 'demo-t1',
+    title: 'Weekly Execution Report',
+    description: 'Standard weekly sprint/execution report template with KPI tracking',
+    type: 'report',
+    category: 'R1',
+    scope: 'application',
+    status: 'active',
+    updatedAt: '2026-02-01T10:00:00Z',
+    createdBy: 'System',
+    sectionCount: 6,
+  },
+  {
+    id: 'demo-t2',
+    title: 'Steering Committee Deck',
+    description: 'Formal board-level steering committee presentation',
+    type: 'presentation',
+    category: 'R2',
+    scope: 'application',
+    status: 'active',
+    updatedAt: '2026-02-01T10:00:00Z',
+    createdBy: 'System',
+    slideCount: 15,
+  },
+  {
+    id: 'demo-t3',
+    title: 'Benefits Tracking Report',
+    description: 'KPI and benefits realization tracking template',
+    type: 'report',
+    category: 'R3',
+    scope: 'application',
+    status: 'active',
+    updatedAt: '2026-01-15T10:00:00Z',
+    createdBy: 'System',
+    sectionCount: 5,
+  },
+  {
+    id: 'demo-t4',
+    title: 'Portfolio Overview',
+    description: 'Cross-initiative portfolio health and progress overview',
+    type: 'report',
+    category: 'R4',
+    scope: 'application',
+    status: 'active',
+    updatedAt: '2026-01-15T10:00:00Z',
+    createdBy: 'System',
+    sectionCount: 8,
+  },
+  {
+    id: 'demo-t5',
+    title: 'Workshop Facilitation Deck',
+    description: 'Interactive workshop presentation with exercises',
+    type: 'presentation',
+    category: 'initiative_review',
+    scope: 'application',
+    status: 'active',
+    updatedAt: '2026-02-10T10:00:00Z',
+    createdBy: 'System',
+    slideCount: 20,
+  },
+  {
+    id: 'demo-t6',
+    title: 'Investment Case Template',
+    description: 'NPV/IRR/ROI investment decision support template',
+    type: 'report',
+    category: 'financial_review',
+    scope: 'application',
+    status: 'active',
+    updatedAt: '2026-02-20T10:00:00Z',
+    createdBy: 'System',
+    sectionCount: 7,
+  },
 ];
 
 // ─── Reports ──────────────────────────────────────────────────────
@@ -169,10 +341,13 @@ function mapReport(raw: any): ReportItem {
 function mapArtifactReport(raw: any): ReportItem {
   const delivery = String(raw.originStatus || raw.deliveryState || 'draft').toLowerCase();
   const reportStatus: ReportItem['status'] =
-    delivery === 'ready' ? 'ready' :
-    delivery === 'archived' ? 'archived' :
-    delivery === 'shared' || delivery === 'exported' ? 'exported' :
-    'draft';
+    delivery === 'ready'
+      ? 'ready'
+      : delivery === 'archived'
+        ? 'archived'
+        : delivery === 'shared' || delivery === 'exported'
+          ? 'exported'
+          : 'draft';
 
   return {
     id: raw.originRecordId || raw.origin_record_id || raw.id,
@@ -301,7 +476,11 @@ function mapArtifactPresentation(raw: any): PresentationItem {
     title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
     sourceType: (raw.sourceType || 'tool') as PresentationItem['sourceType'],
     owner: raw.ownerUserId || raw.createdBy || '—',
-    status: (raw.originStatus || raw.deliveryState || 'draft').toLowerCase() as PresentationItem['status'],
+    status: (
+      raw.originStatus ||
+      raw.deliveryState ||
+      'draft'
+    ).toLowerCase() as PresentationItem['status'],
     presentationMode: raw.presentationMode || 'briefing',
     createdAt: raw.createdAt || new Date().toISOString(),
     updatedAt: raw.lastTransitionAt || raw.updatedAt || new Date().toISOString(),
@@ -482,7 +661,10 @@ export function useMyWorkArtifactOutputs(limit = 8) {
   return { mine, review, recent, loading, error, refetch: fetchOutputs };
 }
 
-export function useArtifactOutputsForInitiative(initiativeId: string | null | undefined, limit = 8) {
+export function useArtifactOutputsForInitiative(
+  initiativeId: string | null | undefined,
+  limit = 8
+) {
   const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -532,14 +714,14 @@ export function useArtifactOutputsForInitiative(initiativeId: string | null | un
 
 export function useArtifactOutputsForInitiatives(
   initiativeIds: string[] | null | undefined,
-  limit = 8,
+  limit = 8
 ) {
   const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const normalizedIds = Array.from(
-    new Set((initiativeIds || []).map((id) => String(id || '').trim()).filter(Boolean)),
+    new Set((initiativeIds || []).map((id) => String(id || '').trim()).filter(Boolean))
   ).sort();
   const idsKey = normalizedIds.join('|');
 
@@ -559,13 +741,15 @@ export function useArtifactOutputsForInitiatives(
             sourceInitiativeId: initiativeId,
             limit: String(Math.max(1, limit)),
           });
-          const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
+          const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, {
+            headers: getHeaders(),
+          });
           if (!res.ok) {
             throw new Error('Canonical artifact registry failed to load initiative outputs.');
           }
           const data = await res.json();
           return Array.isArray(data.data) ? data.data : [];
-        }),
+        })
       );
 
       const seen = new Set<string>();
@@ -589,6 +773,77 @@ export function useArtifactOutputsForInitiatives(
       setLoading(false);
     }
   }, [idsKey, limit]);
+
+  useEffect(() => {
+    void fetchOutputs();
+  }, [fetchOutputs]);
+
+  return { rows, loading, error, refetch: fetchOutputs };
+}
+
+export function useArtifactOutputsForOrigins(
+  origins: Array<{ type?: string | null; id?: string | null }> | null | undefined,
+  limit = 8
+) {
+  const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizedOrigins = Array.from(
+    new Map(
+      (origins || [])
+        .map((origin) => {
+          const type = String(origin?.type || '')
+            .trim()
+            .toLowerCase();
+          const id = String(origin?.id || '').trim();
+          const runtime =
+            type === 'report' ? 'report' : type === 'presentation' ? 'presentation' : null;
+          if (!runtime || !id) return null;
+          return [`${runtime}:${id}`, { runtime, id }] as const;
+        })
+        .filter(Boolean)
+    ).values()
+  ).slice(0, Math.max(1, limit));
+
+  const originsKey = normalizedOrigins.map((origin) => `${origin.runtime}:${origin.id}`).join('|');
+
+  const fetchOutputs = useCallback(async () => {
+    if (!normalizedOrigins.length) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const responses = await Promise.all(
+        normalizedOrigins.map(async ({ runtime, id }) => {
+          const res = await fetch(`${API_URL}/artifacts/origin/${runtime}/${encodeURIComponent(id)}`, {
+            headers: getHeaders(),
+          });
+          if (!res.ok) {
+            throw new Error('Canonical artifact registry failed to load notebook outputs.');
+          }
+          const data = await res.json();
+          return data.data || null;
+        })
+      );
+
+      const mapped = responses
+        .map(mapRegistryItemToUnified)
+        .filter((item: UnifiedOutputRow | null): item is UnifiedOutputRow => !!item);
+
+      setRows(mapped);
+      setError(null);
+    } catch {
+      setRows([]);
+      setError('Canonical artifact registry failed to load notebook outputs.');
+    } finally {
+      setLoading(false);
+    }
+  }, [originsKey, limit]);
 
   useEffect(() => {
     void fetchOutputs();
@@ -676,7 +931,9 @@ export function useSheetOutputs() {
         const list = data.data || [];
         const mapped = list
           .map(mapRegistryItemToUnified)
-          .filter((item: UnifiedOutputRow | null): item is UnifiedOutputRow => item?.kind === 'sheet');
+          .filter(
+            (item: UnifiedOutputRow | null): item is UnifiedOutputRow => item?.kind === 'sheet'
+          );
         setRows(mapped);
         setError(null);
         return;

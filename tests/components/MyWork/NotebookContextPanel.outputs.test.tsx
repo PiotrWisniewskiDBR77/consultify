@@ -11,8 +11,10 @@ const {
   apiMock,
   trackFunnelEventMock,
   useArtifactOutputsForInitiativesMock,
+  useArtifactOutputsForOriginsMock,
 } = vi.hoisted(() => ({
   useArtifactOutputsForInitiativesMock: vi.fn(),
+  useArtifactOutputsForOriginsMock: vi.fn(),
   trackFunnelEventMock: vi.fn(),
   apiMock: {
     suggestMyIdeas: vi.fn(),
@@ -44,6 +46,7 @@ vi.mock('../../../src/components/MyWork/notebook/PulseItemPickerModal', () => ({
 
 vi.mock('../../../src/components/ReportsAndPresentations/useRapData', () => ({
   useArtifactOutputsForInitiatives: (...args: unknown[]) => useArtifactOutputsForInitiativesMock(...args),
+  useArtifactOutputsForOrigins: (...args: unknown[]) => useArtifactOutputsForOriginsMock(...args),
 }));
 
 vi.mock('../../../src/services/funnelAnalytics', () => ({
@@ -94,6 +97,12 @@ describe('NotebookContextPanel linked outputs', () => {
       error: null,
       refetch: vi.fn(),
     });
+    useArtifactOutputsForOriginsMock.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
   });
 
   it('renders linked outputs sourced from note initiative backlinks', async () => {
@@ -125,6 +134,65 @@ describe('NotebookContextPanel linked outputs', () => {
           name: 'Board deck',
         },
       }),
+    );
+  });
+
+  it('renders direct converted outputs from the active note on the linked outputs surface', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    apiMock.getLinkGraphBacklinks.mockResolvedValue([]);
+    apiMock.notebookResolveEmbedChips.mockResolvedValue({ chips: [] });
+    useArtifactOutputsForInitiativesMock.mockReturnValue({
+      rows: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useArtifactOutputsForOriginsMock.mockReturnValue({
+      rows: [
+        {
+          kind: 'document',
+          originRecordId: 'report-1',
+          artifactId: 'artifact-report-1',
+          title: 'Notebook source report',
+          statusKey: 'ready',
+          owner: 'user-1',
+          updatedAt: '2026-03-24T07:00:00.000Z',
+          exportFormats: ['pdf'],
+          governance: { visibilityScope: 'private' },
+        },
+      ],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <NotebookContextPanel
+        open
+        onClose={vi.fn()}
+        editor={null}
+        noteId="note-1"
+        noteTitle="Q1 planning"
+        noteTags={['board']}
+        allNotes={[]}
+        noteConvertedTo={[{ type: 'report', id: 'report-1' }]}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Notebook source report')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Open'));
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: {
+          type: 'report',
+          id: 'report-1',
+          name: 'Notebook source report',
+        },
+      })
     );
   });
 });

@@ -17,8 +17,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  useArtifactOutputsForInitiatives,
+  useArtifactOutputsForOrigins,
+} from '@/components/ReportsAndPresentations/useRapData';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
-import { useArtifactOutputsForInitiatives } from '@/components/ReportsAndPresentations/useRapData';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { NotebookPage } from '@/types/myWork';
@@ -109,6 +112,7 @@ interface NotebookContextPanelProps {
   noteTitle: string;
   noteTags: string[];
   allNotes: NotebookPage[];
+  noteConvertedTo?: Array<{ type?: string | null; id?: string | null }>;
 }
 
 export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
@@ -119,6 +123,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   noteTitle,
   noteTags,
   allNotes,
+  noteConvertedTo = [],
 }) => {
   const { i18n } = useTranslation();
   const pl = i18n.language === 'pl';
@@ -184,18 +189,39 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       Array.from(
         new Set(
           usedIn
-            .filter((item) => String(item.sourceType || '').trim().toLowerCase() === 'initiative')
+            .filter(
+              (item) =>
+                String(item.sourceType || '')
+                  .trim()
+                  .toLowerCase() === 'initiative'
+            )
             .map((item) => String(item.sourceId || '').trim())
-            .filter(Boolean),
-        ),
+            .filter(Boolean)
+        )
       ),
-    [usedIn],
+    [usedIn]
   );
   const {
     rows: linkedOutputRows,
     loading: linkedOutputsLoading,
     error: linkedOutputsError,
   } = useArtifactOutputsForInitiatives(initiativeBacklinkIds, 8);
+  const {
+    rows: directOutputRows,
+    loading: directOutputsLoading,
+    error: directOutputsError,
+  } = useArtifactOutputsForOrigins(noteConvertedTo, 8);
+  const allLinkedOutputRows = useMemo(() => {
+    const seen = new Set<string>();
+    return [...directOutputRows, ...linkedOutputRows].filter((row) => {
+      const key = row.artifactId || `${row.kind}:${row.originRecordId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [directOutputRows, linkedOutputRows]);
+  const linkedOutputsErrorMessage = directOutputsError || linkedOutputsError;
+  const linkedOutputsBusy = directOutputsLoading || linkedOutputsLoading;
 
   useEffect(() => {
     if (!open) return;
@@ -422,7 +448,15 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   };
 
   const openItem = (
-    type: 'idea' | 'initiative' | 'task' | 'decision' | 'notebook' | 'report' | 'presentation' | 'sheet',
+    type:
+      | 'idea'
+      | 'initiative'
+      | 'task'
+      | 'decision'
+      | 'notebook'
+      | 'report'
+      | 'presentation'
+      | 'sheet',
     id: string,
     name: string
   ) => {
@@ -624,28 +658,30 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
               <EmbeddedView
                 title={pl ? 'Powiązane outputy' : 'Linked outputs'}
-                count={linkedOutputRows.length}
-                loading={linkedOutputsLoading}
+                count={allLinkedOutputRows.length}
+                loading={linkedOutputsBusy}
                 readOnly
                 viewModes={['list']}
               >
-                {linkedOutputsError ? (
+                {linkedOutputsErrorMessage ? (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
-                    {linkedOutputsError}
+                    {linkedOutputsErrorMessage}
                   </div>
-                ) : initiativeBacklinkIds.length === 0 && !linkedOutputsLoading ? (
+                ) : allLinkedOutputRows.length === 0 &&
+                  initiativeBacklinkIds.length === 0 &&
+                  !linkedOutputsBusy ? (
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
                     {pl
                       ? 'Brak outputów powiązanych z inicjatywami tej notatki.'
-                      : 'No outputs linked to this note initiatives yet.'}
+                      : 'No outputs linked to this note yet.'}
                   </div>
-                ) : linkedOutputRows.length === 0 && !linkedOutputsLoading ? (
+                ) : allLinkedOutputRows.length === 0 && !linkedOutputsBusy ? (
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
                     {pl ? 'Brak powiązanych outputów.' : 'No linked outputs yet.'}
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {linkedOutputRows.slice(0, 8).map((row) => (
+                    {allLinkedOutputRows.slice(0, 8).map((row) => (
                       <div
                         key={row.artifactId || `${row.kind}:${row.originRecordId}`}
                         className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
@@ -656,7 +692,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                               {row.title}
                             </div>
                             <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                              {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
+                              {row.kind} · {row.statusKey} ·{' '}
+                              {row.governance?.visibilityScope || 'private'}
                             </div>
                           </div>
                           <button
@@ -668,7 +705,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                     ? 'presentation'
                                     : 'sheet',
                                 row.originRecordId,
-                                row.title,
+                                row.title
                               )
                             }
                             className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"

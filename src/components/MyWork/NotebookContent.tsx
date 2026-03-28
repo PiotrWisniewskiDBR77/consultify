@@ -2333,6 +2333,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             noteTitle={title}
             noteTags={pageTags}
             allNotes={pages}
+            noteConvertedTo={activePage.convertedTo || []}
           />
         )}
 

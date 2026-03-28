@@ -540,7 +540,10 @@ Current status: `active`
 - [x] first evidence-first packet defined around notebook capture upload authority continuity
 - [x] first real bounded packet landed around notebook capture upload authority continuity on the active notebook surface
 - [x] focused regression added for the governed notebook capture upload seam
-- [ ] assess whether another thinner notes/object-linked outputs seam remains before wider notes acceptance-review or the next broader packet
+- [x] second real bounded packet landed around direct notebook output readback continuity on the active notebook surface
+- [x] focused regression extended for direct notebook output readback continuity
+- [x] assessed the post-direct-output-readback residual before selecting a wider broader-notes packet
+- [ ] choose the next honest broader-notes packet after the direct-readback slice closed
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1360,6 +1363,8 @@ Current status: `done`
 
 ## 5. Change Log
 
+- 2026-03-28: landed the second bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, so the active notebook context panel now reads back direct report/presentation outputs already recorded on the same note instead of only showing initiative-derived outputs
+- 2026-03-28: recorded `evidence/504-v81-broader-notes-post-direct-output-readback-residual-assessment.md`, concluding that one more tiny notebook linked-output readback patch is no longer the honest next step and the lane should move to a wider remaining notes/output residual
 - 2026-03-28: landed the first bounded packet inside broader `Notes` adjunct / object-linked outputs breadth in `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, moving notebook capture upload initiation onto a governed V8-first seam while keeping legacy fallback only for unsupported statuses
 - 2026-03-28: accepted broader `Multiplayer / collaboration` breadth as bounded `T4` done in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`, because the lane now closes the honest active collaboration visibility and reconnect continuity residual without leaving another smaller real packet behind
 - 2026-03-28: promoted broader `Notes` adjunct / object-linked outputs breadth into active `T4` execution with charter `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md` and split-brain map `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`, with notebook capture upload authority continuity selected as the first honest packet
