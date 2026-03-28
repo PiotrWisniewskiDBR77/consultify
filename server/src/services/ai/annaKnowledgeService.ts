@@ -448,7 +448,10 @@ export async function buildAnnaKnowledgeContext(opts: {
       })
       .slice(0, limit);
 
-    const { contextText, sources } = buildContextText(hits);
+    const { contextText: rawContextText, sources } = buildContextText(hits);
+    const contextText = portfolioMode
+      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
+      : rawContextText;
     return {
       contextText,
       matchedProducts: detected.matchedProducts,
