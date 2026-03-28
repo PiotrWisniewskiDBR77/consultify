@@ -46,6 +46,10 @@ COPY . .
 # Build a minimal runtime knowledge bundle so staging/prod can reindex
 # product pills and tool packs without shipping large PDFs/XLSX.
 RUN mkdir -p /tmp/knowledge-runtime/product-pills /tmp/knowledge-runtime/tool-kb && \
+    echo "Knowledge source folders (after COPY . .):" && \
+    (ls -la knowledge | head -50 || true) && \
+    (ls -la "knowledge/Pigułki wiedzy " | head -50 || true) && \
+    (ls -la knowledge/tool-kb | head -50 || true) && \
     if [ -d "knowledge/Pigułki wiedzy " ]; then \
       cp -R "knowledge/Pigułki wiedzy "/. /tmp/knowledge-runtime/product-pills/; \
     fi && \
