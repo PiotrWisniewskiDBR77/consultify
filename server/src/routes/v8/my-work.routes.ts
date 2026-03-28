@@ -1,16 +1,13 @@
 import { randomUUID } from 'crypto';
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 import multer from 'multer';
 import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { InboxAiAssistItemSchema, runInboxAiAssist } from '../../services/inboxAiAssistService.js';
 import inboxService from '../../services/inboxService.js';
-import {
-  InboxAiAssistItemSchema,
-  runInboxAiAssist,
-} from '../../services/inboxAiAssistService.js';
 import {
   applyGovernedBulkInboxTriage,
   applyGovernedInboxTriage,
@@ -22,8 +19,6 @@ import {
 } from '../../services/notebookConversionService.js';
 import notebookService from '../../services/notebookService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
-import { getTableColumns } from '../../utils/dbSchema.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   CalendarPhaseName,
   CalendarPhaseStatus,
@@ -31,6 +26,8 @@ import type {
   MaturityLevel,
 } from '../../types/myWorkRoofPackage.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
 const notebookCaptureUpload = multer({
@@ -272,7 +269,7 @@ async function canAccessNotebookRow(userId: string, orgId: string, row: any): Pr
     if (ownerId === String(userId)) return true;
     const member = await queryHelpers.queryOne<{ ok: number }>(
       `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
-      [projectId, userId],
+      [projectId, userId]
     );
     return Boolean(member);
   }
@@ -299,7 +296,11 @@ const addDaysDateOnly = (dateOnly: string, days: number): string => {
   return date.toISOString().slice(0, 10);
 };
 
-function handleMyWorkRoofError(err: unknown, res: Response, fallbackMessage: string): Response | null {
+function handleMyWorkRoofError(
+  err: unknown,
+  res: Response,
+  fallbackMessage: string
+): Response | null {
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: fallbackMessage,
@@ -395,7 +396,8 @@ const DERIVED_CALENDAR_PHASES: DerivedCalendarPhaseTruth[] = [
     phaseName: 'phase_a_internal',
     status: 'active',
     blockedBy: null,
-    rationale: 'Internal MyWork calendar hardening can proceed independently of connector delivery.',
+    rationale:
+      'Internal MyWork calendar hardening can proceed independently of connector delivery.',
   },
   {
     phaseName: 'phase_b_external_sync',
@@ -406,7 +408,7 @@ const DERIVED_CALENDAR_PHASES: DerivedCalendarPhaseTruth[] = [
 ];
 
 function buildSummaryCounts(
-  blocks: Array<{ maturityLevel: MaturityLevel }>,
+  blocks: Array<{ maturityLevel: MaturityLevel }>
 ): Record<MaturityLevel, number> {
   return blocks.reduce<Record<MaturityLevel, number>>(
     (acc, block) => {
@@ -417,7 +419,7 @@ function buildSummaryCounts(
       backed_by_real_service: 0,
       partial_stitched: 0,
       placeholder_non_canonical: 0,
-    },
+    }
   );
 }
 
@@ -438,14 +440,17 @@ router.put(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
   '/objects/:objectId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const data = await myWorkRoofService.getCanonicalObjectState(req.params.objectId, organizationId);
+    const data = await myWorkRoofService.getCanonicalObjectState(
+      req.params.objectId,
+      organizationId
+    );
 
     if (!data) {
       return res.status(404).json({
@@ -455,7 +460,7 @@ router.get(
     }
 
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.put(
@@ -484,7 +489,7 @@ router.put(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -494,7 +499,7 @@ router.get(
     const data = await myWorkRoofService.getSurfaceProjection(
       req.params.objectId,
       req.params.surface as any,
-      organizationId,
+      organizationId
     );
 
     if (!data) {
@@ -505,7 +510,7 @@ router.get(
     }
 
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 /**
@@ -532,7 +537,7 @@ router.get(
       data: { items },
       meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
     });
-  }),
+  })
 );
 
 /**
@@ -550,7 +555,7 @@ router.get(
       data: stats,
       meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
     });
-  }),
+  })
 );
 
 /**
@@ -568,7 +573,7 @@ router.post(
       data: { success: true, ...result },
       meta: { version: 'v8', contract: V8_INBOX_CANONICAL_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -608,7 +613,7 @@ router.post(
       data,
       meta: { version: 'v8', contract: V8_INBOX_TRIAGE_MUTATION_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -664,7 +669,7 @@ router.post(
       data,
       meta: { version: 'v8', contract: V8_INBOX_TRIAGE_MUTATION_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -692,7 +697,7 @@ router.post(
     } catch (err: any) {
       return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
     }
-  }),
+  })
 );
 
 router.post(
@@ -712,7 +717,7 @@ router.post(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -721,7 +726,7 @@ router.get(
     const { organizationId, userId } = getV8Context(req);
     const data = await myWorkRoofService.getInboxMaterializationStats(userId, organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -739,7 +744,7 @@ router.get(
     }
 
     if (req.query.status) {
-      where.push('coalesce(np.status, \'active\') = ?');
+      where.push("coalesce(np.status, 'active') = ?");
       params.push(String(req.query.status));
     }
 
@@ -751,7 +756,7 @@ router.get(
 
     if (req.query.q) {
       const like = `%${String(req.query.q).trim().toLowerCase()}%`;
-      where.push('(lower(np.title) LIKE ? OR lower(coalesce(np.content_text, \'\')) LIKE ?)');
+      where.push("(lower(np.title) LIKE ? OR lower(coalesce(np.content_text, '')) LIKE ?)");
       params.push(like, like);
     }
 
@@ -766,7 +771,7 @@ router.get(
             OR pm.user_id IS NOT NULL
           )
         )
-      )`,
+      )`
     );
     params.push(userId, userId);
 
@@ -813,14 +818,14 @@ router.get(
         ORDER BY ${orderBy}
         LIMIT ? OFFSET ?
       `,
-        [userId, ...params, limit, offset],
+        [userId, ...params, limit, offset]
       )) || [];
 
     return res.json({
       data: rows.map((row) => formatNotebookRow(row)),
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -852,8 +857,13 @@ router.post(
       projectId: req.body.projectId || undefined,
     });
 
-    return res.status(201).json({ data, meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT } });
+    return res.status(201).json({
+      data,
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
   })
+);
+
 router.post(
   '/notebook/pages',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -867,22 +877,29 @@ router.post(
 
     const projectId = req.body?.projectId ? String(req.body.projectId) : null;
     const visibility = (
-      req.body?.visibility ? String(req.body.visibility).toLowerCase() : projectId ? 'project' : 'private'
+      req.body?.visibility
+        ? String(req.body.visibility).toLowerCase()
+        : projectId
+          ? 'project'
+          : 'private'
     ) as 'private' | 'project';
 
     if (visibility === 'project' && !projectId) {
-      return res
-        .status(400)
-        .json({ error: 'projectId is required for visibility=project', code: 'PROJECT_ID_REQUIRED' });
+      return res.status(400).json({
+        error: 'projectId is required for visibility=project',
+        code: 'PROJECT_ID_REQUIRED',
+      });
     }
 
     if (visibility === 'project' && projectId) {
       const member = await queryHelpers.queryOne<{ ok: number }>(
         `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
-        [projectId, userId],
+        [projectId, userId]
       );
       if (!member) {
-        return res.status(403).json({ error: 'Not a project member', code: 'PROJECT_MEMBERSHIP_REQUIRED' });
+        return res
+          .status(403)
+          .json({ error: 'Not a project member', code: 'PROJECT_MEMBERSHIP_REQUIRED' });
       }
     }
 
@@ -910,7 +927,7 @@ router.post(
           : 'active',
         now,
         now,
-      ],
+      ]
     );
 
     const row = await queryHelpers.queryOne<any>(
@@ -938,14 +955,14 @@ router.post(
         updated_at as "updatedAt"
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
-      [id],
+      [id]
     );
 
     return res.status(201).json({
       data: formatNotebookRow(row),
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.get(
@@ -980,7 +997,7 @@ router.get(
        FROM notebook_pages
        WHERE id = ?
        LIMIT 1`,
-      [String(req.params.id || '').trim()],
+      [String(req.params.id || '').trim()]
     );
 
     if (!row) {
@@ -994,7 +1011,7 @@ router.get(
       data: formatNotebookRow(row),
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.put(
@@ -1008,7 +1025,7 @@ router.put(
       `SELECT id, owner_user_id, organization_id, project_id, visibility
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
-      [id],
+      [id]
     );
 
     if (!existing) {
@@ -1029,9 +1046,13 @@ router.put(
     };
 
     if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
-    if (req.body?.tags !== undefined) set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
+    if (req.body?.tags !== undefined)
+      set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
     if (req.body?.contentJson !== undefined) {
-      set('content_json', safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] })));
+      set(
+        'content_json',
+        safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] }))
+      );
     }
     if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
     if (typeof req.body?.maturity === 'string') set('maturity', req.body.maturity);
@@ -1066,11 +1087,20 @@ router.put(
       set('project_id', nextProjectId);
       set('visibility', nextProjectId ? 'project' : 'private');
     }
+    if (req.body?.convertedTo !== undefined) {
+      set(
+        'converted_to_json',
+        safeJsonString(Array.isArray(req.body.convertedTo) ? req.body.convertedTo : [], '[]')
+      );
+    }
 
     if (setParts.length > 0) {
       setParts.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
-      await queryHelpers.queryRun(`UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`, params);
+      await queryHelpers.queryRun(
+        `UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`,
+        params
+      );
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -1097,14 +1127,14 @@ router.put(
         created_at as "createdAt",
         updated_at as "updatedAt"
        FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [id],
+      [id]
     );
 
     return res.json({
       data: formatNotebookRow(row),
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.delete(
@@ -1116,7 +1146,7 @@ router.delete(
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
       `SELECT id, owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [id],
+      [id]
     );
 
     if (!existing) {
@@ -1134,7 +1164,7 @@ router.delete(
       data: { success: true, id },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.put(
@@ -1146,7 +1176,7 @@ router.put(
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
       `SELECT id, owner_user_id, organization_id, coalesce(pinned, 0) as pinned FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [id],
+      [id]
     );
 
     if (!existing) {
@@ -1162,14 +1192,14 @@ router.put(
     const pinned = existing.pinned ? 0 : 1;
     await queryHelpers.queryRun(
       `UPDATE notebook_pages SET pinned = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [pinned, id],
+      [pinned, id]
     );
 
     return res.json({
       data: { id, pinned: Boolean(pinned) },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.put(
@@ -1179,7 +1209,9 @@ router.put(
     if (!(await requireNotebookPagesTable(res))) return;
 
     const id = String(req.params.id || '').trim();
-    const status = String(req.body?.status || '').trim().toLowerCase();
+    const status = String(req.body?.status || '')
+      .trim()
+      .toLowerCase();
     if (!['inbox', 'active', 'converted', 'archived'].includes(status)) {
       return res.status(400).json({
         error: 'Invalid status. Must be inbox|active|converted|archived',
@@ -1189,7 +1221,7 @@ router.put(
 
     const existing = await queryHelpers.queryOne<any>(
       `SELECT id, owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [id],
+      [id]
     );
 
     if (!existing) {
@@ -1204,14 +1236,14 @@ router.put(
 
     await queryHelpers.queryRun(
       `UPDATE notebook_pages SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [status, id],
+      [status, id]
     );
 
     return res.json({
       data: { id, status },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -1225,7 +1257,7 @@ router.post(
       `SELECT id, title, content_text as "contentText", maturity
        FROM notebook_pages
        WHERE id = ? AND owner_user_id = ? AND organization_id = ? LIMIT 1`,
-      [pageId, userId, organizationId],
+      [pageId, userId, organizationId]
     );
 
     if (!page) {
@@ -1241,7 +1273,7 @@ router.post(
       },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -1253,21 +1285,23 @@ router.post(
     const pageId = String(req.params.id || '').trim();
     const parsed = notebookProposalSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.message, code: 'NOTEBOOK_AI_PROPOSAL_INVALID' });
+      return res
+        .status(400)
+        .json({ error: parsed.error.message, code: 'NOTEBOOK_AI_PROPOSAL_INVALID' });
     }
 
     const proposal = await notebookService.createAIProposal(
       organizationId,
       userId,
       pageId,
-      parsed.data,
+      parsed.data
     );
 
     return res.status(201).json({
       data: proposal,
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.get(
@@ -1289,7 +1323,7 @@ router.get(
       data: { proposals },
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -1301,25 +1335,29 @@ router.post(
     const schema = z.object({ action: z.enum(['accepted', 'rejected']) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.message, code: 'NOTEBOOK_AI_PROPOSAL_ACTION_INVALID' });
+      return res
+        .status(400)
+        .json({ error: parsed.error.message, code: 'NOTEBOOK_AI_PROPOSAL_ACTION_INVALID' });
     }
 
     const proposal = await notebookService.resolveAIProposal(
       organizationId,
       String(req.params.proposalId || '').trim(),
       userId,
-      parsed.data.action,
+      parsed.data.action
     );
 
     if (!proposal) {
-      return res.status(404).json({ error: 'Proposal not found', code: 'NOTEBOOK_AI_PROPOSAL_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Proposal not found', code: 'NOTEBOOK_AI_PROPOSAL_NOT_FOUND' });
     }
 
     return res.json({
       data: proposal,
       meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -1380,7 +1418,7 @@ router.post(
       }
       throw error;
     }
-  }),
+  })
 );
 
 router.get(
@@ -1433,7 +1471,8 @@ router.get(
       if (hasDue) dateExprParts.push('t.due_date');
       if (hasStart) dateExprParts.push('t.start_date');
       if (hasPlannedStart) dateExprParts.push('t.planned_start_date');
-      const primaryDateExpr = dateExprParts.length > 0 ? `COALESCE(${dateExprParts.join(', ')})` : null;
+      const primaryDateExpr =
+        dateExprParts.length > 0 ? `COALESCE(${dateExprParts.join(', ')})` : null;
 
       const assignmentParts: string[] = [];
       if (hasAssigneeId) assignmentParts.push('t.assignee_id = ?');
@@ -1487,7 +1526,7 @@ router.get(
             ORDER BY ${primaryDateExpr ? `${primaryDateExpr} ASC` : 't.updated_at DESC'}
             LIMIT 800
           `,
-          params,
+          params
         )) || [];
 
       for (const row of rows) {
@@ -1526,7 +1565,8 @@ router.get(
       const hasInitSponsor = initCols.has('sponsor_id');
       const hasInitCreatedBy = initCols.has('created_by');
       const stakeholderCols = await getTableColumns('initiative_stakeholders');
-      const hasStakeholders = stakeholderCols.has('initiative_id') && stakeholderCols.has('user_id');
+      const hasStakeholders =
+        stakeholderCols.has('initiative_id') && stakeholderCols.has('user_id');
 
       const startExpr =
         (hasInitPlannedStart && 'i.planned_start_date') ||
@@ -1547,7 +1587,7 @@ router.get(
         if (hasInitSponsor) relationParts.push('i.sponsor_id = ?');
         if (hasStakeholders) {
           relationParts.push(
-            'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)',
+            'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)'
           );
         }
         if (relationParts.length === 0 && hasInitCreatedBy) relationParts.push('i.created_by = ?');
@@ -1587,7 +1627,7 @@ router.get(
               ORDER BY ${startExpr} ASC
               LIMIT 400
             `,
-            params,
+            params
           )) || [];
 
         for (const row of rows) {
@@ -1619,7 +1659,7 @@ router.get(
         if (hasInitSponsor) relationParts.push('i.sponsor_id = ?');
         if (hasStakeholders) {
           relationParts.push(
-            'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)',
+            'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)'
           );
         }
         if (relationParts.length === 0 && hasInitCreatedBy) relationParts.push('i.created_by = ?');
@@ -1660,7 +1700,7 @@ router.get(
               ORDER BY m.target_date ASC
               LIMIT 600
             `,
-            params,
+            params
           )) || [];
 
         for (const row of rows) {
@@ -1670,7 +1710,9 @@ router.get(
           const milestoneName = String(row?.name || '').trim();
           events.push({
             id: `initiative-ms-${row.id}`,
-            title: initiativeName ? `${initiativeName}: ${milestoneName || 'Milestone'}` : milestoneName || 'Milestone',
+            title: initiativeName
+              ? `${initiativeName}: ${milestoneName || 'Milestone'}`
+              : milestoneName || 'Milestone',
             start: targetDate,
             allDay: true,
             source: 'initiative',
@@ -1732,7 +1774,7 @@ router.get(
             ORDER BY d.deadline ASC
             LIMIT 400
           `,
-          params,
+          params
         )) || [];
 
       for (const row of rows) {
@@ -1780,7 +1822,7 @@ router.get(
               ORDER BY m.start_at ASC
               LIMIT 200
             `,
-            params,
+            params
           )) || [];
 
         const sourceColorMap: Record<string, string> = {
@@ -1825,17 +1867,25 @@ router.get(
 
     if (hasRange && start && end) {
       const meetingStarts = events
-        .filter((event) => !event.allDay && ['outlook', 'google', 'consultify'].includes(event.source))
+        .filter(
+          (event) => !event.allDay && ['outlook', 'google', 'consultify'].includes(event.source)
+        )
         .map((event) => ({
           start: new Date(event.start),
-          end: event.end ? new Date(event.end) : new Date(new Date(event.start).getTime() + 3600000),
+          end: event.end
+            ? new Date(event.end)
+            : new Date(new Date(event.start).getTime() + 3600000),
         }));
 
       const rangeStart = new Date(start);
       const rangeEnd = new Date(end);
       const dayMs = 86400000;
 
-      for (let current = new Date(rangeStart); current < rangeEnd; current = new Date(current.getTime() + dayMs)) {
+      for (
+        let current = new Date(rangeStart);
+        current < rangeEnd;
+        current = new Date(current.getTime() + dayMs)
+      ) {
         const dayOfWeek = current.getUTCDay();
         if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
@@ -1894,7 +1944,7 @@ router.get(
       data: { events },
       meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
     });
-  }),
+  })
 );
 
 router.post(
@@ -1929,14 +1979,14 @@ router.post(
     await queryHelpers.queryRun(
       `INSERT INTO tasks (id, title, description, due_date, assignee_id, organization_id, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 'todo', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      [id, title, description || null, start, userId, organizationId],
+      [id, title, description || null, start, userId, organizationId]
     );
 
     return res.status(201).json({
       data: { id, source: 'task', message: 'Task created from calendar' },
       meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
     });
-  }),
+  })
 );
 
 router.get(
@@ -1953,7 +2003,7 @@ router.get(
            AND date(due_date) = date(?)
            AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
          ORDER BY due_date ASC`,
-        [userId, organizationId, date],
+        [userId, organizationId, date]
       ),
       queryHelpers.queryAll<any>(
         `SELECT id, title, deadline
@@ -1963,7 +2013,7 @@ router.get(
            AND date(deadline) = date(?)
            AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
          ORDER BY deadline ASC`,
-        [organizationId, userId, userId, date],
+        [organizationId, userId, userId, date]
       ),
     ]);
 
@@ -1985,7 +2035,7 @@ router.get(
       },
       meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
     });
-  }),
+  })
 );
 
 router.put(
@@ -2005,7 +2055,7 @@ router.put(
       if (handled) return handled;
       throw err;
     }
-  }),
+  })
 );
 
 router.get(
@@ -2014,7 +2064,7 @@ router.get(
     const { organizationId } = getV8Context(req);
     const data = await myWorkRoofService.getCalendarPhases(organizationId);
     return res.json({ data, meta: { version: 'v8' } });
-  }),
+  })
 );
 
 router.get(
@@ -2095,7 +2145,7 @@ router.get(
       },
       meta: { version: 'v8' },
     });
-  }),
+  })
 );
 
 export default router;

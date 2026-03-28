@@ -279,6 +279,61 @@ describe('Api notebook V8 fallback guard', () => {
     );
   });
 
+  it('appends a converted notebook output without duplicating the same target', async () => {
+    vi.mocked(V8MyWorkApi.getNotebookPage).mockResolvedValue({
+      id: 'note-converted-1',
+      status: 'active',
+      convertedTo: [
+        { type: 'report', id: 'report-1' },
+        { type: 'presentation', id: 'deck-1' },
+      ],
+    } as any);
+    vi.mocked(V8MyWorkApi.updateNotebookPage).mockResolvedValue({
+      id: 'note-converted-1',
+      status: 'converted',
+    } as any);
+
+    await Api.appendNotebookConvertedOutput('note-converted-1', {
+      type: 'report',
+      id: 'report-1',
+    });
+
+    expect(vi.mocked(V8MyWorkApi.getNotebookPage)).toHaveBeenCalledWith('note-converted-1');
+    expect(vi.mocked(V8MyWorkApi.updateNotebookPage)).toHaveBeenCalledWith('note-converted-1', {
+      status: 'converted',
+      convertedTo: [
+        { type: 'presentation', id: 'deck-1' },
+        { type: 'report', id: 'report-1' },
+      ],
+    });
+  });
+
+  it('appends a new converted notebook output alongside existing entries', async () => {
+    vi.mocked(V8MyWorkApi.getNotebookPage).mockResolvedValue({
+      id: 'note-converted-2',
+      status: 'active',
+      convertedTo: [{ type: 'report', id: 'report-1' }],
+    } as any);
+    vi.mocked(V8MyWorkApi.updateNotebookPage).mockResolvedValue({
+      id: 'note-converted-2',
+      status: 'converted',
+    } as any);
+
+    await Api.appendNotebookConvertedOutput('note-converted-2', {
+      type: 'presentation',
+      id: 'deck-2',
+    });
+
+    expect(vi.mocked(V8MyWorkApi.getNotebookPage)).toHaveBeenCalledWith('note-converted-2');
+    expect(vi.mocked(V8MyWorkApi.updateNotebookPage)).toHaveBeenCalledWith('note-converted-2', {
+      status: 'converted',
+      convertedTo: [
+        { type: 'report', id: 'report-1' },
+        { type: 'presentation', id: 'deck-2' },
+      ],
+    });
+  });
+
   it('streams notebook action extraction through the shared Api client seam', async () => {
     const chunks = [
       'data: {"type":"stage","label":"Analyzing..."}\n',

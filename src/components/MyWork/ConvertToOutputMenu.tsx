@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { Api } from '@/services/api';
 import {
   type ConversionSourceType,
   type ConversionTargetType,
@@ -124,6 +125,12 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
         sourceTitle
       );
       if (result.success) {
+        if (sourceType === 'notebook') {
+          await Api.appendNotebookConvertedOutput(sourceId, {
+            type: targetType,
+            id: result.outputId,
+          });
+        }
         setDialogOpen(false);
         ConvertToConfirmation.show({
           outputType: targetType,

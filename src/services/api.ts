@@ -1,10 +1,11 @@
 // @ts-nocheck
+import i18n from '@/i18n';
+
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
-import { trackFunnelEvent } from './funnelAnalytics';
-import { tokenService } from './tokenService';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
-import i18n from '@/i18n';
+import { trackFunnelEvent } from './funnelAnalytics';
+import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
@@ -3496,7 +3497,10 @@ export const Api = {
   },
 
   // --- Activity Feed ---
-  getMyIdeaActivity: async (ideaId: string, opts?: { limit?: number; offset?: number }): Promise<any> => {
+  getMyIdeaActivity: async (
+    ideaId: string,
+    opts?: { limit?: number; offset?: number }
+  ): Promise<any> => {
     const params = new URLSearchParams();
     if (opts?.limit) params.set('limit', String(opts.limit));
     if (opts?.offset) params.set('offset', String(opts.offset));
@@ -3512,10 +3516,11 @@ export const Api = {
     ideaId: string,
     payload: { type: string; actor: string; nodeId?: string; nodeLabel?: string; detail?: string }
   ): Promise<any> => {
-    const res = await fetch(
-      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/activity`,
-      { method: 'POST', headers: getHeaders(), body: JSON.stringify(payload) }
-    );
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/activity`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
     return handleResponse(res, 'Failed to create activity entry');
   },
 
@@ -3528,7 +3533,12 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch node comments');
   },
 
-  addNodeComment: async (ideaId: string, nodeId: string, text: string, mentions?: string[]): Promise<any> => {
+  addNodeComment: async (
+    ideaId: string,
+    nodeId: string,
+    text: string,
+    mentions?: string[]
+  ): Promise<any> => {
     const res = await fetch(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/nodes/${encodeURIComponent(nodeId)}/comments`,
       { method: 'POST', headers: getHeaders(), body: JSON.stringify({ text, mentions }) }
@@ -8382,9 +8392,12 @@ export const Api = {
       if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
         throw error;
       }
-      const res = await fetch(`${API_URL}/my-work/calendar/conflicts?date=${encodeURIComponent(date)}`, {
-        headers: getHeaders(),
-      });
+      const res = await fetch(
+        `${API_URL}/my-work/calendar/conflicts?date=${encodeURIComponent(date)}`,
+        {
+          headers: getHeaders(),
+        }
+      );
       return handleResponse(res, 'Failed to check conflicts');
     }
   },
@@ -10908,9 +10921,12 @@ export const Api = {
       const params = new URLSearchParams();
       if (initiativeId) params.set('initiativeId', initiativeId);
       const query = params.toString();
-      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/plans${query ? `?${query}` : ''}`, {
-        headers: getHeaders(),
-      });
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/plans${query ? `?${query}` : ''}`,
+        {
+          headers: getHeaders(),
+        }
+      );
       if (!res.ok) throw new Error('Failed to fetch stakeholder plans');
       const data = await res.json();
       return data.data || [];
@@ -10921,9 +10937,12 @@ export const Api = {
   },
   getStakeholderPlanItems: async (planId: string): Promise<any[]> => {
     try {
-      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/plans/${encodeURIComponent(planId)}/items`, {
-        headers: getHeaders(),
-      });
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/plans/${encodeURIComponent(planId)}/items`,
+        {
+          headers: getHeaders(),
+        }
+      );
       if (!res.ok) throw new Error('Failed to fetch stakeholder plan items');
       const data = await res.json();
       return data.data || [];
@@ -10938,9 +10957,12 @@ export const Api = {
       if (params?.initiativeId) search.set('initiativeId', params.initiativeId);
       if (params?.status) search.set('status', params.status);
       const query = search.toString();
-      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/steerco-packs${query ? `?${query}` : ''}`, {
-        headers: getHeaders(),
-      });
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/steerco-packs${query ? `?${query}` : ''}`,
+        {
+          headers: getHeaders(),
+        }
+      );
       if (!res.ok) throw new Error('Failed to fetch steerco packs');
       const data = await res.json();
       return data.data || [];
@@ -10971,9 +10993,12 @@ export const Api = {
       if (params?.initiativeId) search.set('initiativeId', params.initiativeId);
       if (typeof params?.limit === 'number') search.set('limit', String(params.limit));
       const query = search.toString();
-      const res = await fetchWithRetry(`${API_URL}/stakeholder-comm/log${query ? `?${query}` : ''}`, {
-        headers: getHeaders(),
-      });
+      const res = await fetchWithRetry(
+        `${API_URL}/stakeholder-comm/log${query ? `?${query}` : ''}`,
+        {
+          headers: getHeaders(),
+        }
+      );
       if (!res.ok) throw new Error('Failed to fetch stakeholder send log');
       const data = await res.json();
       return data.data || [];
@@ -12375,6 +12400,32 @@ export const Api = {
     }
   },
 
+  appendNotebookConvertedOutput: async (
+    id: string,
+    nextOutput: { type?: string | null; id?: string | null }
+  ): Promise<any> => {
+    const type = String(nextOutput?.type || '').trim();
+    const outputId = String(nextOutput?.id || '').trim();
+    if (!type || !outputId) {
+      throw new Error('Notebook converted output requires type and id');
+    }
+
+    const page = await Api.getNotebookPage(id);
+    const existing = Array.isArray(page?.convertedTo) ? page.convertedTo : [];
+    const merged = [
+      ...existing.filter(
+        (entry: any) =>
+          String(entry?.type || '').trim() !== type || String(entry?.id || '').trim() !== outputId
+      ),
+      { type, id: outputId },
+    ];
+
+    return Api.updateNotebookPage(id, {
+      status: 'converted',
+      convertedTo: merged,
+    });
+  },
+
   deleteNotebookPage: async (id: string): Promise<void> => {
     try {
       await V8MyWorkApi.deleteNotebookPage(id);
@@ -12423,17 +12474,25 @@ export const Api = {
 
   classifyNotebookPage: async (
     id: string
-  ): Promise<{ pageId: string; suggestedType: string; reason: string; maturity?: string | null }> => {
+  ): Promise<{
+    pageId: string;
+    suggestedType: string;
+    reason: string;
+    maturity?: string | null;
+  }> => {
     try {
       return await V8MyWorkApi.classifyNotebookPage(id);
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
         throw error;
       }
-      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/classify`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
+      const res = await fetch(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/classify`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+        }
+      );
       return handleResponse(res, 'Failed to classify notebook page');
     }
   },
@@ -12497,14 +12556,17 @@ export const Api = {
       onEvent?: (event: { type: string; [key: string]: unknown }) => void;
     } = {}
   ): Promise<void> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/extract-actions`, {
-      method: 'POST',
-      headers: {
-        ...getHeaders(),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ language: options.language ?? 'en' }),
-    });
+    const res = await fetch(
+      `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/extract-actions`,
+      {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ language: options.language ?? 'en' }),
+      }
+    );
     if (!res.ok) {
       throw new Error('Failed to extract actions');
     }
@@ -12905,11 +12967,14 @@ export const Api = {
   // ──────────────────────────────────────────────
 
   exportComplete: async (exportId: string, data: { fileUrl: string; fileSizeBytes?: number }) => {
-    const res = await fetch(`${API_URL}/v4-final/exports/${encodeURIComponent(exportId)}/complete`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
+    const res = await fetch(
+      `${API_URL}/v4-final/exports/${encodeURIComponent(exportId)}/complete`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
     return handleResponse(res, 'Failed to complete export');
   },
 
@@ -12917,11 +12982,14 @@ export const Api = {
     gapId: string,
     data: { status: string; autoInitiativesCreated?: number }
   ) => {
-    const res = await fetch(`${API_URL}/v4-final/gap-analyses/${encodeURIComponent(gapId)}/status`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
+    const res = await fetch(
+      `${API_URL}/v4-final/gap-analyses/${encodeURIComponent(gapId)}/status`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
     return handleResponse(res, 'Failed to update gap analysis status');
   },
 
@@ -13010,7 +13078,10 @@ export const Api = {
 
   raidList: async (filters?: { initiativeId?: string; type?: string; status?: string }) => {
     const params = new URLSearchParams();
-    if (filters) Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
+    if (filters)
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v) params.set(k, v);
+      });
     const qs = params.toString() ? `?${params}` : '';
     const res = await fetch(`${API_URL}/raid${qs}`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to list RAID items');

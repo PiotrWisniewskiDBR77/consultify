@@ -61,13 +61,14 @@ import { AITopicsPanel } from './notebook/AITopicsPanel';
 import { ConvertChecklistModal } from './notebook/ConvertChecklistModal';
 import {
   CalloutNode,
-  EmbeddedRefNode,
   DetailsContentNode,
   DetailsNode,
   DetailsSummaryNode,
+  EmbeddedRefNode,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { NotebookContextPanel } from './notebook/NotebookContextPanel';
+import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
 import {
   detectSlashTrigger,
@@ -274,18 +275,34 @@ const buildOutlineDraft = (
 
   if (target === 'presentation') {
     return isPolish
-      ? ['- Kontekst i cel', '- Najważniejsze obserwacje', '- Implikacje biznesowe', '- Następne kroki'].join('\n')
-      : ['- Context and goal', '- Key observations', '- Business implications', '- Next steps'].join('\n');
+      ? [
+          '- Kontekst i cel',
+          '- Najważniejsze obserwacje',
+          '- Implikacje biznesowe',
+          '- Następne kroki',
+        ].join('\n')
+      : [
+          '- Context and goal',
+          '- Key observations',
+          '- Business implications',
+          '- Next steps',
+        ].join('\n');
   }
 
   if (target === 'assessment') {
     return isPolish
-      ? ['- Zakres oceny', '- Główne pytania', '- Evidence do zebrania', '- Obszary ryzyka'].join('\n')
-      : ['- Assessment scope', '- Core questions', '- Evidence to collect', '- Risk areas'].join('\n');
+      ? ['- Zakres oceny', '- Główne pytania', '- Evidence do zebrania', '- Obszary ryzyka'].join(
+          '\n'
+        )
+      : ['- Assessment scope', '- Core questions', '- Evidence to collect', '- Risk areas'].join(
+          '\n'
+        );
   }
 
   return isPolish
-    ? ['- Executive summary', '- Analiza problemu', '- Opcje działania', '- Rekomendacje'].join('\n')
+    ? ['- Executive summary', '- Analiza problemu', '- Opcje działania', '- Rekomendacje'].join(
+        '\n'
+      )
     : ['- Executive summary', '- Problem analysis', '- Options', '- Recommendations'].join('\n');
 };
 
@@ -1732,11 +1749,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 <AlertTriangle size={9} className="inline" />
                               </span>
                             )}
-                            {p.convertedTo && p.convertedTo.length > 0 && (
-                              <span className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-medium">
-                                ✓ {p.convertedTo[0].type}
-                              </span>
-                            )}
+                            {(() => {
+                              const convertedSummary = getNotebookConvertedOutputSummary(p.convertedTo);
+                              if (convertedSummary.total === 0) return null;
+                              return (
+                                <span
+                                  className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-medium"
+                                  title={convertedSummary.visibleTypes.join(', ')}
+                                >
+                                  ✓ {convertedSummary.visibleTypes.join(', ')}
+                                  {convertedSummary.extraCount > 0
+                                    ? ` +${convertedSummary.extraCount}`
+                                    : ''}
+                                </span>
+                              );
+                            })()}
                             {p.tags &&
                               p.tags.slice(0, 2).map((tag) => (
                                 <span
@@ -1962,7 +1989,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         title={isPolish ? 'Ikona strony' : 'Page icon'}
                       >
                         {activePage.icon ||
-                          (MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] || MATURITY_CONFIG.seed).icon}
+                          (
+                            MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] ||
+                            MATURITY_CONFIG.seed
+                          ).icon}
                       </span>
                       <div className="flex-1 min-w-0">
                         <input
@@ -2214,14 +2244,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             <div className="mt-2 flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => void resolveNotebookAIProposal(proposal.id, 'accepted')}
+                                onClick={() =>
+                                  void resolveNotebookAIProposal(proposal.id, 'accepted')
+                                }
                                 className="rounded-md bg-violet-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-violet-500"
                               >
                                 {isPolish ? 'Akceptuj' : 'Accept'}
                               </button>
                               <button
                                 type="button"
-                                onClick={() => void resolveNotebookAIProposal(proposal.id, 'rejected')}
+                                onClick={() =>
+                                  void resolveNotebookAIProposal(proposal.id, 'rejected')
+                                }
                                 className="rounded-md bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/[0.1]"
                               >
                                 {isPolish ? 'Odrzuć' : 'Reject'}
@@ -2242,9 +2276,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           </div>
                           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                             {selectedEmbedPreview.artifactType}
-                            {selectedEmbedPreview.status
-                              ? ` · ${selectedEmbedPreview.status}`
-                              : ''}
+                            {selectedEmbedPreview.status ? ` · ${selectedEmbedPreview.status}` : ''}
                           </div>
                         </div>
                         <button
@@ -2293,11 +2325,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 ? 'Plan działań AI'
                                 : 'AI action plan',
                         aiCommand === 'ask'
-                          ? (isPolish ? 'Odpowiedź AI' : 'AI answer')
+                          ? isPolish
+                            ? 'Odpowiedź AI'
+                            : 'AI answer'
                           : aiCommand === 'expand'
-                            ? (isPolish ? 'Rozwinięcie AI' : 'AI expansion')
+                            ? isPolish
+                              ? 'Rozwinięcie AI'
+                              : 'AI expansion'
                             : aiCommand === 'challenge'
-                              ? (isPolish ? 'Pytania krytyczne AI' : 'AI challenge')
+                              ? isPolish
+                                ? 'Pytania krytyczne AI'
+                                : 'AI challenge'
                               : isPolish
                                 ? 'Plan działań AI'
                                 : 'AI action plan'

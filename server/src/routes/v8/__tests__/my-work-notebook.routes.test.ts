@@ -86,7 +86,7 @@ describe('V8 My Work notebook routes', () => {
         maturity: 'seed',
         icon: null,
         summary: null,
-        status: 'active',
+        status: 'converted',
         pinned: 0,
         verificationStatus: 'unverified',
         reviewCadence: 'monthly',
@@ -204,28 +204,40 @@ describe('V8 My Work notebook routes', () => {
         maturity: 'mature',
         icon: null,
         summary: 'summary',
-        status: 'active',
+        status: 'converted',
         pinned: 1,
         verificationStatus: 'verified',
         reviewCadence: 'monthly',
         staleAt: null,
         lastReviewedAt: null,
-        convertedToJson: null,
+        convertedToJson: JSON.stringify([{ type: 'report', id: 'report-1' }]),
         createdAt: '2026-03-26T10:00:00.000Z',
         updatedAt: '2026-03-26T10:05:00.000Z',
       });
 
     const res = await request(createApp())
       .put('/api/v8/my-work/notebook/pages/note-3')
-      .send({ title: 'Updated title', contentText: 'updated', tags: ['beta'] });
+      .send({
+        title: 'Updated title',
+        contentText: 'updated',
+        tags: ['beta'],
+        status: 'converted',
+        convertedTo: [{ type: 'report', id: 'report-1' }],
+      });
 
     expect(res.status).toBe(200);
     expect(mockQueryRun).toHaveBeenCalled();
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('converted_to_json = ?'),
+      expect.arrayContaining([JSON.stringify([{ type: 'report', id: 'report-1' }])])
+    );
     expect(res.body.data).toMatchObject({
       id: 'note-3',
       title: 'Updated title',
       tags: ['beta'],
       pinned: true,
+      status: 'converted',
+      convertedTo: [{ type: 'report', id: 'report-1' }],
     });
   });
 

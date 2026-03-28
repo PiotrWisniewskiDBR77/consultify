@@ -17,29 +17,28 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import { featureFlags } from '../config/FeatureFlags.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { getAiNews, pickTipOfDay } from '../services/homeCoverFeedService.js';
 import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
+import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
-import NotificationService from '../services/notificationService.js';
-import { getAiNews, pickTipOfDay } from '../services/homeCoverFeedService.js';
 import notebookService from '../services/notebookService.js';
+import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { radarActionService } from '../services/radar/radarActionService.js';
-import { radarService } from '../services/radar/radarService.js';
 import { radarRankingService } from '../services/radar/radarRankingService.js';
+import { radarService } from '../services/radar/radarService.js';
+import projectionService from '../services/tablePlatform/ProjectionService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { getActiveRoomsByOrg, getRoomHealth } from '../services/v8/collaborationRoomService.js';
 import { rollupSignals } from '../services/v8/executionVisibilityService.js';
 import { getPendingDecisions } from '../services/v8/planningContinuityService.js';
-import {
-  InboxAiAssistItemSchema,
-  runInboxAiAssist,
-} from '../services/inboxAiAssistService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -50,8 +49,6 @@ import {
   normalizeGraphForStorage,
   validateAndNormalizeGraph,
 } from '../validators/ideaWorkspaceGraph.validators.js';
-import { featureFlags } from '../config/FeatureFlags.js';
-import projectionService from '../services/tablePlatform/ProjectionService.js';
 
 const router = Router();
 
@@ -446,8 +443,7 @@ const resolveCanonicalPersonalTaskIdentity = async (
   req: AuthRequest,
   identity: { userId: string; orgId: string }
 ): Promise<{ userId: string; orgId: string }> => {
-  const email =
-    typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  const email = typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
   if (!email) return identity;
 
   try {
@@ -4662,7 +4658,10 @@ router.post(
 
     let mergedExtensions = extensions;
     if (existing?.extensionsJson && extensions) {
-      mergedExtensions = mergeIdeaMapExtensions(parseIdeaMapObject(existing.extensionsJson), extensions);
+      mergedExtensions = mergeIdeaMapExtensions(
+        parseIdeaMapObject(existing.extensionsJson),
+        extensions
+      );
     } else if (existing?.extensionsJson) {
       mergedExtensions = parseIdeaMapObject(existing.extensionsJson);
     }
@@ -5221,7 +5220,11 @@ router.get(
 
     const snapshots = rows.map((r: any) => {
       let data: any = {};
-      try { data = JSON.parse(String(r.dataJson || '{}')); } catch { /* ignore */ }
+      try {
+        data = JSON.parse(String(r.dataJson || '{}'));
+      } catch {
+        /* ignore */
+      }
       return {
         id: r.id,
         label: r.label,
@@ -5269,7 +5272,16 @@ router.post(
     await queryHelpers.run(
       `INSERT INTO my_idea_map_snapshots (id, idea_id, user_id, organization_id, label, node_count, edge_count, data_json, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [id, ideaId, userId, orgId, parsed.data.label, parsed.data.nodes.length, parsed.data.edges.length, dataJson]
+      [
+        id,
+        ideaId,
+        userId,
+        orgId,
+        parsed.data.label,
+        parsed.data.nodes.length,
+        parsed.data.edges.length,
+        dataJson,
+      ]
     );
 
     await req.emitAuditEvent?.({
@@ -5359,7 +5371,11 @@ router.get(
         nodeId: c.node_id,
         author: c.user_name || c.user_id,
         text: c.text,
-        mentions: c.mentions ? (typeof c.mentions === 'string' ? JSON.parse(c.mentions) : c.mentions) : [],
+        mentions: c.mentions
+          ? typeof c.mentions === 'string'
+            ? JSON.parse(c.mentions)
+            : c.mentions
+          : [],
         createdAt: c.created_at,
       })),
     });
@@ -5398,7 +5414,16 @@ router.post(
     await queryHelpers.run(
       `INSERT INTO idea_node_comments (id, idea_id, node_id, user_id, organization_id, user_name, text, mentions, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      [id, ideaId, nodeId, userId, orgId, userName, parsed.data.text, parsed.data.mentions ? JSON.stringify(parsed.data.mentions) : null]
+      [
+        id,
+        ideaId,
+        nodeId,
+        userId,
+        orgId,
+        userName,
+        parsed.data.text,
+        parsed.data.mentions ? JSON.stringify(parsed.data.mentions) : null,
+      ]
     );
 
     await req.emitAuditEvent?.({
@@ -5437,7 +5462,8 @@ router.delete(
     const ideaId = String(req.params.id || '').trim();
     const nodeId = String(req.params.nodeId || '').trim();
     const commentId = String(req.params.commentId || '').trim();
-    if (!ideaId || !nodeId || !commentId) return res.status(400).json({ error: 'Missing required params' });
+    if (!ideaId || !nodeId || !commentId)
+      return res.status(400).json({ error: 'Missing required params' });
 
     await queryHelpers.run(
       `DELETE FROM idea_node_comments WHERE id = ? AND idea_id = ? AND node_id = ? AND organization_id = ?`,
@@ -5531,7 +5557,17 @@ router.post(
     await queryHelpers.run(
       `INSERT INTO my_idea_activity (id, idea_id, user_id, organization_id, type, actor, node_id, node_label, detail, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [id, ideaId, userId, orgId, parsed.data.type, parsed.data.actor, parsed.data.nodeId || null, parsed.data.nodeLabel || null, parsed.data.detail || null]
+      [
+        id,
+        ideaId,
+        userId,
+        orgId,
+        parsed.data.type,
+        parsed.data.actor,
+        parsed.data.nodeId || null,
+        parsed.data.nodeLabel || null,
+        parsed.data.detail || null,
+      ]
     );
 
     res.status(201).json({ ok: true, entryId: id });
@@ -5708,7 +5744,9 @@ router.post(
     if (!node.data || typeof node.data !== 'object') node.data = {};
     const existingLinks: any[] = Array.isArray(node.data.artifactLinks)
       ? node.data.artifactLinks
-      : Array.isArray(node.artifactLinks) ? node.artifactLinks : [];
+      : Array.isArray(node.artifactLinks)
+        ? node.artifactLinks
+        : [];
     const duplicate = existingLinks.some(
       (l: any) => l.artifactRef?.type === artifactRef.type && l.artifactRef?.id === artifactRef.id
     );
@@ -5790,7 +5828,9 @@ router.delete(
     if (!node.data || typeof node.data !== 'object') node.data = {};
     const links: any[] = Array.isArray(node.data.artifactLinks)
       ? node.data.artifactLinks
-      : Array.isArray(node.artifactLinks) ? node.artifactLinks : [];
+      : Array.isArray(node.artifactLinks)
+        ? node.artifactLinks
+        : [];
     const filtered = links.filter(
       (l: any) => !(l.artifactRef?.type === artifactType && l.artifactRef?.id === artifactId)
     );
@@ -5864,7 +5904,9 @@ router.get(
 
     const links = Array.isArray(node.data?.artifactLinks)
       ? node.data.artifactLinks
-      : Array.isArray(node.artifactLinks) ? node.artifactLinks : [];
+      : Array.isArray(node.artifactLinks)
+        ? node.artifactLinks
+        : [];
     res.json({ artifactLinks: links });
   })
 );
@@ -5958,12 +6000,30 @@ router.post(
     const hasPrefTool = chatMapCols.has('preferred_tool');
     const hasExtJson = chatMapCols.has('extensions_json');
 
-    const insertCols = ['id', 'idea_id', 'user_id', 'organization_id', 'nodes_json', 'edges_json', 'created_at', 'updated_at'];
+    const insertCols = [
+      'id',
+      'idea_id',
+      'user_id',
+      'organization_id',
+      'nodes_json',
+      'edges_json',
+      'created_at',
+      'updated_at',
+    ];
     const insertVals: unknown[] = [mapId, ideaId, userId, orgId, '[]', '[]', now, now];
 
-    if (hasPrefTool) { insertCols.push('preferred_tool'); insertVals.push(preferredSystem || null); }
-    if (hasExtJson) { insertCols.push('extensions_json'); insertVals.push(JSON.stringify(extensions)); }
-    if (hasSchemaVer) { insertCols.push('schema_version'); insertVals.push(3); }
+    if (hasPrefTool) {
+      insertCols.push('preferred_tool');
+      insertVals.push(preferredSystem || null);
+    }
+    if (hasExtJson) {
+      insertCols.push('extensions_json');
+      insertVals.push(JSON.stringify(extensions));
+    }
+    if (hasSchemaVer) {
+      insertCols.push('schema_version');
+      insertVals.push(3);
+    }
 
     await queryHelpers.queryRun(
       `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertCols.map(() => '?').join(', ')})`,
@@ -6424,7 +6484,11 @@ router.post(
       : [];
 
     if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
-    if (!['initiative', 'task_set', 'decision', 'team_chat', 'report', 'presentation'].includes(target)) {
+    if (
+      !['initiative', 'task_set', 'decision', 'team_chat', 'report', 'presentation'].includes(
+        target
+      )
+    ) {
       return res.status(400).json({ error: 'Invalid target' });
     }
 
@@ -6530,9 +6594,15 @@ router.post(
             .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
             .filter(Boolean);
           if (selectedLabels.length > 0) {
-            initSummary = `Selected elements: ${selectedLabels.join(', ')}\n\n${initSummary || ''}`.slice(0, 5000);
+            initSummary =
+              `Selected elements: ${selectedLabels.join(', ')}\n\n${initSummary || ''}`.slice(
+                0,
+                5000
+              );
           }
-        } catch { /* best-effort */ }
+        } catch {
+          /* best-effort */
+        }
       }
       add('summary', initSummary);
       add('area', idea?.area ? String(idea.area).slice(0, 120) : null);
@@ -6799,10 +6869,16 @@ router.post(
       add('user_id', userId);
       add('created_by', userId);
       add('title', safeTitle.slice(0, 255));
-      add('description', [
-        safeBody ? `Idea:\n${safeBody}` : null,
-        safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-      ].filter(Boolean).join('\n').slice(0, 12000));
+      add(
+        'description',
+        [
+          safeBody ? `Idea:\n${safeBody}` : null,
+          safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n')
+          .slice(0, 12000)
+      );
       add('status', 'draft');
       add('source_type', 'idea');
       add('source_id', ideaId);
@@ -6869,10 +6945,16 @@ router.post(
       add('user_id', userId);
       add('created_by', userId);
       add('title', safeTitle.slice(0, 255));
-      add('description', [
-        safeBody ? `Idea:\n${safeBody}` : null,
-        safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-      ].filter(Boolean).join('\n').slice(0, 12000));
+      add(
+        'description',
+        [
+          safeBody ? `Idea:\n${safeBody}` : null,
+          safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n')
+          .slice(0, 12000)
+      );
       add('status', 'draft');
       add('source_type', 'idea');
       add('source_id', ideaId);
@@ -7814,6 +7896,12 @@ router.put(
       set('project_id', nextProjectId);
       const nextVis = nextProjectId ? 'project' : 'private';
       set('visibility', nextVis);
+    }
+    if (req.body?.convertedTo !== undefined) {
+      set(
+        'converted_to_json',
+        safeJsonString(Array.isArray(req.body.convertedTo) ? req.body.convertedTo : [], '[]')
+      );
     }
 
     const selectNotebookFull = `
@@ -10131,7 +10219,7 @@ Task data:
                   ? `Task: expand into a clear brief (max 10 sentences): context, goal, definition of done, risks, next step.`
                   : `Task: summarize into a short brief (max 3 sentences) + 3 "next steps" bullets.`;
 
-      return `${baseContext}\n${ask}\n\nZwróć TYLKO JSON {\"text\":\"...\"} bez markdown i bez dodatkowego tekstu.`;
+      return `${baseContext}\n${ask}\n\nZwróć TYLKO JSON {"text":"..."} bez markdown i bez dodatkowego tekstu.`;
     };
 
     try {
@@ -10723,11 +10811,19 @@ router.get(
 
       let nodes: any[] = [];
       let extensions: any = {};
-      try { nodes = JSON.parse(String(mapRow.nodes_json || '[]')); } catch { nodes = []; }
-      try { extensions = JSON.parse(String(mapRow.extensions_json || '{}')); } catch { extensions = {}; }
+      try {
+        nodes = JSON.parse(String(mapRow.nodes_json || '[]'));
+      } catch {
+        nodes = [];
+      }
+      try {
+        extensions = JSON.parse(String(mapRow.extensions_json || '{}'));
+      } catch {
+        extensions = {};
+      }
 
-      const columns: Array<{ key: string; header: string; visible?: boolean }> =
-        extensions?.table?.columns || [{ key: 'label', header: 'Name' }];
+      const columns: Array<{ key: string; header: string; visible?: boolean }> = extensions?.table
+        ?.columns || [{ key: 'label', header: 'Name' }];
       const visibleCols = columns.filter((c: any) => c.visible !== false);
 
       const escapeCSV = (val: string): string => {
@@ -10739,11 +10835,13 @@ router.get(
 
       const headerLine = visibleCols.map((c: any) => escapeCSV(c.header || c.key)).join(',');
       const dataLines = nodes.map((node: any) =>
-        visibleCols.map((col: any) => {
-          const val = col.key === 'type' ? (node.type || '') : (node.data?.[col.key] ?? '');
-          if (Array.isArray(val)) return escapeCSV(val.join('; '));
-          return escapeCSV(String(val));
-        }).join(',')
+        visibleCols
+          .map((col: any) => {
+            const val = col.key === 'type' ? node.type || '' : (node.data?.[col.key] ?? '');
+            if (Array.isArray(val)) return escapeCSV(val.join('; '));
+            return escapeCSV(String(val));
+          })
+          .join(',')
       );
 
       const csv = '\uFEFF' + [headerLine, ...dataLines].join('\n');
@@ -10777,7 +10875,8 @@ router.post(
     const { userId, userName, color, activeCell, timestamp } = req.body || {};
 
     try {
-      const realtimePlatformService = (await import('../services/realtimePlatformService.js')).default;
+      const realtimePlatformService = (await import('../services/realtimePlatformService.js'))
+        .default;
       await realtimePlatformService.upsertPresence(channelId, {
         userId: userId || identity.userId,
         userName: userName || identity.userId,
@@ -10807,10 +10906,15 @@ router.get(
     const channelId = `idea-table-${ideaId}`;
 
     try {
-      const realtimePlatformService = (await import('../services/realtimePlatformService.js')).default;
+      const realtimePlatformService = (await import('../services/realtimePlatformService.js'))
+        .default;
       const rows = await realtimePlatformService.listPresence(channelId);
       const users = (Array.isArray(rows) ? rows : []).map((r: any) => {
-        const cursor = r.cursor_state ? (typeof r.cursor_state === 'string' ? JSON.parse(r.cursor_state) : r.cursor_state) : {};
+        const cursor = r.cursor_state
+          ? typeof r.cursor_state === 'string'
+            ? JSON.parse(r.cursor_state)
+            : r.cursor_state
+          : {};
         return {
           id: r.user_id,
           name: r.user_name || r.user_id,
@@ -10910,7 +11014,8 @@ router.get(
         if (hasDue) dateExprParts.push('t.due_date');
         if (hasStart) dateExprParts.push('t.start_date');
         if (hasPlannedStart) dateExprParts.push('t.planned_start_date');
-        const primaryDateExpr = dateExprParts.length > 0 ? `COALESCE(${dateExprParts.join(', ')})` : null;
+        const primaryDateExpr =
+          dateExprParts.length > 0 ? `COALESCE(${dateExprParts.join(', ')})` : null;
 
         const assignmentParts: string[] = [];
         if (hasAssigneeId) assignmentParts.push('t.assignee_id = ?');
@@ -11032,7 +11137,8 @@ router.get(
               'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)'
             );
           }
-          if (relationParts.length === 0 && hasInitCreatedBy) relationParts.push('i.created_by = ?');
+          if (relationParts.length === 0 && hasInitCreatedBy)
+            relationParts.push('i.created_by = ?');
 
           const where: string[] = ['i.organization_id = ?'];
           const params: any[] = [orgId];
@@ -11279,7 +11385,11 @@ router.get(
 
           for (const m of rows) {
             let agenda: any = {};
-            try { agenda = JSON.parse(m.agenda_json || '{}'); } catch { /* ignore */ }
+            try {
+              agenda = JSON.parse(m.agenda_json || '{}');
+            } catch {
+              /* ignore */
+            }
             const calSource = agenda.calendarSource || 'outlook';
             if (calSource === 'outlook' && !wantOutlook) continue;
             if (calSource === 'google' && !wantGoogle) continue;
@@ -11312,8 +11422,15 @@ router.get(
       // Generate ghost blocks for "own work" time in gaps between meetings
       if (hasRange && start && end) {
         const meetingStarts = events
-          .filter((e) => !e.allDay && (e.source === 'outlook' || e.source === 'google' || e.source === 'consultify'))
-          .map((e) => ({ start: new Date(e.start), end: e.end ? new Date(e.end) : new Date(new Date(e.start).getTime() + 3600000) }));
+          .filter(
+            (e) =>
+              !e.allDay &&
+              (e.source === 'outlook' || e.source === 'google' || e.source === 'consultify')
+          )
+          .map((e) => ({
+            start: new Date(e.start),
+            end: e.end ? new Date(e.end) : new Date(new Date(e.start).getTime() + 3600000),
+          }));
 
         const rangeStart = new Date(start);
         const rangeEnd = new Date(end);
@@ -11352,7 +11469,8 @@ router.get(
             if (dur > bestGap.duration) bestGap = { ...s, duration: dur };
           }
 
-          if (dayMeetings.length > 0 && bestGap.duration >= 5400000) { // >= 90 min, only on days with meetings
+          if (dayMeetings.length > 0 && bestGap.duration >= 5400000) {
+            // >= 90 min, only on days with meetings
             const focusStart = bestGap.start;
             const focusDur = Math.min(bestGap.duration, 7200000); // max 2h
             const focusEnd = new Date(focusStart.getTime() + focusDur);
@@ -11419,7 +11537,9 @@ router.post(
         );
         res.json({ id, source: 'task', message: 'Task created from calendar' });
       } else {
-        res.status(501).json({ error: `Creating ${source} events from calendar is not yet supported` });
+        res
+          .status(501)
+          .json({ error: `Creating ${source} events from calendar is not yet supported` });
       }
     } catch (err: any) {
       logger.error('[calendar-create-event]', err);
@@ -11549,7 +11669,8 @@ const DEFAULT_HOME_V2_PRESET: HomeV2IndustryPreset = {
   marketSignalTitle: 'Transformation funding is moving toward cross-functional value pools',
   marketSignalSummary:
     'Leaders are backing programs that connect strategy, execution, and capability-building rather than isolated pilots.',
-  technologySignalTitle: 'AI copilots are being embedded into operating models, not launched as side tools',
+  technologySignalTitle:
+    'AI copilots are being embedded into operating models, not launched as side tools',
   technologySignalSummary:
     'The strongest programs redesign rituals, decisions, and flows around AI assistance instead of adding another disconnected interface.',
   benchmarkLabel: 'Transformation benchmark',
@@ -11569,7 +11690,8 @@ const MANUFACTURING_HOME_V2_PRESET: HomeV2IndustryPreset = {
   marketSignalTitle: 'Energy pressure is changing transformation prioritization in manufacturing',
   marketSignalSummary:
     'Manufacturing programs are getting funded fastest when they connect planning, quality, and efficiency levers rather than isolated automation ideas.',
-  technologySignalTitle: 'Computer vision and planning copilots are moving from pilot to operating lane',
+  technologySignalTitle:
+    'Computer vision and planning copilots are moving from pilot to operating lane',
   technologySignalSummary:
     'Plants are redesigning quality triage, maintenance decisions, and production planning around AI-assisted workflows.',
   benchmarkLabel: 'Manufacturing transformation benchmark',
@@ -11640,7 +11762,18 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    if (!(await requireTables(res, ['radar_sources', 'radar_raw_items', 'radar_processed_signals', 'user_radar_profiles', 'radar_ranked_signals', 'radar_actions', 'watchlist_items']))) return;
+    if (
+      !(await requireTables(res, [
+        'radar_sources',
+        'radar_raw_items',
+        'radar_processed_signals',
+        'user_radar_profiles',
+        'radar_ranked_signals',
+        'radar_actions',
+        'watchlist_items',
+      ]))
+    )
+      return;
 
     const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
     const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
@@ -11696,7 +11829,9 @@ router.patch(
 
     const parsed = radarProfilePatchSchema.safeParse(req.body || {});
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid profile payload', details: parsed.error.flatten() });
+      return res
+        .status(400)
+        .json({ error: 'Invalid profile payload', details: parsed.error.flatten() });
     }
 
     const updated = await radarRankingService.updateProfile(identity.userId, {
@@ -11717,7 +11852,9 @@ router.post(
 
     const parsed = radarActionSchema.safeParse(req.body || {});
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid radar action payload', details: parsed.error.flatten() });
+      return res
+        .status(400)
+        .json({ error: 'Invalid radar action payload', details: parsed.error.flatten() });
     }
 
     const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
@@ -11766,7 +11903,9 @@ router.get(
       const signalWindowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const timeMode = inferHomeV2TimeMode(now);
       const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
-      const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+      const langRaw = Array.isArray(appLanguage)
+        ? appLanguage.join(',')
+        : String(appLanguage || '');
       const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
       const L = (en: string, pl: string) => (isPolish ? pl : en);
 
@@ -11805,8 +11944,7 @@ router.get(
         executionSignalRollup,
         activeRooms,
         pendingDecisionChains,
-      ] =
-        await Promise.all([
+      ] = await Promise.all([
         safeHomeV2Query('tasks', [
           {
             sql: `SELECT id, title, description, status, priority, due_date, updated_at
@@ -11947,13 +12085,12 @@ router.get(
           },
         ]),
         getAiNews(now, 6).catch(() => []),
-        artifactRegistryService
-          .listMyWorkArtifacts({
-            organizationId: orgId,
-            userId,
-            roleKey: req.user?.role ? String(req.user.role) : null,
-            limit: 8,
-          }),
+        artifactRegistryService.listMyWorkArtifacts({
+          organizationId: orgId,
+          userId,
+          roleKey: req.user?.role ? String(req.user.role) : null,
+          limit: 8,
+        }),
         inboxService.getInboxStats(userId, orgId).catch(() => ({
           total: 0,
           bySection: {},
@@ -11971,7 +12108,9 @@ router.get(
       ]);
 
       const roomHealths = await Promise.all(
-        (activeRooms || []).slice(0, 6).map((room) => getRoomHealth(room.roomId, orgId).catch(() => null)),
+        (activeRooms || [])
+          .slice(0, 6)
+          .map((room) => getRoomHealth(room.roomId, orgId).catch(() => null))
       );
 
       const { appTip, aiPlaybookTip } = pickTipOfDay(now);
@@ -12019,7 +12158,7 @@ router.get(
       }));
 
       const executionSignalTypes = Array.from(executionSignalRollup.byType.entries()).sort(
-        (left, right) => right[1] - left[1],
+        (left, right) => right[1] - left[1]
       );
       const topExecutionSignalType = executionSignalTypes[0]?.[0] ?? null;
       const formatExecutionSignalType = (value: string | null): string => {
@@ -12037,24 +12176,27 @@ router.get(
 
       const collaborationHealth = roomHealths.filter(Boolean);
       const degradedRoomCount = collaborationHealth.filter(
-        (room) => room && (room.state === 'error' || room.degradedSince),
+        (room) => room && (room.state === 'error' || room.degradedSince)
       ).length;
       const activePresenceCount = collaborationHealth.reduce(
         (sum, room) => sum + (room?.activePresenceCount ?? 0),
-        0,
+        0
       );
       const inboxPendingCount = Number(inboxStats.byStatus?.pending || 0);
       const inboxAtRiskCount = Number(inboxStats.bySlaStatus?.at_risk || 0);
       const reviewSharedOutputCount = outputFlow.filter(
-        (artifact) => artifact.visibilityScope === 'review_shared',
+        (artifact) => artifact.visibilityScope === 'review_shared'
       ).length;
       const governedPendingDecisionChainCount = (pendingDecisionChains || []).length;
-      const governedPendingDecisionStepCount = (pendingDecisionChains || []).reduce((sum, chain) => {
-        const pendingSteps = Array.isArray(chain?.decisions)
-          ? chain.decisions.filter((decision) => decision?.status === 'pending').length
-          : 0;
-        return sum + pendingSteps;
-      }, 0);
+      const governedPendingDecisionStepCount = (pendingDecisionChains || []).reduce(
+        (sum, chain) => {
+          const pendingSteps = Array.isArray(chain?.decisions)
+            ? chain.decisions.filter((decision) => decision?.status === 'pending').length
+            : 0;
+          return sum + pendingSteps;
+        },
+        0
+      );
 
       const nextUpCutoff = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       const todayKey = now.toISOString().slice(0, 10);
@@ -12100,7 +12242,9 @@ router.get(
         .slice(0, 6)
         .map(({ _ts, ...e }) => e);
 
-      const overdueTasks = tasks.filter((task: any) => task.due_date && new Date(task.due_date) < now);
+      const overdueTasks = tasks.filter(
+        (task: any) => task.due_date && new Date(task.due_date) < now
+      );
       const tasksDueSoon = tasks.slice(0, 3);
       const pendingDecisions = decisions;
       const blockedCount = overdueTasks.length + (pendingDecisions.length > 2 ? 1 : 0);
@@ -12112,7 +12256,13 @@ router.get(
               id: String(tasksDueSoon[0].id),
               type: 'task',
               title: String(tasksDueSoon[0].title),
-              meta: overdueTasks.length > 0 ? L('Execution needs a clean next move', 'Wykonanie potrzebuje czystego „next move”') : L('Closest execution commitment', 'Najbliższe zobowiązanie wykonawcze'),
+              meta:
+                overdueTasks.length > 0
+                  ? L(
+                      'Execution needs a clean next move',
+                      'Wykonanie potrzebuje czystego „next move”'
+                    )
+                  : L('Closest execution commitment', 'Najbliższe zobowiązanie wykonawcze'),
               priority: overdueTasks.length > 0 ? 'high' : 'medium',
             }
           : null,
@@ -12132,7 +12282,10 @@ router.get(
               id: String(ideas[0].id),
               type: 'idea',
               title: String(ideas[0].title),
-              meta: L('Strongest current transformation concept', 'Najsilniejszy obecny koncept transformacyjny'),
+              meta: L(
+                'Strongest current transformation concept',
+                'Najsilniejszy obecny koncept transformacyjny'
+              ),
               priority: 'medium',
             }
           : null,
@@ -12181,10 +12334,12 @@ router.get(
       const presetPl: HomeV2IndustryPreset = isManufacturingPreset
         ? {
             industryLabel: 'Produkcja',
-            marketSignalTitle: 'Presja kosztów energii zmienia priorytety transformacji w produkcji',
+            marketSignalTitle:
+              'Presja kosztów energii zmienia priorytety transformacji w produkcji',
             marketSignalSummary:
               'Programy dostają finansowanie najszybciej, gdy łączą planowanie, jakość i efektywność zamiast izolowanych pomysłów automatyzacji.',
-            technologySignalTitle: 'Wizja komputerowa i copiloci planistyczni przechodzą z pilota do “pasa operacyjnego”',
+            technologySignalTitle:
+              'Wizja komputerowa i copiloci planistyczni przechodzą z pilota do “pasa operacyjnego”',
             technologySignalSummary:
               'Zakłady przeprojektowują triage jakości, decyzje utrzymania i planowanie produkcji pod AI‑asystowane workflowy.',
             benchmarkLabel: 'Benchmark transformacji (produkcja)',
@@ -12200,10 +12355,12 @@ router.get(
           }
         : {
             industryLabel: 'Transformacja',
-            marketSignalTitle: 'Finansowanie transformacji przesuwa się w stronę cross‑functional “value pools”',
+            marketSignalTitle:
+              'Finansowanie transformacji przesuwa się w stronę cross‑functional “value pools”',
             marketSignalSummary:
               'Liderzy wspierają programy, które łączą strategię, wykonanie i budowanie kompetencji, zamiast izolowanych pilotów.',
-            technologySignalTitle: 'Copiloci AI są wbudowywani w model operacyjny, a nie uruchamiani jako narzędzia “obok”',
+            technologySignalTitle:
+              'Copiloci AI są wbudowywani w model operacyjny, a nie uruchamiani jako narzędzia “obok”',
             technologySignalSummary:
               'Najmocniejsze programy przeprojektowują rytuały, decyzje i przepływy wokół AI‑asysty, zamiast dokładać kolejny odłączony interfejs.',
             benchmarkLabel: 'Benchmark transformacji',
@@ -12229,7 +12386,11 @@ router.get(
       const industryFreshness = 74;
 
       const aiPulsePriority = computePriorityWeight(88, 84, pendingDecisions.length > 0 ? 4 : 0);
-      const momentumPriority = computePriorityWeight(72, momentumFreshness, ideas.length > 1 ? 4 : 0);
+      const momentumPriority = computePriorityWeight(
+        72,
+        momentumFreshness,
+        ideas.length > 1 ? 4 : 0
+      );
       const sparkPriority = computePriorityWeight(78, sparkFreshness, ideas.length > 0 ? 4 : 0);
       const decisionPriority = computePriorityWeight(74, decisionFreshness, blockedCount * 2);
       const industryPriority = computePriorityWeight(70, industryFreshness, priorities ? 3 : 0);
@@ -12240,13 +12401,20 @@ router.get(
         {
           id: 'aiPulseCore',
           title: L('AI Pulse Core', 'AI Pulse Core'),
-          subtitle: L('Your highest-signal transformation readout', 'Najbardziej “wysokosygnałowy” odczyt transformacji'),
+          subtitle: L(
+            'Your highest-signal transformation readout',
+            'Najbardziej “wysokosygnałowy” odczyt transformacji'
+          ),
           accent: 'ai',
           size: 'hero',
           priorityWeight: aiPulsePriority,
           relevanceScore: 96,
           freshnessScore: 84,
-          ctaIntents: ['prioritize_transformation', 'challenge_storyline', 'summarize_for_leadership'],
+          ctaIntents: [
+            'prioritize_transformation',
+            'challenge_storyline',
+            'summarize_for_leadership',
+          ],
           payload: {
             greeting: isPolish
               ? `Dzień dobry${req.user?.firstName ? `, ${req.user.firstName}` : ''}`
@@ -12272,7 +12440,10 @@ router.get(
         {
           id: 'momentum',
           title: L('Momentum', 'Momentum'),
-          subtitle: L('Where the program is gaining or losing speed', 'Gdzie program przyspiesza, a gdzie traci prędkość'),
+          subtitle: L(
+            'Where the program is gaining or losing speed',
+            'Gdzie program przyspiesza, a gdzie traci prędkość'
+          ),
           accent: 'success',
           size: computeRecommendedSize(momentumPriority, 'md'),
           priorityWeight: momentumPriority,
@@ -12284,23 +12455,22 @@ router.get(
               governedPendingDecisionChainCount > 0
                 ? L(
                     'Governed decision chains are setting the pace.',
-                    'Governed decision chains nadają dziś tempo.',
+                    'Governed decision chains nadają dziś tempo.'
                   )
                 : executionSignalRollup.total > 0
                   ? L(
                       'Governed execution is carrying the week.',
-                      'Governed execution niesie ten tydzień.',
+                      'Governed execution niesie ten tydzień.'
                     )
                   : inboxPendingCount > 0
                     ? L(
                         'Follow-through is waiting in the inbox.',
-                        'Follow-through czeka teraz w inboxie.',
+                        'Follow-through czeka teraz w inboxie.'
                       )
                     : L(
                         'Governed momentum is stable but still light.',
-                        'Governed momentum jest stabilny, ale wciąż lekkie.',
-                      )
-                ,
+                        'Governed momentum jest stabilny, ale wciąż lekkie.'
+                      ),
             summary:
               governedPendingDecisionChainCount > 0
                 ? isPolish
@@ -12316,7 +12486,7 @@ router.get(
                       : `${inboxPendingCount} pending inbox items and ${inboxAtRiskCount} at-risk SLA items show where follow-through can weaken momentum even without new decisions.`
                     : L(
                         'The governed rails are quiet right now, so the next lift should come from shaping a stronger lane rather than clearing operational drag.',
-                        'Governed rails są teraz spokojne, więc kolejny lift powinien wynikać z lepszego ukształtowania lane, a nie z usuwania operacyjnego tarcia.',
+                        'Governed rails są teraz spokojne, więc kolejny lift powinien wynikać z lepszego ukształtowania lane, a nie z usuwania operacyjnego tarcia.'
                       ),
             stats: [
               {
@@ -12355,11 +12525,11 @@ router.get(
                   executionSignalRollup.total > 0
                     ? L(
                         'Governed execution is producing real movement',
-                        'Governed execution generuje realny ruch',
+                        'Governed execution generuje realny ruch'
                       )
                     : L(
                         'The execution lane is currently quiet',
-                        'Lane wykonawczy jest teraz spokojny',
+                        'Lane wykonawczy jest teraz spokojny'
                       ),
                 summary:
                   executionSignalRollup.total > 0
@@ -12379,11 +12549,11 @@ router.get(
                   governedPendingDecisionChainCount > 0
                     ? L(
                         'Decision chains are still constraining throughput',
-                        'Decision chains nadal ograniczają throughput',
+                        'Decision chains nadal ograniczają throughput'
                       )
                     : L(
                         'Decision throughput is currently clean',
-                        'Decision throughput jest obecnie czysty',
+                        'Decision throughput jest obecnie czysty'
                       ),
                 summary:
                   governedPendingDecisionChainCount > 0
@@ -12403,11 +12573,11 @@ router.get(
                   inboxPendingCount > 0 || reviewSharedOutputCount > 0
                     ? L(
                         'Follow-through is accumulating in governed queues',
-                        'Follow-through kumuluje się w governed queues',
+                        'Follow-through kumuluje się w governed queues'
                       )
                     : L(
                         'Follow-through pressure is currently light',
-                        'Presja follow-through jest obecnie lekka',
+                        'Presja follow-through jest obecnie lekka'
                       ),
                 summary:
                   inboxPendingCount > 0 || reviewSharedOutputCount > 0
@@ -12427,7 +12597,10 @@ router.get(
         {
           id: 'sparkField',
           title: L('Spark Field', 'Spark Field'),
-          subtitle: L('Ideas and notes with transformation gravity', 'Pomysły i notatki z “grawitacją transformacji”'),
+          subtitle: L(
+            'Ideas and notes with transformation gravity',
+            'Pomysły i notatki z “grawitacją transformacji”'
+          ),
           accent: 'warm',
           size: computeRecommendedSize(sparkPriority, 'lg'),
           priorityWeight: sparkPriority,
@@ -12476,7 +12649,10 @@ router.get(
         {
           id: 'decisionTemperature',
           title: L('Decision Temperature', 'Decision Temperature'),
-          subtitle: L('Where approvals and blockers are heating up', 'Gdzie approvals i blockery się podgrzewają'),
+          subtitle: L(
+            'Where approvals and blockers are heating up',
+            'Gdzie approvals i blockery się podgrzewają'
+          ),
           accent: 'alert',
           size: computeRecommendedSize(decisionPriority, 'md'),
           priorityWeight: decisionPriority,
@@ -12506,11 +12682,11 @@ router.get(
                   governedPendingDecisionChainCount > 0
                     ? L(
                         'Governed decision chains are still open in the planning spine',
-                        'W planning spine nadal sa otwarte governed decision chains',
+                        'W planning spine nadal sa otwarte governed decision chains'
                       )
                     : L(
                         'Governed decision chains are currently clear',
-                        'Governed decision chains sa obecnie czyste',
+                        'Governed decision chains sa obecnie czyste'
                       ),
                 summary:
                   governedPendingDecisionChainCount > 0
@@ -12519,7 +12695,7 @@ router.get(
                       : `${governedPendingDecisionChainCount} active chains and ${governedPendingDecisionStepCount} pending decision steps are still waiting for closure.`
                     : L(
                         'The governed planning spine does not currently report any pending decision chains for this organization.',
-                        'Governed planning spine nie raportuje obecnie zadnych oczekujacych decision chains dla tej organizacji.',
+                        'Governed planning spine nie raportuje obecnie zadnych oczekujacych decision chains dla tej organizacji.'
                       ),
                 tag: 'Governed planning',
                 tone: governedPendingDecisionChainCount > 0 ? 'warning' : 'neutral',
@@ -12528,8 +12704,14 @@ router.get(
                 id: 'decision-heat-1',
                 title:
                   pendingDecisions.length > 0
-                    ? L('Decision drag is now visible at Home level', 'Drag decyzyjny jest już widoczny na poziomie Home')
-                    : L('No high-temperature decision detected', 'Brak decyzji “wysokotemperaturowej”'),
+                    ? L(
+                        'Decision drag is now visible at Home level',
+                        'Drag decyzyjny jest już widoczny na poziomie Home'
+                      )
+                    : L(
+                        'No high-temperature decision detected',
+                        'Brak decyzji “wysokotemperaturowej”'
+                      ),
                 summary:
                   pendingDecisions.length > 0
                     ? L(
@@ -12545,7 +12727,13 @@ router.get(
               },
               {
                 id: 'decision-heat-2',
-                title: blockedCount > 1 ? L('Execution and approvals are colliding', 'Wykonanie i approvals się zderzają') : L('Governance is manageable', 'Governance jest do udźwignięcia'),
+                title:
+                  blockedCount > 1
+                    ? L(
+                        'Execution and approvals are colliding',
+                        'Wykonanie i approvals się zderzają'
+                      )
+                    : L('Governance is manageable', 'Governance jest do udźwignięcia'),
                 summary:
                   blockedCount > 1
                     ? L(
@@ -12565,7 +12753,10 @@ router.get(
         {
           id: 'industryLens',
           title: L('Industry Lens', 'Industry Lens'),
-          subtitle: L('External signals translated into transformation relevance', 'Sygnały z zewnątrz przetłumaczone na znaczenie dla transformacji'),
+          subtitle: L(
+            'External signals translated into transformation relevance',
+            'Sygnały z zewnątrz przetłumaczone na znaczenie dla transformacji'
+          ),
           accent: 'cool',
           size: computeRecommendedSize(industryPriority, 'lg'),
           priorityWeight: industryPriority,
@@ -12647,7 +12838,10 @@ router.get(
                 ? {
                     id: `task-${tasksDueSoon[0].id}`,
                     label: String(tasksDueSoon[0].title),
-                    progressLabel: overdueTasks.length > 0 ? L('Needs immediate attention', 'Wymaga natychmiastowej uwagi') : L('Closest active move', 'Najbliższy aktywny ruch'),
+                    progressLabel:
+                      overdueTasks.length > 0
+                        ? L('Needs immediate attention', 'Wymaga natychmiastowej uwagi')
+                        : L('Closest active move', 'Najbliższy aktywny ruch'),
                     status: overdueTasks.length > 0 ? 'blocked' : 'accelerating',
                     entityType: 'task',
                     entityId: String(tasksDueSoon[0].id),
@@ -12681,7 +12875,10 @@ router.get(
         {
           id: 'teamSignal',
           title: L('Team Signal', 'Team Signal'),
-          subtitle: L('Organizational alignment around the transformation storyline', 'Wyrównanie organizacji wokół narracji transformacji'),
+          subtitle: L(
+            'Organizational alignment around the transformation storyline',
+            'Wyrównanie organizacji wokół narracji transformacji'
+          ),
           accent: 'neutral',
           size: computeRecommendedSize(teamPriority, 'md'),
           priorityWeight: teamPriority,
@@ -12699,16 +12896,15 @@ router.get(
                     'The system looks collaborative enough to push one strong storyline forward.',
                     'System wygląda wystarczająco współpracująco, żeby pchać jedną silną narrację do przodu.'
                   ),
-            summary:
-              priorities
-                ? L(
-                    `Current priorities in context: ${priorities}. Home should keep these visible without turning into an operational cockpit.`,
-                    `Aktualne priorytety w kontekście: ${priorities}. Home ma je trzymać widoczne, ale bez zamiany w “operational cockpit”.`
-                  )
-                : L(
-                    'Home should help the team align around transformation direction, not just task status.',
-                    'Home ma pomagać zespołowi alignować się na kierunku transformacji, nie tylko na statusie zadań.'
-                  ),
+            summary: priorities
+              ? L(
+                  `Current priorities in context: ${priorities}. Home should keep these visible without turning into an operational cockpit.`,
+                  `Aktualne priorytety w kontekście: ${priorities}. Home ma je trzymać widoczne, ale bez zamiany w “operational cockpit”.`
+                )
+              : L(
+                  'Home should help the team align around transformation direction, not just task status.',
+                  'Home ma pomagać zespołowi alignować się na kierunku transformacji, nie tylko na statusie zadań.'
+                ),
             signals: [
               {
                 id: 'team-signal-collaboration',
@@ -12716,11 +12912,11 @@ router.get(
                   activeRooms.length > 0
                     ? L(
                         'Live collaboration is visible in the workspace layer',
-                        'W warstwie workspace widac zywa wspolprace',
+                        'W warstwie workspace widac zywa wspolprace'
                       )
                     : L(
                         'Collaboration substrate is quiet right now',
-                        'Substrat wspolpracy jest teraz cichy',
+                        'Substrat wspolpracy jest teraz cichy'
                       ),
                 detail:
                   activeRooms.length > 0
@@ -12729,9 +12925,14 @@ router.get(
                       : `${activeRooms.length} active rooms, ${activePresenceCount} active presences, and ${degradedRoomCount} degraded rooms.`
                     : L(
                         'No active collaboration rooms are currently bound to this organization, so alignment still depends mostly on narrative and decision rhythm.',
-                        'Brak aktywnych pokoi wspolpracy dla tej organizacji, wiec alignment nadal opiera sie glownie na narracji i rytmie decyzji.',
+                        'Brak aktywnych pokoi wspolpracy dla tej organizacji, wiec alignment nadal opiera sie glownie na narracji i rytmie decyzji.'
                       ),
-                tone: degradedRoomCount > 0 ? 'warning' : activeRooms.length > 0 ? 'positive' : 'neutral',
+                tone:
+                  degradedRoomCount > 0
+                    ? 'warning'
+                    : activeRooms.length > 0
+                      ? 'positive'
+                      : 'neutral',
               },
               {
                 id: 'team-signal-1',
@@ -12744,7 +12945,10 @@ router.get(
               },
               {
                 id: 'team-signal-2',
-                title: pendingDecisions.length > 0 ? L('Leadership attention is the lever', 'Uwaga liderów jest dźwignią') : L('Leadership attention is available', 'Uwaga liderów jest dostępna'),
+                title:
+                  pendingDecisions.length > 0
+                    ? L('Leadership attention is the lever', 'Uwaga liderów jest dźwignią')
+                    : L('Leadership attention is available', 'Uwaga liderów jest dostępna'),
                 detail:
                   pendingDecisions.length > 0
                     ? L(
@@ -12759,12 +12963,14 @@ router.get(
               },
               {
                 id: 'team-signal-3',
-                title: L('Narrative discipline matters more than more updates', 'Dyscyplina narracji jest ważniejsza niż kolejne update’y'),
-                detail:
-                  L(
-                    'If Home keeps showing isolated signals, the team will see a dashboard. If it tells one story, they will see direction.',
-                    'Jeśli Home pokazuje izolowane sygnały, zespół zobaczy dashboard. Jeśli opowiada jedną historię, zobaczy kierunek.'
-                  ),
+                title: L(
+                  'Narrative discipline matters more than more updates',
+                  'Dyscyplina narracji jest ważniejsza niż kolejne update’y'
+                ),
+                detail: L(
+                  'If Home keeps showing isolated signals, the team will see a dashboard. If it tells one story, they will see direction.',
+                  'Jeśli Home pokazuje izolowane sygnały, zespół zobaczy dashboard. Jeśli opowiada jedną historię, zobaczy kierunek.'
+                ),
                 tone: 'neutral',
               },
             ],
@@ -12786,25 +12992,35 @@ router.get(
               { id: 'new-idea', label: L('+ Idea', '+ Pomysł'), kind: 'create', target: 'idea' },
               { id: 'new-note', label: L('+ Note', '+ Notatka'), kind: 'create', target: 'note' },
               { id: 'new-task', label: L('+ Task', '+ Zadanie'), kind: 'create', target: 'task' },
-              { id: 'new-decision', label: L('+ Decision', '+ Decyzja'), kind: 'create', target: 'decision' },
-              { id: 'open-calendar', label: L('Calendar', 'Kalendarz'), kind: 'navigate', target: 'calendar' },
+              {
+                id: 'new-decision',
+                label: L('+ Decision', '+ Decyzja'),
+                kind: 'create',
+                target: 'decision',
+              },
+              {
+                id: 'open-calendar',
+                label: L('Calendar', 'Kalendarz'),
+                kind: 'navigate',
+                target: 'calendar',
+              },
               {
                 id: 'ask-ai',
                 label: L('Ask AI', 'Zapytaj AI'),
                 kind: 'chat',
-                starterPrompt:
-                  L(
-                    'Turn the current Home signals into one clear transformation narrative, three priorities, and one next decision.',
-                    'Zamień sygnały z Home w jedną klarowną narrację transformacji, trzy priorytety i jedną następną decyzję.'
-                  ),
+                starterPrompt: L(
+                  'Turn the current Home signals into one clear transformation narrative, three priorities, and one next decision.',
+                  'Zamień sygnały z Home w jedną klarowną narrację transformacji, trzy priorytety i jedną następną decyzję.'
+                ),
               },
             ],
             runtimeSummary: {
               inboxPending: Number(inboxStats.byStatus?.pending || 0),
               inboxAtRisk: Number(inboxStats.bySlaStatus?.at_risk || 0),
               recentOutputs: outputFlow.length,
-              reviewSharedOutputs: outputFlow.filter((artifact) => artifact.visibilityScope === 'review_shared')
-                .length,
+              reviewSharedOutputs: outputFlow.filter(
+                (artifact) => artifact.visibilityScope === 'review_shared'
+              ).length,
             },
           },
         },
@@ -12861,7 +13077,13 @@ router.get(
       const pendingDecisions = pendingDecisionsResult.rows;
       const recentIdeas = recentIdeasResult.rows;
 
-      const focusItems: Array<{ id: string; type: string; title: string; meta: string; priority: string }> = [];
+      const focusItems: Array<{
+        id: string;
+        type: string;
+        title: string;
+        meta: string;
+        priority: string;
+      }> = [];
 
       if (overdueTasks.length > 0) {
         focusItems.push({
@@ -12944,13 +13166,14 @@ router.get(
       const notes = notesResult.rows;
       const ideasWithoutTasks = ideasWithoutTasksResult.rows;
 
-      const aiNudge = ideasWithoutTasks.length > 0
-        ? {
-            text: `"${ideasWithoutTasks[0].title}" has no tasks yet. Want to break it into actionable steps?`,
-            ideaId: ideasWithoutTasks[0].id,
-            action: 'Expand idea',
-          }
-        : null;
+      const aiNudge =
+        ideasWithoutTasks.length > 0
+          ? {
+              text: `"${ideasWithoutTasks[0].title}" has no tasks yet. Want to break it into actionable steps?`,
+              ideaId: ideasWithoutTasks[0].id,
+              action: 'Expand idea',
+            }
+          : null;
 
       res.json({
         ideas: ideas.map((i: any) => ({
