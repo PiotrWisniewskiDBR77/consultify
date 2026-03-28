@@ -110,7 +110,7 @@ export const ValueJourneySection: React.FC = () => {
           </motion.p>
         </div>
 
-        <div className="grid xl:grid-cols-[1.15fr_0.85fr] gap-6">
+        <div className="grid gap-6 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -134,17 +134,19 @@ export const ValueJourneySection: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-3">
-              {valueLayers.map(({ title, description, Icon }) => (
+            <div className="space-y-3">
+              {valueLayers.map(({ title, description }, index) => (
                 <div
                   key={title}
-                  className="min-h-[180px] rounded-2xl border border-white/[0.045] bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-white/[0.035]"
+                  className="flex gap-4 rounded-2xl border border-white/[0.045] bg-white/[0.02] p-4 backdrop-blur-sm transition-colors hover:bg-white/[0.035]"
                 >
-                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/12 bg-violet-500/10">
-                    <Icon size={18} className="text-violet-300" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/12 bg-violet-500/10 text-sm font-black text-violet-300">
+                    {index + 1}
                   </div>
-                  <p className="text-sm font-black text-white mb-2">{title}</p>
-                  <p className="text-xs text-white/60 leading-relaxed">{description}</p>
+                  <div>
+                    <p className="mb-1 text-sm font-black text-white">{title}</p>
+                    <p className="text-xs leading-relaxed text-white/60">{description}</p>
+                  </div>
                 </div>
               ))}
             </div>
