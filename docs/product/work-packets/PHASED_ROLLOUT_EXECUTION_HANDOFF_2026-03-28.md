@@ -61,6 +61,7 @@ For each org promotion:
 8. do not promote another org while `evidence/522-production-post-promotion-monitoring-window-open.md` remains the current monitoring checkpoint
 9. prefer rerunning `npm run rollout:v8:monitor -- --json` for repeatable checkpoint evidence instead of rebuilding the probe sequence by hand
 10. keep the auto-saved JSON artefacts from that command as the machine-readable observation trail under `server/exports/`
+11. use `docs/product/work-packets/MANUAL_TEST_RUNBOOK_2026-03-28.md` for the bounded pre/post-manual verification pass instead of inventing a new ad hoc checklist
 
 ---
 

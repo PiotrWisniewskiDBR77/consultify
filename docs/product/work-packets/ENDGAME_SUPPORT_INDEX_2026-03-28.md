@@ -48,6 +48,8 @@ If you need the primary control docs, read:
   Current evidence for the second explicit production org promotion under the phased rollout posture.
 - `docs/product/work-packets/evidence/522-production-post-promotion-monitoring-window-open.md`
   Current observation-window checkpoint after the second explicit production org promotion.
+- `docs/product/work-packets/MANUAL_TEST_RUNBOOK_2026-03-28.md`
+  Current bounded checklist for the pre/post-manual verification pass during the open observation window.
 
 ---
 

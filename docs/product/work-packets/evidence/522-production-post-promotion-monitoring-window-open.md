@@ -58,4 +58,8 @@ The script uses the current promoted-user defaults, logs in through the existing
 
 Latest saved checkpoint artefact:
 
-- `server/exports/v8-rollout-monitor-2026-03-28T08-10-35-138Z.json`
+- `server/exports/v8-rollout-monitor-2026-03-28T09-14-27-513Z.json`
+
+Manual-test operator support:
+
+- `docs/product/work-packets/MANUAL_TEST_RUNBOOK_2026-03-28.md`
