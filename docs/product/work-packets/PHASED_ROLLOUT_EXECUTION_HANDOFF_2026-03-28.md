@@ -59,6 +59,7 @@ For each org promotion:
 6. keep the `48h` post-promotion monitoring rule from `CP-10`
 7. stop promotion and roll back if the live signals violate the thresholds in `CP-10`
 8. do not promote another org while `evidence/522-production-post-promotion-monitoring-window-open.md` remains the current monitoring checkpoint
+9. prefer rerunning `npm run rollout:v8:monitor -- --json` for repeatable checkpoint evidence instead of rebuilding the probe sequence by hand
 
 ---
 

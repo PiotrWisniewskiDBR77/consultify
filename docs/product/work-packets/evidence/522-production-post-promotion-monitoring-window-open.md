@@ -47,3 +47,11 @@ The current V8 admin-monitoring endpoints are superadmin-gated and resolve org c
 ## Rule in force
 
 Do not promote any additional org during this open observation window unless the current promoted set is first shown to be degraded and the action is a rollback rather than a further rollout expansion.
+
+## Repeatable operator path
+
+The observation window can now be re-checked with:
+
+`npm run rollout:v8:monitor -- --json`
+
+The script uses the current promoted-user defaults, logs in through the existing macOS Keychain credential store, and replays the same runtime/admin/non-V8 checkpoint sequence captured in this evidence.

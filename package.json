@@ -33,6 +33,7 @@
     "dev:staging:ro": "node scripts/dev/preflight-ports.mjs && ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && VITE_STABLE_DEV=1 ENV_FILE=.env.staging.local concurrently \"npm run dev:backend:staging:ro\" \"npm run dev:frontend:local\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:backend:watch": "npm run dev:backend:staging",
     "db:seed:dbr77": "SEED_MODE=production SEED_CONFIRM=YES_I_UNDERSTAND_PRODUCTION DB_TYPE=postgres npx tsx server/scripts/seed-production-dbr77-users.ts",
+    "rollout:v8:monitor": "tsx server/scripts/v8-rollout-monitor.ts",
     "db:seed:demo:contract": "tsx server/scripts/seed-demo-dataset-contract.ts",
     "smoke:demo:script-a": "tsx server/scripts/smoke-demo-script-a.ts",
     "smoke:interview:d01d02": "tsx server/scripts/smoke-interview-d01-d02.ts",
