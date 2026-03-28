@@ -38,12 +38,8 @@ Thumbs.db
 
 # Documentation (not needed in container)
 docs
-*.md
+evidence
 !README.md
-# Keep runtime knowledge packs (Anna product pills, tool packs).
-# Re-include the entire knowledge tree, then exclude large binary sources.
-!knowledge/
-!knowledge/**
 knowledge/**/*.pdf
 knowledge/**/*.xlsx
 knowledge/**/*.pptx
