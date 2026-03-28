@@ -2,8 +2,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+import * as queryHelpers from '../utils/queryHelpers.js';
+
 const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'notebook-attachments');
 const MAX_NOTEBOOK_ATTACHMENT_SIZE = 25 * 1024 * 1024;
+const NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES = 3;
+const NOTEBOOK_ATTACHMENT_STAGING_DIR = path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, '.staging-delete');
 const BLOCKED_EXTENSIONS = new Set([
   '.exe',
   '.bat',
@@ -31,8 +35,130 @@ export interface NotebookAttachmentRecord {
   storageKey?: string;
 }
 
+export class NotebookAttachmentMutationError extends Error {
+  status: number;
+  code: string;
+
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = 'NotebookAttachmentMutationError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 function sanitizeFilename(filename: string): string {
   return filename.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/-+/g, '-') || 'attachment';
+}
+
+function resolveAttachmentAbsolutePath(storageKey: string): string | null {
+  if (!storageKey || path.isAbsolute(storageKey) || storageKey.includes('..')) {
+    return null;
+  }
+  return path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, storageKey);
+}
+
+function serializeNotebookAttachments(attachments: NotebookAttachmentRecord[]): string {
+  return JSON.stringify(parseNotebookAttachments(attachments));
+}
+
+async function cleanupStoredAttachment(attachment: NotebookAttachmentRecord): Promise<void> {
+  if (!attachment.storageKey) return;
+  const filePath = resolveAttachmentAbsolutePath(attachment.storageKey);
+  if (!filePath) return;
+  await fs.unlink(filePath).catch(() => undefined);
+}
+
+async function cleanupStoredAttachments(attachments: NotebookAttachmentRecord[]): Promise<void> {
+  await Promise.all(attachments.map((attachment) => cleanupStoredAttachment(attachment)));
+}
+
+async function loadPageAttachments(pageId: string): Promise<NotebookAttachmentRecord[]> {
+  const row = await queryHelpers.queryOne<{ attachmentsJson?: string | null }>(
+    `SELECT attachments_json as "attachmentsJson"
+     FROM notebook_pages
+     WHERE id = ?
+     LIMIT 1`,
+    [pageId]
+  );
+  if (!row) {
+    throw new NotebookAttachmentMutationError(404, 'NOTEBOOK_PAGE_NOT_FOUND', 'Notebook page not found');
+  }
+  return parseNotebookAttachments(row.attachmentsJson);
+}
+
+async function compareAndSwapPageAttachments(
+  pageId: string,
+  previousAttachments: NotebookAttachmentRecord[],
+  nextAttachments: NotebookAttachmentRecord[]
+): Promise<boolean> {
+  const result = await queryHelpers.queryRun(
+    `UPDATE notebook_pages
+     SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?
+       AND COALESCE(attachments_json, '[]')::jsonb = ?::jsonb`,
+    [
+      serializeNotebookAttachments(nextAttachments),
+      pageId,
+      serializeNotebookAttachments(previousAttachments),
+    ]
+  );
+  return Number(result?.changes || 0) > 0;
+}
+
+async function stageAttachmentDeletion(target: NotebookAttachmentRecord): Promise<{
+  finalize: () => Promise<void>;
+  restore: () => Promise<void>;
+}> {
+  if (!target.storageKey) {
+    return {
+      finalize: async () => undefined,
+      restore: async () => undefined,
+    };
+  }
+
+  const sourcePath = resolveAttachmentAbsolutePath(target.storageKey);
+  if (!sourcePath) {
+    return {
+      finalize: async () => undefined,
+      restore: async () => undefined,
+    };
+  }
+
+  const stagedPath = path.join(
+    NOTEBOOK_ATTACHMENT_STAGING_DIR,
+    `${target.id}-${Date.now()}-${path.basename(target.storageKey)}`
+  );
+
+  try {
+    await fs.mkdir(path.dirname(stagedPath), { recursive: true });
+    await fs.rename(sourcePath, stagedPath);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    if (code !== 'ENOENT') {
+      throw error;
+    }
+    return {
+      finalize: async () => undefined,
+      restore: async () => undefined,
+    };
+  }
+
+  return {
+    finalize: async () => {
+      await fs.unlink(stagedPath).catch(() => undefined);
+    },
+    restore: async () => {
+      await fs.mkdir(path.dirname(sourcePath), { recursive: true });
+      await fs.rename(stagedPath, sourcePath).catch(async (error) => {
+        const code = (error as NodeJS.ErrnoException | undefined)?.code;
+        if (code === 'ENOENT') {
+          return;
+        }
+        throw error;
+      });
+    },
+  };
 }
 
 export function parseNotebookAttachments(
@@ -122,6 +248,60 @@ export async function persistNotebookAttachment(params: {
   };
 }
 
+export async function addNotebookAttachmentsToPage(params: {
+  organizationId: string;
+  pageId: string;
+  files: Array<{
+    buffer: Buffer;
+    originalname: string;
+    mimetype: string;
+  }>;
+  userId?: string;
+}): Promise<NotebookAttachmentRecord[]> {
+  const uploaded: NotebookAttachmentRecord[] = [];
+
+  try {
+    for (const file of params.files) {
+      const attachment = await persistNotebookAttachment({
+        organizationId: params.organizationId,
+        pageId: params.pageId,
+        fileBuffer: file.buffer,
+        fileOriginalname: file.originalname,
+        fileMimetype: file.mimetype,
+        userId: params.userId,
+      });
+      uploaded.push(attachment);
+    }
+
+    for (let attempt = 0; attempt < NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES; attempt += 1) {
+      const currentAttachments = await loadPageAttachments(params.pageId);
+      if (currentAttachments.length + uploaded.length > 10) {
+        throw new NotebookAttachmentMutationError(
+          400,
+          'NOTEBOOK_ATTACHMENT_LIMIT_EXCEEDED',
+          'Attachment limit exceeded'
+        );
+      }
+
+      const nextAttachments = [...currentAttachments, ...uploaded];
+      if (
+        await compareAndSwapPageAttachments(params.pageId, currentAttachments, nextAttachments)
+      ) {
+        return nextAttachments;
+      }
+    }
+
+    throw new NotebookAttachmentMutationError(
+      409,
+      'NOTEBOOK_ATTACHMENT_WRITE_CONFLICT',
+      'Attachment upload conflicted with another notebook update'
+    );
+  } catch (error) {
+    await cleanupStoredAttachments(uploaded);
+    throw error;
+  }
+}
+
 export async function resolveNotebookAttachmentFile(
   raw: string | NotebookAttachmentRecord[] | null | undefined,
   attachmentId: string
@@ -133,11 +313,8 @@ export async function resolveNotebookAttachmentFile(
 } | null> {
   const match = parseNotebookAttachments(raw).find((attachment) => attachment.id === attachmentId);
   if (!match?.storageKey) return null;
-  if (path.isAbsolute(match.storageKey) || match.storageKey.includes('..')) {
-    return null;
-  }
-
-  const filePath = path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, match.storageKey);
+  const filePath = resolveAttachmentAbsolutePath(match.storageKey);
+  if (!filePath) return null;
   try {
     await fs.access(filePath);
   } catch {
@@ -158,9 +335,50 @@ export async function deleteNotebookAttachmentFile(
 ): Promise<NotebookAttachmentRecord[]> {
   const attachments = parseNotebookAttachments(raw);
   const target = attachments.find((attachment) => attachment.id === attachmentId);
-  if (target?.storageKey) {
-    const filePath = path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, target.storageKey);
-    await fs.unlink(filePath).catch(() => undefined);
+  if (target) {
+    await cleanupStoredAttachment(target);
   }
   return attachments.filter((attachment) => attachment.id !== attachmentId);
+}
+
+export async function removeNotebookAttachmentFromPage(params: {
+  pageId: string;
+  attachmentId: string;
+}): Promise<NotebookAttachmentRecord[]> {
+  for (let attempt = 0; attempt < NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES; attempt += 1) {
+    const currentAttachments = await loadPageAttachments(params.pageId);
+    const target = currentAttachments.find((attachment) => attachment.id === params.attachmentId);
+    if (!target) {
+      throw new NotebookAttachmentMutationError(
+        404,
+        'NOTEBOOK_ATTACHMENT_NOT_FOUND',
+        'Attachment not found'
+      );
+    }
+
+    const remainingAttachments = currentAttachments.filter(
+      (attachment) => attachment.id !== params.attachmentId
+    );
+    const stagedDeletion = await stageAttachmentDeletion(target);
+
+    try {
+      if (
+        await compareAndSwapPageAttachments(params.pageId, currentAttachments, remainingAttachments)
+      ) {
+        await stagedDeletion.finalize();
+        return remainingAttachments;
+      }
+    } catch (error) {
+      await stagedDeletion.restore();
+      throw error;
+    }
+
+    await stagedDeletion.restore();
+  }
+
+  throw new NotebookAttachmentMutationError(
+    409,
+    'NOTEBOOK_ATTACHMENT_WRITE_CONFLICT',
+    'Attachment delete conflicted with another notebook update'
+  );
 }

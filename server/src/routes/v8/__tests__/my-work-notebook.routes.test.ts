@@ -16,8 +16,10 @@ const mockConvertNotebookPage = vi.fn();
 const mockNotebookCapture = vi.fn();
 const mockResolveStoredNotebookSourceFile = vi.fn();
 const mockPersistNotebookAttachment = vi.fn();
+const mockAddNotebookAttachmentsToPage = vi.fn();
 const mockResolveNotebookAttachmentFile = vi.fn();
 const mockDeleteNotebookAttachmentFile = vi.fn();
+const mockRemoveNotebookAttachmentFromPage = vi.fn();
 
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
@@ -64,8 +66,19 @@ vi.mock('../../../services/notebookSourceFileService.js', () => ({
 
 vi.mock('../../../services/notebookAttachmentService.js', () => ({
   persistNotebookAttachment: (...args: unknown[]) => mockPersistNotebookAttachment(...args),
+  addNotebookAttachmentsToPage: (...args: unknown[]) => mockAddNotebookAttachmentsToPage(...args),
   resolveNotebookAttachmentFile: (...args: unknown[]) => mockResolveNotebookAttachmentFile(...args),
   deleteNotebookAttachmentFile: (...args: unknown[]) => mockDeleteNotebookAttachmentFile(...args),
+  removeNotebookAttachmentFromPage: (...args: unknown[]) => mockRemoveNotebookAttachmentFromPage(...args),
+  NotebookAttachmentMutationError: class NotebookAttachmentMutationError extends Error {
+    status: number;
+    code: string;
+    constructor(status: number, code: string, message: string) {
+      super(message);
+      this.status = status;
+      this.code = code;
+    }
+  },
   parseNotebookAttachments: (raw: string | null | undefined) => (raw ? JSON.parse(raw) : []),
   toPublicNotebookAttachments: (raw: string | null | undefined) =>
     (raw ? JSON.parse(raw) : []).map(
@@ -323,14 +336,16 @@ describe('V8 My Work notebook routes', () => {
         createdAt: '2026-03-26T10:00:00.000Z',
         updatedAt: '2026-03-28T10:00:00.000Z',
       });
-    mockPersistNotebookAttachment.mockResolvedValue({
-      id: 'att-v8-1',
-      name: 'brief.pdf',
-      type: 'application/pdf',
-      size: 11,
-      uploadedAt: '2026-03-28T10:00:00.000Z',
-      storageKey: 'org/note/brief.pdf',
-    });
+    mockAddNotebookAttachmentsToPage.mockResolvedValue([
+      {
+        id: 'att-v8-1',
+        name: 'brief.pdf',
+        type: 'application/pdf',
+        size: 11,
+        uploadedAt: '2026-03-28T10:00:00.000Z',
+        storageKey: 'org/note/brief.pdf',
+      },
+    ]);
 
     const res = await request(createApp())
       .post('/api/v8/my-work/notebook/pages/note-attach-1/attachments')
@@ -340,11 +355,15 @@ describe('V8 My Work notebook routes', () => {
       });
 
     expect(res.status).toBe(201);
-    expect(mockPersistNotebookAttachment).toHaveBeenCalledWith(
+    expect(mockAddNotebookAttachmentsToPage).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: ORG,
         pageId: 'note-attach-1',
-        fileOriginalname: 'brief.pdf',
+        files: [
+          expect.objectContaining({
+            originalname: 'brief.pdf',
+          }),
+        ],
       })
     );
     expect(res.body.data.attachments).toEqual([
@@ -434,17 +453,17 @@ describe('V8 My Work notebook routes', () => {
         createdAt: '2026-03-26T10:00:00.000Z',
         updatedAt: '2026-03-28T10:00:00.000Z',
       });
-    mockDeleteNotebookAttachmentFile.mockResolvedValue([]);
+    mockRemoveNotebookAttachmentFromPage.mockResolvedValue([]);
 
     const res = await request(createApp()).delete(
       '/api/v8/my-work/notebook/pages/note-attach-2/attachments/att-delete-1'
     );
 
     expect(res.status).toBe(200);
-    expect(mockDeleteNotebookAttachmentFile).toHaveBeenCalledWith(
-      expect.any(String),
-      'att-delete-1'
-    );
+    expect(mockRemoveNotebookAttachmentFromPage).toHaveBeenCalledWith({
+      pageId: 'note-attach-2',
+      attachmentId: 'att-delete-1',
+    });
     expect(res.body.data.attachments).toEqual([]);
   });
 

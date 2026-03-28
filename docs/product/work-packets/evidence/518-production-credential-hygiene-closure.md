@@ -7,7 +7,7 @@ Status: closed
 
 ## What changed
 
-- inventoried the real in-scope privileged production accounts by checking live production password hashes against the known weak credential set via the public production Postgres target
+- inventoried the real in-scope privileged production accounts by checking live production password hashes against the approved weak-credential detection set via the public production Postgres target
 - rotated every affected privileged production account to a fresh unique strong password
 - stored the fresh credentials only in the local approved secret system used for this run: macOS Keychain service `consultify-prod-credential-rotation-2026-03-28`
 - stored a rollback backup of the pre-rotation credential state only in macOS Keychain service `consultify-prod-credential-rotation-backup-2026-03-28`
@@ -18,49 +18,26 @@ Status: closed
 
 Approval basis: execute the active production credential-hygiene closeout from the current endgame plan.
 
-Rotation reason for every row below: the production password hash for the privileged account still matched the previously known weak credential `123456`.
+Rotation reason for every affected account: the production password hash still matched an approved weak-credential detection signature at the time of the closeout run.
 
-| Account | Role | Organization |
-|---|---|---|
-| `admin@dbr77.com` | `SUPERADMIN` | `dbr77` |
-| `piotr.wisniewski@dbr77.com` | `OWNER` | `dbr77` |
-| `adam.kilka@dbr77.com` | `ADMIN` | `dbr77` |
-| `anja.nugmanowa@dbr77.com` | `ADMIN` | `dbr77` |
-| `bartlomiej.straszka@dbr77.com` | `ADMIN` | `dbr77` |
-| `bartosz.solomski@dbr77.com` | `ADMIN` | `dbr77` |
-| `doreen.mittelstaedt@dbr77.com` | `ADMIN` | `dbr77` |
-| `jeremiasz.kazmierczak@dbr77.com` | `ADMIN` | `dbr77` |
-| `justyna.laskowska@dbr77.com` | `ADMIN` | `dbr77` |
-| `kamil.kuczek@dbr77.com` | `ADMIN` | `dbr77` |
-| `katarzyna.marszalkiewicz@dbr77.com` | `ADMIN` | `dbr77` |
-| `katarzyna.szwarocka@dbr77.com` | `ADMIN` | `dbr77` |
-| `konrad.milewski@dbr77.com` | `ADMIN` | `dbr77` |
-| `konrad.stefanik@dbr77.com` | `ADMIN` | `dbr77` |
-| `marcin.zorawik@db77.pl` | `ADMIN` | `dbr77` |
-| `michal.lomzynski@dbr77.com` | `ADMIN` | `dbr77` |
-| `paulo.soares@dbr77.com` | `ADMIN` | `dbr77` |
-| `pawel.dera@dbr77.com` | `ADMIN` | `dbr77` |
-| `pawel.kalinski@dbr77.com` | `ADMIN` | `dbr77` |
-| `pawel.mroczkowski@dbr77.com` | `ADMIN` | `dbr77` |
-| `tomasz.jankowski@dbr77.com` | `ADMIN` | `dbr77` |
-| `torian.richardson@dbr77.com` | `ADMIN` | `dbr77` |
-| `wojciech.wesolowski@dbr77.com` | `ADMIN` | `dbr77` |
-| `anna.zielinska@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `ewa.gajda@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `jan.wozniak@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `karolina.mazur@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `magda.nowak@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `mateusz.kurek@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `michal.stepien@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `ola.mroz@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `piotr.baran@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
-| `tomasz.lewandowski@ateliertoys-demo.com` | `ADMIN` | `ateliertoys-demo` |
+The exact account roster is intentionally not stored in git. It was retained only in the approved operational systems for this run:
+
+- live production `users` query output used during the execution window
+- local macOS Keychain services `consultify-prod-credential-rotation-2026-03-28` and `consultify-prod-credential-rotation-backup-2026-03-28`
+
+Sanitized scope summary:
+
+| Organization | Role mix | Rotated accounts |
+|---|---|---:|
+| `dbr77` | `1 SUPERADMIN`, `1 OWNER`, `21 ADMIN` | `23` |
+| `ateliertoys-demo` | `10 ADMIN` | `10` |
+| **Total** | `1 SUPERADMIN`, `1 OWNER`, `31 ADMIN` | `33` |
 
 ## Verification
 
 Executed checks:
 
-1. Queried live production `users` through `DATABASE_PUBLIC_URL` and compared the in-scope privileged password hashes against the known weak credential set: `123456`, `test123`, `test123456`, `demo123`, `Demo2025!`, `superadminpassword123`.
+1. Queried live production `users` through `DATABASE_PUBLIC_URL` and compared the in-scope privileged password hashes against the approved weak-credential detection set used for the closeout run.
 2. Generated fresh unique 28-character strong passwords for every affected account and wrote them only to Keychain service `consultify-prod-credential-rotation-2026-03-28`.
 3. Wrote a rollback-only backup of the previous credential state only to Keychain service `consultify-prod-credential-rotation-backup-2026-03-28`.
 4. Updated every affected production password hash and revoked stale access artifacts from `refresh_tokens`, `user_sessions`, `sessions`, and `password_resets`.

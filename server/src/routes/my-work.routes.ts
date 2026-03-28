@@ -29,9 +29,10 @@ import { createOutcomeFromCluster, materializeClusters } from '../services/ideaC
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
 import {
-  deleteNotebookAttachmentFile,
+  addNotebookAttachmentsToPage,
+  NotebookAttachmentMutationError,
   parseNotebookAttachments,
-  persistNotebookAttachment,
+  removeNotebookAttachmentFromPage,
   resolveNotebookAttachmentFile,
   toPublicNotebookAttachments,
 } from '../services/notebookAttachmentService.js';
@@ -7936,34 +7937,24 @@ router.post(
     if (String(existing.owner_user_id || '') !== String(userId))
       return res.status(403).json({ error: 'Owner-only' });
 
-    const currentAttachments = parseNotebookAttachments(existing.attachmentsJson);
-    if (currentAttachments.length + files.length > 10) {
-      return res.status(400).json({ error: 'Attachment limit exceeded' });
-    }
-
     try {
-      const uploaded = await Promise.all(
-        files.map((file) =>
-          persistNotebookAttachment({
-            organizationId: orgId,
-            pageId: id,
-            fileBuffer: file.buffer,
-            fileOriginalname: file.originalname,
-            fileMimetype: file.mimetype,
-            userId,
-          })
-        )
-      );
-
-      await queryHelpers.queryRun(
-        `UPDATE notebook_pages
-         SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [JSON.stringify([...currentAttachments, ...uploaded]), id]
-      );
+      await addNotebookAttachmentsToPage({
+        organizationId: orgId,
+        pageId: id,
+        files: files.map((file) => ({
+          buffer: file.buffer,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+        })),
+        userId,
+      });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
         error: error instanceof Error ? error.message : 'Attachment upload failed',
+        code:
+          error instanceof NotebookAttachmentMutationError
+            ? error.code
+            : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
       });
     }
 
@@ -8085,21 +8076,24 @@ router.delete(
     if (String(existing.owner_user_id || '') !== String(userId))
       return res.status(403).json({ error: 'Owner-only' });
 
-    const currentAttachments = parseNotebookAttachments(existing.attachmentsJson);
-    if (!currentAttachments.some((attachment) => attachment.id === attachmentId)) {
+    if (!parseNotebookAttachments(existing.attachmentsJson).some((attachment) => attachment.id === attachmentId)) {
       return res.status(404).json({ error: 'Attachment not found' });
     }
 
-    const remainingAttachments = await deleteNotebookAttachmentFile(
-      existing.attachmentsJson,
-      attachmentId
-    );
-    await queryHelpers.queryRun(
-      `UPDATE notebook_pages
-       SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [JSON.stringify(remainingAttachments), id]
-    );
+    try {
+      await removeNotebookAttachmentFromPage({
+        pageId: id,
+        attachmentId,
+      });
+    } catch (error) {
+      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
+        error: error instanceof Error ? error.message : 'Attachment delete failed',
+        code:
+          error instanceof NotebookAttachmentMutationError
+            ? error.code
+            : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
+      });
+    }
 
     const selectNotebookFull = `
       SELECT
