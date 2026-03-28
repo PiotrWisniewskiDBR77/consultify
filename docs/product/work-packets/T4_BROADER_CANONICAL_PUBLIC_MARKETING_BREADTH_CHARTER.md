@@ -1,6 +1,6 @@
 # T4 Charter - broader canonical `/` and public marketing breadth
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: broader canonical `/` and public marketing breadth
 > Taxonomy: `T4`

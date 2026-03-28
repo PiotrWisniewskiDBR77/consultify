@@ -1,6 +1,6 @@
 # T4 Charter - Landing Anna Prompt-Quality / Retrieval-Quality
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: `Landing Anna prompt-quality / retrieval-quality`
 > Taxonomy: `T4`

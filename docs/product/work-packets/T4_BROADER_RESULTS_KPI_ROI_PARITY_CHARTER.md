@@ -1,6 +1,6 @@
 # T4 Charter - broader `Results / KPI / ROI` parity
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: broader `Results / KPI / ROI` parity
 > Taxonomy: `T4`

@@ -1,6 +1,6 @@
 # T4 Charter - Landing Anna broader voice UX / architecture
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: `Landing Anna` broader voice UX / architecture
 > Taxonomy: `T4`

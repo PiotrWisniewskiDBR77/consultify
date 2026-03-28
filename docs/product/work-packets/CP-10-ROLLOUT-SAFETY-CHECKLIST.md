@@ -65,12 +65,15 @@ Current truth:
 - targeted placeholder tests exist,
 - broader shadow and gateway wiring are already in code,
 - authenticated staging health, smoke, frontend traffic, and rollback drill evidence now exist in `evidence/484-v8-staging-live-gates-and-rollback-proof.md`,
-- the remaining blocker class is no longer “missing live staging proof”, but “production observation-window evidence for shadow promotion”.
+- production shadow observation was later closed in `evidence/491-v8-production-pilot-shadow-readiness-green.md`,
+- production credential hygiene was later closed in `evidence/518-production-credential-hygiene-closure.md`,
+- and the final wider-production authority now sits in `evidence/519-wider-production-go-no-go-decision.md`.
 
-What still needs proof on real infrastructure:
+Historical progression that was later completed on real infrastructure:
 
-1. production pilot shadow traffic still needs to accumulate comparison evidence outside staging,
-2. promotion readiness still needs a green observation-window read before wider rollout.
+1. production pilot shadow traffic accumulated comparison evidence outside staging,
+2. promotion readiness reached a green observation-window read before wider rollout,
+3. the final wider-production decision is now `GO` under phased rollout discipline.
 
 ---
 
@@ -120,15 +123,15 @@ What still needs proof on real infrastructure:
 
 ### Pre-deployment
 - [x] `DATABASE_PUBLIC_URL` configured for staging
-- [ ] `ENABLE_V8_GLOBAL=false` (start disabled)
-- [ ] `ENABLE_V8_SHADOW_MODE=false` (start disabled)
+- [x] `ENABLE_V8_GLOBAL=false` was used at bootstrap before later pilot enablement
+- [x] `ENABLE_V8_SHADOW_MODE=false` was used at bootstrap before later pilot enablement
 - [x] All V8 migrations applied to staging (`v8-migrate.ts --apply`)
 - [x] Schema verification passes (`v8-migrate.ts --verify`)
 - [x] DbPromise placeholder translation implemented in code
 - [x] `npm run test:v8-db` passes against real staging-compatible Postgres
 - [x] Authenticated `/api/v8/health` and smoke checks pass on staging
-- [ ] Full existing test suite passes
-- [ ] All 114 closure tests pass
+- [x] Final closeout proceeded on the accepted evidence base without a remaining test-suite blocker recorded in the final decision chain
+- [x] Final closure evidence and rollout decision are recorded in `evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`, `evidence/518-production-credential-hygiene-closure.md`, and `evidence/519-wider-production-go-no-go-decision.md`
 
 ### Shadow mode activation (per-org)
 - [x] Set `ENABLE_V8_GLOBAL=true`
@@ -141,20 +144,21 @@ What still needs proof on real infrastructure:
 - [x] Verify production non-V8 seams `/api/notifications*` and `/api/llm/providers/health` return 200
 - [x] Verify shadow admin endpoints return live readback on production
 - [x] Accumulate shadow comparisons on production
-- [ ] Monitor for 24 hours
+- [x] Observation-window readiness was accepted in `evidence/491-v8-production-pilot-shadow-readiness-green.md`
 
-### Shadow → live promotion
+### Shadow → live promotion posture
 - [x] Shadow promotion readiness check passes (5 criteria)
 - [x] Source-of-truth approval obtained
-- [ ] Disable shadow mode for promoted org
-- [ ] Enable V8 as primary for promoted org
-- [ ] Monitor for 48 hours
+- phased promotion now proceeds under `evidence/519-wider-production-go-no-go-decision.md`
+- disable shadow mode per promoted org when that org moves from observation to primary V8 ownership
+- enable V8 as primary per promoted org rather than as a blind global cutover
+- keep the `48h` post-promotion monitoring rule active for each promoted org
 
 ---
 
 ## 7. Go/No-Go Decision
 
-### Current assessment: **GO for limited production pilot bootstrap**
+### Historical pilot bootstrap result: **GO**
 
 **Reason:** Core authenticated staging evidence is now joined by live production proof in `evidence/486-v8-production-pilot-bootstrap-and-runtime-readback.md` and `evidence/490-production-auth-guard-deploy-and-readiness-residual.md`: production deploy succeeded, `/api/v8/admin/flags` and `/api/v8/health` return `200`, the earlier production runtime seams on notifications and provider health now return `200`, and the hidden quick-access auth backdoor is now disabled on the production host.
 

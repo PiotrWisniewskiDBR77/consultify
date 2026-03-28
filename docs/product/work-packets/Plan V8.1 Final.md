@@ -71,12 +71,12 @@ Only one major lane should be `active` at a time unless independence is proven.
 
 - `T0`, `T1`, `T2`, and `T3` bounded closure work is complete for the promoted scopes
 - all earlier promoted `T4` lanes through broader `Multiplayer / collaboration` breadth are now accepted
-- the only remaining promoted lane is broader `Notes` adjunct / object-linked outputs breadth
+- broader `Notes` adjunct / object-linked outputs breadth is now accepted as the final bounded lane
 
 ### Current planning truth
 
 - the program is no longer blocked by micro residue
-- what remains is broad residual breadth that must be closed intentionally
+- the product program is complete at `13 / 13`
 - all `Phase A` and `Phase B` lanes under this plan are now accepted
 - broader `Sync` completion is now accepted in bounded form
 - broader `Multiplayer / collaboration` breadth is now accepted in bounded form
@@ -203,17 +203,15 @@ Do not activate a new lane until:
 
 ---
 
-## 9. First execution lane
+## 9. Historical first execution lane
 
-### Lane name
+This section is retained only as historical context for how the program originally started.
+
+It is no longer a live execution instruction because the program is complete at `13 / 13` and `current lane = none`.
+
+### Original lane name
 
 `Landing Anna prompt-quality / retrieval-quality`
-
-### Why it starts first
-
-- it is the most user-visible remaining Anna improvement
-- it improves both typed and voice paths
-- it builds on already accepted Anna runtime discipline, placement, fallback, telemetry integrity, and reopen continuity
 
 ### First files to inspect and likely update
 
@@ -361,7 +359,7 @@ Use the following structure for each lane as it becomes active:
 - status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_CHAT_AI_CORE_PARITY_EXPANSION_CHARTER.md`
 - split-brain map: `evidence/361-v81-broader-chat-ai-core-parity-expansion-split-brain-map.md`
-- current packet: `bounded acceptance review`
+- current packet: `none`
 - last accepted packet: `legacy chat private mode indicator seam`
 - blocker: `none`
 - next action: `keep the accepted chat/ai-core lane capped unless a new broader explicit promotion is created later`

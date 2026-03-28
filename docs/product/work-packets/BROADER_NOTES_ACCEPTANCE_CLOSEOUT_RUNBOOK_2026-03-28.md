@@ -3,7 +3,7 @@
 > Date: 2026-03-28
 > Purpose: exact doc-update sequence to execute immediately after broader `Notes` is accepted
 > Scope: documentation and control-board closeout only
-> Status: ready
+> Status: historical executed runbook
 
 ---
 

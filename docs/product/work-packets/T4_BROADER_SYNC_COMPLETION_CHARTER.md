@@ -1,6 +1,6 @@
 # T4 Charter - broader `Sync` completion
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: broader `Sync` completion
 > Taxonomy: `T4`

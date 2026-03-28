@@ -1,6 +1,6 @@
 # T4 Charter - Landing Anna multilingual expansion
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: `Landing Anna multilingual expansion`
 > Taxonomy: `T4`

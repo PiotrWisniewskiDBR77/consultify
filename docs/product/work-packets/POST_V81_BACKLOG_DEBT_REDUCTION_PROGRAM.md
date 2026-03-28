@@ -1,6 +1,6 @@
 # Post-V8/V8.1 Backlog Debt Reduction Program
 
-> Status: active debt-reduction program
+> Status: complete - historical record of the finished debt-reduction program
 > Owner: Manager Agent
 > Scope: post-closure backlog reduction after the frozen `V8 + V8.1` wave
 > Authority inputs: `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`, `docs/product/work-packets/V8_V81_FINAL_SIGNOFF_MEMO.md`, `docs/product/work-packets/V8_V81_FINAL_GO_DECISION.md`, `docs/product/work-packets/V8_V81_WAVE_CLOSURE_DECLARATION.md`
@@ -51,6 +51,10 @@ The program has five goals:
 
 ## 3. Debt taxonomy
 
+This taxonomy is retained as the classification model used during execution.
+
+Current truth: no lane remains active inside this program, and any future work must be promoted as a new program or separately approved lane instead of being treated as unfinished residue here.
+
 All backlog items must be classified before implementation starts.
 
 ### `T0` - Closure residue
@@ -59,8 +63,8 @@ Bounded proof/runtime gaps that survived final sign-off.
 
 Current items:
 
-- `Calendar`
-- `Organization / Admin / Superadmin`
+- none inside this completed program
+- `Calendar` and `Organization / Admin / Superadmin` were closed during execution and remain here only as historical tranche examples
 
 ### `T1` - Structural split-brain
 
@@ -68,9 +72,8 @@ Areas where API, UI, or runtime truth are still split across legacy and V8/V8.1 
 
 Current items:
 
-- `Reports / Presentations`
-- `Idea workspace`
-- any lane where the user-facing happy path still depends on legacy truth
+- none inside this completed program
+- `Reports / Presentations` and `Idea workspace` were closed during execution and remain here only as historical tranche examples
 
 ### `T2` - Promoted parity tranche
 
@@ -78,14 +81,8 @@ Lanes previously accepted as `hold bounded` that now require explicit promotion 
 
 Current items:
 
-- no `T2` lane is currently active
-- broader parity expansion in `Chat`
-- broader parity expansion in `AI core`
-- broader write/read breadth in `Results / KPI / ROI`
-- broader ingest / model / budget / valuation breadth in `Finance`
-- broader onboarding / client-access / payout-settings / statement breadth in `Partner Program`
-- broader OAuth / completion breadth in `Sync / connectors / interoperability`
-- broader realtime / collaboration breadth in `Multiplayer / collaboration`
+- none inside this completed program
+- the `T2` parity lanes listed here were all promoted, landed, and accepted during execution
 
 ### `T3` - Adjunct and side-lane debt
 
@@ -93,8 +90,8 @@ Non-core side lanes that are real backlog but should not reopen already accepted
 
 Current items:
 
-- notebook upload / attachment breadth after bounded `Notes` adjunct acceptance
-- object-linked outputs breadth not required by current package acceptance
+- none inside this completed program
+- the broader notes/output residuals listed here were resolved by the later broader `Notes` acceptance recorded in `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`
 
 ### `T4` - Explicitly deferred product backlog
 
@@ -102,12 +99,8 @@ Visible backlog that remains outside execution until separately approved.
 
 Current items:
 
-- broad `Landing page` redesign
-- broader canonical `/` copy / section-order / visual-system work beyond the accepted homepage IA cut
-- `Landing Anna prompt-quality / retrieval-quality`
-- `Landing Anna multilingual expansion`
-- `Landing Anna` broader voice UX / architecture
-- `Landing Anna` backend analytics / dashboard breadth
+- none inside this completed program
+- the entries below are retained only as historical examples of visible backlog that was later promoted and closed or deliberately kept outside this completed program
 
 Historical accepted `T4` lanes remain recorded in the lane map below; the list above shows what still remains to be closed or explicitly retired.
 
@@ -281,21 +274,21 @@ The accepted bounded `T3` `Notes` adjuncts lane already closed governed notebook
 
 This promoted broader lane started with the smallest active real residual: notebook capture upload authority continuity on the live notebook creation surface. The lane then moved through wider notebook-linked output continuity on the list and context readback surfaces, the upload-origin source attachment seam, nearby related-note surfaces, and finally live notebook attachment management on the active notebook page before acceptance.
 
-### Three-agent assignment
+### Historical three-agent assignment
 
 - `Manager`: maintain this program, tranche rules, and broader-notes packet discipline
 - `Agent A`: close active broader-notes seams one honest packet at a time
-- `Agent B`: keep already accepted non-notes lanes parked while this lane is active
+- `Agent B`: keep already accepted non-notes lanes parked while this lane was active
 
 ### Exit criteria
 
-- the active broader notes lane keeps bounded packet discipline,
+- the broader notes lane keeps bounded packet discipline,
 - accepted bounded evidence remains the authority for previously closed lanes,
 - and the earlier accepted bounded `T3` notes adjunct lane does not get silently reopened as a whole notebook architecture rewrite.
 
-### Current lane status
+### Final lane status
 
-The active lane is documented in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`.
+The completed lane is documented in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`.
 
 Current result:
 
@@ -354,7 +347,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 - broader `Notes` adjunct / object-linked outputs breadth is now accepted in bounded form
 - no active product lane remains inside this program; only operational rollout closeout remains outside the completed product program
 
-### Remaining work to reach 100%
+### Closed route to 100%
 
 | remaining theme | current posture | why it still remains | recommended order | finish condition |
 | --- | --- | --- | --- | --- |
@@ -372,7 +365,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Multiplayer / collaboration` breadth | done | accepted lane closed presence + lock indicators only, and the broader promoted lane now also closes active collaboration visibility plus overlay/table reconnect continuity in bounded form without claiming a full transport rewrite | `12` | remaining collaboration breadth is closed or explicitly retired |
 | broader `Notes` adjunct / object-linked outputs breadth | done | accepted lane now covers notebook capture/upload authority, notebook-origin output persistence/readback, notebook list output summaries, upload provenance, upload-origin source-file continuity, nearby related-surface metadata propagation, and live notebook attachment management on the active notebook surface | `13` | remaining notes/output breadth is either outside this completed program or requires a separately promoted wider lane |
 
-### Recommended execution order
+### Historical execution order
 
 #### Phase A - Finish the Anna value path first
 

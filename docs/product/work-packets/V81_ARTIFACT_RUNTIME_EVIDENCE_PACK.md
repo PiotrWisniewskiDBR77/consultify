@@ -1,6 +1,6 @@
 # V8.1 Artifact Runtime Evidence Pack
 
-> Status: active local evidence pack
+> Status: historical local evidence pack
 > Scope: `V8.1` artifact runtime, Outputs Library, My Work outputs bridge, and final local closure evidence
 > Authority: supports `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md` and `docs/product/work-packets/V8_V81_CLOSURE_LEDGER.md`
 > Last updated: 2026-03-24

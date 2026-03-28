@@ -4,6 +4,13 @@ Date: 2026-03-28
 Owner: Manager Agent
 Scope: production deploy readback after auth-surface hardening
 
+Superseded status note:
+
+This evidence remains historically accurate for the moment it was captured, but its blocker conclusion was later superseded by:
+
+- `evidence/518-production-credential-hygiene-closure.md`
+- `evidence/519-wider-production-go-no-go-decision.md`
+
 ## What changed
 
 - removed production availability of the hidden `AuthView` quick-access login backdoor while preserving local / staging availability
@@ -43,3 +50,8 @@ Current truth after that later production observation update:
 
 - rollout telemetry is no longer the blocker,
 - credential hygiene remains the remaining blocker for an honest wider production go decision.
+
+This later same-day status note is itself no longer the final state:
+
+- credential hygiene was later closed in `evidence/518-production-credential-hygiene-closure.md`
+- the final wider-production authority is `evidence/519-wider-production-go-no-go-decision.md`

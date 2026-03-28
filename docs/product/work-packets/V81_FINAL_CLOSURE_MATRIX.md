@@ -1,6 +1,6 @@
 # V8.1 Final Closure Matrix
 
-> Status: active final closure matrix
+> Status: historical final closure matrix snapshot
 > Owner: Manager Agent
 > Scope: exact closure status for the `V8.1` artifact runtime and outputs scope
 > Authority: high for final `V8.1` local closure accounting under `docs/product/V8_1_FINAL_100_PERCENT_COMPLETION_PLAN.md`

@@ -1,6 +1,6 @@
 # Post-V8/V8.1 Backlog Tracker
 
-> Status: active
+> Status: complete - historical tracker for the finished program
 > Parent program: `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
 > Last updated: 2026-03-28
 
@@ -15,7 +15,7 @@ Use it together with the parent program:
 - the program explains tranche order, rules, and acceptance,
 - this tracker is where we move statuses and tick completion evidence.
 
-Helpful supporting docs for the current endgame:
+Helpful supporting docs for the final closeout record:
 
 - `docs/product/work-packets/ENDGAME_SUPPORT_INDEX_2026-03-28.md`
 - `docs/product/work-packets/NEXT_AGENT_HANDOFF_2026-03-28.md`

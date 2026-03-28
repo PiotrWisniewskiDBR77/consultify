@@ -1,7 +1,7 @@
 # Production Credential Hygiene Closeout Checklist
 
 > Date: 2026-03-28
-> Purpose: close the remaining wider-production blocker without interfering with the active broader `Notes` lane
+> Purpose: historical ops checklist used to close the former wider-production credential blocker
 > Scope: production account / credential operations only
 > Status: executed and closed in `evidence/518-production-credential-hygiene-closure.md`
 
@@ -9,22 +9,26 @@
 
 ## 1. Why this exists
 
-`evidence/490-production-auth-guard-deploy-and-readiness-residual.md` and `evidence/491-v8-production-pilot-shadow-readiness-green.md` now agree on the remaining wider-production blocker:
+At the time this checklist was created, `evidence/490-production-auth-guard-deploy-and-readiness-residual.md` and `evidence/491-v8-production-pilot-shadow-readiness-green.md` still pointed to credential hygiene as the remaining wider-production blocker.
+
+That blocker is now closed in `evidence/518-production-credential-hygiene-closure.md` and the final rollout authority is `evidence/519-wider-production-go-no-go-decision.md`.
 
 - rollout telemetry is green,
-- broader `Notes` remains the only active product lane,
-- wider production promotion is still blocked by credential hygiene on affected production accounts.
+- the product program is complete at `13 / 13`,
+- credential hygiene is no longer blocking wider production promotion.
 
-This checklist created a safe parallel workstream that did not require touching the active notebook / notes implementation path.
+This checklist created a safe parallel workstream that did not require touching the active implementation path.
 
 ---
 
 ## 2. No-touch boundaries
 
+Historical note: these boundaries were the execution guardrails during the closeout run.
+
 Do not do any of the following as part of this checklist:
 
 - edit notebook / notes runtime code
-- change active broader `Notes` lane scope
+- change the accepted implementation scope or reopen product lanes implicitly
 - redeploy application code unless an emergency rollback is required
 - widen V8 rollout scope before credential cleanup is verified
 

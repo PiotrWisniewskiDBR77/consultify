@@ -1,6 +1,6 @@
 # T4 Charter - broader `Mobile` redesign
 
-> Status: active
+> Status: historical charter for an accepted lane
 > Program: `POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM`
 > Lane: broader `Mobile` redesign
 > Taxonomy: `T4`

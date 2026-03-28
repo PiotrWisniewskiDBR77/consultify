@@ -3,7 +3,7 @@
 > Date: 2026-03-28
 > Purpose: reduce decision friction for the active broader `Notes` lane without interfering with the in-flight implementation work
 > Scope: planning, packet selection, acceptance prep, and doc-closeout support only
-> Status: ready
+> Status: historical support pack for the accepted lane
 
 ---
 
