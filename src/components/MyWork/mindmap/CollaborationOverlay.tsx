@@ -23,6 +23,13 @@ export interface CollaborationSessionState {
   lastActivity: number;
 }
 
+type CollaborationConnectionState =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'degraded';
+
 interface CollaborationOverlayProps {
   ideaId: string;
   currentUserId: string;
@@ -100,6 +107,7 @@ function useCollaboration(
   selectedNodeIds: string[] = []
 ) {
   const [connected, setConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<CollaborationConnectionState>('idle');
   const [users, setUsers] = useState<CollaborationUser[]>([]);
   const [sessionState, setSessionState] = useState<CollaborationSessionState | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -124,8 +132,16 @@ function useCollaboration(
     try {
       if (!shouldReconnectRef.current) return;
       const token = getAuthToken();
-      if (!token || !ideaId || !userId) return;
-      if (isE2EToken(token)) return;
+      if (!token || !ideaId || !userId) {
+        setConnectionState('idle');
+        return;
+      }
+      if (isE2EToken(token)) {
+        setConnectionState('idle');
+        return;
+      }
+
+      setConnectionState(reconnectAttempt.current > 0 ? 'reconnecting' : 'connecting');
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(
@@ -134,6 +150,7 @@ function useCollaboration(
 
       ws.onopen = () => {
         setConnected(true);
+        setConnectionState('connected');
         reconnectAttempt.current = 0;
         sendMessage({ type: 'join', userId, userName });
       };
@@ -174,16 +191,20 @@ function useCollaboration(
 
       ws.onclose = () => {
         setConnected(false);
+        setUsers([]);
+        setSessionState(null);
         wsRef.current = null;
         if (heartbeatTimer.current) {
           clearInterval(heartbeatTimer.current);
           heartbeatTimer.current = null;
         }
         if (!shouldReconnectRef.current) {
+          setConnectionState('degraded');
           return;
         }
         const delay = Math.min(1000 * 2 ** reconnectAttempt.current, 30_000);
         reconnectAttempt.current += 1;
+        setConnectionState('reconnecting');
         reconnectTimer.current = setTimeout(connect, delay);
       };
 
@@ -194,6 +215,7 @@ function useCollaboration(
       wsRef.current = ws;
     } catch {
       setConnected(false);
+      setConnectionState('degraded');
     }
   }, [ideaId, sendMessage, userId, userName]);
 
@@ -286,6 +308,7 @@ function useCollaboration(
 
   return {
     connected,
+    connectionState,
     users,
     sessionState,
     sendCursor,
@@ -305,7 +328,8 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   onRegisterSend,
 }) => {
   const { t } = useTranslation();
-  const { connected, users, sessionState, sendCursor, sendMessage } = useCollaboration(
+  const { connected, connectionState, users, sessionState, sendCursor, sendMessage } =
+    useCollaboration(
     ideaId,
     currentUserId,
     currentUserName,
@@ -347,9 +371,12 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
       .flatMap(([uid, nodeIds]) => nodeIds.map((nid) => ({ userId: uid, nodeId: nid })));
   }, [sessionState, currentUserId]);
 
-  const shouldShowDegradedState = !connected;
+  const shouldShowStatusState =
+    connectionState === 'connecting' ||
+    connectionState === 'reconnecting' ||
+    connectionState === 'degraded';
   const shouldRenderOverlay =
-    shouldShowDegradedState ||
+    shouldShowStatusState ||
     otherUsers.length > 0 ||
     lockedNodeEntries.length > 0 ||
     otherSelections.length > 0;
@@ -451,13 +478,21 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 
   return (
     <div ref={overlayRootRef} className="absolute inset-0 z-30 pointer-events-none">
-      {shouldShowDegradedState && (
+      {shouldShowStatusState && (
         <div className="absolute top-3 right-3 z-50 flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-semibold text-amber-800 shadow-lg backdrop-blur-sm dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
           <WifiOff size={12} />
           <div className="flex flex-col leading-tight">
-            <span>{t('collaboration.connectionDegraded', 'Connection degraded')}</span>
+            <span>
+              {connectionState === 'connecting'
+                ? t('collaboration.connecting', 'Connecting collaboration')
+                : connectionState === 'reconnecting'
+                  ? t('collaboration.reconnecting', 'Reconnecting collaboration')
+                  : t('collaboration.connectionDegraded', 'Connection degraded')}
+            </span>
             <span className="text-[9px] font-medium text-amber-700/90 dark:text-amber-200/80">
-              {t('collaboration.singleUserMode', 'Single-user mode')}
+              {connectionState === 'connecting'
+                ? t('collaboration.establishingSession', 'Establishing session')
+                : t('collaboration.singleUserMode', 'Single-user mode')}
             </span>
           </div>
         </div>
