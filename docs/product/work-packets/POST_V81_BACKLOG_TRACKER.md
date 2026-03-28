@@ -93,7 +93,7 @@ Status vocabulary:
 | broader `Partner Program` parity | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_PARTNER_PROGRAM_PARITY_CHARTER.md`; split-brain map recorded in `evidence/155-v81-partner-program-split-brain-map.md`; landed packets through `evidence/439-v81-broader-partner-commission-placeholder-retirement-seam.md`; accepted in `evidence/440-v81-broader-partner-program-parity-t4-acceptance.md` |
 | broader `Sync` completion | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/492-v81-broader-sync-completion-t4-acceptance.md`; residual assessment recorded in `evidence/489-v81-broader-sync-post-settings-lifecycle-residual-assessment.md`; no further packet inside the accepted bounded lane |
 | broader `Multiplayer / collaboration` breadth | `T4` | `Parking lot` | `done` | `Manager` | accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`; no further packet inside the accepted bounded lane |
-| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `active` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; landed packets: `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md` |
+| broader `Notes` adjunct / object-linked outputs breadth | `T4` | `Parking lot` | `done` | `Manager` | chartered in `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`; split-brain map recorded in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`; landed packets: `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md`, `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md`, `evidence/505-v81-broader-notes-notebook-output-menu-persistence-continuity-seam.md`, `evidence/506-v81-broader-notes-notebook-list-output-summary-continuity-seam.md`, `evidence/507-v81-broader-notes-upload-source-readback-continuity-seam.md`, `evidence/508-v81-broader-notes-direct-assessment-output-readback-continuity-seam.md`, `evidence/510-v81-broader-notes-upload-origin-source-attachment-continuity-seam.md`, `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md`, `evidence/514-v81-broader-notes-live-notebook-attachment-management-seam.md`; accepted in `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md` |
 
 ---
 
@@ -541,7 +541,7 @@ Current status: `done`
 
 ### broader `Notes` adjunct / object-linked outputs breadth
 
-Current status: `active`
+Current status: `done`
 
 - [x] explicit follow-on promotion granted after broader `Multiplayer / collaboration` breadth acceptance
 - [x] broader notes / object-linked outputs breadth charter written
@@ -570,7 +570,11 @@ Current status: `active`
 - [x] eighth real bounded packet landed around related-surface metadata propagation on nearby note readback surfaces
 - [x] focused regression added for related-surface metadata propagation
 - [x] assessed the post-related-surface-propagation residual before selecting the next broader-notes packet
-- [ ] choose the next broader-notes packet from wider notebook attachment management or materially wider output propagation
+- [x] choose the next broader-notes packet from wider notebook attachment management or materially wider output propagation
+- [x] ninth real bounded packet landed around live notebook attachment management on the active notebook surface
+- [x] focused regression added for notebook attachment upload, download, and delete continuity
+- [x] final residual assessment confirmed that no smaller honest broader-notes packet remains before acceptance
+- [x] lane accepted and moved to `done`
 
 ### `Landing Anna backend analytics / dashboard breadth`
 
@@ -1694,3 +1698,6 @@ Current status: `done`
 - 2026-03-26: assessed the next highest-value lane after the Anna plateau and kept the overall program held in `evidence/317-v81-post-backlog-program-held-state-after-post-anna-next-lane-assessment.md` because no remaining bounded lane is ready for promotion without a fresh explicit unlock into broader prompt-quality, multilingual, voice-architecture, analytics/dashboard, or other new-scope breadth
 - 2026-03-26: recorded `Landing Anna prompt-quality` as the leading next explicit-unlock candidate in `evidence/318-v81-post-backlog-leading-next-unlock-candidate-after-anna.md` while keeping the program held until a new bounded lane is deliberately promoted
 - 2026-03-26: added V8 partner regions parity for the visible profile workflow, moved `PartnerPortalView` regions save onto `/api/v8/partner/organization/regions` with bounded fallback, and recorded the packet in `evidence/162-v81-partner-regions-v8-seam.md`
+- 2026-03-28: landed the final broader-notes packet in `evidence/514-v81-broader-notes-live-notebook-attachment-management-seam.md` by adding durable notebook attachment upload, download, delete, and active-surface readback continuity through governed V8-first seams with bounded legacy compatibility
+- 2026-03-28: recorded the final broader-notes residual assessment in `evidence/515-v81-broader-notes-post-live-attachment-management-residual-assessment.md`, confirming that no smaller honest broader-notes packet remains before acceptance
+- 2026-03-28: accepted broader `Notes` adjunct / object-linked outputs breadth in `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md` and closed the post-`V8/V8.1` product program at `13 / 13`

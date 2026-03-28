@@ -7,7 +7,7 @@
 > Last updated: 2026-03-28
 > Operational tracker: `docs/product/work-packets/POST_V81_BACKLOG_TRACKER.md`
 > Final execution board: `docs/product/work-packets/Plan V8.1 Final.md`
-> Current state: active - broader `Notes` adjunct / object-linked outputs breadth remains the only active product lane at `12 / 13`
+> Current state: complete - broader `Notes` adjunct / object-linked outputs breadth has been accepted and the product program now stands at `13 / 13`
 
 ---
 
@@ -268,8 +268,8 @@ The following do **not** qualify as done:
 
 Current state:
 
-- broader `Notes` adjunct / object-linked outputs breadth is currently promoted
-- broader `Multiplayer / collaboration` breadth is accepted in bounded form and moved to `done`
+- broader `Notes` adjunct / object-linked outputs breadth is now accepted in bounded form
+- the post-`V8/V8.1` product program is now complete at `13 / 13`
 
 ### Slice name
 
@@ -279,7 +279,7 @@ broader `Notes` adjunct / object-linked outputs breadth
 
 The accepted bounded `T3` `Notes` adjuncts lane already closed governed notebook AI proposal continuity and governed notebook convert continuity, but broader notebook capture/upload authority and object-linked outputs breadth still remained outside that bounded scope at promotion time.
 
-This promoted broader lane started with the smallest active real residual: notebook capture upload authority continuity on the live notebook creation surface. The active residual has since moved forward into wider notebook-linked output continuity on the list and context readback surfaces, then through the first honest upload-origin source attachment seam, and now onto nearby related-note surfaces, while wider attachment breadth and more distant output propagation still remain explicitly outside any single packet claim.
+This promoted broader lane started with the smallest active real residual: notebook capture upload authority continuity on the live notebook creation surface. The lane then moved through wider notebook-linked output continuity on the list and context readback surfaces, the upload-origin source attachment seam, nearby related-note surfaces, and finally live notebook attachment management on the active notebook page before acceptance.
 
 ### Three-agent assignment
 
@@ -299,9 +299,9 @@ The active lane is documented in `docs/product/work-packets/T4_BROADER_NOTES_ADJ
 
 Current result:
 
-- broader `Multiplayer / collaboration` breadth is now accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`,
-- the next queued lane is now promoted through `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`,
-- the active lane now uses the split-brain map in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`,
+- broader `Multiplayer / collaboration` breadth is accepted in `evidence/500-v81-broader-multiplayer-collaboration-breadth-t4-acceptance.md`,
+- broader `Notes` adjunct / object-linked outputs breadth was promoted through `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`,
+- the lane used the split-brain map in `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`,
 - the first real bounded broader notes packet landed in `evidence/502-v81-broader-notes-notebook-capture-upload-authority-continuity-seam.md` by moving notebook capture upload initiation onto a governed V8-first seam while keeping broader attachment/output redesign out of scope,
 - the second real bounded broader notes packet landed in `evidence/503-v81-broader-notes-direct-notebook-output-readback-continuity-seam.md` by teaching the active notebook context panel to read back direct report/presentation outputs already recorded on the same note instead of only showing initiative-derived outputs,
 - the post-direct-output residual assessment recorded in `evidence/504-v81-broader-notes-post-direct-output-readback-residual-assessment.md` confirmed that one more tiny linked-output patch on the same surface is no longer the honest next step before wider notes/output residuals,
@@ -314,6 +314,10 @@ Current result:
 - the post-source-attachment residual assessment recorded in `evidence/511-v81-broader-notes-post-source-attachment-residual-assessment.md` confirmed that one more tiny upload-origin note affordance is no longer the honest next step before wider notebook attachment management or broader output propagation,
 - the eighth real bounded broader notes packet landed in `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md` by propagating notebook upload/output truth onto nearby `Task`, `Decision`, and `Initiative` note suggestion/readback surfaces instead of leaving that metadata trapped inside the notebook editor,
 - the post-related-surface residual assessment recorded in `evidence/513-v81-broader-notes-post-related-surface-propagation-residual-assessment.md` confirmed that one more tiny nearby note-card badge patch is no longer the honest next step before wider notebook attachment management or materially wider output propagation,
+- the ninth real bounded broader notes packet landed in `evidence/514-v81-broader-notes-live-notebook-attachment-management-seam.md` by adding durable notebook attachment add/read/download/delete continuity on the active notebook surface,
+- the final residual assessment recorded in `evidence/515-v81-broader-notes-post-live-attachment-management-residual-assessment.md` confirmed that no smaller honest broader-notes packet remains before acceptance,
+- broader `Notes` adjunct / object-linked outputs breadth is accepted in `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`,
+- the post-`V8/V8.1` product program is formally complete in `evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`,
 - the previously accepted bounded `T3` `Notes` adjuncts lane stays capped rather than silently reopening its already accepted AI-proposals and convert packets.
 
 ### Explicitly out of scope
@@ -347,8 +351,8 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 - broader `Partner Program` parity is accepted in bounded form
 - broader `Sync` completion is accepted in bounded form
 - broader `Multiplayer / collaboration` breadth is accepted in bounded form
-- broader `Notes` adjunct / object-linked outputs breadth is now the active broader lane
-- what remains is no longer micro residue; it is broad residual breadth that must be deliberately promoted or deliberately retired
+- broader `Notes` adjunct / object-linked outputs breadth is now accepted in bounded form
+- no active product lane remains inside this program; only operational rollout closeout remains outside the completed product program
 
 ### Remaining work to reach 100%
 
@@ -366,7 +370,7 @@ Accepted bounded lanes already listed in this document remain done; they do not 
 | broader `Partner Program` parity | done | accepted lane plus twenty broader packets now close the smallest honest active partner residuals across payout/statement history, referral-tools, referred-customer lifecycle, onboarding, client-access, dashboard runtime/trust, payout-settings ownership, and final commission-surface placeholder retirement without forcing a broader partner pipeline/support product build | `10` | remaining partner breadth is closed or explicitly retired |
 | broader `Sync` completion | done | accepted sync lane closed bounded observability and lifecycle controls, and the broader promoted lane now also closes connect/onboarding completion truth, governed provider round-trip coverage, org-level authority alignment, and settings lifecycle continuity in bounded form | `11` | remaining sync completion breadth is closed or explicitly retired |
 | broader `Multiplayer / collaboration` breadth | done | accepted lane closed presence + lock indicators only, and the broader promoted lane now also closes active collaboration visibility plus overlay/table reconnect continuity in bounded form without claiming a full transport rewrite | `12` | remaining collaboration breadth is closed or explicitly retired |
-| broader `Notes` adjunct / object-linked outputs breadth | active | accepted lane closed AI proposals + convert continuity only; the broader lane is now promoted around notebook capture/upload authority and wider object-linked outputs breadth on active notebook surfaces, with upload authority, direct notebook output readback, notebook output-menu persistence, notebook list output summary continuity, upload source readback continuity, direct assessment output readback continuity, upload-origin source attachment continuity, and nearby related-surface metadata propagation now landed in bounded form | `13` | remaining notes/output breadth is closed or explicitly retired |
+| broader `Notes` adjunct / object-linked outputs breadth | done | accepted lane now covers notebook capture/upload authority, notebook-origin output persistence/readback, notebook list output summaries, upload provenance, upload-origin source-file continuity, nearby related-surface metadata propagation, and live notebook attachment management on the active notebook surface | `13` | remaining notes/output breadth is either outside this completed program or requires a separately promoted wider lane |
 
 ### Recommended execution order
 
@@ -416,7 +420,7 @@ Before the program resumes, each remaining theme needs one explicit choice:
 2. `keep visible` - remain in backlog, not active
 3. `retire from 100% target` - remove from this program's finish line and track elsewhere
 
-Without these decisions, the program will stay technically truthful but operationally stuck in `held`.
+That product-program choice is now finished; remaining endgame work is operational rollout closeout rather than another product-lane decision.
 
 ### Practical finish-line rule
 

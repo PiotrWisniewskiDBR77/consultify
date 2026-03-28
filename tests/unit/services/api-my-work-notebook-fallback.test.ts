@@ -23,6 +23,8 @@ vi.mock('@/services/api/v8/my-work', () => ({
   V8MyWorkApi: {
     getNotebookPages: vi.fn(),
     getNotebookPage: vi.fn(),
+    uploadNotebookAttachments: vi.fn(),
+    deleteNotebookAttachment: vi.fn(),
     notebookCaptureUpload: vi.fn(),
     createNotebookPage: vi.fn(),
     updateNotebookPage: vi.fn(),
@@ -329,6 +331,124 @@ describe('Api notebook V8 fallback guard', () => {
       2,
       '/api/my-work/notebook/pages/note-42/source-file',
       expect.objectContaining({ headers: expect.any(Object) })
+    );
+  });
+
+  it('does not retry notebook attachment download on transient errors', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 429,
+      headers: { get: vi.fn(() => null) },
+    } as unknown as Response);
+
+    await expect(Api.downloadNotebookAttachment('note-42', 'att-1')).rejects.toMatchObject({
+      status: 429,
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/v8/my-work/notebook/pages/note-42/attachments/att-1/download',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
+  });
+
+  it('falls back to legacy notebook attachment download only for non-supported V8 statuses', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        headers: { get: vi.fn(() => null) },
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(['attachment'], { type: 'text/plain' }),
+        headers: {
+          get: vi.fn((name: string) =>
+            name === 'Content-Disposition' ? 'attachment; filename="brief.txt"' : null
+          ),
+        },
+      } as unknown as Response);
+
+    await expect(Api.downloadNotebookAttachment('note-42', 'att-1')).resolves.toMatchObject({
+      filename: 'brief.txt',
+    });
+
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      '/api/v8/my-work/notebook/pages/note-42/attachments/att-1/download',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/my-work/notebook/pages/note-42/attachments/att-1/download',
+      expect.objectContaining({ headers: expect.any(Object) })
+    );
+  });
+
+  it('routes notebook attachment upload through the V8 client seam', async () => {
+    vi.mocked(V8MyWorkApi.uploadNotebookAttachments).mockResolvedValue({
+      id: 'note-attach-1',
+      attachments: [{ id: 'att-1', name: 'brief.pdf' }],
+    } as any);
+
+    const file = new File(['hello'], 'brief.pdf', { type: 'application/pdf' });
+    const result = await Api.uploadNotebookAttachments('note-attach-1', [file]);
+
+    expect(result).toMatchObject({
+      id: 'note-attach-1',
+    });
+    expect(vi.mocked(V8MyWorkApi.uploadNotebookAttachments)).toHaveBeenCalledWith('note-attach-1', [
+      file,
+    ]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('falls back to legacy notebook attachment upload only for non-supported V8 statuses', async () => {
+    vi.mocked(V8MyWorkApi.uploadNotebookAttachments).mockRejectedValue({
+      status: 404,
+      message: 'Not Found',
+    });
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'note-attach-2', attachments: [{ id: 'att-2' }] }),
+    } as Response);
+
+    const file = new File(['hello'], 'brief.pdf', { type: 'application/pdf' });
+    const result = await Api.uploadNotebookAttachments('note-attach-2', [file]);
+
+    expect(result).toMatchObject({
+      id: 'note-attach-2',
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/my-work/notebook/pages/note-attach-2/attachments',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.any(FormData),
+      })
+    );
+  });
+
+  it('falls back to legacy notebook attachment delete only for non-supported V8 statuses', async () => {
+    vi.mocked(V8MyWorkApi.deleteNotebookAttachment).mockRejectedValue({
+      status: 404,
+      message: 'Not Found',
+    });
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'note-attach-3', attachments: [] }),
+    } as Response);
+
+    const result = await Api.deleteNotebookAttachment('note-attach-3', 'att-3');
+
+    expect(result).toMatchObject({
+      id: 'note-attach-3',
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/my-work/notebook/pages/note-attach-3/attachments/att-3',
+      expect.objectContaining({
+        method: 'DELETE',
+      })
     );
   });
 

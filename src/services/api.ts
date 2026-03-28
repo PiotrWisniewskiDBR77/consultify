@@ -12368,6 +12368,77 @@ export const Api = {
     }
   },
 
+  downloadNotebookAttachment: async (
+    id: string,
+    attachmentId: string
+  ): Promise<{ blob: Blob; filename: string }> => {
+    const downloadFrom = async (url: string) => {
+      const res = await fetch(url, { headers: getHeaders() });
+      if (!res.ok) {
+        const error: any = new Error('Failed to download notebook attachment');
+        error.status = res.status;
+        throw error;
+      }
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('Content-Disposition') || '';
+      const encodedMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+      const plainMatch = contentDisposition.match(/filename="([^"]+)"/i);
+      const filename = encodedMatch?.[1]
+        ? decodeURIComponent(encodedMatch[1])
+        : plainMatch?.[1] || `notebook-attachment-${attachmentId}`;
+      return { blob, filename };
+    };
+
+    try {
+      return await downloadFrom(
+        `${API_URL}/v8/my-work/notebook/pages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}/download`
+      );
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      return downloadFrom(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}/download`
+      );
+    }
+  },
+
+  uploadNotebookAttachments: async (id: string, files: FileList | File[]): Promise<any> => {
+    try {
+      return await V8MyWorkApi.uploadNotebookAttachments(id, files);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append('files', file));
+      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`, {
+        method: 'POST',
+        headers: getHeaders(true),
+        body: formData,
+      });
+      return handleResponse(res, 'Failed to upload notebook attachments');
+    }
+  },
+
+  deleteNotebookAttachment: async (id: string, attachmentId: string): Promise<any> => {
+    try {
+      return await V8MyWorkApi.deleteNotebookAttachment(id, attachmentId);
+    } catch (error) {
+      if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
+        throw error;
+      }
+      const res = await fetch(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}`,
+        {
+          method: 'DELETE',
+          headers: getHeaders(),
+        }
+      );
+      return handleResponse(res, 'Failed to delete notebook attachment');
+    }
+  },
+
   /** V4-NOTE-01: Upload PDF/XLSX/TXT → extract text → create notebook page */
   uploadNotebookFile: async (file: File): Promise<any> => {
     let capture: any;

@@ -1,7 +1,7 @@
+import express, { type Express } from 'express';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +15,9 @@ const mockResolveAIProposal = vi.fn();
 const mockConvertNotebookPage = vi.fn();
 const mockNotebookCapture = vi.fn();
 const mockResolveStoredNotebookSourceFile = vi.fn();
+const mockPersistNotebookAttachment = vi.fn();
+const mockResolveNotebookAttachmentFile = vi.fn();
+const mockDeleteNotebookAttachmentFile = vi.fn();
 
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
@@ -49,13 +52,25 @@ vi.mock('../../../services/notebookConversionService.js', () => ({
 }));
 
 vi.mock('../../../services/notebookSourceFileService.js', () => ({
-  resolveStoredNotebookSourceFile: (...args: unknown[]) => mockResolveStoredNotebookSourceFile(...args),
+  resolveStoredNotebookSourceFile: (...args: unknown[]) =>
+    mockResolveStoredNotebookSourceFile(...args),
   toPublicNotebookCaptureMetadata: (raw: string | null | undefined) => {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     const { sourceFileStorageKey: _internal, ...publicMetadata } = parsed;
     return publicMetadata;
   },
+}));
+
+vi.mock('../../../services/notebookAttachmentService.js', () => ({
+  persistNotebookAttachment: (...args: unknown[]) => mockPersistNotebookAttachment(...args),
+  resolveNotebookAttachmentFile: (...args: unknown[]) => mockResolveNotebookAttachmentFile(...args),
+  deleteNotebookAttachmentFile: (...args: unknown[]) => mockDeleteNotebookAttachmentFile(...args),
+  parseNotebookAttachments: (raw: string | null | undefined) => (raw ? JSON.parse(raw) : []),
+  toPublicNotebookAttachments: (raw: string | null | undefined) =>
+    (raw ? JSON.parse(raw) : []).map(
+      ({ storageKey: _storageKey, ...attachment }: any) => attachment
+    ),
 }));
 
 import myWorkRoutes from '../my-work.routes.js';
@@ -113,6 +128,16 @@ describe('V8 My Work notebook routes', () => {
           storedSourceFile: true,
           sourceFileStorageKey: 'org-hidden/note.pdf',
         }),
+        attachmentsJson: JSON.stringify([
+          {
+            id: 'att-1',
+            name: 'notes.png',
+            type: 'image/png',
+            size: 1200,
+            uploadedAt: '2026-03-26T10:00:00.000Z',
+            storageKey: 'org-hidden/notes.png',
+          },
+        ]),
         convertedToJson: null,
         createdAt: '2026-03-26T10:00:00.000Z',
         updatedAt: '2026-03-26T10:00:00.000Z',
@@ -137,8 +162,18 @@ describe('V8 My Work notebook routes', () => {
         fileMimetype: 'application/pdf',
         storedSourceFile: true,
       },
+      attachments: [
+        {
+          id: 'att-1',
+          name: 'notes.png',
+          type: 'image/png',
+          size: 1200,
+          uploadedAt: '2026-03-26T10:00:00.000Z',
+        },
+      ],
     });
     expect(res.body.data[0].captureMetadata.sourceFileStorageKey).toBeUndefined();
+    expect(res.body.data[0].attachments[0].storageKey).toBeUndefined();
   });
 
   it('creates a notebook page through the V8 namespace', async () => {
@@ -234,13 +269,183 @@ describe('V8 My Work notebook routes', () => {
       sizeBytes: 11,
     });
 
-    const res = await request(createApp()).get('/api/v8/my-work/notebook/pages/note-download-1/source-file');
+    const res = await request(createApp()).get(
+      '/api/v8/my-work/notebook/pages/note-download-1/source-file'
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/plain');
     expect(res.text).toBe('hello world');
 
     await fs.unlink(tmpFile).catch(() => undefined);
+  });
+
+  it('uploads notebook attachments through the V8 namespace', async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'note-attach-1',
+        owner_user_id: USER_ID,
+        organization_id: ORG,
+        attachmentsJson: JSON.stringify([]),
+      })
+      .mockResolvedValueOnce({
+        id: 'note-attach-1',
+        ownerUserId: USER_ID,
+        organizationId: ORG,
+        projectId: null,
+        visibility: 'private',
+        title: 'Attachment note',
+        contentJson: JSON.stringify({ type: 'doc', content: [] }),
+        contentText: 'content',
+        tags: '[]',
+        maturity: 'seed',
+        icon: null,
+        summary: null,
+        status: 'active',
+        pinned: 0,
+        verificationStatus: 'unverified',
+        reviewCadence: 'monthly',
+        staleAt: null,
+        lastReviewedAt: null,
+        captureSource: null,
+        captureMetadataJson: null,
+        attachmentsJson: JSON.stringify([
+          {
+            id: 'att-v8-1',
+            name: 'brief.pdf',
+            type: 'application/pdf',
+            size: 11,
+            uploadedAt: '2026-03-28T10:00:00.000Z',
+            storageKey: 'org/note/brief.pdf',
+          },
+        ]),
+        convertedToJson: null,
+        createdAt: '2026-03-26T10:00:00.000Z',
+        updatedAt: '2026-03-28T10:00:00.000Z',
+      });
+    mockPersistNotebookAttachment.mockResolvedValue({
+      id: 'att-v8-1',
+      name: 'brief.pdf',
+      type: 'application/pdf',
+      size: 11,
+      uploadedAt: '2026-03-28T10:00:00.000Z',
+      storageKey: 'org/note/brief.pdf',
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/my-work/notebook/pages/note-attach-1/attachments')
+      .attach('files', Buffer.from('hello world'), {
+        filename: 'brief.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(res.status).toBe(201);
+    expect(mockPersistNotebookAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        pageId: 'note-attach-1',
+        fileOriginalname: 'brief.pdf',
+      })
+    );
+    expect(res.body.data.attachments).toEqual([
+      expect.objectContaining({
+        id: 'att-v8-1',
+        name: 'brief.pdf',
+        type: 'application/pdf',
+      }),
+    ]);
+  });
+
+  it('downloads notebook attachments through the V8 namespace', async () => {
+    const tmpFile = path.join(os.tmpdir(), `notebook-attachment-${Date.now()}.txt`);
+    await fs.writeFile(tmpFile, 'attachment body', 'utf8');
+    mockQueryOne.mockResolvedValue({
+      id: 'note-download-2',
+      ownerUserId: USER_ID,
+      organizationId: ORG,
+      projectId: null,
+      visibility: 'private',
+      attachmentsJson: JSON.stringify([
+        {
+          id: 'att-2',
+          name: 'attachment.txt',
+          type: 'text/plain',
+          size: 15,
+          storageKey: 'org/attachment.txt',
+        },
+      ]),
+    });
+    mockResolveNotebookAttachmentFile.mockResolvedValue({
+      filePath: tmpFile,
+      fileName: 'attachment.txt',
+      mimeType: 'text/plain',
+      sizeBytes: 15,
+    });
+
+    const res = await request(createApp()).get(
+      '/api/v8/my-work/notebook/pages/note-download-2/attachments/att-2/download'
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.text).toBe('attachment body');
+
+    await fs.unlink(tmpFile).catch(() => undefined);
+  });
+
+  it('deletes notebook attachments through the V8 namespace', async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'note-attach-2',
+        owner_user_id: USER_ID,
+        organization_id: ORG,
+        attachmentsJson: JSON.stringify([
+          {
+            id: 'att-delete-1',
+            name: 'remove.txt',
+            type: 'text/plain',
+            size: 7,
+            storageKey: 'org/remove.txt',
+          },
+        ]),
+      })
+      .mockResolvedValueOnce({
+        id: 'note-attach-2',
+        ownerUserId: USER_ID,
+        organizationId: ORG,
+        projectId: null,
+        visibility: 'private',
+        title: 'Attachment note',
+        contentJson: JSON.stringify({ type: 'doc', content: [] }),
+        contentText: 'content',
+        tags: '[]',
+        maturity: 'seed',
+        icon: null,
+        summary: null,
+        status: 'active',
+        pinned: 0,
+        verificationStatus: 'unverified',
+        reviewCadence: 'monthly',
+        staleAt: null,
+        lastReviewedAt: null,
+        captureSource: null,
+        captureMetadataJson: null,
+        attachmentsJson: JSON.stringify([]),
+        convertedToJson: null,
+        createdAt: '2026-03-26T10:00:00.000Z',
+        updatedAt: '2026-03-28T10:00:00.000Z',
+      });
+    mockDeleteNotebookAttachmentFile.mockResolvedValue([]);
+
+    const res = await request(createApp()).delete(
+      '/api/v8/my-work/notebook/pages/note-attach-2/attachments/att-delete-1'
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockDeleteNotebookAttachmentFile).toHaveBeenCalledWith(
+      expect.any(String),
+      'att-delete-1'
+    );
+    expect(res.body.data.attachments).toEqual([]);
   });
 
   it('updates an owned notebook page through the V8 namespace', async () => {

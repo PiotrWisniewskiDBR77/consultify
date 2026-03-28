@@ -80,14 +80,14 @@ Only one major lane should be `active` at a time unless independence is proven.
 - all `Phase A` and `Phase B` lanes under this plan are now accepted
 - broader `Sync` completion is now accepted in bounded form
 - broader `Multiplayer / collaboration` breadth is now accepted in bounded form
-- broader `Notes` adjunct / object-linked outputs breadth is now the active lane
+- broader `Notes` adjunct / object-linked outputs breadth is now accepted in bounded form
 
 ### Current success metric
 
-- completed remaining themes: `12 / 13`
-- active lane: broader `Notes` adjunct / object-linked outputs breadth
-- landed packets in the current active lane: `8`
-- last accepted lane: broader `Multiplayer / collaboration` breadth
+- completed remaining themes: `13 / 13`
+- active lane: `none`
+- landed packets in the current active lane: `0`
+- last accepted lane: broader `Notes` adjunct / object-linked outputs breadth
 
 ---
 
@@ -107,7 +107,7 @@ Only one major lane should be `active` at a time unless independence is proven.
 | `10` | broader `Partner Program` parity | `Phase C` | `done` | accepted partner payout/campaign/profile seams plus twenty broader packets now cover payout history, statement history, referred-customer list/readback, referral-tools reads, partner-home onboarding status, partner-home onboarding CTA authority, enterprise onboarding wizard status restoration, enterprise onboarding legal acceptance, enterprise onboarding pricing-tier selection, enterprise onboarding completion, client-access client list continuity, project continuity, access-link authority, employee roster continuity, dashboard runtime/trust, payout-settings ownership, and final commission placeholder retirement | broader partner breadth is accepted |
 | `11` | broader `Sync` completion | `Phase C` | `done` | bounded hub/lifecycle work did not close full OAuth/provider breadth, so the broader lane was promoted around connect/onboarding completion truth and is now accepted after the broader surface chain landed | broader sync completion is accepted |
 | `12` | broader `Multiplayer / collaboration` breadth | `Phase C` | `done` | presence + lock indicators landed, deeper realtime behavior did not, so the broader lane was promoted around visible degraded-state and runtime continuity on active collaboration surfaces and is now accepted in bounded form | broader collaboration breadth is accepted |
-| `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `active` | upload/attachment/output breadth remains outside accepted adjunct scope, so the broader lane is now promoted around notebook capture/upload authority and wider object-linked outputs breadth | broader notes/output breadth is accepted |
+| `13` | broader `Notes` adjunct / object-linked outputs breadth | `Phase C` | `done` | the broader lane is now accepted after bounded notebook capture/upload authority, notebook-origin output continuity, source-file continuity, nearby metadata propagation, and live notebook attachment management closed the last honest notes residuals | broader notes/output breadth is accepted |
 
 ---
 
@@ -180,19 +180,19 @@ No lane should jump directly from `queued` to `done`.
 
 ### Current lane
 
-- status: `active`
-- lane: broader `Notes` adjunct / object-linked outputs breadth
-- latest evidence: post-assessment-output residual reassessment recorded in `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`
-- reason: the tiny notebook direct-readback seams are now closed through upload provenance plus direct report, presentation, and assessment output continuity, so the next honest broader-notes step must now come from notebook attachment breadth or wider output propagation
+- status: `none`
+- lane: `none`
+- latest evidence: broader-notes acceptance recorded in `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`
+- reason: the final broader-notes packet plus residual assessment closed the last honest program lane, so the product program now stands at `13 / 13`
 
 ### Next three lanes
 
-- none; keep the broader `Notes` lane active until it is either accepted or explicitly blocked
+- none
 
 ### Active blockers
 
-- none at plan-lane level
-- separate rollout residual still exists outside this lane: production credential hygiene cleanup remains required before wider production promotion is honest `GO`
+- no product-program lane blocker remains
+- no separate rollout blocker remains outside the completed program: the final wider-production `GO` is recorded in `evidence/519-wider-production-go-no-go-decision.md` and rollout now proceeds under phased monitoring and rollback discipline
 
 ### Decision rule
 
@@ -424,14 +424,14 @@ Use the following structure for each lane as it becomes active:
 
 #### broader `Notes` adjunct / object-linked outputs breadth
 
-- status: `active`
+- status: `done`
 - charter: `docs/product/work-packets/T4_BROADER_NOTES_ADJUNCT_OBJECT_LINKED_OUTPUTS_BREADTH_CHARTER.md`
 - split-brain map: `evidence/501-v81-broader-notes-object-linked-outputs-breadth-split-brain-map.md`
 - current packet: `none`
-- last accepted packet: `evidence/512-v81-broader-notes-related-surface-metadata-propagation-seam.md`
+- last accepted packet: `evidence/514-v81-broader-notes-live-notebook-attachment-management-seam.md`
 - blocker: `none`
-- next action: `choose the next broader-notes packet from wider notebook attachment management or materially wider output propagation now that nearby related-note surfaces carry notebook truth`
-- acceptance evidence: `none`
+- next action: `hold the accepted broader notes lane unless a wider notebook files or output-propagation lane is explicitly promoted later`
+- acceptance evidence: `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`
 
 ---
 

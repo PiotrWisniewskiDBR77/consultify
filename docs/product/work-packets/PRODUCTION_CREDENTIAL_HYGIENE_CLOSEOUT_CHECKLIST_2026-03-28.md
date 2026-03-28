@@ -3,7 +3,7 @@
 > Date: 2026-03-28
 > Purpose: close the remaining wider-production blocker without interfering with the active broader `Notes` lane
 > Scope: production account / credential operations only
-> Status: ready to execute
+> Status: executed and closed in `evidence/518-production-credential-hygiene-closure.md`
 
 ---
 
@@ -15,7 +15,7 @@
 - broader `Notes` remains the only active product lane,
 - wider production promotion is still blocked by credential hygiene on affected production accounts.
 
-This checklist creates a safe parallel workstream that does not require touching the active notebook / notes implementation path.
+This checklist created a safe parallel workstream that did not require touching the active notebook / notes implementation path.
 
 ---
 
@@ -42,6 +42,8 @@ This is an ops / access-hygiene closeout only.
 ---
 
 ## 4. Execution sequence
+
+Execution result: complete. The full closeout evidence is recorded in `evidence/518-production-credential-hygiene-closure.md`.
 
 ### Step 1 - Inventory the affected accounts
 
@@ -128,3 +130,12 @@ This checklist is complete only when all of the following are true:
 3. every required new credential has been verified as working
 4. evidence is written
 5. `CP-10` can treat credential hygiene as closed, leaving approval as the only remaining managerial step
+
+Current outcome:
+
+- complete
+- all `33` affected privileged production accounts were rotated
+- old weak credentials were rejected for all `33`
+- replacement credentials authenticated successfully for all `33`
+- stale session artifacts were cleared after verification
+- no rollback was needed

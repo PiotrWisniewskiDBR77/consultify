@@ -1,6 +1,6 @@
 # CP-10: V8 Rollout Safety Checklist & Go/No-Go Gate
 
-> Status: PRODUCTION PILOT GREEN — staging gates, production deploy readback, and production shadow promotion-readiness are now proven, but credential-hygiene cleanup is still pending before wider promotion
+> Status: GO FOR WIDER PRODUCTION — staging gates, production deploy readback, production shadow promotion-readiness, and production credential hygiene are now proven and aligned with `evidence/519-wider-production-go-no-go-decision.md`
 > Owner: Manager Agent
 > Date: 2026-03-23
 > Authority: Source-of-truth decisions D1-D6
@@ -145,7 +145,7 @@ What still needs proof on real infrastructure:
 
 ### Shadow → live promotion
 - [x] Shadow promotion readiness check passes (5 criteria)
-- [ ] Source-of-truth approval obtained
+- [x] Source-of-truth approval obtained
 - [ ] Disable shadow mode for promoted org
 - [ ] Enable V8 as primary for promoted org
 - [ ] Monitor for 48 hours
@@ -158,16 +158,16 @@ What still needs proof on real infrastructure:
 
 **Reason:** Core authenticated staging evidence is now joined by live production proof in `evidence/486-v8-production-pilot-bootstrap-and-runtime-readback.md` and `evidence/490-production-auth-guard-deploy-and-readiness-residual.md`: production deploy succeeded, `/api/v8/admin/flags` and `/api/v8/health` return `200`, the earlier production runtime seams on notifications and provider health now return `200`, and the hidden quick-access auth backdoor is now disabled on the production host.
 
-### Current assessment for wider production promotion: **NO-GO**
+### Current assessment for wider production promotion: **GO**
 
-**Reason:** production shadow observation is now green in `evidence/491-v8-production-pilot-shadow-readiness-green.md`, but live credential hygiene still requires operational cleanup after weak known production credentials were observed during auth verification.
+**Reason:** production shadow observation remains green in `evidence/491-v8-production-pilot-shadow-readiness-green.md`, credential hygiene is closed in `evidence/518-production-credential-hygiene-closure.md`, the product program is complete at `13 / 13`, and the final rollout authority is now recorded in `evidence/519-wider-production-go-no-go-decision.md`.
 
-### What must happen before GO:
-1. Rotate weak known production credentials and confirm the old credentials no longer authenticate
-2. Preserve rollback readiness while the pilot remains limited
-3. Re-run final GO/NO-GO after credential cleanup
+### What remains mandatory after GO:
+1. Preserve rollback readiness while phased promotion remains in flight
+2. Keep per-org rollout discipline and do not treat this as a blind all-org cutover
+3. Keep `CP-10` and `evidence/519-wider-production-go-no-go-decision.md` aligned to the same rollout posture
 
-### Estimated time to wider production promotion: dependent on credential hygiene cleanup and final approval
+### Estimated time to wider production promotion: approved now under phased execution discipline
 
 ---
 
@@ -178,5 +178,7 @@ What still needs proof on real infrastructure:
 - `CP-04-AUTH-CONTRACT.md`
 - `CP-08-SHADOW-PROMOTION-CRITERIA.md`
 - `CP-11-POSTGRES-COMPATIBILITY-REPORT.md`
+- `evidence/518-production-credential-hygiene-closure.md`
+- `evidence/519-wider-production-go-no-go-decision.md`
 - `PRODUCTION_CREDENTIAL_HYGIENE_CLOSEOUT_CHECKLIST_2026-03-28.md`
 - `TRANCHE_01_EXECUTION_ORDER.md`

@@ -68,6 +68,7 @@ import {
   EmbeddedRefNode,
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
+import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { NotebookContextPanel } from './notebook/NotebookContextPanel';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
@@ -1273,11 +1274,33 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       link.remove();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error(isPolish ? 'Nie udało się pobrać pliku źródłowego' : 'Failed to download source file');
+      toast.error(
+        isPolish ? 'Nie udało się pobrać pliku źródłowego' : 'Failed to download source file'
+      );
     } finally {
       setIsDownloadingSourceFile(false);
     }
   }, [activePage?.id, isDownloadingSourceFile, isPolish]);
+
+  const handleUploadNotebookAttachments = useCallback(
+    async (files: FileList) => {
+      if (!activePage?.id) return;
+      const updated = await Api.uploadNotebookAttachments(activePage.id, files);
+      if (!updated?.id) return;
+      setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+    },
+    [activePage?.id]
+  );
+
+  const handleDeleteNotebookAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!activePage?.id) return;
+      const updated = await Api.deleteNotebookAttachment(activePage.id, attachmentId);
+      if (!updated?.id) return;
+      setPages((prev) => prev.map((page) => (page.id === updated.id ? updated : page)));
+    },
+    [activePage?.id]
+  );
 
   const refreshAIProposals = useCallback(async (pageId: string) => {
     try {
@@ -1789,7 +1812,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               );
                             })()}
                             {(() => {
-                              const convertedSummary = getNotebookConvertedOutputSummary(p.convertedTo);
+                              const convertedSummary = getNotebookConvertedOutputSummary(
+                                p.convertedTo
+                              );
                               if (convertedSummary.total === 0) return null;
                               return (
                                 <span
@@ -2078,7 +2103,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             if (!uploadSource) return null;
                             const hasStoredSourceFile = Boolean(
                               activePage.captureMetadata?.storedSourceFile &&
-                                activePage.captureMetadata?.fileOriginalname
+                              activePage.captureMetadata?.fileOriginalname
                             );
                             return (
                               <>
@@ -2374,6 +2399,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
                   {/* Rich editor */}
                   <EditorContent editor={editor} />
+
+                  {activePage ? (
+                    <div className="mt-4">
+                      <NotebookAttachmentsSection
+                        noteId={activePage.id}
+                        attachments={activePage.attachments || []}
+                        onUpload={handleUploadNotebookAttachments}
+                        onDelete={handleDeleteNotebookAttachment}
+                      />
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* AI inline response */}

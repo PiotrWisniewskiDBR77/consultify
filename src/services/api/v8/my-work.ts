@@ -150,6 +150,14 @@ export interface V8NotebookPage {
     sourceFileSizeBytes?: number | null;
     [key: string]: unknown;
   } | null;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    size: number;
+    uploadedAt: string;
+    uploadedBy?: string;
+  }>;
   convertedTo?: Record<string, unknown> | null;
   createdAt?: string;
   updatedAt?: string;
@@ -288,7 +296,22 @@ export const V8MyWorkApi = {
     ),
   getNotebookPage: (id: string) =>
     v8Get<V8NotebookPage>(`/my-work/notebook/pages/${encodeURIComponent(id)}`),
-  notebookCaptureUpload: (file: File, options?: { title?: string; projectId?: string; tags?: string[] }) => {
+  uploadNotebookAttachments: (id: string, files: FileList | File[]) => {
+    const formData = new FormData();
+    Array.from(files).forEach((file) => formData.append('files', file));
+    return v8PostMultipart<V8NotebookPage>(
+      `/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`,
+      formData
+    );
+  },
+  deleteNotebookAttachment: (id: string, attachmentId: string) =>
+    v8Delete<V8NotebookPage>(
+      `/my-work/notebook/pages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}`
+    ),
+  notebookCaptureUpload: (
+    file: File,
+    options?: { title?: string; projectId?: string; tags?: string[] }
+  ) => {
     const formData = new FormData();
     formData.append('file', file);
     if (options?.title) formData.append('title', options.title);

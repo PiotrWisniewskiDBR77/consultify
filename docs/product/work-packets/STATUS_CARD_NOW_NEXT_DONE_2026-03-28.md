@@ -8,12 +8,13 @@
 
 ## Now
 
-- program completion stands at `12 / 13`
-- the only active product lane is broader `Notes` adjunct / object-linked outputs breadth
-- the latest broader-notes residual assessment is `evidence/509-v81-broader-notes-post-assessment-output-readback-residual-assessment.md`
-- the next honest broader-notes step must now come from notebook attachment breadth or wider notebook-origin output propagation
+- program completion stands at `13 / 13`
+- no product lane is active
+- the latest product-program acceptance is `evidence/516-v81-broader-notes-adjunct-object-linked-outputs-breadth-t4-acceptance.md`
+- the product program completion declaration is `evidence/517-v81-post-v8-v8.1-program-13-of-13-completion-declaration.md`
 - production shadow readiness is green
-- wider production promotion is blocked only by credential hygiene
+- credential hygiene is closed in `evidence/518-production-credential-hygiene-closure.md`
+- wider production `GO` is now recorded in `evidence/519-wider-production-go-no-go-decision.md`
 
 ---
 
@@ -21,17 +22,15 @@
 
 ### Product track
 
-1. choose the next broader-notes packet from notebook attachment breadth or wider output propagation
-2. land the packet with focused regression
-3. reassess whether any smaller honest packet still remains
-4. if not, accept broader `Notes` and move the program to `13 / 13`
+1. keep the product program closed at `13 / 13`
+2. do not reopen accepted lanes without a fresh explicit promotion
+3. treat wider-production rollout as an ops decision, not a new product packet
 
 ### Ops track
 
-1. rotate the affected production credentials
-2. verify old weak credentials no longer authenticate
-3. capture credential-hygiene closure evidence
-4. rerun final wider-production `GO / NO-GO`
+1. use `evidence/519-wider-production-go-no-go-decision.md` as the current rollout decision authority
+2. keep phased promotion, rollback, and monitoring discipline aligned with `CP-10`
+3. do not reopen product work as a substitute for rollout execution
 
 ---
 
@@ -40,7 +39,11 @@
 - all earlier promoted lanes through broader `Multiplayer / collaboration` breadth are accepted
 - broader `Sync` completion is accepted
 - broader `Multiplayer / collaboration` breadth is accepted
+- broader `Notes` is accepted
+- the full product program is declared `13 / 13` complete
 - production shadow observation is green in `evidence/491-v8-production-pilot-shadow-readiness-green.md`
+- production credential hygiene is closed in `evidence/518-production-credential-hygiene-closure.md`
+- wider production `GO` is recorded in `evidence/519-wider-production-go-no-go-decision.md`
 - doc support for final closeout is prepared:
   - `BROADER_NOTES_PARALLEL_SUPPORT_PACK_2026-03-28.md`
   - `BROADER_NOTES_ACCEPTANCE_TEMPLATE_2026-03-28.md`
@@ -57,4 +60,4 @@ Do not reopen already accepted lanes.
 
 Do not invent another tiny notebook readback patch if the residual has already been assessed as a larger breadth choice.
 
-Do not widen production promotion before credential hygiene is evidenced as closed.
+Do not drift from the phased rollout, rollback, and monitoring posture recorded in `CP-10` and `evidence/519-wider-production-go-no-go-decision.md`.

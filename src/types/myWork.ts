@@ -610,6 +610,15 @@ export type NotebookVerificationStatus = 'unverified' | 'verified' | 'disputed';
 export type NotebookReviewCadence = 'weekly' | 'monthly' | 'quarterly' | 'never';
 export type NotebookCaptureSource = 'upload' | 'web_clipper' | 'email_forward' | 'api_import';
 
+export interface NotebookAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+  uploadedBy?: string;
+}
+
 export interface NotebookPage {
   id: string;
   title: string;
@@ -649,6 +658,7 @@ export interface NotebookPage {
     storedSourceFile?: boolean;
     sourceFileSizeBytes?: number | null;
   } | null;
+  attachments?: NotebookAttachment[];
   createdAt: string;
   updatedAt: string;
 }

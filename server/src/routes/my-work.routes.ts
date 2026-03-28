@@ -28,6 +28,13 @@ import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
+import {
+  deleteNotebookAttachmentFile,
+  parseNotebookAttachments,
+  persistNotebookAttachment,
+  resolveNotebookAttachmentFile,
+  toPublicNotebookAttachments,
+} from '../services/notebookAttachmentService.js';
 import notebookService from '../services/notebookService.js';
 import {
   resolveStoredNotebookSourceFile,
@@ -7414,7 +7421,9 @@ const canAccessNotebookRow = async (
   return Boolean((pm as any)?.ok);
 };
 
-const parseCaptureMetadata = (raw: string | null | undefined) => toPublicNotebookCaptureMetadata(raw);
+const parseCaptureMetadata = (raw: string | null | undefined) =>
+  toPublicNotebookCaptureMetadata(raw);
+const parseAttachments = (raw: string | null | undefined) => toPublicNotebookAttachments(raw);
 
 /**
  * GET /api/my-work/notebook/pages?projectId?&q?&status?&pinned?&sort?&limit?&offset?
@@ -7509,6 +7518,7 @@ router.get(
           np.last_reviewed_at as lastReviewedAt,
           np.capture_source as "captureSource",
           np.capture_metadata as "captureMetadataJson",
+          np.attachments_json as "attachmentsJson",
           np.converted_to_json as "convertedToJson",
           np.created_at as "createdAt",
           np.updated_at as "updatedAt"
@@ -7538,9 +7548,11 @@ router.get(
         pinned: Boolean(r.pinned),
         captureSource: r.captureSource ?? null,
         captureMetadata: parseCaptureMetadata(r.captureMetadataJson),
+        attachments: parseAttachments(r.attachmentsJson),
         convertedTo: parseConvertedTo(r.convertedToJson),
         convertedToJson: undefined,
         captureMetadataJson: undefined,
+        attachmentsJson: undefined,
         contentJson: (() => {
           try {
             return r.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] };
@@ -7644,6 +7656,7 @@ router.post(
         coalesce(pinned, 0) as pinned,
         capture_source as "captureSource",
         capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -7666,9 +7679,11 @@ router.post(
       pinned: Boolean(row?.pinned),
       captureSource: row?.captureSource ?? null,
       captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
+      attachments: parseAttachments(row?.attachmentsJson),
       convertedTo: parseConvertedTo(row?.convertedToJson),
       convertedToJson: undefined,
       captureMetadataJson: undefined,
+      attachmentsJson: undefined,
       contentJson: (() => {
         try {
           return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
@@ -7697,6 +7712,10 @@ const notebookUpload = multer({
     }
     cb(new Error('Only PDF, XLSX, TXT, MD allowed'));
   },
+});
+const notebookAttachmentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 10 },
 });
 
 router.post(
@@ -7728,6 +7747,7 @@ router.post(
         visibility, title, content_json as "contentJson", content_text as "contentText", tags_json as tags,
         maturity, icon, summary, coalesce(status, 'active') as status, coalesce(pinned, 0) as pinned,
         capture_source as "captureSource", capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson", created_at as "createdAt", updated_at as "updatedAt"
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [captureResult.pageId]
@@ -7748,8 +7768,10 @@ router.post(
       pinned: false,
       captureSource: row?.captureSource ?? null,
       captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
+      attachments: parseAttachments(row?.attachmentsJson),
       convertedTo: parseCT(row),
       captureMetadataJson: undefined,
+      attachmentsJson: undefined,
       contentJson: (() => {
         try {
           return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
@@ -7795,6 +7817,7 @@ router.get(
         last_reviewed_at as lastReviewedAt,
         capture_source as "captureSource",
         capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -7833,6 +7856,7 @@ router.get(
       lastReviewedAt: row.lastReviewedAt ?? null,
       captureSource: row.captureSource ?? null,
       captureMetadata: parseCaptureMetadata(row.captureMetadataJson),
+      attachments: parseAttachments(row.attachmentsJson),
       convertedTo: parseConvertedTo(row.convertedToJson),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -7884,6 +7908,259 @@ router.get(
 
     res.setHeader('Content-Type', storedFile.mimeType || 'application/octet-stream');
     return res.download(storedFile.filePath, storedFile.fileName);
+  })
+);
+
+router.post(
+  '/notebook/pages/:id/attachments',
+  notebookAttachmentUpload.array('files', 10),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const files = ((req.files as Express.Multer.File[] | undefined) || []).filter(Boolean);
+    if (files.length === 0) return res.status(400).json({ error: 'Files required' });
+
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, attachments_json as "attachmentsJson"
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (String(existing.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
+
+    const currentAttachments = parseNotebookAttachments(existing.attachmentsJson);
+    if (currentAttachments.length + files.length > 10) {
+      return res.status(400).json({ error: 'Attachment limit exceeded' });
+    }
+
+    try {
+      const uploaded = await Promise.all(
+        files.map((file) =>
+          persistNotebookAttachment({
+            organizationId: orgId,
+            pageId: id,
+            fileBuffer: file.buffer,
+            fileOriginalname: file.originalname,
+            fileMimetype: file.mimetype,
+            userId,
+          })
+        )
+      );
+
+      await queryHelpers.queryRun(
+        `UPDATE notebook_pages
+         SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [JSON.stringify([...currentAttachments, ...uploaded]), id]
+      );
+    } catch (error) {
+      return res.status(400).json({
+        error: error instanceof Error ? error.message : 'Attachment upload failed',
+      });
+    }
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as verificationStatus,
+        coalesce(review_cadence, 'monthly') as reviewCadence,
+        stale_at as staleAt,
+        last_reviewed_at as lastReviewedAt,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    const parseCT = (raw: string | null) => {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    };
+
+    return res.status(201).json({
+      ...row,
+      tags: parseTagsArray(row?.tags),
+      pinned: Boolean(row?.pinned),
+      verificationStatus: row?.verificationStatus ?? 'unverified',
+      reviewCadence: row?.reviewCadence ?? 'monthly',
+      staleAt: row?.staleAt ?? null,
+      lastReviewedAt: row?.lastReviewedAt ?? null,
+      captureSource: row?.captureSource ?? null,
+      captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
+      attachments: parseAttachments(row?.attachmentsJson),
+      convertedTo: parseCT(row?.convertedToJson),
+      convertedToJson: undefined,
+      captureMetadataJson: undefined,
+      attachmentsJson: undefined,
+      contentJson: (() => {
+        try {
+          return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+        } catch {
+          return { type: 'doc', content: [] };
+        }
+      })(),
+    });
+  })
+);
+
+router.get(
+  '/notebook/pages/:id/attachments/:attachmentId/download',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const attachmentId = String(req.params.attachmentId || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, project_id, visibility, attachments_json as "attachmentsJson"
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!(await canAccessNotebookRow(userId, orgId, row)))
+      return res.status(403).json({ error: 'Forbidden' });
+
+    const storedFile = await resolveNotebookAttachmentFile(row.attachmentsJson, attachmentId);
+    if (!storedFile) {
+      return res.status(404).json({ error: 'Attachment not found' });
+    }
+
+    res.setHeader('Content-Type', storedFile.mimeType || 'application/octet-stream');
+    return res.download(storedFile.filePath, storedFile.fileName);
+  })
+);
+
+router.delete(
+  '/notebook/pages/:id/attachments/:attachmentId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const attachmentId = String(req.params.attachmentId || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, attachments_json as "attachmentsJson"
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (String(existing.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
+
+    const currentAttachments = parseNotebookAttachments(existing.attachmentsJson);
+    if (!currentAttachments.some((attachment) => attachment.id === attachmentId)) {
+      return res.status(404).json({ error: 'Attachment not found' });
+    }
+
+    const remainingAttachments = await deleteNotebookAttachmentFile(
+      existing.attachmentsJson,
+      attachmentId
+    );
+    await queryHelpers.queryRun(
+      `UPDATE notebook_pages
+       SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [JSON.stringify(remainingAttachments), id]
+    );
+
+    const selectNotebookFull = `
+      SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as verificationStatus,
+        coalesce(review_cadence, 'monthly') as reviewCadence,
+        stale_at as staleAt,
+        last_reviewed_at as lastReviewedAt,
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM notebook_pages WHERE id = ? LIMIT 1`;
+    const row = await queryHelpers.queryOne<any>(selectNotebookFull, [id]);
+    const parseCT = (raw: string | null) => {
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    };
+
+    return res.json({
+      ...row,
+      tags: parseTagsArray(row?.tags),
+      pinned: Boolean(row?.pinned),
+      verificationStatus: row?.verificationStatus ?? 'unverified',
+      reviewCadence: row?.reviewCadence ?? 'monthly',
+      staleAt: row?.staleAt ?? null,
+      lastReviewedAt: row?.lastReviewedAt ?? null,
+      captureSource: row?.captureSource ?? null,
+      captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
+      attachments: parseAttachments(row?.attachmentsJson),
+      convertedTo: parseCT(row?.convertedToJson),
+      convertedToJson: undefined,
+      captureMetadataJson: undefined,
+      attachmentsJson: undefined,
+      contentJson: (() => {
+        try {
+          return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+        } catch {
+          return { type: 'doc', content: [] };
+        }
+      })(),
+    });
   })
 );
 
@@ -7987,6 +8264,7 @@ router.put(
         last_reviewed_at as lastReviewedAt,
         capture_source as "captureSource",
         capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -8011,9 +8289,11 @@ router.put(
         lastReviewedAt: r?.lastReviewedAt ?? null,
         captureSource: r?.captureSource ?? null,
         captureMetadata: parseCaptureMetadata(r?.captureMetadataJson),
+        attachments: parseAttachments(r?.attachmentsJson),
         convertedTo: parseCT(r?.convertedToJson),
         convertedToJson: undefined,
         captureMetadataJson: undefined,
+        attachmentsJson: undefined,
         contentJson: (() => {
           try {
             return r?.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] };

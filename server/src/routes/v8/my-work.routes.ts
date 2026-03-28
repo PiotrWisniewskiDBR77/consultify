@@ -14,14 +14,21 @@ import {
   VALID_INBOX_TRIAGE_ACTIONS,
 } from '../../services/inboxTriageService.js';
 import {
+  deleteNotebookAttachmentFile,
+  parseNotebookAttachments,
+  persistNotebookAttachment,
+  resolveNotebookAttachmentFile,
+  toPublicNotebookAttachments,
+} from '../../services/notebookAttachmentService.js';
+import {
   convertNotebookPage,
   NotebookConversionError,
 } from '../../services/notebookConversionService.js';
+import notebookService from '../../services/notebookService.js';
 import {
   resolveStoredNotebookSourceFile,
   toPublicNotebookCaptureMetadata,
 } from '../../services/notebookSourceFileService.js';
-import notebookService from '../../services/notebookService.js';
 import * as myWorkRoofService from '../../services/v8/myWorkRoofService.js';
 import type {
   CalendarPhaseName,
@@ -37,6 +44,10 @@ const router = Router();
 const notebookCaptureUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
+});
+const notebookAttachmentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 10 },
 });
 
 /** B-05: V8 envelope for governed canonical inbox (V4-INBX-01) intake surface. */
@@ -236,7 +247,9 @@ const parseConvertedTo = (raw: string | null | undefined) => {
   }
 };
 
-const parseCaptureMetadata = (raw: string | null | undefined) => toPublicNotebookCaptureMetadata(raw);
+const parseCaptureMetadata = (raw: string | null | undefined) =>
+  toPublicNotebookCaptureMetadata(raw);
+const parseAttachments = (raw: string | null | undefined) => toPublicNotebookAttachments(raw);
 
 const parseNotebookContent = (raw: string | null | undefined) => {
   try {
@@ -256,9 +269,11 @@ const formatNotebookRow = (row: any) => ({
   lastReviewedAt: row?.lastReviewedAt ?? null,
   captureSource: row?.captureSource ?? null,
   captureMetadata: parseCaptureMetadata(row?.captureMetadataJson),
+  attachments: parseAttachments(row?.attachmentsJson),
   convertedTo: parseConvertedTo(row?.convertedToJson),
   convertedToJson: undefined,
   captureMetadataJson: undefined,
+  attachmentsJson: undefined,
   contentJson: parseNotebookContent(row?.contentJson),
 });
 
@@ -818,6 +833,7 @@ router.get(
           np.last_reviewed_at as "lastReviewedAt",
           np.capture_source as "captureSource",
           np.capture_metadata as "captureMetadataJson",
+          np.attachments_json as "attachmentsJson",
           np.converted_to_json as "convertedToJson",
           np.created_at as "createdAt",
           np.updated_at as "updatedAt"
@@ -963,6 +979,7 @@ router.post(
         last_reviewed_at as "lastReviewedAt",
         capture_source as "captureSource",
         capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -1006,6 +1023,7 @@ router.get(
         last_reviewed_at as "lastReviewedAt",
         capture_source as "captureSource",
         capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -1072,6 +1090,228 @@ router.get(
 
     res.setHeader('Content-Type', storedFile.mimeType || 'application/octet-stream');
     return res.download(storedFile.filePath, storedFile.fileName);
+  })
+);
+
+router.post(
+  '/notebook/pages/:id/attachments',
+  notebookAttachmentUpload.array('files', 10),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const files = ((req.files as Express.Multer.File[] | undefined) || []).filter(Boolean);
+    if (files.length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'Files required', code: 'NOTEBOOK_ATTACHMENT_FILE_REQUIRED' });
+    }
+
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, attachments_json as "attachmentsJson"
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(existing.organization_id || '') !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(existing.owner_user_id || '') !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    const currentAttachments = parseNotebookAttachments(existing.attachmentsJson);
+    if (currentAttachments.length + files.length > 10) {
+      return res.status(400).json({
+        error: 'Attachment limit exceeded',
+        code: 'NOTEBOOK_ATTACHMENT_LIMIT_EXCEEDED',
+      });
+    }
+
+    try {
+      const uploaded = await Promise.all(
+        files.map((file) =>
+          persistNotebookAttachment({
+            organizationId,
+            pageId: id,
+            fileBuffer: file.buffer,
+            fileOriginalname: file.originalname,
+            fileMimetype: file.mimetype,
+            userId,
+          })
+        )
+      );
+
+      await queryHelpers.queryRun(
+        `UPDATE notebook_pages
+         SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [JSON.stringify([...currentAttachments, ...uploaded]), id]
+      );
+    } catch (error) {
+      return res.status(400).json({
+        error: error instanceof Error ? error.message : 'Attachment upload failed',
+        code: 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
+      });
+    }
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as "verificationStatus",
+        coalesce(review_cadence, 'monthly') as "reviewCadence",
+        stale_at as "staleAt",
+        last_reviewed_at as "lastReviewedAt",
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    return res.status(201).json({
+      data: formatNotebookRow(row),
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
+  })
+);
+
+router.get(
+  '/notebook/pages/:id/attachments/:attachmentId/download',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const attachmentId = String(req.params.attachmentId || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        attachments_json as "attachmentsJson"
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+    if (!row) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (!(await canAccessNotebookRow(userId, organizationId, row))) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+
+    const storedFile = await resolveNotebookAttachmentFile(row.attachmentsJson, attachmentId);
+    if (!storedFile) {
+      return res
+        .status(404)
+        .json({ error: 'Attachment not found', code: 'NOTEBOOK_ATTACHMENT_NOT_FOUND' });
+    }
+
+    res.setHeader('Content-Type', storedFile.mimeType || 'application/octet-stream');
+    return res.download(storedFile.filePath, storedFile.fileName);
+  })
+);
+
+router.delete(
+  '/notebook/pages/:id/attachments/:attachmentId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!(await requireNotebookPagesTable(res))) return;
+
+    const id = String(req.params.id || '').trim();
+    const attachmentId = String(req.params.attachmentId || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, attachments_json as "attachmentsJson"
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (String(existing.organization_id || '') !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+    if (String(existing.owner_user_id || '') !== String(userId)) {
+      return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    const currentAttachments = parseNotebookAttachments(existing.attachmentsJson);
+    if (!currentAttachments.some((attachment) => attachment.id === attachmentId)) {
+      return res
+        .status(404)
+        .json({ error: 'Attachment not found', code: 'NOTEBOOK_ATTACHMENT_NOT_FOUND' });
+    }
+
+    const remainingAttachments = await deleteNotebookAttachmentFile(
+      existing.attachmentsJson,
+      attachmentId
+    );
+    await queryHelpers.queryRun(
+      `UPDATE notebook_pages
+       SET attachments_json = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [JSON.stringify(remainingAttachments), id]
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility,
+        title,
+        content_json as "contentJson",
+        content_text as "contentText",
+        tags_json as tags,
+        maturity,
+        icon,
+        summary,
+        coalesce(status, 'active') as status,
+        coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as "verificationStatus",
+        coalesce(review_cadence, 'monthly') as "reviewCadence",
+        stale_at as "staleAt",
+        last_reviewed_at as "lastReviewedAt",
+        capture_source as "captureSource",
+        capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
+        converted_to_json as "convertedToJson",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    return res.json({
+      data: formatNotebookRow(row),
+      meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+    });
   })
 );
 
@@ -1186,6 +1426,7 @@ router.put(
         last_reviewed_at as "lastReviewedAt",
         capture_source as "captureSource",
         capture_metadata as "captureMetadataJson",
+        attachments_json as "attachmentsJson",
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
