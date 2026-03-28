@@ -64,6 +64,10 @@ const nonV8Endpoints = [
   '/api/llm/providers/health',
 ] as const;
 
+function timestampForFile(): string {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
 function parseArgs(argv: string[]) {
   const users: MonitorUser[] = [];
   let baseUrl = DEFAULT_BASE_URL;
@@ -153,6 +157,7 @@ function usage(): string {
     '  --user <email[:role]>           Repeatable. role is user or superadmin.',
     '  --json                          Print full JSON report.',
     '  --output <relative-path>        Write JSON report to a file.',
+    '                                 Default: server/exports/v8-rollout-monitor-<timestamp>.json',
     '  --help                          Show this help.',
     '',
     'Default users:',
@@ -417,11 +422,11 @@ async function main(): Promise<void> {
     options.users.map((user) => monitorUser(user, options.baseUrl, options.keychainService)),
   );
   const report = buildReport(options.baseUrl, options.keychainService, users);
-
-  if (options.outputPath) {
-    const savedPath = writeReport(options.outputPath, report);
-    console.log(`Saved JSON report to ${savedPath}`);
-  }
+  const savedPath = writeReport(
+    options.outputPath || `server/exports/v8-rollout-monitor-${timestampForFile()}.json`,
+    report,
+  );
+  console.log(`Saved JSON report to ${savedPath}`);
 
   if (options.jsonOutput) {
     console.log(JSON.stringify(report, null, 2));

@@ -54,4 +54,8 @@ The observation window can now be re-checked with:
 
 `npm run rollout:v8:monitor -- --json`
 
-The script uses the current promoted-user defaults, logs in through the existing macOS Keychain credential store, and replays the same runtime/admin/non-V8 checkpoint sequence captured in this evidence.
+The script uses the current promoted-user defaults, logs in through the existing macOS Keychain credential store, replays the same runtime/admin/non-V8 checkpoint sequence captured in this evidence, and auto-saves a machine-readable JSON artefact under `server/exports/` for each rerun.
+
+Latest saved checkpoint artefact:
+
+- `server/exports/v8-rollout-monitor-2026-03-28T08-10-35-138Z.json`
